@@ -1,0 +1,40 @@
+:root {
+    /* Base Colors */
+    --black: #000000;
+    --white: #ffffff;
+
+    /* Brand Colors */
+    --brand-primary: #E82C3F;
+    /* Crimson Red */
+    --brand-secondary: #009639;
+    /* Forest Green */
+
+    /* Supporting Colors (from your palette) */
+    --lavender: #B899D2;
+    --navy-blue: #1E2A4A;
+    --soft-pink: #F9C9D6;
+    --light-blue: #B0C8ED;
+    --soft-gray: #EAEAEA;
+    --mid-gray: #BFBFBF;
+    --dark-gray: #444444;
+
+    /* Buttons */
+    --btn-primary: var(--brand-primary);
+    --btn-secondary: var(--brand-secondary);
+    --btn-success: #10b981;
+    /* Optional: you can align with brand */
+    --btn-danger: var(--brand-primary);
+
+    /* Text Colors */
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-muted: #6b7280;
+
+    /* Background / Foreground */
+    --background: #ffffff;
+    --foreground: #2c2c2c;
+
+    /* Gradients / Accent (Optional) */
+    --gradient-primary: linear-gradient(90deg, #E82C3F 0%, #C32230 100%);
+    --gradient-secondary: linear-gradient(90deg, #009639 0%, #007A2D 100%);
+}
