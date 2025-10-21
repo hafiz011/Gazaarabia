@@ -133,3 +133,97 @@ a {
 }
 
 /* ============= home pagwe end ============= */
+
+
+
+
+
+/* ====================== Admin dashboard start ===================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+aside {
+  font-family: 'Inter', sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+.sidebar-link-active {
+  background: var(--brand-primary);
+  color: var(--white);
+  box-shadow: 0 0 10px rgba(232, 44, 63, 0.4);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--brand-primary);
+  border-radius: 4px;
+}
+
+
+
+/* ================= Active filed css start========== */
+/* input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brand-secondary);
+  box-shadow: 0 0 0 2px var(--brand-secondary);
+  transition: all 0.2s ease;
+}
+
+
+
+.input-field {
+  @apply w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition;
+} */
+
+
+/* ===========================
+   TAILWIND INPUT STYLING
+=========================== */
+input:not(.MuiInputBase-input):focus,
+textarea:not(.MuiInputBase-input):focus,
+select:not(.MuiInputBase-input):focus {
+  outline: none;
+  border-color: var(--brand-secondary);
+  box-shadow: 0 0 0 2px var(--brand-secondary);
+  transition: all 0.2s ease;
+}
+
+.input-field {
+  @apply w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition;
+}
+
+
+/* ================= Active filed css end========== */
+
+
+
+/* ===================== table scrollbar start ============== */
+
+/* globals.css */
+::-webkit-scrollbar {
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* gray-300 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f5f9; /* gray-100 */
+}
+
+
+/* ===================== table scrollbar end ============== */
+
+
+/* ====================== Admin dashboard end ===================== */

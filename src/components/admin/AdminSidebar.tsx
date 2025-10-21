@@ -1,0 +1,85 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Package, ShoppingCart, Users, LogOut } from "lucide-react";
+
+const links = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/sizes", label: "Sizes", icon: Users },
+  { href: "/admin/colors-list", label: "Colors", icon: Users },
+  { href: "/admin/category-list", label: "Categories", icon: Users },
+  { href: "/admin/subcategories", label: "Subcategories", icon: Users },
+  { href: "/admin/material-cares", label: "Material Cares", icon: Users },
+  { href: "/admin/brands", label: "Brands", icon: Users },
+  { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/delivery-options", label: "Delivery Options", icon: Package },
+  { href: "/admin/blog-categories", label: "Blog Categories", icon: Package },
+  { href: "/admin/blogs", label: "Blogs", icon: Package },
+];
+
+export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
+  const pathname = usePathname();
+
+  return (
+    <aside
+      className={`fixed md:static z-40 top-0 left-0 h-full w-64 transform
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col`}
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(30,42,74,0.95) 0%, rgba(30,42,74,0.88) 100%)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      {/* Logo */}
+      <div className="p-6 border-b border-[var(--dark-gray)] flex items-center gap-2">
+        {/* <Image
+          src="/images/logo.png"
+          alt="Logo"
+          width={36}
+          height={36}
+          className="rounded-md"
+        /> */}
+        <h2 className="text-lg font-semibold tracking-wide text-white">
+          Gaza Arabia <span className="text-[var(--brand-primary)]">Admin</span>
+        </h2>
+      </div>
+
+      {/* Navigation */}
+      <nav className="mt-4 flex-1 flex flex-col gap-1 px-3">
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+                ${
+                  isActive
+                    ? "bg-[var(--brand-primary)] text-white shadow-[0_4px_12px_rgba(232,44,63,0.4)] scale-[1.02]"
+                    : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white hover:scale-[1.02]"
+                }`}
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      {/* <div className="p-4 border-t border-[var(--dark-gray)] flex items-center justify-between text-xs text-[var(--soft-gray)]">
+        <span>© {new Date().getFullYear()} Gaza Arabia</span>
+        <button
+          className="flex items-center gap-1 text-[var(--soft-gray)] hover:text-white transition"
+        >
+          <LogOut size={16} />
+          Logout
+        </button>
+      </div> */}
+    </aside>
+  );
+}

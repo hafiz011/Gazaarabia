@@ -125,7 +125,7 @@ export default function Header() {
                                 src={
                                     isHomePage && !isScrolled
                                         ? "/images/logo.png"
-                                        : "/images/logo-dark.png"
+                                       : "/images/logo-dark.png"
                                 }
                                 alt="Gaza Arabia"
                                 fill

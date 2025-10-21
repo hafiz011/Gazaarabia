@@ -1,0 +1,223 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =========================
+// ROLES & USERS
+// =========================
+model Roles {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  users Users[]
+
+  @@map("roles")
+}
+
+model Users {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  role      Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+// =========================
+// SIZES
+// =========================
+model Sizes {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("sizes")
+}
+
+// =========================
+// COLORS
+// =========================
+model Colors {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  hexCode     String
+  rgbCode     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("colors")
+}
+
+// =========================
+// CATEGORIES
+// =========================
+model Categories {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  subcategories Subcategory[]
+  products      Products[] // ✅ back relation added
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("categories")
+}
+
+// =========================
+// SUBCATEGORIES
+// =========================
+model Subcategory {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  categoryId Int
+  category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Products[] // ✅ back relation added
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@map("subcategories")
+}
+
+// =========================
+// MATERIAL CARE
+// =========================
+model MaterialCare {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  careType    String?
+  material    String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("material_care")
+}
+
+// =========================
+// BRAND
+// =========================
+model Brand {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  logo       String?
+  isTrending Boolean    @default(false)
+  products   Products[] // ✅ back relation added
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+// =========================
+// PRODUCTS
+// =========================
+model Products {
+  id               Int     @id @default(autoincrement())
+  title            String
+  shortDescription String?
+  description      String?
+  fitType          String?
+  careAdvice       String?
+  costPrice        Float
+  sellingPrice     Float
+  discountPrice    Float?
+  baseQty          Int
+  barcode          String?
+  active           Boolean @default(true)
+
+  brandId Int?
+  brand   Brand? @relation(fields: [brandId], references: [id])
+
+  categoryId Int?
+  category   Categories? @relation(fields: [categoryId], references: [id])
+
+  subcategoryId Int?
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
+
+  images   ProductImage[]
+  variants ProductVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =========================
+// PRODUCT IMAGES
+// =========================
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  alt       String?
+  colorId   Int?
+  primary   Boolean  @default(false)
+  productId Int
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+// =========================
+// PRODUCT VARIANTS
+// =========================
+model ProductVariant {
+  id       Int     @id @default(autoincrement())
+  sku      String
+  price    Float
+  stock    Int
+  isActive Boolean @default(true)
+
+  colorId Int?
+  sizeId  Int?
+
+  productId Int
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+model DeliveryOptions {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  minTime     Int
+  maxTime     Int
+  cutOffTime  String
+  cost        Float
+  freeOver    Float?
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("delivery_options")
+}
+
+model BlogCategories {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blogs Blogs[]
+
+  @@map("blog_categories")
+}
+
+model Blogs {
+  id          Int             @id @default(autoincrement())
+  title       String
+  slug        String          @unique
+  content     String
+  image       String?
+  categoryId  Int
+  category    BlogCategories  @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("blogs")
+}
+
