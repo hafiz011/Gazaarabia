@@ -13,6 +13,10 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
     string,
     { title: string; subtitle?: string; action?: { label: string; href?: string; modalKey?: string } }
   > = {
+    "/admin": {
+      title: "Dashboard",
+      subtitle: "Overview of your store content and modules.",
+    },
     "/admin/category-list": {
       title: "Categories",
       subtitle: "Manage the available categories for your product catalog.",

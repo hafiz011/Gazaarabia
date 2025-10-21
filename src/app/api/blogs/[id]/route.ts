@@ -7,15 +7,44 @@ interface Params {
   params: { id: string };
 }
 
+// export async function GET(req: Request, { params }: Params) {
+//   try {
+//     const blog = await prisma.blogs.findUnique({
+//       where: { id: Number(params.id) },
+//       include: { category: true },
+//     });
+//     if (!blog) return NextResponse.json({ error: "Not found" }, { status: 404 });
+//     return NextResponse.json(blog);
+//   } catch (err) {
+//     return NextResponse.json({ error: "Failed to fetch blog" }, { status: 500 });
+//   }
+// }
+
+
 export async function GET(req: Request, { params }: Params) {
   try {
-    const blog = await prisma.blogs.findUnique({
-      where: { id: Number(params.id) },
-      include: { category: true },
-    });
+    // ✅ check for slug in query params
+    const { searchParams } = new URL(req.url);
+    const slug = searchParams.get("slug");
+
+    let blog;
+
+    if (slug) {
+      blog = await prisma.blogs.findUnique({
+        where: { slug },
+        include: { category: true },
+      });
+    } else {
+      blog = await prisma.blogs.findUnique({
+        where: { id: Number(params.id) },
+        include: { category: true },
+      });
+    }
+
     if (!blog) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(blog);
   } catch (err) {
+    console.error("❌ Error fetching blog", err);
     return NextResponse.json({ error: "Failed to fetch blog" }, { status: 500 });
   }
 }

@@ -211,7 +211,7 @@ model Blogs {
   id          Int             @id @default(autoincrement())
   title       String
   slug        String          @unique
-  content     String
+  content     String          @db.LongText
   image       String?
   categoryId  Int
   category    BlogCategories  @relation(fields: [categoryId], references: [id])

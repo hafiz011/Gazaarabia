@@ -156,30 +156,32 @@ export default function BlogListPage() {
                   </td>
                 </tr>
               ) : paginatedBlogs.length > 0 ? (
-                paginatedBlogs.map((blog, idx) => (
+                paginatedBlogs.map((blog: any, idx) => (
                   <tr
                     key={blog.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
                     </td>
                     <td className="py-3 px-3 text-center">{blog.title}</td>
                     <td className="py-3 px-3 text-center">{blog.slug}</td>
-                    <td className="py-3 px-3 text-center">{blog.categoryId}</td>
-                    <td className="py-3 px-3 text-center">
-                      {blog.image ? (
-                        <img
-                          src={blog.image}
-                          alt={blog.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        "-"
-                      )}
+                    <td className="py-3 px-3 text-center">{blog.category?.name}</td>
+                    <td className="py-3 px-3">
+                      <div className="flex justify-center items-center h-full">
+                        {blog.image ? (
+                          <img
+                            src={blog.image}
+                            alt={blog.title}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
                     </td>
+
                     <td className="py-3 px-3 text-center">
                       {new Date(blog.createdAt).toLocaleDateString()}
                     </td>
@@ -223,7 +225,7 @@ export default function BlogListPage() {
         <MenuItem
           onClick={() => {
             // No edit functionality, just placeholder
-           router.push("/admin/blogs/form/"+selectedBlogId)
+            router.push("/admin/blogs/form/" + selectedBlogId)
           }}
         >
           <ListItemIcon>

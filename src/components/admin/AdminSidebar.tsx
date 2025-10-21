@@ -2,22 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Users,
+  Ruler,
+  Palette,
+  Layers,
+  Grid,
+  Droplets,
+  Tag,
+  Package,
+  Truck,
+  FileText,
+  BookOpen,
+  LogOut
+} from "lucide-react";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/sizes", label: "Sizes", icon: Users },
-  { href: "/admin/colors-list", label: "Colors", icon: Users },
-  { href: "/admin/category-list", label: "Categories", icon: Users },
-  { href: "/admin/subcategories", label: "Subcategories", icon: Users },
-  { href: "/admin/material-cares", label: "Material Cares", icon: Users },
-  { href: "/admin/brands", label: "Brands", icon: Users },
+  { href: "/admin/sizes", label: "Sizes", icon: Ruler },
+  { href: "/admin/colors-list", label: "Colors", icon: Palette },
+  { href: "/admin/category-list", label: "Categories", icon: Layers },
+  { href: "/admin/subcategories", label: "Subcategories", icon: Grid },
+  { href: "/admin/material-cares", label: "Material Cares", icon: Droplets },
+  { href: "/admin/brands", label: "Brands", icon: Tag },
   { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/delivery-options", label: "Delivery Options", icon: Package },
-  { href: "/admin/blog-categories", label: "Blog Categories", icon: Package },
-  { href: "/admin/blogs", label: "Blogs", icon: Package },
+  { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
+  { href: "/admin/blog-categories", label: "Blog Categories", icon: BookOpen },
+  { href: "/admin/blogs", label: "Blogs", icon: FileText },
 ];
 
 export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
@@ -36,13 +51,6 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
     >
       {/* Logo */}
       <div className="p-6 border-b border-[var(--dark-gray)] flex items-center gap-2">
-        {/* <Image
-          src="/images/logo.png"
-          alt="Logo"
-          width={36}
-          height={36}
-          className="rounded-md"
-        /> */}
         <h2 className="text-lg font-semibold tracking-wide text-white">
           Gaza Arabia <span className="text-[var(--brand-primary)]">Admin</span>
         </h2>
@@ -70,8 +78,8 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
         })}
       </nav>
 
-      {/* Footer */}
-      {/* <div className="p-4 border-t border-[var(--dark-gray)] flex items-center justify-between text-xs text-[var(--soft-gray)]">
+      {/* Footer (Optional) */}
+      <div className="p-4 border-t border-[var(--dark-gray)] flex items-center justify-between text-xs text-[var(--soft-gray)]">
         <span>© {new Date().getFullYear()} Gaza Arabia</span>
         <button
           className="flex items-center gap-1 text-[var(--soft-gray)] hover:text-white transition"
@@ -79,7 +87,7 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
           <LogOut size={16} />
           Logout
         </button>
-      </div> */}
+      </div>
     </aside>
   );
 }

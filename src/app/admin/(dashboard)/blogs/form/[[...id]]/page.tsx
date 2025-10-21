@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   Box,
   Button,
@@ -19,8 +19,10 @@ import { blogService } from "@/lib/services/blogService";
 import { blogCategoryService } from "@/lib/services/blogCategoryService";
 import type { Category } from "@/lib/services/categoryService";
 
-export default function AddBlogPage() {
+export default function AddOrEditBlogPage() {
   const router = useRouter();
+  const params = useParams();
+  const blogId = params?.id; // undefined when creating, defined when editing
 
   const [form, setForm] = useState({
     title: "",
@@ -35,25 +37,21 @@ export default function AddBlogPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
-  const [alert, setAlert] = useState<{
-    isOpen: boolean;
-    type: "success" | "error" | "";
-    message: string;
-  }>({ isOpen: false, type: "", message: "" });
+  const [alert, setAlert] = useState<{ isOpen: boolean; type: "success" | "error" | ""; message: string }>({
+    isOpen: false,
+    type: "",
+    message: "",
+  });
 
-  const [popup, setPopup] = useState<{
-    isOpen: boolean;
-    type: "success" | "error" | "warning" | "";
-    message: string;
-  }>({ isOpen: false, type: "", message: "" });
+  const [popup, setPopup] = useState<{ isOpen: boolean; type: "success" | "error" | "warning" | ""; message: string }>({
+    isOpen: false,
+    type: "",
+    message: "",
+  });
 
   const fieldStyle = {
-    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-      borderColor: "var(--brand-secondary)",
-    },
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: "var(--brand-secondary)",
-    },
+    "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "var(--brand-secondary)" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "var(--brand-secondary)" },
   };
 
   // 🧭 Fetch categories
@@ -73,15 +71,39 @@ export default function AddBlogPage() {
     fetchCategories();
   }, []);
 
+  // 🧾 Fetch blog if editing
+  useEffect(() => {
+    if (!blogId) return;
+    const fetchBlog = async () => {
+      try {
+        const data :any = await blogService.getById(Number(blogId));
+        setForm({
+          title: data.title,
+          slug: data.slug,
+          content: data.content,
+          image: data.image,
+          categoryId: String(data.categoryId),
+        });
+        setPreviewImage(data.image);
+      } catch (err: any) {
+        setAlert({
+          isOpen: true,
+          type: "error",
+          message: err.message || "Failed to load blog details.",
+        });
+      }
+    };
+    fetchBlog();
+  }, [blogId]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 📤 Trigger file input
   const handleUploadClick = () => fileInputRef.current?.click();
 
-  // 🖼️ Upload image and set preview
+  // 🖼️ Upload image
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -93,24 +115,17 @@ export default function AddBlogPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/upload?folder=blogs", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/upload?folder=blogs", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Failed to upload image");
 
       const data = await res.json();
       setForm((prev) => ({ ...prev, image: data.url }));
     } catch (err: any) {
-      setAlert({
-        isOpen: true,
-        type: "error",
-        message: err.message || "Image upload failed.",
-      });
+      setAlert({ isOpen: true, type: "error", message: err.message || "Image upload failed." });
     }
   };
 
+  // ✅ Submit (Add / Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -118,39 +133,43 @@ export default function AddBlogPage() {
       setPopup({ isOpen: true, type: "warning", message: "Please fill all required fields." });
       return;
     }
-
     if (!form.categoryId) {
-      setPopup({
-        isOpen: true,
-        type: "warning",
-        message: "Please select a category.",
-      });
+      setPopup({ isOpen: true, type: "warning", message: "Please select a category." });
       return;
     }
-
     if (!form.image) {
-      setPopup({
-        isOpen: true,
-        type: "warning",
-        message: "Please upload at least one image.",
-      });
+      setPopup({ isOpen: true, type: "warning", message: "Please upload at least one image." });
       return;
     }
 
     try {
       setLoading(true);
-      await blogService.create({
-        title: form.title,
-        slug: form.slug,
-        content: form.content,
-        image: form.image,
-        categoryId: Number(form.categoryId),
-      });
 
-      setAlert({ isOpen: true, type: "success", message: "Blog added successfully!" });
+      if (blogId) {
+        // ✏️ Update
+        await blogService.update(Number(blogId), {
+          title: form.title,
+          slug: form.slug,
+          content: form.content,
+          image: form.image,
+          categoryId: Number(form.categoryId),
+        });
+        setAlert({ isOpen: true, type: "success", message: "Blog updated successfully!" });
+      } else {
+        // 🆕 Create
+        await blogService.create({
+          title: form.title,
+          slug: form.slug,
+          content: form.content,
+          image: form.image,
+          categoryId: Number(form.categoryId),
+        });
+        setAlert({ isOpen: true, type: "success", message: "Blog added successfully!" });
+      }
+
       setTimeout(() => router.push("/admin/blogs"), 1200);
     } catch (err: any) {
-      setAlert({ isOpen: true, type: "error", message: err.message || "Failed to add blog." });
+      setAlert({ isOpen: true, type: "error", message: err.message || "Failed to save blog." });
     } finally {
       setLoading(false);
     }
@@ -170,12 +189,11 @@ export default function AddBlogPage() {
         <Box className="bg-white p-6 rounded-xl shadow border border-[var(--soft-gray)]">
           <div className="mb-6 border-b pb-4">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-              Add Blog
+              {blogId ? "Update Blog" : "Add Blog"}
             </h2>
           </div>
 
           <div className="space-y-4">
-            {/* 🏷️ Title */}
             <TextField
               label="Title"
               required
@@ -186,7 +204,6 @@ export default function AddBlogPage() {
               sx={fieldStyle}
             />
 
-            {/* 📝 Slug */}
             <TextField
               label="Slug"
               required
@@ -197,7 +214,6 @@ export default function AddBlogPage() {
               sx={fieldStyle}
             />
 
-            {/* 📝 Content */}
             <TextField
               label="Content"
               required
@@ -210,7 +226,6 @@ export default function AddBlogPage() {
               sx={fieldStyle}
             />
 
-            {/* 📂 Category Dropdown */}
             <FormControl fullWidth required sx={fieldStyle}>
               <InputLabel id="category-select-label">Category</InputLabel>
               <Select
@@ -231,7 +246,6 @@ export default function AddBlogPage() {
               </Select>
             </FormControl>
 
-            {/* 🖼️ Image Upload */}
             <Box>
               <Typography variant="body1" mb={1}>
                 Blog Image <span className="text-red-500">*</span>
@@ -242,7 +256,6 @@ export default function AddBlogPage() {
                   border: "2px dashed var(--mid-gray)",
                   borderRadius: "8px",
                   height: "200px",
-                  width: "100%",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -267,7 +280,6 @@ export default function AddBlogPage() {
               </div>
               <input
                 ref={fileInputRef}
-                id="blog-image-upload"
                 type="file"
                 accept="image/*"
                 hidden
@@ -275,7 +287,6 @@ export default function AddBlogPage() {
               />
             </Box>
 
-            {/* 🆗 Actions */}
             <div className="flex justify-end gap-3 pt-6 border-t mt-6">
               <Button
                 variant="outlined"
@@ -297,7 +308,7 @@ export default function AddBlogPage() {
                 type="submit"
                 disabled={loading}
               >
-                Add Blog
+                {blogId ? "Update Blog" : "Add Blog"}
               </Button>
             </div>
           </div>
