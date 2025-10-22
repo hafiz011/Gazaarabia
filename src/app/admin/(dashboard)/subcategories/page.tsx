@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Pencil, Trash2, X, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
@@ -34,17 +34,16 @@ export default function SubcategoryListPage() {
     onCancel: undefined,
   });
 
-  // 📥 Fetch subcategories & categories
+  // 📥 Fetch data
   useEffect(() => {
     fetchSubcategories();
     fetchCategories();
   }, []);
 
-  // 🔍 Fetch subcategories whenever search term changes
   useEffect(() => {
     const timeout = setTimeout(() => {
       fetchSubcategories(searchTerm);
-    }, 300); // debounce for better UX
+    }, 300);
     return () => clearTimeout(timeout);
   }, [searchTerm]);
 
@@ -95,11 +94,23 @@ export default function SubcategoryListPage() {
     }
   };
 
-  // 🧮 Pagination
-  const totalPages = Math.ceil(subcategories.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedSubcategories = subcategories.slice(startIndex, startIndex + pageSize);
+  // 🧮 Filter & Paginate
+  const filteredSubcategories = useMemo(() => {
+    return subcategories.filter(
+      (sub) =>
+        sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [subcategories, searchTerm]);
 
+  const totalPages = Math.ceil(filteredSubcategories.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedSubcategories = filteredSubcategories.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  // 📝 Add / Update Subcategory
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formCategoryId) return;
@@ -227,9 +238,7 @@ export default function SubcategoryListPage() {
                 paginatedSubcategories.map((sub, idx) => (
                   <tr
                     key={sub.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
@@ -272,17 +281,79 @@ export default function SubcategoryListPage() {
         </div>
 
         {/* ✅ Pagination */}
-        {!loading && subcategories.length > 0 && (
+        {!loading && filteredSubcategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={subcategories.length}
+            totalItems={filteredSubcategories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}
           />
         )}
       </div>
+
+      {/* 🪄 Modal for Add/Edit Subcategory */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-lg font-semibold mb-4">
+              {isEditing ? "Edit Subcategory" : "Add Subcategory"}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              {/* Subcategory Name */}
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Subcategory Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="e.g. Men's Wear"
+              />
+
+              {/* Category Select */}
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formCategoryId ?? ""}
+                onChange={(e) => setFormCategoryId(Number(e.target.value))}
+                className="w-full border rounded px-3 py-2 mb-4"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded border"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
+                >
+                  {isEditing ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ✅ Popup Alert */}
       <PopupAlert

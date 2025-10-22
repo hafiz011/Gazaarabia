@@ -5,102 +5,104 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
 import CategoryHeader from "@/components/CategoryHeader";
 import Pagination from "@/components/Pagination";
+import { shopService } from "@/lib/services/front-end/shopServices";
+import Loader from "@/components/Loader";
+import NoData from "@/components/NoData";  // 👈 import here
 
-export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = React.use(params);
+export default function CategoryPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    const router = useRouter();
-    const searchParams = useSearchParams();
+  const [products, setProducts] = useState<any[]>([]);
+  const [parentCategory, setParentCategory] = useState<any>(null);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1
+  );
 
-    // 🔢 Product data (example)
-    const products = [...Array(40)].map((_, i) => ({
-        id: i + 1,
-        title: `Product ${i + 1}`,
-        price: "£4,999",
-        label: "New IN",
-        images: ["/images/shop/img1-1.jpg", "/images/shop/img1-2.jpg", "/images/shop/img1-1.jpg"],
-        colors: ["#BFA6A0", "#FFFFFF", "#000000", "#E82C3F", "#009639"],
-    }));
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [loading, setLoading] = useState<boolean>(true);
 
-    // 📄 Pagination settings
-    const itemsPerPage = 8;
-    const totalPages = Math.ceil(products.length / itemsPerPage);
+  // 🛍️ Fetch products API
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data: any = await shopService.getShopData(slug, currentPage, 6);
+      setProducts(data.products);
+      setTotalPages(data.totalPages);
+      setParentCategory(data.parentCategory)
+      setSubcategories(data.subcategories || []);
+    } catch (error) {
+      console.error("❌ Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // ✅ Read current page from URL or default to 1
-    const pageFromUrl = Number(searchParams.get("page")) || 1;
-    const [currentPage, setCurrentPage] = useState(pageFromUrl);
+  // 🔄 Re-fetch on page or slug change
+  useEffect(() => {
+    fetchProducts();
+  }, [slug, currentPage, selectedCategory]);
 
-    // 👇 Whenever page changes, update the URL
-    useEffect(() => {
-        router.push(`?page=${currentPage}`, { scroll: false });
-    }, [currentPage, router]);
+  // 🧭 Sync current page with URL
+  useEffect(() => {
+    router.push(`?page=${currentPage}`, { scroll: false });
+  }, [currentPage, router]);
 
-    // 🧮 Paginated products
-    const paginatedProducts = products.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+  return (
+    <>
+      {loading && <Loader />}
 
-    return (
-        <section className="bg-[var(--background)] min-h-screen">
-            <CategoryHeader
-                title={slug.replace(/-/g, " ")}
-                description="Our coats and cover-ups epitomise sophistication and timeless elegance..."
-                categories={[
-                    "All", "Abayas", "Maxi Dresses", "Kimonos", "Kaftans", "Embroideries",
-                    "Prayer Outfits", "Slip Dresses", "Co-Ord Sets", "Coats & Cover Ups",
-                    "Girls Abayas", "Midis & Tops", "Trousers & Skirts", "Shirt Dresses",
-                    "Modest Swimwear", "Modest Activewear"
-                ]}
-            />
+      <section className="bg-[var(--background)] min-h-screen">
+        <CategoryHeader
+          selectedSlug={slug}
+          title={slug.replace(/-/g, " ")}
+          description="Our coats and cover-ups epitomise sophistication and timeless elegance..."
+          parentCategory = {parentCategory}
+          categories={subcategories}
+          onCategoryChange={(cat) => {
+            router.push(`/shop/${cat}`);
+          }}
+        />
 
-            {/* 🛍️ Product Grid */}
-            <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8">
-                {/* <div
-                    className="
-            grid
-            grid-cols-1
-            sm:grid-cols-2
-            md:grid-cols-2
-            lg:grid-cols-3
-            xl:grid-cols-4
-            gap-x-4 gap-y-8
-            justify-items-center
-          "
-                >
-                    {paginatedProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                </div> */}
+        <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8">
+          {/* ✅ Show NoData if products array is empty */}
+          {products.length === 0 && !loading ? (
+            <NoData message="No products found for this category." />
+          ) : (
+            <>
+              {/* Product Grid */}
+              <div
+                className="
+                  grid grid-cols-1
+                  sm:grid-cols-2
+                  md:grid-cols-2
+                  lg:grid-cols-2
+                  xl:grid-cols-3
+                  2xl:grid-cols-4
+                  gap-x-4 gap-y-14
+                  justify-items-center
+                "
+              >
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
 
-
-                <div
-                    className="
-    grid
-    grid-cols-1
-    sm:grid-cols-2
-    md:grid-cols-2
-    lg:grid-cols-2    
-    xl:grid-cols-3
-    2xl:grid-cols-4
-    gap-x-4 gap-y-14
-    justify-items-center
-  "
-                >
-                    {paginatedProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                </div>
-
-
-
-                {/* 📍 Pagination Component */}
+              {/* Pagination */}
+              {totalPages > 1 && (
                 <Pagination
-                    totalPages={totalPages}
-                    currentPage={currentPage}
-                    onPageChange={setCurrentPage}
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
                 />
-            </div>
-        </section>
-    );
+              )}
+            </>
+          )}
+        </div>
+      </section>
+    </>
+  );
 }

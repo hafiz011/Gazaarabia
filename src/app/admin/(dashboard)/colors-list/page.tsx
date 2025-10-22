@@ -144,7 +144,7 @@ export default function ColorListPage() {
                       {color.name}
                     </td>
                     <td className="py-3 px-5 text-gray-600">{color.hexCode}</td>
-                    <td className="py-3 px-5 text-gray-600">{color.description || "-"}</td>
+                    <td className="py-3 px-5 text-gray-600">{color.description || "N/A"}</td>
                     <td className="py-3 px-5 text-gray-600">
                       {new Date(color.createdAt).toLocaleDateString()}
                     </td>

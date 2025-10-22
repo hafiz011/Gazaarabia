@@ -1,79 +1,90 @@
 "use client";
 
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { TextField, MenuItem, Box, Button } from "@mui/material";
 import { Upload } from "lucide-react";
-import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
+import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
+import { brandService } from "@/lib/services/brandService";
 
-export default function AddBlogPage() {
+export default function BrandFormPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id?.[0]; // [[...id]] support
+  const isEditMode = Boolean(id);
 
-  // 📝 Form state
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    content: "",
-    categoryId: "" as number | string,
-    image: "",
+  // 📝 Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    logo: "",
+    isTrending: false,
   });
 
-  // 📸 Preview state
-  const [preview, setPreview] = useState("");
+  // 📸 Logo Preview
+  const [preview, setPreview] = useState<string>("");
 
-  // 📤 File input ref
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 📂 Category data
-  const [categories, setCategories] = useState<any[]>([]);
-
-  // ⚡ Loading states
+  // ⚡ Loading States
+  const [fetching, setFetching] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // ⚠️ Alert states
-  const [popupAlert, setPopupAlert] = useState<PopUpInterface>({
+  // 📤 File Input Ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ⚠️ Alerts
+  const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
+    isOpen: false,
+    type: "",
+    message: "",
+  });
+  const [alertMessageData, setAlertMessageData] = useState<AlertInterface>({
     isOpen: false,
     type: "",
     message: "",
   });
 
-  const [alertMessage, setAlertMessage] = useState<AlertInterface>({
-    isOpen: false,
-    type: "",
-    message: "",
-  });
-
-  const fieldStyle = {
-    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-      borderColor: "var(--brand-secondary)",
-    },
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: "var(--brand-secondary)",
-    },
-  };
-
-  // 📥 Fetch categories
+  // 🧭 Fetch brand data if editing
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (isEditMode) fetchBrandData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-  const fetchCategories = async () => {
+  const fetchBrandData = async () => {
     try {
-      const res = await fetch("/api/blog-categories");
-      const data = await res.json();
-      setCategories(data);
-    } catch (error) {
-      setAlertMessage({
+      setFetching(true);
+      const res = await brandService.getById(Number(id));
+
+      // Handle both raw and nested API formats
+      const data = res?.data ?? res;
+
+      setFormData({
+        name: data.name || "",
+        logo: data.logo || "",
+        isTrending: Boolean(data.isTrending),
+      });
+
+      if (data.logo) {
+        setPreview(data.logo);
+      }
+    } catch (error: any) {
+      setAlertMessageData({
         isOpen: true,
         type: "error",
-        message: "Failed to load categories.",
+        message: error.message || "Failed to load brand details.",
       });
+    } finally {
+      setFetching(false);
     }
   };
 
-  // 🖼️ Upload
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
   const handleUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,80 +95,66 @@ export default function AddBlogPage() {
     setPreview(previewUrl);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const form = new FormData();
+      form.append("file", file);
 
-      const res = await fetch("/api/upload?folder=blogs", {
+      const res = await fetch("/api/upload?folder=brands", {
         method: "POST",
-        body: formData,
+        body: form,
       });
 
-      if (!res.ok) throw new Error("Failed to upload image");
+      if (!res.ok) throw new Error("Failed to upload logo");
       const data = await res.json();
-
-      setForm((prev) => ({ ...prev, image: data.url }));
+      setFormData((prev) => ({ ...prev, logo: data.url }));
     } catch (err: any) {
-      setAlertMessage({
+      setAlertMessageData({
         isOpen: true,
         type: "error",
-        message: err.message || "Image upload failed.",
+        message: err.message || "Logo upload failed.",
       });
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "categoryId" ? Number(value) : value,
-    }));
-  };
-
-  // 📝 Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title.trim() || !form.content.trim() || !form.categoryId) {
-      setPopupAlert({
+    if (!formData.name.trim()) {
+      setPopUpAlertData({
         isOpen: true,
         type: "warning",
-        message: "Please fill all required fields.",
-        onConfirm: () => setPopupAlert((prev) => ({ ...prev, isOpen: false })),
+        message: "Brand name is required.",
+        onConfirm: () =>
+          setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
       return;
     }
 
     try {
       setSubmitting(true);
-      const res = await fetch("/api/blogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      setAlertMessageData({ isOpen: false, type: "", message: "" });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setAlertMessage({
+      if (isEditMode) {
+        await brandService.update(Number(id), formData);
+        setAlertMessageData({
           isOpen: true,
-          type: "error",
-          message: data.error || "Failed to create blog.",
+          type: "success",
+          message: "Brand updated successfully!",
         });
-        setSubmitting(false);
-        return;
+      } else {
+        await brandService.create(formData);
+        setAlertMessageData({
+          isOpen: true,
+          type: "success",
+          message: "Brand added successfully!",
+        });
       }
 
-      setAlertMessage({
-        isOpen: true,
-        type: "success",
-        message: "Blog added successfully!",
-      });
-
-      setTimeout(() => router.push("/admin/blogs"), 1000);
+      setTimeout(() => router.push("/admin/brands"), 1000);
     } catch (err: any) {
-      setAlertMessage({
+      setAlertMessageData({
         isOpen: true,
         type: "error",
-        message: err.message || "Failed to save blog.",
+        message: err.message || "Failed to save brand.",
       });
     } finally {
       setSubmitting(false);
@@ -165,138 +162,125 @@ export default function AddBlogPage() {
   };
 
   return (
-    <Box className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-4xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 p-8">
-        <h1 className="text-2xl font-semibold mb-6">Add New Blog</h1>
+        <h1 className="text-2xl font-semibold mb-6">
+          {isEditMode ? "Edit Brand" : "Add Brand"}
+        </h1>
 
         {/* ✅ Alert Message */}
-        {alertMessage.isOpen && alertMessage.type && (
+        {alertMessageData.isOpen && alertMessageData.type && (
           <AlertMessage
-            type={alertMessage.type}
-            message={alertMessage.message}
+            type={alertMessageData.type}
+            message={alertMessageData.message}
             onClose={() =>
-              setAlertMessage((prev) => ({ ...prev, isOpen: false }))
+              setAlertMessageData((prev) => ({ ...prev, isOpen: false }))
             }
           />
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <TextField
-            required
-            label="Title"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            fullWidth
-            sx={fieldStyle}
-          />
+        {fetching && isEditMode && !formData.name ? (
+          <p>Loading...</p>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {/* Brand Name */}
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Brand Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
+              placeholder="e.g. Nike"
+              required
+            />
 
-          <TextField
-            label="Slug (optional)"
-            name="slug"
-            value={form.slug}
-            onChange={handleChange}
-            fullWidth
-            sx={fieldStyle}
-            helperText="Leave empty to auto-generate from title"
-          />
-
-          <TextField
-            required
-            label="Category"
-            name="categoryId"
-            select
-            value={form.categoryId}
-            onChange={handleChange}
-            fullWidth
-            sx={fieldStyle}
-          >
-            {categories.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            required
-            label="Content"
-            name="content"
-            value={form.content}
-            onChange={handleChange}
-            fullWidth
-            multiline
-            rows={6}
-            sx={fieldStyle}
-          />
-
-          {/* 🖼️ Image Upload (same design as BrandFormPage) */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700">Image</label>
+            {/* Logo Upload */}
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Brand Logo (optional)
+            </label>
             <div
               onClick={handleUploadClick}
-              className="border-2 border-dashed rounded-md py-6 flex flex-col items-center justify-center cursor-pointer hover:border-[var(--brand-primary)]"
+              className="w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[var(--brand-primary)] transition mb-4"
             >
-              {preview || form.image ? (
+              {preview ? (
                 <img
-                  src={preview || form.image}
-                  alt="Preview"
-                  className="h-32 object-contain"
+                  src={preview}
+                  alt="Logo Preview"
+                  className="h-full w-full object-contain p-2"
                 />
               ) : (
-                <Upload className="text-gray-400" size={28} />
+                <>
+                  <Upload className="text-gray-400 mb-2" size={28} />
+                  <p className="text-sm text-gray-500 text-center">
+                    Click to upload
+                  </p>
+                </>
               )}
-              <p className="text-sm text-gray-500 mt-2">
-                Click to upload or drop an image
-              </p>
             </div>
             <input
-              ref={fileInputRef}
               type="file"
+              ref={fileInputRef}
               accept="image/*"
-              className="hidden"
               onChange={handleFileChange}
+              className="hidden"
             />
-          </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outlined"
-              onClick={() => router.push("/admin/blogs")}
-              sx={{
-                color: "var(--text-primary)",
-                borderColor: "var(--mid-gray)",
-                "&:hover": { borderColor: "var(--text-primary)" },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              sx={{
-                background: "var(--brand-primary)",
-                "&:hover": { background: "#c32230" },
-              }}
-              type="submit"
-              disabled={submitting}
-            >
-              {submitting ? "Saving..." : "Add Blog"}
-            </Button>
-          </div>
-        </form>
+            {/* Trending Checkbox */}
+            <div className="mb-6 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isTrending"
+                name="isTrending"
+                checked={formData.isTrending}
+                onChange={handleChange}
+              />
+              <label htmlFor="isTrending" className="text-sm text-gray-700">
+                Mark as Trending
+              </label>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/admin/brands")}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 rounded bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)] transition flex items-center gap-2"
+              >
+                {submitting && (
+                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                )}
+                {submitting
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Saving..."
+                  : isEditMode
+                  ? "Update"
+                  : "Add"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* 🆕 Popup Alert */}
         <PopupAlert
-          type={popupAlert.type as any}
-          message={popupAlert.message}
-          confirmText={popupAlert.type === "confirm" ? "Yes" : "OK"}
-          cancelText={popupAlert.type === "confirm" ? "Cancel" : undefined}
-          onConfirm={popupAlert.onConfirm}
-          onCancel={popupAlert.onCancel}
-          show={popupAlert.isOpen}
+          type={popUpAlertData.type as any}
+          message={popUpAlertData.message}
+          confirmText={popUpAlertData.type === "confirm" ? "Yes" : "OK"}
+          cancelText={popUpAlertData.type === "confirm" ? "Cancel" : undefined}
+          onConfirm={popUpAlertData.onConfirm}
+          onCancel={popUpAlertData.onCancel}
+          show={popUpAlertData.isOpen}
         />
       </div>
-    </Box>
+    </div>
   );
 }

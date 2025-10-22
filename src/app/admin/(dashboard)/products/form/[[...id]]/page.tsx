@@ -15,6 +15,7 @@ import { subcategoryService } from "@/lib/services/subcategoryService";
 import { colorService } from "@/lib/services/colorService";
 import { sizeService } from "@/lib/services/sizeService";
 import { uploadService } from "@/lib/services/uploadService";
+import { materialCareService } from "@/lib/services/materialCareService";
 
 import { TextField, MenuItem, Box, Button } from "@mui/material";
 
@@ -49,6 +50,7 @@ function ProductFormContent() {
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
+  const [careAdvices, setCareAdvices] = useState<any[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -76,12 +78,20 @@ function ProductFormContent() {
 
   const fetchDropdownData = async () => {
     try {
-      const [brandsData, categoriesData, subcatData, colorsData, sizesData]: any = await Promise.all([
+      const [
+        brandsData,
+        categoriesData,
+        subcatData,
+        colorsData,
+        sizesData,
+        careData,
+      ]: any = await Promise.all([
         brandService.getAll(),
         categoryService.getAll(),
         subcategoryService.getAll(),
         colorService.getAll(),
         sizeService.getAll(),
+        materialCareService.getAll(), // 👈 fetch care advices
       ]);
 
       setBrands(brandsData.data ?? brandsData);
@@ -89,6 +99,7 @@ function ProductFormContent() {
       setSubcategories(subcatData.data ?? subcatData);
       setColors(colorsData.data ?? colorsData);
       setSizes(sizesData.data ?? sizesData);
+      setCareAdvices(careData.data ?? careData);
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -157,11 +168,16 @@ function ProductFormContent() {
   };
 
   const handleVariantAdd = () => {
-    setVariants((prev) => [...prev, { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true }]);
+    setVariants((prev) => [
+      ...prev,
+      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true },
+    ]);
   };
 
   const handleVariantChange = (idx: number, field: string, value: any) => {
-    setVariants((prev) => prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v)));
+    setVariants((prev) =>
+      prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v))
+    );
   };
 
   const handleVariantRemove = (idx: number) => {
@@ -170,7 +186,8 @@ function ProductFormContent() {
 
   const validateVariants = () => {
     for (const v of variants) {
-      if (!v.colorId || !v.sizeId || !v.sku.trim() || !v.price || !v.stock) return false;
+      if (!v.colorId || !v.sizeId || !v.sku.trim() || !v.price || !v.stock)
+        return false;
     }
     return true;
   };
@@ -191,7 +208,8 @@ function ProductFormContent() {
       setPopup({
         isOpen: true,
         type: "warning",
-        message: "Please fill all required fields in variants (Color, Size, SKU, Price, Stock).",
+        message:
+          "Please fill all required fields in variants (Color, Size, SKU, Price, Stock).",
       });
       return;
     }
@@ -236,7 +254,9 @@ function ProductFormContent() {
 
   return (
     <Box className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">{isEditMode ? "Update Product" : "Add Product"}</h1>
+      <h1 className="text-2xl font-semibold mb-6">
+        {isEditMode ? "Update Product" : "Add Product"}
+      </h1>
 
       {alertMessage.isOpen && alertMessage.type && (
         <AlertMessage
@@ -249,7 +269,18 @@ function ProductFormContent() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 🧾 Basic Info */}
         <Box className="bg-white p-6 rounded-xl shadow space-y-4">
-          <TextField id="brand" autoComplete="off" label={<RequiredLabel text="Brand" />} select name="brandId" value={form.brandId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+          <TextField
+            id="brand"
+            autoComplete="off"
+            label={<RequiredLabel text="Brand" />}
+            select
+            name="brandId"
+            value={form.brandId}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          >
             {brands.map((b) => (
               <MenuItem key={b.id} value={b.id}>
                 {b.name}
@@ -257,7 +288,18 @@ function ProductFormContent() {
             ))}
           </TextField>
 
-          <TextField id="category" autoComplete="off" label={<RequiredLabel text="Category" />} select name="categoryId" value={form.categoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+          <TextField
+            id="category"
+            autoComplete="off"
+            label={<RequiredLabel text="Category" />}
+            select
+            name="categoryId"
+            value={form.categoryId}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          >
             {categories.map((c) => (
               <MenuItem key={c.id} value={c.id}>
                 {c.name}
@@ -265,7 +307,18 @@ function ProductFormContent() {
             ))}
           </TextField>
 
-          <TextField id="subcategory" autoComplete="off" label={<RequiredLabel text="Subcategory" />} select name="subcategoryId" value={form.subcategoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+          <TextField
+            id="subcategory"
+            autoComplete="off"
+            label={<RequiredLabel text="Subcategory" />}
+            select
+            name="subcategoryId"
+            value={form.subcategoryId}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          >
             {subcategories.map((s) => (
               <MenuItem key={s.id} value={s.id}>
                 {s.name}
@@ -273,22 +326,136 @@ function ProductFormContent() {
             ))}
           </TextField>
 
-          <TextField id="title" autoComplete="off" label={<RequiredLabel text="Title" />} name="title" value={form.title} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField id="shortDesc" autoComplete="off" label={<RequiredLabel text="Short Description" />} name="shortDescription" value={form.shortDescription} onChange={handleInputChange} inputProps={{ required: true }} fullWidth multiline rows={2} sx={fieldStyle} />
-          <TextField id="desc" autoComplete="off" label={<RequiredLabel text="Description" />} name="description" value={form.description} onChange={handleInputChange} inputProps={{ required: true }} fullWidth multiline rows={3} sx={fieldStyle} />
-          <TextField id="care" autoComplete="off" label={<RequiredLabel text="Care Advice" />} name="careAdvice" value={form.careAdvice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth multiline rows={2} sx={fieldStyle} />
+          <TextField
+            id="title"
+            autoComplete="off"
+            label={<RequiredLabel text="Title" />}
+            name="title"
+            value={form.title}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+
+          <TextField
+            id="shortDesc"
+            autoComplete="off"
+            label={<RequiredLabel text="Short Description" />}
+            name="shortDescription"
+            value={form.shortDescription}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            multiline
+            rows={2}
+            sx={fieldStyle}
+          />
+
+          <TextField
+            id="desc"
+            autoComplete="off"
+            label={<RequiredLabel text="Description" />}
+            name="description"
+            value={form.description}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            multiline
+            rows={3}
+            sx={fieldStyle}
+          />
+
+          {/* ✅ Care Advice Dropdown */}
+          <TextField
+            id="careAdvice"
+            select
+            label={<RequiredLabel text="Care Advice" />}
+            name="careAdvice"
+            value={form.careAdvice}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          >
+            {careAdvices.map((care) => (
+              <MenuItem key={care.id} value={care.title}>
+                {care.title} ({care.material})
+              </MenuItem>
+            ))}
+          </TextField>
         </Box>
 
         {/* 💰 Pricing */}
         <Box className="bg-white p-6 rounded-xl shadow space-y-4">
-          <TextField id="costPrice" autoComplete="off" label={<RequiredLabel text="Cost Price" />} name="costPrice" type="number" value={form.costPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField id="sellingPrice" autoComplete="off" label={<RequiredLabel text="Selling Price" />} name="sellingPrice" type="number" value={form.sellingPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField id="discountPrice" autoComplete="off" label={<RequiredLabel text="Discount Price" />} name="discountPrice" type="number" value={form.discountPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField id="baseQty" autoComplete="off" label={<RequiredLabel text="Base Qty" />} name="baseQty" type="number" value={form.baseQty} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField id="barcode" autoComplete="off" label={<RequiredLabel text="Barcode" />} name="barcode" value={form.barcode} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
+          <TextField
+            id="costPrice"
+            autoComplete="off"
+            label={<RequiredLabel text="Cost Price" />}
+            name="costPrice"
+            type="number"
+            value={form.costPrice}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+          <TextField
+            id="sellingPrice"
+            autoComplete="off"
+            label={<RequiredLabel text="Selling Price" />}
+            name="sellingPrice"
+            type="number"
+            value={form.sellingPrice}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+          <TextField
+            id="discountPrice"
+            autoComplete="off"
+            label={<RequiredLabel text="Discount Price" />}
+            name="discountPrice"
+            type="number"
+            value={form.discountPrice}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+          <TextField
+            id="baseQty"
+            autoComplete="off"
+            label={<RequiredLabel text="Base Qty" />}
+            name="baseQty"
+            type="number"
+            value={form.baseQty}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+          <TextField
+            id="barcode"
+            autoComplete="off"
+            label={<RequiredLabel text="Barcode" />}
+            name="barcode"
+            value={form.barcode}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
 
           <div className="flex items-center gap-2 pt-2">
-            <input type="checkbox" name="active" checked={form.active} onChange={handleInputChange} className="w-4 h-4 accent-[var(--brand-secondary)] cursor-pointer" />
+            <input
+              type="checkbox"
+              name="active"
+              checked={form.active}
+              onChange={handleInputChange}
+              className="w-4 h-4 accent-[var(--brand-secondary)] cursor-pointer"
+            />
             <label htmlFor="active" className="text-gray-700 font-medium cursor-pointer">
               Active
             </label>
@@ -303,16 +470,33 @@ function ProductFormContent() {
           <div className="flex flex-wrap gap-4">
             {images.map((img, idx) => (
               <div key={idx} className="relative group">
-                <img src={img.url} alt="" className="w-24 h-24 object-cover rounded border" />
-                <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
+                <img
+                  src={img.url}
+                  alt=""
+                  className="w-24 h-24 object-cover rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            <div onClick={() => fileInputRef.current?.click()} className="w-24 h-24 border-2 border-dashed flex items-center justify-center cursor-pointer rounded text-gray-400 hover:text-black transition">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-24 h-24 border-2 border-dashed flex items-center justify-center cursor-pointer rounded text-gray-400 hover:text-black transition"
+            >
               <Upload size={24} />
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
           </div>
         </Box>
 
@@ -320,14 +504,29 @@ function ProductFormContent() {
         <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Variants (Color × Size)</h2>
-            <Button variant="contained" sx={{ background: "var(--brand-secondary)" }} onClick={handleVariantAdd}>
+            <Button
+              variant="contained"
+              sx={{ background: "var(--brand-secondary)" }}
+              onClick={handleVariantAdd}
+            >
               <Plus size={16} style={{ marginRight: 4 }} /> Add Variant
             </Button>
           </div>
 
           {variants.map((v, idx) => (
             <div key={idx} className="grid grid-cols-8 gap-2 items-center">
-              <TextField autoComplete="off" label={<RequiredLabel text="Color" />} select value={v.colorId} onChange={(e) => handleVariantChange(idx, "colorId", e.target.value)} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+              <TextField
+                autoComplete="off"
+                label={<RequiredLabel text="Color" />}
+                select
+                value={v.colorId}
+                onChange={(e) =>
+                  handleVariantChange(idx, "colorId", e.target.value)
+                }
+                inputProps={{ required: true }}
+                fullWidth
+                sx={fieldStyle}
+              >
                 {colors.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
                     {c.name}
@@ -335,7 +534,18 @@ function ProductFormContent() {
                 ))}
               </TextField>
 
-              <TextField autoComplete="off" label={<RequiredLabel text="Size" />} select value={v.sizeId} onChange={(e) => handleVariantChange(idx, "sizeId", e.target.value)} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+              <TextField
+                autoComplete="off"
+                label={<RequiredLabel text="Size" />}
+                select
+                value={v.sizeId}
+                onChange={(e) =>
+                  handleVariantChange(idx, "sizeId", e.target.value)
+                }
+                inputProps={{ required: true }}
+                fullWidth
+                sx={fieldStyle}
+              >
                 {sizes.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
                     {s.name}
@@ -343,16 +553,55 @@ function ProductFormContent() {
                 ))}
               </TextField>
 
-              <TextField autoComplete="off" label={<RequiredLabel text="SKU" />} value={v.sku} onChange={(e) => handleVariantChange(idx, "sku", e.target.value)} inputProps={{ required: true }} sx={fieldStyle} />
-              <TextField autoComplete="off" label={<RequiredLabel text="Price" />} type="number" value={v.price} onChange={(e) => handleVariantChange(idx, "price", e.target.value)} inputProps={{ required: true }} sx={fieldStyle} />
-              <TextField autoComplete="off" label={<RequiredLabel text="Stock" />} type="number" value={v.stock} onChange={(e) => handleVariantChange(idx, "stock", e.target.value)} inputProps={{ required: true }} sx={fieldStyle} />
+              <TextField
+                autoComplete="off"
+                label={<RequiredLabel text="SKU" />}
+                value={v.sku}
+                onChange={(e) => handleVariantChange(idx, "sku", e.target.value)}
+                inputProps={{ required: true }}
+                sx={fieldStyle}
+              />
+
+              <TextField
+                autoComplete="off"
+                label={<RequiredLabel text="Price" />}
+                type="number"
+                value={v.price}
+                onChange={(e) =>
+                  handleVariantChange(idx, "price", e.target.value)
+                }
+                inputProps={{ required: true }}
+                sx={fieldStyle}
+              />
+
+              <TextField
+                autoComplete="off"
+                label={<RequiredLabel text="Stock" />}
+                type="number"
+                value={v.stock}
+                onChange={(e) =>
+                  handleVariantChange(idx, "stock", e.target.value)
+                }
+                inputProps={{ required: true }}
+                sx={fieldStyle}
+              />
 
               <label className="flex justify-center items-center gap-1 col-span-1">
-                <input type="checkbox" checked={v.isActive} onChange={(e) => handleVariantChange(idx, "isActive", e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={v.isActive}
+                  onChange={(e) =>
+                    handleVariantChange(idx, "isActive", e.target.checked)
+                  }
+                />
                 Active
               </label>
 
-              <button type="button" onClick={() => handleVariantRemove(idx)} className="text-red-500 hover:text-red-700 transition flex justify-center col-span-1">
+              <button
+                type="button"
+                onClick={() => handleVariantRemove(idx)}
+                className="text-red-500 hover:text-red-700 transition flex justify-center col-span-1"
+              >
                 <Trash2 size={16} />
               </button>
             </div>
@@ -364,13 +613,24 @@ function ProductFormContent() {
           <Button variant="outlined" onClick={() => router.push("/admin/products")}>
             Cancel
           </Button>
-          <Button variant="contained" sx={{ background: "var(--brand-secondary)" }} type="submit" disabled={submitting}>
+          <Button
+            variant="contained"
+            sx={{ background: "var(--brand-secondary)" }}
+            type="submit"
+            disabled={submitting}
+          >
             {submitting ? "Saving..." : isEditMode ? "Update Product" : "Add Product"}
           </Button>
         </Box>
       </form>
 
-      <PopupAlert type={popup.type as any} message={popup.message} confirmText={"OK"} onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))} show={popup.isOpen} />
+      <PopupAlert
+        type={popup.type as any}
+        message={popup.message}
+        confirmText={"OK"}
+        onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))}
+        show={popup.isOpen}
+      />
     </Box>
   );
 }
