@@ -24,6 +24,8 @@ model Users {
   createdAt DateTime @default(now())
   role      Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
+  addresses Address[]
+
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
 }
@@ -207,4 +209,26 @@ model productvariant {
 
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
+}
+
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  firstName   String
+  lastName    String?
+  company     String?
+  address1    String
+  address2    String?
+  city        String
+  country     String
+  postalCode  String
+  phone       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 🔑 Relation to Users
+  userId Int
+  user   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
 }

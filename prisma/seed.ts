@@ -1,35 +1,43 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma :any= new PrismaClient();
+const prisma = new PrismaClient();
 
 async function main() {
+  // 🛡️ Create or update roles
   const adminRole = await prisma.roles.upsert({
     where: { name: "admin" },
     update: {},
     create: { name: "admin" },
   });
 
-  const userRole = await prisma.roles.upsert({
-    where: { name: "user" },
+  await prisma.roles.upsert({
+    where: { name: "customer" },
     update: {},
-    create: { name: "user" },
+    create: { name: "customer" },
   });
 
-  const hashedPassword = await bcrypt.hash("admin123", 10);
-
+  // 🔑 Create only the admin user
+  const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.users.upsert({
     where: { email: "admin@example.com" },
     update: {},
     create: {
       name: "Super Admin",
       email: "admin@example.com",
-      password: hashedPassword,
+      password: adminPassword,
       roleId: adminRole.id,
     },
   });
 
-  console.log("✅ Seeding completed");
+  console.log("Seeding completed: Roles (admin, customer) + Admin user created");
 }
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

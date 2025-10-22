@@ -1,70 +1,95 @@
-// import NextAuth from "next-auth";
-// import CredentialsProvider from "next-auth/providers/credentials";
-// import { prisma } from "@/lib/prisma";
-// import bcrypt from "bcryptjs";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { authService } from "@/lib/services/authService";
 
-// const handler = NextAuth({
-//   secret: process.env.NEXTAUTH_SECRET,
-//   session: { strategy: "jwt" },
-//   providers: [
-//     CredentialsProvider({
-//       name: "Credentials",
-//       credentials: {
-//         email: { label: "Email", type: "email" },
-//         password: { label: "Password", type: "password" },
-//       },
-//       async authorize(credentials) {
-//         if (!credentials?.email || !credentials?.password) {
-//           throw new Error("Email and password are required");
-//         }
+const authOptions :any = {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email and password are required");
+          }
 
-//         const user = await prisma.users.findUnique({
-//           where: { email: credentials.email },
-//           include: {
-//             role: true, // include role info if needed
-//           },
-//         });
+          // 🔐 Call your custom login API
+          const res = await authService.login({
+            email: credentials.email,
+            password: credentials.password,
+          });
 
-//         if (!user) {
-//           throw new Error("Invalid email or password");
-//         }
+          // ✅ Check response structure
+          if (res && res.token && res.user) {
+            return {
+              id: res.user.id.toString(),
+              name: res.user.name,
+              email: res.user.email,
+              token: res.token,
+              role: res.user.roleName, // or res.user.role if you have a string role
+              user_id: res.user.id,
+            };
+          }
 
-//         const validPassword = await bcrypt.compare(
-//           credentials.password,
-//           user.password
-//         );
+          // ❌ If invalid credentials
+          return null;
+        } catch (error: any) {
+          console.error("Authorization error:", error);
+          throw new Error(error.message || "Login failed");
+        }
+      },
+    }),
+  ],
 
-//         if (!validPassword) {
-//           throw new Error("Invalid email or password");
-//         }
+  pages: {
+    signIn: "/account/login", // ✅ use your login page route
+  },
 
-//         // You can restrict admin login here if needed
-//         if (user.role.name !== "ADMIN") {
-//           throw new Error("Access denied. Not an admin user.");
-//         }
+  session: {
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 1 day
+  },
 
-//         return {
-//           id: user.id,
-//           name: user.name,
-//           email: user.email,
-//           role: user.role.name,
-//         };
-//       },
-//     }),
-//   ],
-//   pages: {
-//     signIn: "/admin/login",
-//   },
-//   callbacks: {
-//     async jwt({ token, user }) {
-//       if (user) token.user = user;
-//       return token;
-//     },
-//     async session({ session, token }) {
-//       session.user = token.user as any;
-//       return session;
-//     },
-//   },
-// });
+  callbacks: {
+    async jwt({ token, user }:any) {
+      // Attach user info to token after login
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.token = user.token;
+        token.role = user.role;
+        token.user_id = user.user_id;
+      }
+      return token;
+    },
 
-// export { handler as GET, handler as POST };
+    async session({ session, token }:any) {
+      // Attach token info to session.user
+      session.user = {
+        id: token.id,
+        name: token.name,
+        email: token.email,
+        token: token.token,
+        role: token.role,
+        user_id: token.user_id,
+      };
+      return session;
+    },
+
+    async redirect({ url, baseUrl }:any) {
+      // 🚀 Smart redirect after login
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
+  },
+
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
