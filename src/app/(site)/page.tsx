@@ -133,13 +133,9 @@ export default function Home() {
   };
 
   return (
-    // <main className="min-h-screen w-full">
-    <main className="min-h-screen w-full relative overflow-visible">
-
+    <main className="min-h-screen w-full">
       {/* ========================= Hero Slider ========================= */}
-      {/* <section className="relative w-full h-[100vh] overflow-hidden"> */}
-      <section className="relative w-full h-[100vh] overflow-hidden z-0">
-
+      <section className="relative w-full h-[100vh] overflow-hidden">
         {videoSources.map((src, index) => (
           <video
             key={index}

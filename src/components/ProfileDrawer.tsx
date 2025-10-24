@@ -70,35 +70,20 @@ export default function ProfileDrawer({ isOpen, onClose }: Props) {
     <>
       {/* Overlay */}
       {isOpen && (
-        // <div
-        //   className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 animate-fadeIn"
-        //   onClick={onClose}
-        // />
         <div
-  className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[9998] animate-fadeIn"
-  onClick={onClose}
-/>
-
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 animate-fadeIn"
+          onClick={onClose}
+        />
       )}
 
       {/* Drawer */}
-      {/* <div
+      <div
         ref={drawerRef}
         style={{ width: drawerWidth, maxWidth: "360px" }}
         className={`fixed top-0 right-0 h-full bg-[var(--background)] shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         } flex flex-col`}
-      > */}
-
-<div
-  ref={drawerRef}
-  style={{ width: drawerWidth, maxWidth: "360px" }}
-  className={`fixed top-0 right-0 h-full bg-[var(--background)] shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out ${
-    isOpen ? "translate-x-0" : "translate-x-full"
-  } flex flex-col`}
->
-
-
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--soft-gray)]">
           <h3 className="text-lg font-semibold tracking-wide uppercase text-[var(--text-primary)]">
