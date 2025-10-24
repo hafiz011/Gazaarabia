@@ -1,23 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma:any = new PrismaClient();
+const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
 /**
  * @route GET /api/delivery-options/:id
  * @desc Get delivery option by ID
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
-    if (!id) {
+    const { id } = await context.params;
+    const optionId = Number(id);
+
+    if (!optionId) {
       return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
     }
 
-    const option = await prisma.deliveryOptions.findUnique({ where: { id } });
+    const option = await prisma.deliveryOptions.findUnique({
+      where: { id: optionId },
+    });
+
     if (!option) {
       return NextResponse.json({ message: "Not found" }, { status: 404 });
     }
@@ -36,12 +39,10 @@ export async function GET(
  * @route PUT /api/delivery-options/:id
  * @desc Update delivery option by ID
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
+    const optionId = Number(id);
     const body = await req.json();
     const { name, description, minTime, maxTime, cutOffTime, cost, freeOver, status } = body;
 
@@ -53,7 +54,7 @@ export async function PUT(
     }
 
     const updated = await prisma.deliveryOptions.update({
-      where: { id },
+      where: { id: optionId },
       data: {
         name,
         description,
@@ -83,17 +84,16 @@ export async function PUT(
  * @route DELETE /api/delivery-options/:id
  * @desc Delete delivery option by ID
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
-    if (!id) {
+    const { id } = await context.params;
+    const optionId = Number(id);
+
+    if (!optionId) {
       return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
     }
 
-    await prisma.deliveryOptions.delete({ where: { id } });
+    await prisma.deliveryOptions.delete({ where: { id: optionId } });
 
     return NextResponse.json({
       message: "Delivery option deleted successfully",

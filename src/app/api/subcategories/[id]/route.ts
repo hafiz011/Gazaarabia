@@ -1,13 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma :any= new PrismaClient();
+const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ Get subcategory by ID
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+// ✅ GET Subcategory by ID
+export async function GET(_req: NextRequest, context: RouteContext) {
   try {
+    const { id } = await context.params;
+    const subcategoryId = Number(id);
+
+    if (!subcategoryId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
     const subcategory = await prisma.subcategory.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: subcategoryId },
       include: { category: true },
     });
 
@@ -18,9 +29,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       );
     }
 
-    return NextResponse.json(subcategory);
+    return NextResponse.json({ success: true, data: subcategory });
   } catch (error) {
-    console.error("GET Subcategory Error:", error);
+    console.error("❌ GET Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch subcategory." },
       { status: 500 }
@@ -28,9 +39,19 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-// ✅ Update subcategory
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// ✅ PUT - Update Subcategory
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
+    const { id } = await context.params;
+    const subcategoryId = Number(id);
+
+    if (!subcategoryId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
     const { name, categoryId } = await req.json();
 
     if (!name || !categoryId) {
@@ -40,8 +61,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       );
     }
 
-    const id = Number(params.id);
-    const existing = await prisma.subcategory.findUnique({ where: { id } });
+    const existing = await prisma.subcategory.findUnique({
+      where: { id: subcategoryId },
+    });
 
     if (!existing) {
       return NextResponse.json(
@@ -50,9 +72,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       );
     }
 
-    // Check duplicate name
-    const duplicate = await prisma.subcategory.findUnique({ where: { name } });
-    if (duplicate && duplicate.id !== id) {
+    // ✅ Check duplicate name
+    const duplicate = await prisma.subcategory.findUnique({
+      where: { name },
+    });
+
+    if (duplicate && duplicate.id !== subcategoryId) {
       return NextResponse.json(
         { success: false, message: "A subcategory with this name already exists." },
         { status: 409 }
@@ -60,13 +85,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updated = await prisma.subcategory.update({
-      where: { id },
-      data: { name, categoryId },
+      where: { id: subcategoryId },
+      data: {
+        name,
+        categoryId: Number(categoryId),
+      },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("PUT Subcategory Error:", error);
+    console.error("❌ PUT Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update subcategory." },
       { status: 500 }
@@ -74,11 +102,22 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-// ✅ Delete subcategory
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+// ✅ DELETE Subcategory
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
-    const existing = await prisma.subcategory.findUnique({ where: { id } });
+    const { id } = await context.params;
+    const subcategoryId = Number(id);
+
+    if (!subcategoryId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.subcategory.findUnique({
+      where: { id: subcategoryId },
+    });
 
     if (!existing) {
       return NextResponse.json(
@@ -87,11 +126,16 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
       );
     }
 
-    await prisma.subcategory.delete({ where: { id } });
+    await prisma.subcategory.delete({
+      where: { id: subcategoryId },
+    });
 
-    return NextResponse.json({ success: true, message: "Subcategory deleted successfully." });
+    return NextResponse.json({
+      success: true,
+      message: "Subcategory deleted successfully.",
+    });
   } catch (error) {
-    console.error("DELETE Subcategory Error:", error);
+    console.error("❌ DELETE Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete subcategory." },
       { status: 500 }

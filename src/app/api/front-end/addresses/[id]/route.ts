@@ -1,41 +1,69 @@
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
-const prisma: any = new PrismaClient();
+const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const token: any = getTokenFromHeader(req)
-  const userId = getUserIdFromToken(token);
-  if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+// 📝 UPDATE Address
+export async function PUT(req: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const addressId = Number(id);
 
-  const body = await req.json();
+    const token :any= getTokenFromHeader(req);
+    const userId = getUserIdFromToken(token);
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-  const updated = await prisma.address.updateMany({
-    where: { id: Number(params.id), userId },
-    data: body,
-  });
+    const body = await req.json();
 
-  if (!updated.count) {
-    return NextResponse.json({ message: "Address not found" }, { status: 404 });
+    const updated = await prisma.address.updateMany({
+      where: { id: addressId, userId },
+      data: body,
+    });
+
+    if (!updated.count) {
+      return NextResponse.json({ message: "Address not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Address updated successfully" });
+  } catch (error) {
+    console.error("❌ PUT /address/[id] error:", error);
+    return NextResponse.json(
+      { message: "Failed to update address" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ message: "Address updated" });
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const token: any = getTokenFromHeader(req)
-  const userId = getUserIdFromToken(token);
-  if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+// ❌ DELETE Address
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const addressId = Number(id);
 
-  const deleted = await prisma.address.deleteMany({
-    where: { id: Number(params.id), userId },
-  });
+    const token :any = getTokenFromHeader(req);
+    const userId = getUserIdFromToken(token);
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-  if (!deleted.count) {
-    return NextResponse.json({ message: "Address not found" }, { status: 404 });
+    const deleted = await prisma.address.deleteMany({
+      where: { id: addressId, userId },
+    });
+
+    if (!deleted.count) {
+      return NextResponse.json({ message: "Address not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Address deleted successfully" });
+  } catch (error) {
+    console.error("❌ DELETE /address/[id] error:", error);
+    return NextResponse.json(
+      { message: "Failed to delete address" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ message: "Address deleted" });
 }

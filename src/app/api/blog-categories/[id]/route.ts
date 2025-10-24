@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import slugify from "slugify";
 
-const prisma:any = new PrismaClient();
+const prisma = new PrismaClient();
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+// ✅ GET by ID
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params;
+
     const category = await prisma.blogCategories.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     if (!category) {
@@ -21,24 +24,23 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// ✅ PUT (Update)
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { name, slug } = await req.json();
+    const { id } = await context.params;
+    const { name, slug } = await request.json();
 
-    if (!name || name.trim() === "") {
+    if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required." }, { status: 400 });
     }
 
-    const finalSlug =
-      slug && slug.trim() !== ""
-        ? slug
-        : slugify(name, { lower: true, strict: true });
+    const finalSlug = slug?.trim() || slugify(name, { lower: true, strict: true });
 
-    // ✅ Check if another category uses the same name/slug
+    // Check for duplicates
     const duplicate = await prisma.blogCategories.findFirst({
       where: {
         OR: [{ name }, { slug: finalSlug }],
-        NOT: { id: Number(params.id) },
+        NOT: { id: Number(id) },
       },
     });
 
@@ -50,7 +52,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updated = await prisma.blogCategories.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: { name, slug: finalSlug },
     });
 
@@ -68,11 +70,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+// ✅ DELETE
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params;
+
     await prisma.blogCategories.delete({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
+
     return NextResponse.json({ message: "Deleted successfully." });
   } catch (error) {
     console.error("DELETE error:", error);

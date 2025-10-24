@@ -1,50 +1,92 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma :any= new PrismaClient();
+const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
-
-// get
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+// ✅ GET Size by ID
+export async function GET(_req: NextRequest, context: RouteContext) {
   try {
-    const id = parseInt(params.id);
-    const size = await prisma.sizes.findUnique({ where: { id } });
-    if (!size) return NextResponse.json({ error: "Size not found" }, { status: 404 });
-    return NextResponse.json(size);
+    const { id } = await context.params;
+    const sizeId = Number(id);
+
+    if (!sizeId) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const size = await prisma.sizes.findUnique({ where: { id: sizeId } });
+
+    if (!size) {
+      return NextResponse.json({ error: "Size not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: size });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch size" }, { status: 500 });
+    console.error("❌ GET Size Error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch size" },
+      { status: 500 }
+    );
   }
 }
 
-// 📌 UPDATE Size
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// ✅ PUT - Update Size
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await context.params;
+    const sizeId = Number(id);
+
+    if (!sizeId) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
     const { name, description } = await req.json();
+
+    if (!name || !name.trim()) {
+      return NextResponse.json(
+        { error: "Name is required" },
+        { status: 400 }
+      );
+    }
+
     const updated = await prisma.sizes.update({
-      where: { id },
-      data: { name, description },
+      where: { id: sizeId },
+      data: { name: name.trim(), description },
     });
-    return NextResponse.json(updated);
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("PUT Size Error:", error);
-    return NextResponse.json({ error: "Failed to update size" }, { status: 500 });
+    console.error("❌ PUT Size Error:", error);
+    return NextResponse.json(
+      { error: "Failed to update size" },
+      { status: 500 }
+    );
   }
 }
 
-
-// 📌 DELETE Size
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+// ✅ DELETE - Delete Size
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
+    const sizeId = Number(id);
+
+    if (!sizeId) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
 
     await prisma.sizes.delete({
-      where: { id: Number(id) },
+      where: { id: sizeId },
     });
 
-    return NextResponse.json({ message: "Size deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Size deleted successfully",
+    });
   } catch (error) {
-    console.error("DELETE Size Error:", error);
-    return NextResponse.json({ error: "Failed to delete size" }, { status: 500 });
+    console.error("❌ DELETE Size Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete size" },
+      { status: 500 }
+    );
   }
 }

@@ -1,17 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma:any = new PrismaClient();
+const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
 // ✅ GET by ID
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
+    const materialCareId = Number(id);
+
+    if (!materialCareId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
     const item = await prisma.materialCare.findUnique({
-      where: { id },
+      where: { id: materialCareId },
     });
 
     if (!item) {
@@ -23,7 +30,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: item });
   } catch (error) {
-    console.error("GET MaterialCare by ID Error:", error);
+    console.error("❌ GET MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch item." },
       { status: 500 }
@@ -32,12 +39,18 @@ export async function GET(
 }
 
 // ✅ PUT (Update)
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
+    const materialCareId = Number(id);
+
+    if (!materialCareId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
     const { title, description, careType, material, icon } = await req.json();
 
     if (!title || !description) {
@@ -48,7 +61,7 @@ export async function PUT(
     }
 
     const updatedItem = await prisma.materialCare.update({
-      where: { id },
+      where: { id: materialCareId },
       data: {
         title,
         description,
@@ -60,7 +73,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updatedItem });
   } catch (error) {
-    console.error("PUT MaterialCare Error:", error);
+    console.error("❌ PUT MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update material care item." },
       { status: 500 }
@@ -69,19 +82,28 @@ export async function PUT(
 }
 
 // ✅ DELETE
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
+    const materialCareId = Number(id);
+
+    if (!materialCareId) {
+      return NextResponse.json(
+        { success: false, message: "Invalid ID." },
+        { status: 400 }
+      );
+    }
+
     await prisma.materialCare.delete({
-      where: { id },
+      where: { id: materialCareId },
     });
 
-    return NextResponse.json({ success: true, message: "Item deleted." });
+    return NextResponse.json({
+      success: true,
+      message: "Material care item deleted successfully.",
+    });
   } catch (error) {
-    console.error("DELETE MaterialCare Error:", error);
+    console.error("❌ DELETE MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete item." },
       { status: 500 }

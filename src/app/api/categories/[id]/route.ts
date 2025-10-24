@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma:any = new PrismaClient();
+const prisma = new PrismaClient();
 
 // 📝 PUT - Update category
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const categoryId = Number(id);
 
   try {
     const { name } = await req.json();
+
     if (!name || !name.trim()) {
       return NextResponse.json(
         { success: false, message: "Category name is required." },
@@ -16,7 +18,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       );
     }
 
-    const existing = await prisma.categories.findUnique({ where: { id } });
+    const existing = await prisma.categories.findUnique({
+      where: { id: categoryId },
+    });
+
     if (!existing) {
       return NextResponse.json(
         { success: false, message: "Category not found." },
@@ -25,7 +30,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updated = await prisma.categories.update({
-      where: { id },
+      where: { id: categoryId },
       data: { name: name.trim() },
     });
 
@@ -40,11 +45,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // ❌ DELETE - Delete category
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const categoryId = Number(id);
 
   try {
-    const existing = await prisma.categories.findUnique({ where: { id } });
+    const existing = await prisma.categories.findUnique({
+      where: { id: categoryId },
+    });
+
     if (!existing) {
       return NextResponse.json(
         { success: false, message: "Category not found." },
@@ -52,9 +61,14 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       );
     }
 
-    await prisma.categories.delete({ where: { id } });
+    await prisma.categories.delete({
+      where: { id: categoryId },
+    });
 
-    return NextResponse.json({ success: true, message: "Category deleted successfully." });
+    return NextResponse.json({
+      success: true,
+      message: "Category deleted successfully.",
+    });
   } catch (error) {
     console.error("DELETE Category Error:", error);
     return NextResponse.json(
