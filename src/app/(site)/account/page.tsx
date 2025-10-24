@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   User,
@@ -15,17 +15,15 @@ import {
 } from "lucide-react";
 import NoData from "@/components/NoData";
 import { authService } from "@/lib/services/authService";
-import { addressService } from "@/lib/services/addressService";
+import { addressService } from "@/lib/services/front-end/addressService";
 import AddressForm from "@/components/AddressForm";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import Loader from "@/components/Loader";
+import { ROUTES } from "@/constants/routes";
 
 export default function MyAccountPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/account";
-  const redirect = searchParams.get("redirect");
 
   const { data: session, status } = useSession();
 
@@ -33,12 +31,12 @@ export default function MyAccountPage() {
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
-      router.replace("/account/login");
+      router.replace(ROUTES.USER.LOGIN);
     } else if (status === "authenticated" && session?.user?.role !== "customer") {
-      router.replace("/");
+      router.replace(ROUTES.HOME);
     }
-    console.log('user:>',session?.user)
-  }, [status, session, router, callbackUrl, redirect]);
+    console.log('user:>', session?.user)
+  }, [status, session, router]);
 
   const [activeTab, setActiveTab] = useState("details");
   const [isEditing, setIsEditing] = useState(false);
@@ -65,7 +63,7 @@ export default function MyAccountPage() {
     if (status !== "authenticated") return;
     const fetchProfile = async () => {
       try {
-        const data = await authService.getProfile();
+        const data = await authService.getProfile(session?.user?.token);
         setProfile(data.user);
       } catch (err: any) {
         setAlert({ isOpen: true, type: "error", message: err.message || "Failed to load profile." });
@@ -81,7 +79,7 @@ export default function MyAccountPage() {
     if (status !== "authenticated") return;
     const fetchAddresses = async () => {
       try {
-        const data = await addressService.getAll();
+        const data = await addressService.getAll(session?.user?.token);
         setAddresses(data);
       } catch (err: any) {
         setAlert({ isOpen: true, type: "error", message: err.message });
@@ -94,11 +92,11 @@ export default function MyAccountPage() {
   const handleSaveAddress = async (data: any) => {
     try {
       if (selectedAddress) {
-        await addressService.update(selectedAddress.id, data);
+        await addressService.update(session?.user?.token, selectedAddress.id, data);
       } else {
-        await addressService.create(data);
+        await addressService.create(session?.user?.token, data);
       }
-      const updated = await addressService.getAll();
+      const updated = await addressService.getAll(session?.user?.token);
       setAddresses(updated);
       setIsEditing(false);
       setSelectedAddress(null);
@@ -107,11 +105,11 @@ export default function MyAccountPage() {
     }
   };
 
-  // 🗑️ Delete Address
+  // Delete Address
   const handleDeleteAddress = async (id: number) => {
     setDeleteLoading(id);
     try {
-      await addressService.remove(id);
+      await addressService.remove(session?.user.token, id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
       setAlert({ isOpen: true, type: "success", message: "Address deleted successfully!" });
     } catch (err: any) {
@@ -125,7 +123,7 @@ export default function MyAccountPage() {
   // 🚪 Handle logout after confirmation
   const handleLogout = async () => {
     setConfirmLogout(false);
-    await signOut({ callbackUrl: "/" });
+    await signOut({ callbackUrl: ROUTES.USER.LOGIN });
   };
 
   const menuItems = [
@@ -172,11 +170,10 @@ export default function MyAccountPage() {
                       setActiveTab(item.key);
                     }
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium transition text-left ${
-                    activeTab === item.key
-                      ? "bg-[var(--brand-primary)] text-white shadow-sm"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--soft-gray)]"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium transition text-left ${activeTab === item.key
+                    ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--soft-gray)]"
+                    }`}
                 >
                   {item.icon}
                   {item.label}
@@ -248,11 +245,10 @@ export default function MyAccountPage() {
                             </button>
                             <button
                               onClick={() => setConfirmDelete({ isOpen: true, id: address.id })}
-                              className={`w-9 h-9 flex items-center justify-center rounded-full transition ${
-                                deleteLoading === address.id
-                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-[var(--soft-pink)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
-                              }`}
+                              className={`w-9 h-9 flex items-center justify-center rounded-full transition ${deleteLoading === address.id
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-[var(--soft-pink)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
+                                }`}
                               disabled={deleteLoading !== null}
                             >
                               {deleteLoading === address.id ? (

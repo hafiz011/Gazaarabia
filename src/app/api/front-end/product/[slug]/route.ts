@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import { isProductInWishlist } from "@/lib/helpers/wishlist";
 
 const prisma: any = new PrismaClient();
 
@@ -9,8 +11,12 @@ export async function GET(
 ) {
   const { slug } = await context.params;
 
+  // 🧭 Get userId if logged in
+  const token = getTokenFromHeader(req);
+  const userId = token ? getUserIdFromToken(token) : null;
+
   try {
-    // ✅ Get product details by slug and include its material care directly
+    // ✅ Get product details by slug and include material care
     const product = await prisma.products.findUnique({
       where: { slug },
       include: {
@@ -23,7 +29,7 @@ export async function GET(
         brand: true,
         categories: true,
         subcategories: true,
-        materialCare: true, // 👈 This will fetch only the linked material care
+        materialCare: true,
       },
     });
 
@@ -34,8 +40,16 @@ export async function GET(
       );
     }
 
-    // ✅ Return product + only its material care data
-    return NextResponse.json(product);
+    // ❤️ Check if this product is in the user's wishlist
+    let isInWishlist = false;
+    if (userId) {
+      isInWishlist = await isProductInWishlist(userId, product.id);
+    }
+
+    return NextResponse.json({
+      ...product,
+      isInWishlist, // ✅ added field
+    });
   } catch (error: any) {
     console.error("❌ Error fetching product by slug:", error);
     return NextResponse.json(

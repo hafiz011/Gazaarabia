@@ -29,10 +29,13 @@ export const authService = {
     return res.json();
   },
 
-   getProfile: async () => {
+   getProfile: async (token:string) => {
     const res = await fetch("/api/front-end/profile", {
       method: "GET",
-      credentials: "include", // Important for cookies
+           headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,  //  send token in header
+      },
     });
     if (!res.ok) throw new Error((await res.json()).message);
     return res.json();

@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/services/authService";
 import AlertMessage from "@/components/AlertMessage";
 import { signIn, useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes"; //  central URL config
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession(); // get session info
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<{
@@ -26,6 +23,19 @@ export default function LoginPage() {
     type: "",
     message: "",
   });
+
+  // Redirect if user already logged in
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "authenticated") {
+      if (session?.user?.role === "customer") {
+        router.replace(ROUTES.USER.PROFILE); //  redirect to profile
+      } else {
+        router.replace("/"); // or some other route for admins
+      }
+    }
+  }, [status, session, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,15 +56,11 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      // const response = await authService.login(form);
-
       const response: any = await signIn("credentials", {
         redirect: false,
         email: form.email,
         password: form.password,
       });
-
-      console.log('response:>', response);
 
       if (response?.error) {
         setAlert({
@@ -71,9 +77,8 @@ export default function LoginPage() {
         message: "Login successful! Redirecting...",
       });
 
-      // Redirect after short delay
       setTimeout(() => {
-        router.push("/account");
+        router.push(ROUTES.USER.PROFILE); //  redirect after login
       }, 1000);
     } catch (err: any) {
       setAlert({

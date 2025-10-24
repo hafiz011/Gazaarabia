@@ -13,7 +13,7 @@ body {
   font-family: var(--font-sans);
 }
 
-/* ============= ✨ Premium Header Animations (Scoped) ✨ ============= */
+/* =============  Premium Header Animations (Scoped)  ============= */
 
 @keyframes dropdown-fade-down {
   from {
@@ -32,7 +32,7 @@ body {
   will-change: opacity, transform;
 }
 
-/* 🌟 Banner Image Fade + Zoom */
+/*  Banner Image Fade + Zoom */
 @keyframes banner-fade-zoom {
   from {
     opacity: 0;
@@ -113,6 +113,19 @@ a {
 }
 
 
+/* header profile section start  */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+
+/* header profile section end  */
 
 
 /* ============= home page start ============= */

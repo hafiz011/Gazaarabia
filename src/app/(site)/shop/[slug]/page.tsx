@@ -2,17 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import ProductCard from "@/components/ProductCard";
 import CategoryHeader from "@/components/CategoryHeader";
 import Pagination from "@/components/Pagination";
 import { shopService } from "@/lib/services/front-end/shopServices";
+import { wishlistService } from "@/lib/services/front-end/wishlistService";
 import Loader from "@/components/Loader";
-import NoData from "@/components/NoData";  // 👈 import here
+import NoData from "@/components/NoData";
 
 export default function CategoryPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+  const token = session?.user?.token || null;
 
   const [products, setProducts] = useState<any[]>([]);
   const [parentCategory, setParentCategory] = useState<any>(null);
@@ -21,18 +25,20 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.get("page")) || 1
   );
-
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 🛍️ Fetch products API
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const data: any = await shopService.getShopData(slug, currentPage, 6);
+      const data: any = await shopService.getShopData(
+        token || "", // 🔑 use token only if available
+        slug,
+        currentPage,
+        6
+      );
       setProducts(data.products);
       setTotalPages(data.totalPages);
-      setParentCategory(data.parentCategory)
+      setParentCategory(data.parentCategory);
       setSubcategories(data.subcategories || []);
     } catch (error) {
       console.error("❌ Failed to fetch products:", error);
@@ -41,39 +47,70 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     }
   };
 
-  // 🔄 Re-fetch on page or slug change
+  // 🟢 Only one API call after session has finished loading
   useEffect(() => {
-    fetchProducts();
-  }, [slug, currentPage, selectedCategory]);
+    if (status !== "loading") {
+      fetchProducts();
+    }
+  }, [slug, currentPage, status, token]);
 
-  // 🧭 Sync current page with URL
+  // 🧭 Sync pagination with URL
   useEffect(() => {
     router.push(`?page=${currentPage}`, { scroll: false });
   }, [currentPage, router]);
 
+  // ❤️ Handle Wishlist Toggle
+  const handleWishlistToggle = async (
+    productId: number,
+    isInWishlist: boolean
+  ) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    // Optimistic UI update
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === productId ? { ...p, isInWishlist: !isInWishlist } : p
+      )
+    );
+
+    try {
+      if (isInWishlist) {
+        await wishlistService.remove(token, productId);
+      } else {
+        await wishlistService.add(token, productId);
+      }
+    } catch (error) {
+      console.error("❌ Wishlist update failed:", error);
+      // Revert UI on error
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId ? { ...p, isInWishlist } : p
+        )
+      );
+    }
+  };
+
   return (
     <>
       {loading && <Loader />}
-
       <section className="bg-[var(--background)] min-h-screen">
         <CategoryHeader
           selectedSlug={slug}
           title={slug.replace(/-/g, " ")}
           description="Our coats and cover-ups epitomise sophistication and timeless elegance..."
-          parentCategory = {parentCategory}
+          parentCategory={parentCategory}
           categories={subcategories}
-          onCategoryChange={(cat) => {
-            router.push(`/shop/${cat}`);
-          }}
+          onCategoryChange={(cat) => router.push(`/shop/${cat}`)}
         />
 
         <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8">
-          {/* ✅ Show NoData if products array is empty */}
           {products.length === 0 && !loading ? (
             <NoData message="No products found for this category." />
           ) : (
             <>
-              {/* Product Grid */}
               <div
                 className="
                   grid grid-cols-1
@@ -87,11 +124,14 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                 "
               >
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onWishlistToggle={handleWishlistToggle}
+                  />
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <Pagination
                   totalPages={totalPages}

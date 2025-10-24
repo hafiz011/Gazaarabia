@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import { getWishlistProductIds } from "@/lib/helpers/wishlist";
 
 const prisma: any = new PrismaClient();
-
-/**
- * GET /api/shop/[slug]?page=1&limit=12
- * - If slug is category → return its subcategories and category products
- * - If slug is subcategory → return its siblings, subcategory products & parent category
- */
 
 export async function GET(
   req: Request,
@@ -19,30 +15,28 @@ export async function GET(
   const limit = Number(searchParams.get("limit")) || 12;
   const skip = (page - 1) * limit;
 
+  const token = getTokenFromHeader(req);
+  const userId = token ? getUserIdFromToken(token) : null;
+
   try {
-    // ✅ Check if slug belongs to a Category
+    let products: any[] = [];
+    let total = 0;
+    let subcategories: any[] = [];
+    let parentCategory: any = null;
+
+    // 🧭 Check if slug is category or subcategory
     const category = await prisma.categories.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true },
     });
 
-    let products = [];
-    let total = 0;
-    let subcategories = [];
-    let parentCategory = null;
-
     if (category) {
-      // 👉 If it's a category
       [products, total, subcategories] = await Promise.all([
         prisma.products.findMany({
           where: { categoryId: category.id },
           include: {
             productimage: true,
-            productvariant: {
-              include: {
-                color: true, // ✅ Return color details here
-              },
-            },
+            productvariant: { include: { color: true } },
             brand: true,
             categories: true,
             subcategories: true,
@@ -51,66 +45,70 @@ export async function GET(
           take: limit,
           orderBy: { createdAt: "desc" },
         }),
-        prisma.products.count({
-          where: { categoryId: category.id },
-        }),
+        prisma.products.count({ where: { categoryId: category.id } }),
         prisma.subcategory.findMany({
           where: { categoryId: category.id },
           orderBy: { name: "asc" },
         }),
       ]);
 
-      // For a category, parentCategory will just be itself
       parentCategory = category;
     } else {
-      // ✅ Else check if slug belongs to a Subcategory
       const subcategory = await prisma.subcategory.findUnique({
         where: { slug },
         select: { id: true, categoryId: true, name: true, slug: true },
       });
 
-      if (subcategory) {
-        [products, total, subcategories] = await Promise.all([
-          prisma.products.findMany({
-            where: { subcategoryId: subcategory.id },
-            include: {
-              productimage: true,
-              productvariant: {
-                include: {
-                  color: true, // ✅ Return color details here too
-                },
-              },
-              brand: true,
-              categories: true,
-              subcategories: true,
-            },
-            skip,
-            take: limit,
-            orderBy: { createdAt: "desc" },
-          }),
-          prisma.products.count({
-            where: { subcategoryId: subcategory.id },
-          }),
-          prisma.subcategory.findMany({
-            where: { categoryId: subcategory.categoryId },
-            orderBy: { name: "asc" },
-          }),
-        ]);
-
-        // 👇 Fetch the parent category of this subcategory
-        parentCategory = await prisma.categories.findUnique({
-          where: { id: subcategory.categoryId },
-          select: { id: true, name: true, slug: true },
-        });
-      } else {
+      if (!subcategory) {
         return NextResponse.json(
           { error: "Invalid category or subcategory slug" },
           { status: 404 }
         );
       }
+
+      [products, total, subcategories] = await Promise.all([
+        prisma.products.findMany({
+          where: { subcategoryId: subcategory.id },
+          include: {
+            productimage: true,
+            productvariant: { include: { color: true } },
+            brand: true,
+            categories: true,
+            subcategories: true,
+          },
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.products.count({ where: { subcategoryId: subcategory.id } }),
+        prisma.subcategory.findMany({
+          where: { categoryId: subcategory.categoryId },
+          orderBy: { name: "asc" },
+        }),
+      ]);
+
+      parentCategory = await prisma.categories.findUnique({
+        where: { id: subcategory.categoryId },
+        select: { id: true, name: true, slug: true },
+      });
+    }
+
+    // ❤️ Wishlist check (using helper)
+    if (userId) {
+      const wishlistIds = await getWishlistProductIds(userId);
+      products = products.map((p) => ({
+        ...p,
+        isInWishlist: wishlistIds.includes(p.id),
+      }));
+    } else {
+      products = products.map((p) => ({
+        ...p,
+        isInWishlist: false,
+      }));
     }
 
     return NextResponse.json({
+      userId,
       products,
       total,
       totalPages: Math.ceil(total / limit),

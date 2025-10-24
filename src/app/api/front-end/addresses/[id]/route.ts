@@ -1,28 +1,13 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
-
-function getUserIdFromToken(req: Request) {
-  const token = req.headers
-    .get("cookie")
-    ?.split("; ")
-    .find((c) => c.startsWith("auth_token="))
-    ?.split("=")[1];
-
-  if (!token) return null;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number };
-    return decoded.id;
-  } catch {
-    return null;
-  }
-}
+const prisma: any = new PrismaClient();
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  // const userId = getUserIdFromToken(req);
-  const userId = 2;
+  const token: any = getTokenFromHeader(req)
+  const userId = getUserIdFromToken(token);
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
@@ -40,8 +25,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  // const userId = getUserIdFromToken(req);
-   const userId = 2;
+  const token: any = getTokenFromHeader(req)
+  const userId = getUserIdFromToken(token);
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const deleted = await prisma.address.deleteMany({
