@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, Search, User, Heart, ShoppingBag } from "lucide-react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import CartDrawer from "@/components/CartDrawer";
+import { useRouter } from "next/navigation";
 
 interface BannerItem {
   image: string;
@@ -63,6 +64,7 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 export default function Header() {
+  const router = useRouter();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
@@ -240,7 +242,9 @@ export default function Header() {
                 <User size={20} />
               </div>
 
-              <div className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition">
+              <div 
+              onClick={()=> router.push("/wishlist")}
+              className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition">
                 <Heart size={20} />
               </div>
 
@@ -259,7 +263,7 @@ export default function Header() {
                 className="cursor-pointer"
                 onClick={() => setProfileDrawer(true)}
               />
-              <Heart size={22} className="cursor-pointer" />
+              <Heart size={22} className="cursor-pointer"   onClick={()=> router.push("/wishlist")} />
               <ShoppingBag
                 size={22}
                 className="cursor-pointer"

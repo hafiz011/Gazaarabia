@@ -1,7 +1,6 @@
 export const wishlistService = {
-  // 🧾 Get all wishlist items of the current user
-  getAll: async (token: string) => {
-    const res = await fetch("/api/front-end/wishlist", {
+  getAll: async (token: string, page = 1, limit = 6) => {
+    const res = await fetch(`/api/front-end/wishlist?page=${page}&limit=${limit}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -13,7 +12,6 @@ export const wishlistService = {
     return res.json();
   },
 
-  // ❤️ Add a product to wishlist
   add: async (token: string, productId: number) => {
     const res = await fetch("/api/front-end/wishlist", {
       method: "POST",
@@ -28,7 +26,6 @@ export const wishlistService = {
     return res.json();
   },
 
-  // ❌ Remove a product from wishlist
   remove: async (token: string, productId: number) => {
     const res = await fetch(`/api/front-end/wishlist/${productId}`, {
       method: "DELETE",

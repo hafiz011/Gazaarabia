@@ -34,7 +34,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
         token || "", // 🔑 use token only if available
         slug,
         currentPage,
-        6
+        8
       );
       setProducts(data.products);
       setTotalPages(data.totalPages);
@@ -64,10 +64,10 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
     productId: number,
     isInWishlist: boolean
   ) => {
-    if (!token) {
-      router.push("/login");
-      return;
-    }
+    // if (!token) {
+    //   router.push("/login");
+    //   return;
+    // }
 
     // Optimistic UI update
     setProducts((prev) =>
@@ -76,20 +76,22 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
       )
     );
 
-    try {
-      if (isInWishlist) {
-        await wishlistService.remove(token, productId);
-      } else {
-        await wishlistService.add(token, productId);
+    if (token) {
+      try {
+        if (isInWishlist) {
+          await wishlistService.remove(token, productId);
+        } else {
+          await wishlistService.add(token, productId);
+        }
+      } catch (error) {
+        console.error("❌ Wishlist update failed:", error);
+        // Revert UI on error
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId ? { ...p, isInWishlist } : p
+          )
+        );
       }
-    } catch (error) {
-      console.error("❌ Wishlist update failed:", error);
-      // Revert UI on error
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId ? { ...p, isInWishlist } : p
-        )
-      );
     }
   };
 
