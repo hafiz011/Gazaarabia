@@ -77,3 +77,28 @@ export interface Blog {
   createdAt: string;
   updatedAt: string;
 }
+
+
+export interface OrderItem {
+  id: number;
+  productId: number;
+  quantity: number;
+  price: number;
+  product?: {
+    id: number;
+    title: string;
+    sellingPrice: number;
+    productimage: { url: string }[];
+  };
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  totalAmount: number;
+  paymentMethod: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  orderItems: OrderItem[];
+}

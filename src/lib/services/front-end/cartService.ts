@@ -51,4 +51,23 @@ export const cartService = {
     if (!res.ok) throw new Error("Failed to update quantity");
     return res.json(); //  can include new subtotal too
   },
+
+
+  // clear cart after purchase
+  clear: async (token: any) => {
+    const res = await fetch(`/api/front-end/cart/clear`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to clear cart: ${errorText}`);
+    }
+
+    return res.json();
+  },
+
 };

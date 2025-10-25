@@ -162,9 +162,11 @@ export default function WishlistPage() {
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">
             My Wishlist
           </h1>
-          <p className="text-[var(--text-muted)] mt-2 text-sm">
-            {wishlist.length} item{wishlist.length !== 1 && "s"} on this page
-          </p>
+          {wishlist.length > 0 &&
+            <p className="text-[var(--text-muted)] mt-2 text-sm">
+              {wishlist.length} item{wishlist.length !== 1 && "s"} on this page
+            </p>
+          }
         </div>
 
         {alert.isOpen && alert.type && (
@@ -176,7 +178,7 @@ export default function WishlistPage() {
         )}
 
         {wishlist.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center pt-8 pb-20">
             <Heart size={50} className="text-[var(--soft-gray)] mb-4" />
             <p className="text-[var(--text-muted)] mb-6 text-center">
               Your wishlist is empty. Start adding products you love!

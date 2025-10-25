@@ -272,6 +272,7 @@ model Orders {
   userId        Int
   totalAmount   Float
   paymentMethod String
+  transactionId String?
   status        String       @default("pending")
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

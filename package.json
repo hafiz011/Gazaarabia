@@ -12,6 +12,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@paypal/react-paypal-js": "^8.9.2",
     "@prisma/client": "^6.17.1",
     "@tailwindcss/line-clamp": "^0.4.4",
     "bcryptjs": "^3.0.2",

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SessionProviderWrapper from "./SessionProviderWrapper";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
 
 export const metadata: Metadata = {
   title: "Gaza Arabia",
@@ -16,7 +18,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SessionProviderWrapper>
-          {children}
+           <PayPalProviderWrapper>
+             {children}
+          </PayPalProviderWrapper>
+         
         </SessionProviderWrapper>
       </body>
     </html>
