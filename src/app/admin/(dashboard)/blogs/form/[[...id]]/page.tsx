@@ -71,8 +71,8 @@ export default function AddOrEditBlogPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await blogCategoryService.getAll(session?.user?.token as string);
-        setCategories(data);
+        const data :any= await blogCategoryService.getAll(session?.user?.token as string);
+        setCategories(data?.data ?? null);
       } catch (err: any) {
         setAlert({
           isOpen: true,
@@ -89,7 +89,8 @@ export default function AddOrEditBlogPage() {
     if (!blogId || !session?.user?.token) return;
     const fetchBlog = async () => {
       try {
-        const data: any = await blogService.getById(session?.user?.token as string, Number(blogId));
+        const res: any = await blogService.getById(session?.user?.token as string, Number(blogId));
+        const data = res?.data ?? null;
         setForm({
           title: data.title,
           slug: data.slug,

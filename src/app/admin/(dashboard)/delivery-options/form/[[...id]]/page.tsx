@@ -71,7 +71,8 @@ export default function CreateOrUpdateDeliveryOptionPage() {
   const fetchDeliveryOption = async (deliveryId: number) => {
     try {
       setLoading(true);
-      const data = await deliveryOptionService.getById(session?.user?.token as string, deliveryId);
+      const res:any = await deliveryOptionService.getById(session?.user?.token as string, deliveryId);
+      const data = res?.data ?? null;
       setForm({
         name: data.name || "",
         description: data.description || "",
