@@ -6,8 +6,10 @@ import { colorService } from "@/lib/services/colorService";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
-// 🧮 Convert hex to RGB string
+// 🧮 Convert hex to RGB
 const hexToRgb = (hex: string) => {
   const cleanHex = hex.replace("#", "");
   const bigint = parseInt(cleanHex, 16);
@@ -20,6 +22,9 @@ const hexToRgb = (hex: string) => {
 export default function AddColorPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+  const token = session?.user?.token;
+
   const colorIdParam = searchParams.get("id");
   const colorId = colorIdParam ? Number(colorIdParam) : null;
 
@@ -31,7 +36,6 @@ export default function AddColorPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Popup & Alert states
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
@@ -56,13 +60,21 @@ export default function AddColorPage() {
     description: "e.g. Bright red shade for T-shirts",
   };
 
-  // 🟡 Prefill form if editing
+  // 🛡️ Redirect non-authenticated users
   useEffect(() => {
-    if (colorId) {
+    if (status === "loading") return;
+    if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
+    else if (status === "authenticated" && session?.user?.role !== "admin")
+      router.replace(ROUTES.HOME);
+  }, [status, session, router]);
+
+  // 🟡 Prefill if editing
+  useEffect(() => {
+    if (colorId && token) {
       const fetchColor = async () => {
         try {
           setLoading(true);
-          const data = await colorService.getById(colorId);
+          const data = await colorService.getById(token, colorId);
           setForm({
             name: data.name,
             hexCode: data.hexCode,
@@ -81,27 +93,25 @@ export default function AddColorPage() {
       };
       fetchColor();
     }
-  }, [colorId]);
+  }, [colorId, token]);
 
-  // 🖊 Update form
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "hexCode" && { rgbCode: hexToRgb(value) }), // auto convert RGB
+      ...(name === "hexCode" && { rgbCode: hexToRgb(value) }),
     }));
   };
 
-  // 📝 Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.hexCode) {
+    if (!form.name.trim() || !form.hexCode || !token) {
       setPopUpAlertData({
         isOpen: true,
         type: "warning",
-        message: "Color name and HEX code are required.",
+        message: "Color name and token are required.",
         onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
       return;
@@ -109,17 +119,15 @@ export default function AddColorPage() {
 
     try {
       setLoading(true);
-      setAlertMessageData({ isOpen: false, type: "", message: "" });
-
       if (colorId) {
-        await colorService.update(colorId, form);
+        await colorService.update(token, colorId, form);
         setAlertMessageData({
           isOpen: true,
           type: "success",
           message: "Color updated successfully!",
         });
       } else {
-        await colorService.create(form);
+        await colorService.create(token, form);
         setAlertMessageData({
           isOpen: true,
           type: "success",
@@ -152,19 +160,15 @@ export default function AddColorPage() {
           : "Add and manage available colors for your products."}
       </p>
 
-      {/* ✅ Alert Messages */}
-      {alertMessageData.isOpen && alertMessageData.type && (
+      {(alertMessageData.isOpen && alertMessageData.type) && (
         <AlertMessage
           type={alertMessageData.type}
           message={alertMessageData.message}
-          onClose={() =>
-            setAlertMessageData((prev) => ({ ...prev, isOpen: false }))
-          }
+          onClose={() => setAlertMessageData((prev) => ({ ...prev, isOpen: false }))}
         />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name */}
         <div>
           <label className="block mb-1 text-sm font-medium text-[var(--text-secondary)]">
             {LABELS.name} <span className="text-[var(--brand-primary)]">*</span>
@@ -179,7 +183,6 @@ export default function AddColorPage() {
           />
         </div>
 
-        {/* Hex Code */}
         <div>
           <label className="block mb-1 text-sm font-medium text-[var(--text-secondary)]">
             {LABELS.hexCode} <span className="text-[var(--brand-primary)]">*</span>
@@ -194,7 +197,6 @@ export default function AddColorPage() {
           />
         </div>
 
-        {/* RGB Code */}
         <div>
           <label className="block mb-1 text-sm font-medium text-[var(--text-secondary)]">
             {LABELS.rgbCode}
@@ -209,7 +211,6 @@ export default function AddColorPage() {
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="block mb-1 text-sm font-medium text-[var(--text-secondary)]">
             {LABELS.description}
@@ -223,7 +224,6 @@ export default function AddColorPage() {
           />
         </div>
 
-        {/* Submit */}
         <div className="flex justify-end">
           <button
             type="submit"
@@ -243,7 +243,6 @@ export default function AddColorPage() {
         </div>
       </form>
 
-      {/* 🆕 Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

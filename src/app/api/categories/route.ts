@@ -1,55 +1,75 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
+const prisma :any = new PrismaClient();
 
-export async function POST(req: Request) {
+// 🔐 POST - Create a new category
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { name } = await req.json();
+    const { name , slug} = await req.json();
 
-    if (!name) {
+    if (!name || name.trim() === "") {
       return NextResponse.json(
-        { success: false, message: "Name is required" },
+        { success: false, message: "Name is required." },
+        { status: 400 }
+      );
+    }
+    if (!slug || slug.trim() === "") {
+      return NextResponse.json(
+        { success: false, message: "Slug is required." },
         { status: 400 }
       );
     }
 
-    // 🧭 FIX HERE
+    // 🧭 Check if category already exists
     const existing = await prisma.categories.findUnique({
-      where: { name },
+      where: { slug: slug.trim() },
     });
 
     if (existing) {
       return NextResponse.json(
-        { success: false, message: "Category with this name already exists." },
+        { success: false, message: "Category with this slug already exists." },
         { status: 409 }
       );
     }
 
     const category = await prisma.categories.create({
-      data: { name },
+      data: { name: name.trim(), slug: slug.trim() },
     });
 
-    return NextResponse.json({ success: true, category });
+    return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error) {
-    console.error("POST Category Error:", error);
+    console.error("❌ POST Category Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to create category" },
+      { success: false, message: "Failed to create category." },
       { status: 500 }
     );
   }
 }
 
-export async function GET() {
+// 🔐 GET - List all categories
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const categories = await prisma.categories.findMany({
       orderBy: { id: "desc" },
     });
-    return NextResponse.json(categories);
+
+    return NextResponse.json({ success: true, data: categories });
   } catch (error) {
-    console.error("GET Category Error:", error);
+    console.error("❌ GET Category Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch categories" },
+      { success: false, message: "Failed to fetch categories." },
       { status: 500 }
     );
   }

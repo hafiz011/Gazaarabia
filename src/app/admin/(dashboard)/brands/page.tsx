@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { Pencil, Trash2, Search, CheckCircle, XCircle } from "lucide-react";
-
 import { useRouter } from "next/navigation";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { brandService } from "@/lib/services/brandService";
+import { useSession } from "next-auth/react";
 
 export default function BrandListPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const token = session?.user?.token;
+
   const [brands, setBrands] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,34 +24,26 @@ export default function BrandListPage() {
     isOpen: false,
     type: "",
     message: "",
-    onConfirm: undefined,
-    onCancel: undefined,
   });
 
-  // ✅ Fetch Brands initially
   useEffect(() => {
-    fetchBrands();
-  }, []);
+    if (token) fetchBrands();
+  }, [token]);
 
-  // ✅ Debounced Search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchBrands(searchTerm);
+      if (token) fetchBrands(searchTerm);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [searchTerm]);
+  }, [searchTerm, token]);
 
   const fetchBrands = async (search?: string) => {
     try {
       setLoading(true);
-      const response: any = await brandService.getAll(search);
-      if (Array.isArray(response)) {
-        setBrands(response);
-      } else if (Array.isArray(response?.data)) {
-        setBrands(response.data);
-      } else {
-        setBrands([]);
-      }
+      const response: any = await brandService.getAll(token!, search);
+      if (Array.isArray(response)) setBrands(response);
+      else if (Array.isArray(response?.data)) setBrands(response.data);
+      else setBrands([]);
     } catch (error) {
       console.error("Failed to fetch brands:", error);
     } finally {
@@ -60,7 +55,6 @@ export default function BrandListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = brands.slice(startIndex, startIndex + pageSize);
 
-  // 🗑️ Delete Handler
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -68,7 +62,7 @@ export default function BrandListPage() {
       message: "Are you sure you want to delete this brand?",
       onConfirm: async () => {
         try {
-          await brandService.remove(id);
+          await brandService.remove(token!, id);
           setPopUpAlertData({
             isOpen: true,
             type: "success",
@@ -92,7 +86,6 @@ export default function BrandListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Brands</h1>
 
@@ -114,7 +107,7 @@ export default function BrandListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -137,41 +130,28 @@ export default function BrandListPage() {
                 paginatedData.map((brand: any, idx) => (
                   <tr
                     key={brand.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
                     </td>
-
-                    {/* ✅ Logo */}
                     <td className="py-3 px-3 text-center">
                       {brand.logo ? (
-                        <img
-                          src={brand.logo}
-                          alt={brand.name}
-                          className="h-8 w-8 object-contain mx-auto"
-                        />
+                        <img src={brand.logo} alt={brand.name} className="h-8 w-8 object-contain mx-auto" />
                       ) : (
                         <span className="text-gray-400 text-xs italic">—</span>
                       )}
                     </td>
-
                     <td className="py-3 px-3 text-center font-medium text-gray-800">
                       {brand.name}
                     </td>
-
                     <td className="py-3 px-3 text-center">
-  {brand.isTrending ? (
-    <CheckCircle size={20} className="text-green-600 mx-auto" />
-  ) : (
-    <XCircle size={20} className="text-red-500 mx-auto" />
-  )}
-</td>
-
-
-                    {/* ✅ Actions */}
+                      {brand.isTrending ? (
+                        <CheckCircle size={20} className="text-green-600 mx-auto" />
+                      ) : (
+                        <XCircle size={20} className="text-red-500 mx-auto" />
+                      )}
+                    </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex justify-center gap-1">
                         <button
@@ -203,8 +183,7 @@ export default function BrandListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
-        {!loading && brands.length > 0 && (
+        {brands.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -216,7 +195,6 @@ export default function BrandListPage() {
         )}
       </div>
 
-      {/* ✅ Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

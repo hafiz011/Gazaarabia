@@ -15,30 +15,33 @@ export interface DeliveryOption {
 }
 
 export const deliveryOptionService = {
-  // ✅ Get all delivery options
-  getAll: (): Promise<DeliveryOption[]> => apiFetch("/api/delivery-options"),
+  getAll: (token: string): Promise<DeliveryOption[]> =>
+    apiFetch("/api/delivery-options", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 
-  // ✅ Get by ID
-  getById: (id: number): Promise<DeliveryOption> =>
-    apiFetch(`/api/delivery-options/${id}`),
+  getById: (token: string, id: number): Promise<DeliveryOption> =>
+    apiFetch(`/api/delivery-options/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 
-  // ✅ Create a new delivery option
-  create: (data: Partial<DeliveryOption>): Promise<DeliveryOption> =>
+  create: (token: string, data: Partial<DeliveryOption>): Promise<DeliveryOption> =>
     apiFetch("/api/delivery-options", {
       method: "POST",
       body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
     }),
 
-  // ✅ Update delivery option
-  update: (id: number, data: Partial<DeliveryOption>): Promise<DeliveryOption> =>
+  update: (token: string, id: number, data: Partial<DeliveryOption>): Promise<DeliveryOption> =>
     apiFetch(`/api/delivery-options/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
     }),
 
-  // ✅ Delete delivery option
-  remove: (id: number): Promise<{ message: string }> =>
+  remove: (token: string, id: number): Promise<{ message: string }> =>
     apiFetch(`/api/delivery-options/${id}`, {
       method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
     }),
 };

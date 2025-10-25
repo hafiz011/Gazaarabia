@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-// 📝 PUT - Update category
+// 📝 PUT - Update category (Protected)
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const categoryId = Number(id);
 
   try {
-    const { name } = await req.json();
+    const { name, slug } = await req.json();
 
-    if (!name || !name.trim()) {
+    if (!name || !name.trim() || !slug || !slug.trim()) {
       return NextResponse.json(
         { success: false, message: "Category name is required." },
         { status: 400 }
@@ -29,14 +35,26 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       );
     }
 
-    const updated = await prisma.categories.update({
-      where: { id: categoryId },
-      data: { name: name.trim() },
+    // ✅ Optional duplicate check
+    const duplicate = await prisma.categories.findFirst({
+      where: { slug: slug.trim(), NOT: { id: categoryId } },
     });
 
-    return NextResponse.json({ success: true, category: updated });
+    if (duplicate) {
+      return NextResponse.json(
+        { success: false, message: "Category with this name already exists." },
+        { status: 409 }
+      );
+    }
+
+    const updated = await prisma.categories.update({
+      where: { id: categoryId },
+      data: { name: name.trim(), slug: slug.trim() },
+    });
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("PUT Category Error:", error);
+    console.error("❌ PUT Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update category." },
       { status: 500 }
@@ -44,8 +62,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-// ❌ DELETE - Delete category
+// 🗑️ DELETE - Delete category (Protected)
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const categoryId = Number(id);
 
@@ -70,7 +93,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       message: "Category deleted successfully.",
     });
   } catch (error) {
-    console.error("DELETE Category Error:", error);
+    console.error("❌ DELETE Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete category." },
       { status: 500 }

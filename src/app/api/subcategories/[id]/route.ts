@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET Subcategory by ID
-export async function GET(_req: NextRequest, context: RouteContext) {
+// GET subcategory by ID (Protected)
+export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const subcategoryId = Number(id);
@@ -31,7 +37,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: subcategory });
   } catch (error) {
-    console.error("❌ GET Subcategory Error:", error);
+    console.error("GET Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch subcategory." },
       { status: 500 }
@@ -39,8 +45,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ PUT - Update Subcategory
+// PUT - Update subcategory (Protected)
 export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const subcategoryId = Number(id);
@@ -52,11 +63,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const { name, categoryId } = await req.json();
-
-    if (!name || !categoryId) {
+    const { name, slug, categoryId } = await req.json();
+    if (!name || !slug || !categoryId) {
       return NextResponse.json(
-        { success: false, message: "Name and Category are required." },
+        { success: false, message: "Name, slug and Category are required." },
         { status: 400 }
       );
     }
@@ -64,7 +74,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const existing = await prisma.subcategory.findUnique({
       where: { id: subcategoryId },
     });
-
     if (!existing) {
       return NextResponse.json(
         { success: false, message: "Subcategory not found." },
@@ -72,14 +81,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       );
     }
 
-    // ✅ Check duplicate name
-    const duplicate = await prisma.subcategory.findUnique({
-      where: { name },
-    });
-
+    const duplicate = await prisma.subcategory.findUnique({ where: { slug } });
     if (duplicate && duplicate.id !== subcategoryId) {
       return NextResponse.json(
-        { success: false, message: "A subcategory with this name already exists." },
+        { success: false, message: "A subcategory with this slug already exists." },
         { status: 409 }
       );
     }
@@ -88,13 +93,18 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       where: { id: subcategoryId },
       data: {
         name,
+        slug,
         categoryId: Number(categoryId),
       },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({
+      success: true,
+      message: "Subcategory updated successfully.",
+      data: updated,
+    });
   } catch (error) {
-    console.error("❌ PUT Subcategory Error:", error);
+    console.error("PUT Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update subcategory." },
       { status: 500 }
@@ -102,8 +112,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ DELETE Subcategory
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+// DELETE subcategory (Protected)
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const subcategoryId = Number(id);
@@ -135,7 +150,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
       message: "Subcategory deleted successfully.",
     });
   } catch (error) {
-    console.error("❌ DELETE Subcategory Error:", error);
+    console.error("DELETE Subcategory Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete subcategory." },
       { status: 500 }

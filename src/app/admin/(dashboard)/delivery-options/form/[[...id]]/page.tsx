@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import { TextField, Box, Button, FormHelperText } from "@mui/material";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { deliveryOptionService } from "@/lib/services/deliveryOptionService";
+import { ROUTES } from "@/constants/routes";
 
 export default function CreateOrUpdateDeliveryOptionPage() {
   const router = useRouter();
-  const params = useParams(); // ✅ get URL params
-  const id = params?.id?.[0]; // [[...id]] will give array
+  const params = useParams();
+  const id = params?.id?.[0]; // [[...id]] returns array
+  const { data: session, status } = useSession();
 
   const [form, setForm] = useState({
     name: "",
@@ -46,18 +49,29 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     },
   };
 
+  // 🟡 Redirect unauthorized users
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
+  // 🟡 Hydrate page & fetch data if editing
   useEffect(() => {
     setHydrated(true);
-    if (id) {
+    if (id && session?.user?.token) {
       fetchDeliveryOption(Number(id));
     }
-  }, [id]);
+  }, [id, session?.user?.token]);
 
-  // ✅ Fetch existing data if editing
+  // ✅ Fetch existing data (edit mode)
   const fetchDeliveryOption = async (deliveryId: number) => {
     try {
       setLoading(true);
-      const data = await deliveryOptionService.getById(deliveryId);
+      const data = await deliveryOptionService.getById(session?.user?.token as string, deliveryId);
       setForm({
         name: data.name || "",
         description: data.description || "",
@@ -79,6 +93,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }
   };
 
+  // 🟡 Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     setForm((prev) => ({
@@ -87,10 +102,10 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }));
   };
 
+  // ✅ Submit form (create or update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Validation
     if (!form.name.trim()) {
       setPopup({ isOpen: true, type: "warning", message: "Please enter a name." });
       return;
@@ -110,9 +125,10 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }
 
     try {
+      const token = session?.user?.token as string;
       if (id) {
         // 📝 Update
-        await deliveryOptionService.update(Number(id), form);
+        await deliveryOptionService.update(token, Number(id), form);
         setAlert({
           isOpen: true,
           type: "success",
@@ -120,7 +136,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
         });
       } else {
         // ➕ Create
-        await deliveryOptionService.create(form);
+        await deliveryOptionService.create(token, form);
         setAlert({
           isOpen: true,
           type: "success",

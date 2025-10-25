@@ -15,9 +15,13 @@ import {
   ListItemText,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
 export default function BlogListPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,22 +32,30 @@ export default function BlogListPage() {
     isOpen: false,
     type: "",
     message: "",
-    onConfirm: undefined,
-    onCancel: undefined,
   });
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedBlogId, setSelectedBlogId] = useState<number | null>(null);
 
+  // 🛡️ Redirect unauthorized users
   useEffect(() => {
-    fetchBlogs();
-  }, []);
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
+  useEffect(() => {
+    if (session?.user?.token) fetchBlogs();
+  }, [session?.user?.token]);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const data = await blogService.getAll();
-      setBlogs(data);
+      const data :any = await blogService.getAll(session?.user?.token as string);
+      setBlogs(data?.data ?? null);
     } catch {
       showAlert("error", "Failed to fetch blogs.");
     } finally {
@@ -66,7 +78,7 @@ export default function BlogListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedBlogs = filteredBlogs.slice(startIndex, startIndex + pageSize);
 
-  // 🗑️ Delete
+  // 🗑️ Delete blog
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -74,7 +86,7 @@ export default function BlogListPage() {
       message: "Are you sure you want to delete this blog?",
       onConfirm: async () => {
         try {
-          await blogService.remove(id);
+          await blogService.remove(session?.user?.token as string, id);
           showAlert("success", "Blog deleted successfully!");
           fetchBlogs();
         } catch (err: any) {
@@ -85,7 +97,6 @@ export default function BlogListPage() {
     });
   };
 
-  // 📢 Popup helper
   const showAlert = (type: "success" | "error", message: string) => {
     setPopUpAlertData({
       isOpen: true,
@@ -95,7 +106,6 @@ export default function BlogListPage() {
     });
   };
 
-  // ⋮ Menu controls
   const openMenu = (event: React.MouseEvent<HTMLElement>, blogId: number) => {
     setMenuAnchor(event.currentTarget);
     setSelectedBlogId(blogId);
@@ -156,32 +166,28 @@ export default function BlogListPage() {
                   </td>
                 </tr>
               ) : paginatedBlogs.length > 0 ? (
-                paginatedBlogs.map((blog: any, idx) => (
+                paginatedBlogs.map((blog, idx) => (
                   <tr
                     key={blog.id}
-                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-100 transition`}
+                    className={`${
+                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-gray-100 transition`}
                   >
-                    <td className="py-3 px-3 text-center text-gray-600">
-                      {startIndex + idx + 1}
-                    </td>
+                    <td className="py-3 px-3 text-center">{startIndex + idx + 1}</td>
                     <td className="py-3 px-3 text-center">{blog.title}</td>
                     <td className="py-3 px-3 text-center">{blog.slug}</td>
                     <td className="py-3 px-3 text-center">{blog.category?.name}</td>
-                    <td className="py-3 px-3">
-                      <div className="flex justify-center items-center h-full">
-                        {blog.image ? (
-                          <img
-                            src={blog.image}
-                            alt={blog.title}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
+                    <td className="py-3 px-3 text-center">
+                      {blog.image ? (
+                        <img
+                          src={blog.image}
+                          alt={blog.title}
+                          className="w-12 h-12 object-cover rounded mx-auto"
+                        />
+                      ) : (
+                        "-"
+                      )}
                     </td>
-
                     <td className="py-3 px-3 text-center">
                       {new Date(blog.createdAt).toLocaleDateString()}
                     </td>
@@ -203,7 +209,6 @@ export default function BlogListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
         {!loading && filteredBlogs.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -216,16 +221,11 @@ export default function BlogListPage() {
         )}
       </div>
 
-      {/* ⋮ Menu with colored icons */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={closeMenu}
-      >
+      {/* ⋮ Menu */}
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
         <MenuItem
           onClick={() => {
-            // No edit functionality, just placeholder
-            router.push("/admin/blogs/form/" + selectedBlogId)
+            router.push("/admin/blogs/form/" + selectedBlogId);
           }}
         >
           <ListItemIcon>

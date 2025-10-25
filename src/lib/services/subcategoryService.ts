@@ -3,6 +3,7 @@ import { apiFetch } from "../api";
 export interface Subcategory {
   id: number;
   name: string;
+  slug: string;
   categoryId: number;
   createdAt: string;
   category?: {
@@ -12,33 +13,42 @@ export interface Subcategory {
 }
 
 export const subcategoryService = {
- getAll: async (search?: string) => {
+  getAll: (token: string, search?: string) => {
     const url = search
       ? `/api/subcategories?search=${encodeURIComponent(search)}`
       : `/api/subcategories`;
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Failed to fetch subcategories");
-    return res.json();
+    return apiFetch(url, {}, token);
   },
 
-  getById: (id: number): Promise<Subcategory> =>
-    apiFetch(`/api/subcategories/${id}`),
+  getById: (token: string, id: number): Promise<Subcategory> =>
+    apiFetch(`/api/subcategories/${id}`, {}, token),
 
-  create: (data: Partial<Subcategory>): Promise<Subcategory> =>
-    apiFetch("/api/subcategories", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  create: (token: string, data: Partial<Subcategory>): Promise<Subcategory> =>
+    apiFetch(
+      "/api/subcategories",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
 
-  update: (id: number, data: Partial<Subcategory>): Promise<Subcategory> =>
-    apiFetch(`/api/subcategories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+  update: (token: string, id: number, data: Partial<Subcategory>): Promise<Subcategory> =>
+    apiFetch(
+      `/api/subcategories/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
 
-  remove: (id: number): Promise<{ message: string }> =>
-    apiFetch(`/api/subcategories/${id}`, {
-      method: "DELETE",
-    }),
+  remove: (token: string, id: number): Promise<{ message: string }> =>
+    apiFetch(
+      `/api/subcategories/${id}`,
+      {
+        method: "DELETE",
+      },
+      token
+    ),
 };

@@ -1,62 +1,69 @@
-import { NextResponse } from "next/server";
-import { PrismaClient, Prisma  } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma :any= new PrismaClient();
+const prisma = new PrismaClient();
 
+// 📌 GET all colors (Protected)
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-// 📌 GET all colors
-export async function GET() {
   try {
-    const colors = await prisma.Colors.findMany({
+    const colors = await prisma.colors.findMany({
       orderBy: { id: "desc" },
     });
-    return NextResponse.json(colors);
+
+    return NextResponse.json({ success: true, data: colors });
   } catch (error) {
-    console.error("GET Colors Error:", error);
-    return NextResponse.json({ error: "Failed to fetch colors" }, { status: 500 });
+    console.error("❌ GET Colors Error:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch colors." },
+      { status: 500 }
+    );
   }
 }
 
+// 🟢 POST - Create new color (Protected)
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-
-export async function POST(req: Request) {
   try {
     const { name, hexCode, rgbCode, description } = await req.json();
 
     if (!name || !hexCode) {
       return NextResponse.json(
-        { success: false, message: "Name and hex code are required" },
+        { success: false, message: "Name and hex code are required." },
         { status: 400 }
       );
     }
 
-    const color = await prisma.Colors.create({
-      data: { name, hexCode, rgbCode, description },
+    const color = await prisma.colors.create({
+      data: { name: name.trim(), hexCode: hexCode.trim(), rgbCode, description },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Color created successfully",
+      message: "Color created successfully.",
       data: color,
     });
   } catch (error: any) {
-    console.error("POST Color Error:", error);
+    console.error("❌ POST Color Error:", error);
 
-    // ✅ Use `Prisma` namespace, not `prisma` instance
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "A color with this name already exists. Please choose a different name.",
-          },
-          { status: 409 }
-        );
-      }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json(
+        { success: false, message: "A color with this name already exists." },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json(
-      { success: false, message: "Failed to create color. Please try again." },
+      { success: false, message: "Failed to create color." },
       { status: 500 }
     );
   }

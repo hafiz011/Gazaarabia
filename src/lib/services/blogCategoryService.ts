@@ -9,25 +9,48 @@ export interface BlogCategory {
 }
 
 export const blogCategoryService = {
-  getAll: (): Promise<BlogCategory[]> => apiFetch("/api/blog-categories"),
+  // Get all categories
+  getAll: (token: string): Promise<BlogCategory[]> =>
+    apiFetch("/api/blog-categories", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
 
-  getById: (id: number): Promise<BlogCategory> =>
-    apiFetch(`/api/blog-categories/${id}`),
+  // Get single category by ID
+  getById: (token: string, id: number): Promise<BlogCategory> =>
+    apiFetch(`/api/blog-categories/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
 
-  create: (data: Partial<BlogCategory>): Promise<BlogCategory> =>
+  // Create new category
+  create: (token: string, data: Partial<BlogCategory>): Promise<BlogCategory> =>
     apiFetch("/api/blog-categories", {
       method: "POST",
       body: JSON.stringify(data),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }),
 
-  update: (id: number, data: Partial<BlogCategory>): Promise<BlogCategory> =>
+  // Update category
+  update: (token: string, id: number, data: Partial<BlogCategory>): Promise<BlogCategory> =>
     apiFetch(`/api/blog-categories/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }),
 
-  remove: (id: number): Promise<{ message: string }> =>
+  // Delete category
+  remove: (token: string, id: number): Promise<{ message: string }> =>
     apiFetch(`/api/blog-categories/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }),
 };

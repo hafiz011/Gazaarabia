@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET product by ID
-export async function GET(_req: NextRequest, context: RouteContext) {
+// ✅ GET product by ID (Protected)
+export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const productId = Number(id);
 
     if (!productId) {
-      return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
     const product = await prisma.products.findUnique({
@@ -26,12 +32,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     });
 
     if (!product) {
-      return NextResponse.json({ message: "Product not found" }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
-    console.error("❌ GET product error:", error);
+    console.error("❌ GET Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch product" },
       { status: 500 }
@@ -39,19 +45,24 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ PUT - Update product
+// ✅ PUT - Update product (Protected)
 export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const productId = Number(id);
 
     if (!productId) {
-      return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
     const body = await req.json();
 
-    // Delete existing images and variants
+    // Delete existing images and variants before updating
     await prisma.productimage.deleteMany({ where: { productId } });
     await prisma.productvariant.deleteMany({ where: { productId } });
 
@@ -101,9 +112,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({ success: true, message: "Product updated successfully", data: updated });
   } catch (error) {
-    console.error("❌ PUT product error:", error);
+    console.error("❌ PUT Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update product" },
       { status: 500 }
@@ -111,34 +122,33 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ DELETE product
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+// ✅ DELETE product (Protected)
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const productId = Number(id);
 
     if (!productId) {
-      return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
-    // 1. Delete related variants
-    await prisma.productvariant.deleteMany({
-      where: { productId },
-    });
+    // 1. Delete variants
+    await prisma.productvariant.deleteMany({ where: { productId } });
 
-    // 2. Delete related images
-    await prisma.productimage.deleteMany({
-      where: { productId },
-    });
+    // 2. Delete images
+    await prisma.productimage.deleteMany({ where: { productId } });
 
-    // 3. Delete the product itself
-    await prisma.products.delete({
-      where: { id: productId },
-    });
+    // 3. Delete product
+    await prisma.products.delete({ where: { id: productId } });
 
     return NextResponse.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.error("❌ DELETE product error:", error);
+    console.error("❌ DELETE Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete product" },
       { status: 500 }

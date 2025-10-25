@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import slugify from "slugify";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET by ID
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+//  GET (Protected)
+export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
-
     const category = await prisma.blogCategories.findUnique({
       where: { id: Number(id) },
     });
@@ -17,18 +23,23 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: "Category not found." }, { status: 404 });
     }
 
-    return NextResponse.json(category);
+    return NextResponse.json({ success: true, data: category });
   } catch (error) {
-    console.error("GET error:", error);
+    console.error("GET Category Error:", error);
     return NextResponse.json({ error: "Internal Server Error." }, { status: 500 });
   }
 }
 
-// ✅ PUT (Update)
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+// PUT (Protected)
+export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
-    const { name, slug } = await request.json();
+    const { name, slug } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required." }, { status: 400 });
@@ -36,7 +47,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     const finalSlug = slug?.trim() || slugify(name, { lower: true, strict: true });
 
-    // Check for duplicates
+    // Check duplicate
     const duplicate = await prisma.blogCategories.findFirst({
       where: {
         OR: [{ name }, { slug: finalSlug }],
@@ -56,7 +67,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data: { name, slug: finalSlug },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
@@ -65,13 +76,18 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       );
     }
 
-    console.error("PUT error:", error);
+    console.error("PUT Category Error:", error);
     return NextResponse.json({ error: "Internal Server Error." }, { status: 500 });
   }
 }
 
-// ✅ DELETE
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+//  DELETE (Protected)
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
 
@@ -79,12 +95,9 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       where: { id: Number(id) },
     });
 
-    return NextResponse.json({ message: "Deleted successfully." });
+    return NextResponse.json({ success: true, message: "Deleted successfully." });
   } catch (error) {
-    console.error("DELETE error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete category." },
-      { status: 500 }
-    );
+    console.error("DELETE Category Error:", error);
+    return NextResponse.json({ error: "Failed to delete category." }, { status: 500 });
   }
 }

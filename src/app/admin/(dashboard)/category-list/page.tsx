@@ -7,6 +7,10 @@ import PopupAlert from "@/components/PopupAlert";
 import { categoryService, Category } from "@/lib/services/categoryService";
 import { useModalStore } from "@/lib/stores/modalStore";
 import { PopUpInterface } from "@/lib/types";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
+import Loader from "@/components/Loader";
 
 export default function CategoryListPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -16,6 +20,7 @@ export default function CategoryListPage() {
   const [loading, setLoading] = useState(true);
 
   const [formName, setFormName] = useState("");
+  const [formSlug, setFormSlug] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -31,26 +36,28 @@ export default function CategoryListPage() {
     onCancel: undefined,
   });
 
+  const { data: session, status } = useSession();
+  const token = session?.user?.token;
+  const router = useRouter();
+
+  // 🛡️ Auth guard
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
+    else if (status === "authenticated" && session?.user?.role !== "admin")
+      router.replace(ROUTES.HOME);
+  }, [status, session, router]);
+
   // 📥 Fetch categories
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (modalAction === "category") {
-      setFormName("");
-      setEditId(null);
-      setIsEditing(false);
-      setIsModalOpen(true);
-      clearModal();
-    }
-  }, [modalAction, clearModal]);
+    if (token) fetchCategories();
+  }, [token]);
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const data = await categoryService.getAll();
-      setCategories(data);
+      const data: any = await categoryService.getAll(token!);
+      setCategories(data?.data ?? null);
     } catch (error) {
       setPopUpAlertData({
         isOpen: true,
@@ -63,6 +70,18 @@ export default function CategoryListPage() {
       setLoading(false);
     }
   };
+
+  // 🔁 Reset modal state
+  useEffect(() => {
+    if (modalAction === "category") {
+      setFormName("");
+      setFormSlug("")
+      setEditId(null);
+      setIsEditing(false);
+      setIsModalOpen(true);
+      clearModal();
+    }
+  }, [modalAction, clearModal]);
 
   // 🧮 Filter + Paginate
   const filteredCategories = useMemo(() => {
@@ -82,25 +101,24 @@ export default function CategoryListPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
+    if (!formSlug.trim()) return;
 
     try {
       if (isEditing && editId) {
-        await categoryService.update(editId, { name: formName });
+        await categoryService.update(token!, editId, { name: formName , slug: formSlug});
         setPopUpAlertData({
           isOpen: true,
           type: "success",
           message: "Category updated successfully!",
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-          onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       } else {
-        await categoryService.create({ name: formName });
+        await categoryService.create(token!, { name: formName, slug: formSlug });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
           message: "Category added successfully!",
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-          onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       }
       setIsModalOpen(false);
@@ -111,7 +129,6 @@ export default function CategoryListPage() {
         type: "error",
         message: err.message || "Failed to save category.",
         onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-        onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
     }
   };
@@ -119,6 +136,7 @@ export default function CategoryListPage() {
   // ✏️ Edit
   const handleEdit = (category: Category) => {
     setFormName(category.name);
+    setFormSlug(category.slug);
     setEditId(category.id);
     setIsEditing(true);
     setIsModalOpen(true);
@@ -132,13 +150,12 @@ export default function CategoryListPage() {
       message: "Are you sure you want to delete this category?",
       onConfirm: async () => {
         try {
-          await categoryService.remove(id);
+          await categoryService.remove(token!, id);
           setPopUpAlertData({
             isOpen: true,
             type: "success",
             message: "Category deleted successfully!",
             onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-            onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
           fetchCategories();
         } catch (err: any) {
@@ -147,13 +164,14 @@ export default function CategoryListPage() {
             type: "error",
             message: err.message || "Failed to delete category.",
             onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-            onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
         }
       },
       onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
     });
   };
+
+  if (status === "loading" || loading) return <Loader />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -181,66 +199,62 @@ export default function CategoryListPage() {
 
         {/* ✅ Table */}
         <div className="overflow-x-auto">
-  <table className="min-w-full text-sm">
-    <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
-      <tr>
-        <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
-        <th className="py-3 px-3 text-center">Category Name</th>
-        <th className="py-3 px-3 text-center">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {loading ? (
-        <tr>
-          <td colSpan={3} className="py-12 text-center text-gray-500 text-sm">
-            Loading categories...
-          </td>
-        </tr>
-      ) : paginatedCategories.length > 0 ? (
-        paginatedCategories.map((cat, idx) => (
-          <tr
-            key={cat.id}
-            className={`${
-              idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-            } hover:bg-gray-100 transition`}
-          >
-            <td className="py-3 px-3 text-center text-gray-600">
-              {startIndex + idx + 1}
-            </td>
-            <td className="py-3 px-3 text-center text-gray-800 font-medium">
-              {cat.name}
-            </td>
-            <td className="py-3 px-3 text-center">
-              <div className="flex justify-center gap-1">
-                <button
-                  onClick={() => handleEdit(cat)}
-                  className="p-1.5 text-[var(--brand-secondary)] hover:bg-gray-100 rounded-full"
-                  title="Edit"
-                >
-                  <Pencil size={18} />
-                </button>
-                <button
-                  onClick={() => handleDelete(cat.id)}
-                  className="p-1.5 text-[var(--brand-primary)] hover:bg-gray-100 rounded-full"
-                  title="Delete"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td colSpan={3} className="py-12 text-center text-gray-500 text-sm">
-            No categories found
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
-
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
+              <tr>
+                <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
+                <th className="py-3 px-3 text-center">Category Name</th>
+                <th className="py-3 px-3 text-center">Slug</th>
+                <th className="py-3 px-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedCategories.length > 0 ? (
+                paginatedCategories.map((cat, idx) => (
+                  <tr
+                    key={cat.id}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
+                  >
+                    <td className="py-3 px-3 text-center text-gray-600">
+                      {startIndex + idx + 1}
+                    </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {cat.name}
+                    </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {cat.slug}
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <div className="flex justify-center gap-1">
+                        <button
+                          onClick={() => handleEdit(cat)}
+                          className="p-1.5 text-[var(--brand-secondary)] hover:bg-gray-100 rounded-full"
+                          title="Edit"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cat.id)}
+                          className="p-1.5 text-[var(--brand-primary)] hover:bg-gray-100 rounded-full"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="py-12 text-center text-gray-500 text-sm">
+                    No categories found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* ✅ Pagination */}
         {!loading && filteredCategories.length > 0 && (
@@ -278,6 +292,18 @@ export default function CategoryListPage() {
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. T-Shirts"
               />
+
+
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Category Slug <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={formSlug}
+                onChange={(e) => setFormSlug(e.target.value)}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="e.g. T-Shirts"
+              />
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"

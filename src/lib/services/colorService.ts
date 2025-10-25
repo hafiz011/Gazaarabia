@@ -11,26 +11,26 @@ export interface Color {
 }
 
 export const colorService = {
-  getAll: (): Promise<Color[]> =>
-    apiFetch("/api/colors"),
+  getAll: (token: string): Promise<Color[]> =>
+    apiFetch("/api/colors", {}, token),
 
-  getById: (id: number): Promise<Color> =>
-    apiFetch(`/api/colors/${id}`),
+  getById: (token: string, id: number): Promise<Color> =>
+    apiFetch(`/api/colors/${id}`, {}, token),
 
-  create: (data: Partial<Color>): Promise<Color> =>
+  create: (token: string, data: Partial<Color>): Promise<Color> =>
     apiFetch("/api/colors", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, token),
 
-  update: (id: number, data: Partial<Color>): Promise<Color> =>
+  update: (token: string, id: number, data: Partial<Color>): Promise<Color> =>
     apiFetch(`/api/colors/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    }),
+    }, token),
 
-  remove: (id: number): Promise<{ message: string }> =>
+  remove: (token: string, id: number): Promise<{ message: string }> =>
     apiFetch(`/api/colors/${id}`, {
       method: "DELETE",
-    }),
+    }, token),
 };

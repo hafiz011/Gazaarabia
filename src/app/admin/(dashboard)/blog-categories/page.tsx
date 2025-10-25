@@ -4,12 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2, X, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
-import { blogCategoryService, BlogCategory } from "@/lib/services/blogCategoryService";
+import TextField from "@mui/material/TextField";
 import { useModalStore } from "@/lib/stores/modalStore";
+import { blogCategoryService, BlogCategory } from "@/lib/services/blogCategoryService";
 import { PopUpInterface } from "@/lib/types";
-import TextField from "@mui/material/TextField"; // ✅ MUI input
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
 
 export default function BlogCategoriesPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,14 +35,22 @@ export default function BlogCategoriesPage() {
     isOpen: false,
     type: "",
     message: "",
-    onConfirm: undefined,
-    onCancel: undefined,
   });
 
-  // 📥 Fetch categories
+  // 🟡 Redirect unauthorized users
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
+  // 📥 Fetch categories with token
+  useEffect(() => {
+    if (session?.user?.token) fetchCategories();
+  }, [session?.user?.token]);
 
   useEffect(() => {
     if (modalAction === "blog-category") {
@@ -52,15 +66,14 @@ export default function BlogCategoriesPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const data = await blogCategoryService.getAll();
-      setCategories(data);
+      const data :any = await blogCategoryService.getAll(session?.user?.token as string);
+      setCategories(data?.data ?? null);
     } catch (error) {
       setPopUpAlertData({
         isOpen: true,
         type: "error",
         message: "Failed to fetch blog categories.",
         onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-        onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
       });
     } finally {
       setLoading(false);
@@ -87,23 +100,28 @@ export default function BlogCategoriesPage() {
     if (!formName.trim() || !formSlug.trim()) return;
 
     try {
+      const token = session?.user?.token as string;
       if (isEditing && editId) {
-        await blogCategoryService.update(editId, { name: formName, slug: formSlug });
+        await blogCategoryService.update(token, editId, {
+          name: formName,
+          slug: formSlug,
+        });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
           message: "Category updated successfully!",
           onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-          onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
         });
       } else {
-        await blogCategoryService.create({ name: formName, slug: formSlug });
+        await blogCategoryService.create(token, {
+          name: formName,
+          slug: formSlug,
+        });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
           message: "Category added successfully!",
           onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-          onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
         });
       }
       setIsModalOpen(false);
@@ -114,7 +132,6 @@ export default function BlogCategoriesPage() {
         type: "error",
         message: err.message || "Failed to save category.",
         onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-        onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
       });
     }
   };
@@ -128,7 +145,7 @@ export default function BlogCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  // 🗑️ Delete
+  // 🗑️ Delete with token
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -136,13 +153,12 @@ export default function BlogCategoriesPage() {
       message: "Are you sure you want to delete this category?",
       onConfirm: async () => {
         try {
-          await blogCategoryService.remove(id);
+          await blogCategoryService.remove(session?.user?.token as string, id);
           setPopUpAlertData({
             isOpen: true,
             type: "success",
             message: "Category deleted successfully!",
             onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-            onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
           });
           fetchCategories();
         } catch (err: any) {
@@ -151,7 +167,6 @@ export default function BlogCategoriesPage() {
             type: "error",
             message: err.message || "Failed to delete category.",
             onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
-            onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
           });
         }
       },
@@ -164,7 +179,9 @@ export default function BlogCategoriesPage() {
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
         {/* ✅ Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-800">Manage Blog Categories</h1>
+          <h1 className="text-xl font-semibold text-gray-800">
+            Manage Blog Categories
+          </h1>
           <div className="relative w-full sm:w-72" suppressHydrationWarning>
             <Search size={18} className="absolute left-3 top-3 text-gray-400" />
             <TextField
@@ -179,7 +196,7 @@ export default function BlogCategoriesPage() {
                 setCurrentPage(1);
               }}
               InputProps={{
-                sx: { pl: 4 }, // padding left to align with icon
+                sx: { pl: 4 },
               }}
             />
           </div>
@@ -219,7 +236,9 @@ export default function BlogCategoriesPage() {
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {cat.name}
                     </td>
-                    <td className="py-3 px-3 text-center text-gray-800">{cat.slug}</td>
+                    <td className="py-3 px-3 text-center text-gray-800">
+                      {cat.slug}
+                    </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex justify-center gap-1">
                         <button

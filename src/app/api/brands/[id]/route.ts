@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
+type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET brand by ID
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+// 🔐 GET - Get single brand by ID
+export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
 
@@ -29,8 +36,13 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-// ✅ UPDATE brand
-export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+// 🔐 PUT - Update brand
+export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const { name, logo, isTrending } = await req.json();
@@ -38,8 +50,8 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     const updated = await prisma.brand.update({
       where: { id: Number(id) },
       data: {
-        name,
-        logo,
+        name: name?.trim(),
+        logo: logo || null,
         isTrending: Boolean(isTrending),
       },
     });
@@ -54,8 +66,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-// ✅ DELETE brand
-export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+// 🔐 DELETE - Delete brand
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
 

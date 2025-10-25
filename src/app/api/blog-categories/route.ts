@@ -1,17 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import slugify from "slugify";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
+const prisma = new PrismaClient();
 
-export async function GET() {
+// 🔐 GET - Protected
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const categories = await prisma.blogCategories.findMany({
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(categories);
+
+    return NextResponse.json({ success: true, data: categories });
   } catch (error) {
-    console.error("GET error:", error);
+    console.error("❌ GET Categories Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch categories." },
       { status: 500 }
@@ -19,7 +27,13 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+// 🔐 POST - Protected
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { name, slug } = await req.json();
 
@@ -36,7 +50,7 @@ export async function POST(req: Request) {
         ? slug
         : slugify(name, { lower: true, strict: true });
 
-    // ✅ Check duplicate name or slug
+    // ✅ Check duplicate
     const existing = await prisma.blogCategories.findFirst({
       where: {
         OR: [{ name }, { slug: finalSlug }],
@@ -54,7 +68,7 @@ export async function POST(req: Request) {
       data: { name, slug: finalSlug },
     });
 
-    return NextResponse.json(category, { status: 201 });
+    return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
@@ -63,7 +77,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.error("POST error:", error);
+    console.error("❌ POST Category Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error." },
       { status: 500 }

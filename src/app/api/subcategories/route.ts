@@ -1,61 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
+const prisma :any = new PrismaClient();
 
-// ✅ GET all subcategories with optional search
-// export async function GET(req: Request) {
-//   try {
-//     // Get search param from URL
-//     const { searchParams } = new URL(req.url);
-//     const search = searchParams.get("search") || "";
+// GET all subcategories with optional search (Protected)
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-//     const subcategories = await prisma.subcategory.findMany({
-//       where: search
-//         ? {
-//             OR: [
-//               {
-//                 name: {
-//                   contains: search,
-//                   mode: "insensitive", // case-insensitive search
-//                 },
-//               },
-//               {
-//                 category: {
-//                   name: {
-//                     contains: search,
-//                     mode: "insensitive",
-//                   },
-//                 },
-//               },
-//             ],
-//           }
-//         : undefined,
-//       orderBy: { createdAt: "desc" },
-//       include: { category: true },
-//     });
-
-//     return NextResponse.json(
-//       {
-//         success: true,
-//         message:
-//           subcategories.length === 0
-//             ? "No subcategories found"
-//             : "Subcategories fetched successfully",
-//         data: subcategories,
-//       },
-//       { status: 200 }
-//     );
-//   } catch (error) {
-//     console.error("GET Subcategories Error:", error);
-//     return NextResponse.json(
-//       { success: false, message: "Failed to fetch subcategories." },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
@@ -64,18 +19,8 @@ export async function GET(req: Request) {
       where: search
         ? {
             OR: [
-              {
-                name: {
-                  contains: search,
-                },
-              },
-              {
-                category: {
-                  name: {
-                    contains: search,
-                  },
-                },
-              },
+              { name: { contains: search, mode: "insensitive" } },
+              { category: { name: { contains: search, mode: "insensitive" } } },
             ],
           }
         : undefined,
@@ -83,17 +28,14 @@ export async function GET(req: Request) {
       include: { category: true },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message:
-          subcategories.length === 0
-            ? "No subcategories found"
-            : "Subcategories fetched successfully",
-        data: subcategories,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message:
+        subcategories.length === 0
+          ? "No subcategories found."
+          : "Subcategories fetched successfully.",
+      data: subcategories,
+    });
   } catch (error) {
     console.error("GET Subcategories Error:", error);
     return NextResponse.json(
@@ -103,21 +45,25 @@ export async function GET(req: Request) {
   }
 }
 
-// ✅ Create new subcategory
-export async function POST(req: Request) {
-  try {
-    const { name, categoryId } = await req.json();
+// Create new subcategory (Protected)
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!name || !categoryId) {
+  try {
+    const { name, slug, categoryId } = await req.json();
+
+    if (!name || !slug || !categoryId) {
       return NextResponse.json(
-        { success: false, message: "Name and Category are required." },
+        { success: false, message: "Name, slug and Category are required." },
         { status: 400 }
       );
     }
 
-    // Check for duplicate
     const exists = await prisma.subcategory.findUnique({
-      where: { name },
+      where: { slug },
     });
 
     if (exists) {
@@ -128,13 +74,14 @@ export async function POST(req: Request) {
     }
 
     const newSubcategory = await prisma.subcategory.create({
-      data: { name, categoryId },
+      data: { name, slug, categoryId },
     });
 
-    return NextResponse.json(
-      { success: true, data: newSubcategory },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Subcategory created successfully.",
+      data: newSubcategory,
+    });
   } catch (error) {
     console.error("POST Subcategory Error:", error);
     return NextResponse.json(

@@ -1,19 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
-
-
+const prisma = new PrismaClient();
 
 /**
- * GET /api/material-care
- * Search in title, careType, material, description
+ * @route GET /api/material-care
+ * @desc Get all material care records with search (Protected)
  */
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const rawSearch = searchParams.get("search") || "";
-    const search = rawSearch.trim().toLowerCase(); // lower for insensitive match
+    const search = rawSearch.trim().toLowerCase();
 
     const where = search
       ? {
@@ -31,18 +35,15 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: materialCares.length
-          ? "Material care records fetched successfully."
-          : "No records found.",
-        data: materialCares,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: materialCares.length
+        ? "Material care records fetched successfully."
+        : "No records found.",
+      data: materialCares,
+    });
   } catch (error) {
-    console.error("[GET /api/material-care] Error:", error);
+    console.error("❌ GET MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch material care records." },
       { status: 500 }
@@ -50,9 +51,16 @@ export async function GET(req: Request) {
   }
 }
 
+/**
+ * @route POST /api/material-care
+ * @desc Create a new material care record (Protected)
+ */
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-// ✅ POST (create)
-export async function POST(req: Request) {
   try {
     const { title, description, careType, material, icon } = await req.json();
 
@@ -73,11 +81,15 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: newItem }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      message: "Material care item created successfully.",
+      data: newItem,
+    });
   } catch (error) {
-    console.error("POST MaterialCare Error:", error);
+    console.error("❌ POST MaterialCare Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to create material care." },
+      { success: false, message: "Failed to create material care item." },
       { status: 500 }
     );
   }

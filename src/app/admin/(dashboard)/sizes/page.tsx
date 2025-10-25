@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Pencil, Trash2, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import { sizeService } from "@/lib/services/sizeService";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
+import Loader from "@/components/Loader";
 
 interface Size {
   id: number;
@@ -16,7 +19,8 @@ interface Size {
 }
 
 export default function SizeListPage() {
-   const router = useRouter();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
   const [sizes, setSizes] = useState<Size[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,23 +34,44 @@ export default function SizeListPage() {
     message: "",
   });
 
+  const token = session?.user?.token;
+
+  // 🛡️ Redirect if not logged in
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
   // ✅ Fetch sizes
-  const fetchSizes = async () => {
+  const fetchSizes = useCallback(async () => {
+    if (!token) return; // prevent calling without token
     try {
       setLoading(true);
-      const data = await sizeService.getAll();
+      const data = await sizeService.getAll(token);
       setSizes(data);
     } catch (error) {
-      console.error("Error fetching sizes:", error);
+      console.error("❌ Error fetching sizes:", error);
+      setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Failed to fetch sizes.",
+        onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchSizes();
-  }, []);
+  }, [fetchSizes]);
 
+  // ✅ Search + pagination
   const filteredSizes = useMemo(() => {
     return sizes.filter(
       (size) =>
@@ -67,7 +92,9 @@ export default function SizeListPage() {
       message: "Are you sure you want to delete this size?",
       onConfirm: async () => {
         try {
-          await sizeService.remove(id);
+          if (!token) throw new Error("Unauthorized");
+
+          await sizeService.remove(token, id);
           setSizes((prev) => prev.filter((s) => s.id !== id));
 
           const newTotalPages = Math.ceil((sizes.length - 1) / pageSize);
@@ -79,14 +106,16 @@ export default function SizeListPage() {
             isOpen: true,
             type: "success",
             message: "Size deleted successfully!",
-            onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+            onConfirm: () =>
+              setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
         } catch (error: any) {
           setPopUpAlertData({
             isOpen: true,
             type: "error",
             message: error.message || "Failed to delete size",
-            onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+            onConfirm: () =>
+              setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
         }
       },
@@ -94,10 +123,12 @@ export default function SizeListPage() {
     });
   };
 
+  // ✏️ Edit size
   const handleEdit = (id: number) => {
-    console.log("Edit size", id);
-    router.push("/admin/size-add?id="+id)
+    router.push(`/admin/size-add?id=${id}`);
   };
+
+  if (status === "loading" || loading) return <Loader />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -136,13 +167,7 @@ export default function SizeListPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500 text-sm">
-                    Loading sizes...
-                  </td>
-                </tr>
-              ) : paginatedSizes.length > 0 ? (
+              {paginatedSizes.length > 0 ? (
                 paginatedSizes.map((size, idx) => (
                   <tr
                     key={size.id}
@@ -150,14 +175,19 @@ export default function SizeListPage() {
                       idx % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-gray-100 transition`}
                   >
-                    <td className="py-3 px-5 text-gray-600">{startIndex + idx + 1}</td>
-                    <td className="py-3 px-5 font-medium text-gray-800">{size.name}</td>
-                    <td className="py-3 px-5 text-gray-600">{size.description || "-"}</td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {startIndex + idx + 1}
+                    </td>
+                    <td className="py-3 px-5 font-medium text-gray-800">
+                      {size.name}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {size.description || "-"}
+                    </td>
                     <td className="py-3 px-5 text-gray-600">
                       {new Date(size.createdAt).toLocaleDateString()}
                     </td>
-                    {/* <td className="py-3 px-5 text-right flex justify-end gap-3"> */}
-                   <td className="py-3 px-3 text-right">
+                    <td className="py-3 px-3 text-right">
                       <button
                         onClick={() => handleEdit(size.id)}
                         title="Edit"
@@ -184,7 +214,10 @@ export default function SizeListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500 text-sm">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-gray-500 text-sm"
+                  >
                     No sizes found
                   </td>
                 </tr>
@@ -211,7 +244,9 @@ export default function SizeListPage() {
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}
         confirmText={popUpAlertData.type === "confirm" ? "Yes" : "OK"}
-        cancelText={popUpAlertData.type === "confirm" ? "Cancel" : undefined}
+        cancelText={
+          popUpAlertData.type === "confirm" ? "Cancel" : undefined
+        }
         onConfirm={popUpAlertData.onConfirm}
         onCancel={popUpAlertData.onCancel}
         show={popUpAlertData.isOpen}

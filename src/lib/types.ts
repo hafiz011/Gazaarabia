@@ -73,6 +73,7 @@ export interface Blog {
   content: string;
   image?: string;
   categoryId: number;
+  category: any,
   createdAt: string;
   updatedAt: string;
 }

@@ -7,31 +7,28 @@ import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
 import { brandService } from "@/lib/services/brandService";
+import { useSession } from "next-auth/react";
 
 export default function BrandFormPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id?.[0]; // [[...id]] support
+  const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
-  // 📝 Form State
+  const { data: session } = useSession();
+  const token = session?.user?.token;
+
   const [formData, setFormData] = useState({
     name: "",
     logo: "",
     isTrending: false,
   });
 
-  // 📸 Logo Preview
   const [preview, setPreview] = useState<string>("");
-
-  // ⚡ Loading States
   const [fetching, setFetching] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // 📤 File Input Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ⚠️ Alerts
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
@@ -43,29 +40,21 @@ export default function BrandFormPage() {
     message: "",
   });
 
-  // 🧭 Fetch brand data if editing
   useEffect(() => {
-    if (isEditMode) fetchBrandData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+    if (isEditMode && token) fetchBrandData();
+  }, [id, token]);
 
   const fetchBrandData = async () => {
     try {
       setFetching(true);
-      const res = await brandService.getById(Number(id));
-
-      // Handle both raw and nested API formats
+      const res = await brandService.getById(token!, Number(id));
       const data = res?.data ?? res;
-
       setFormData({
         name: data.name || "",
         logo: data.logo || "",
         isTrending: Boolean(data.isTrending),
       });
-
-      if (data.logo) {
-        setPreview(data.logo);
-      }
+      if (data.logo) setPreview(data.logo);
     } catch (error: any) {
       setAlertMessageData({
         isOpen: true,
@@ -134,14 +123,14 @@ export default function BrandFormPage() {
       setAlertMessageData({ isOpen: false, type: "", message: "" });
 
       if (isEditMode) {
-        await brandService.update(Number(id), formData);
+        await brandService.update(token!, Number(id), formData);
         setAlertMessageData({
           isOpen: true,
           type: "success",
           message: "Brand updated successfully!",
         });
       } else {
-        await brandService.create(formData);
+        await brandService.create(token!, formData);
         setAlertMessageData({
           isOpen: true,
           type: "success",
@@ -168,7 +157,6 @@ export default function BrandFormPage() {
           {isEditMode ? "Edit Brand" : "Add Brand"}
         </h1>
 
-        {/* ✅ Alert Message */}
         {alertMessageData.isOpen && alertMessageData.type && (
           <AlertMessage
             type={alertMessageData.type}
@@ -191,7 +179,7 @@ export default function BrandFormPage() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
+              className="w-full border rounded px-3 py-2 mb-5"
               placeholder="e.g. Nike"
               required
             />
@@ -241,7 +229,6 @@ export default function BrandFormPage() {
               </label>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
@@ -270,7 +257,6 @@ export default function BrandFormPage() {
           </form>
         )}
 
-        {/* 🆕 Popup Alert */}
         <PopupAlert
           type={popUpAlertData.type as any}
           message={popUpAlertData.message}

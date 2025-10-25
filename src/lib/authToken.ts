@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { NextRequest } from "next/server";
 
 /**
  * Extract JWT token from either Authorization header or Cookie
@@ -22,9 +23,9 @@ export function getTokenFromHeader(req: Request): string | null {
 }
 
 /**
- * 🪪 Decode and get the user ID from token
+ *  Decode and get the user ID from token
  */
-export function getUserIdFromToken(token:string): number | null {
+export function getUserIdFromToken(token: string): number | null {
   try {
     if (!token) return null;
 
@@ -34,4 +35,16 @@ export function getUserIdFromToken(token:string): number | null {
     console.error("JWT verification failed:", error);
     return null;
   }
+
+}
+
+
+/**
+ *  Middleware-like helper to check token and return user ID
+ */
+export async function checkAuth(req: NextRequest): Promise<number | null> {
+  const token: any = getTokenFromHeader(req);
+  const userId = getUserIdFromToken(token);
+  if (!userId) return null;
+  return userId;
 }

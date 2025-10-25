@@ -7,6 +7,7 @@ import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { productService } from "@/lib/services/productService";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Product {
   id: number;
@@ -14,19 +15,22 @@ interface Product {
   sellingPrice: number;
   brand?: { name: string };
   category?: { name: string };
-  images?: { url: string }[];
+  // images?: { url: string }[];
+  productimage?: { url: string }[];
   active: boolean;
   createdAt: string;
 }
 
 export default function ProductListPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const token = session?.user?.token;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
-
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
@@ -36,7 +40,7 @@ export default function ProductListPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await productService.getAll();
+      const res = await productService.getAll(token!, searchTerm);
       setProducts(res.data || res);
     } catch (error) {
       console.error("❌ Error fetching products:", error);
@@ -46,8 +50,8 @@ export default function ProductListPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (token) fetchProducts();
+  }, [token, searchTerm]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) =>
@@ -57,10 +61,7 @@ export default function ProductListPage() {
 
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + pageSize
-  );
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
 
   const handleDelete = (id: number) => {
     setPopUpAlertData({
@@ -68,9 +69,9 @@ export default function ProductListPage() {
       type: "confirm",
       message: "Are you sure you want to delete this product?",
       onConfirm: async () => {
-        await productService.remove(id);
+        await productService.remove(token!, id);
         setProducts((prev) => prev.filter((p) => p.id !== id));
-          setPopUpAlertData((prev) => ({ ...prev, isOpen: false }));
+        setPopUpAlertData((prev) => ({ ...prev, isOpen: false }));
       },
       onCancel: () =>
         setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
@@ -84,7 +85,7 @@ export default function ProductListPage() {
   return (
     <div className="p-4 sm:p-6 mx-auto w-full">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Products</h1>
           <div className="relative w-full md:w-72">
@@ -105,18 +106,8 @@ export default function ProductListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Scrollable Table */}
-        <div
-          className="
-            w-full
-            overflow-x-scroll
-            overflow-y-hidden
-            scrollbar-thin
-            scrollbar-thumb-gray-400
-            scrollbar-track-gray-200
-            "
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
+        {/* Table */}
+        <div className="overflow-x-scroll overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
           <table className="min-w-[1200px] w-full text-sm border-collapse">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium sticky top-0">
               <tr>
@@ -148,9 +139,9 @@ export default function ProductListPage() {
                   >
                     <td className="py-3 px-5">{startIndex + idx + 1}</td>
                     <td className="py-3 px-5">
-                      {p.images?.[0]?.url ? (
+                      {p.productimage?.[0]?.url ? (
                         <img
-                          src={p.images[0].url}
+                          src={p.productimage[0].url}
                           alt={p.title}
                           className="w-12 h-12 object-cover rounded"
                         />
@@ -165,18 +156,14 @@ export default function ProductListPage() {
                     <td className="py-3 px-5">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
-                          p.active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                         }`}
                       >
                         {p.active ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="py-3 px-5 text-gray-600 whitespace-nowrap">
-                      {new Intl.DateTimeFormat("en-GB").format(
-                        new Date(p.createdAt)
-                      )}
+                      {new Intl.DateTimeFormat("en-GB").format(new Date(p.createdAt))}
                     </td>
                     <td className="py-3 px-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -207,7 +194,6 @@ export default function ProductListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
         {!loading && filteredProducts.length > 0 && (
           <div className="p-4">
             <Pagination
@@ -222,7 +208,6 @@ export default function ProductListPage() {
         )}
       </div>
 
-      {/* ✅ Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

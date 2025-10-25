@@ -1,22 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma = new PrismaClient();
 
 /**
  * @route GET /api/delivery-options
- * @desc Get all delivery options
+ * @desc Get all delivery options (Protected)
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const options = await prisma.deliveryOptions.findMany({
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(options);
+
+    return NextResponse.json({ success: true, data: options });
   } catch (error: any) {
     console.error("❌ GET all delivery options error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { success: false, message: "Failed to fetch delivery options", error: error.message },
       { status: 500 }
     );
   }
@@ -24,16 +31,21 @@ export async function GET() {
 
 /**
  * @route POST /api/delivery-options
- * @desc Create new delivery option
+ * @desc Create new delivery option (Protected)
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { name, description, minTime, maxTime, cutOffTime, cost, freeOver, status } = body;
 
     if (!name || !minTime || !maxTime || !cutOffTime || cost === undefined) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -51,14 +63,15 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(
-      { message: "Delivery option created successfully", data: newOption },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Delivery option created successfully",
+      data: newOption,
+    });
   } catch (error: any) {
     console.error("❌ POST delivery option error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { success: false, message: "Failed to create delivery option", error: error.message },
       { status: 500 }
     );
   }

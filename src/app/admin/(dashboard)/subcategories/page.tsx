@@ -8,6 +8,10 @@ import { useModalStore } from "@/lib/stores/modalStore";
 import { PopUpInterface } from "@/lib/types";
 import { subcategoryService, Subcategory } from "@/lib/services/subcategoryService";
 import { categoryService, Category } from "@/lib/services/categoryService";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
+import Loader from "@/components/Loader";
 
 export default function SubcategoryListPage() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -18,6 +22,7 @@ export default function SubcategoryListPage() {
   const [loading, setLoading] = useState(true);
 
   const [formName, setFormName] = useState("");
+  const [formSlug, setFormSlug] = useState("");
   const [formCategoryId, setFormCategoryId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,26 +35,39 @@ export default function SubcategoryListPage() {
     isOpen: false,
     type: "",
     message: "",
-    onConfirm: undefined,
-    onCancel: undefined,
   });
 
-  // 📥 Fetch data
+  const { data: session, status } = useSession();
+  const token = session?.user?.token;
+  const router = useRouter();
+
+  // Auth Guard
   useEffect(() => {
-    fetchSubcategories();
-    fetchCategories();
-  }, []);
+    if (status === "loading") return;
+    if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
+    else if (status === "authenticated" && session?.user?.role !== "admin")
+      router.replace(ROUTES.HOME);
+  }, [status, session, router]);
+
+  // Fetch data
+  useEffect(() => {
+    if (token) {
+      fetchSubcategories();
+      fetchCategories();
+    }
+  }, [token]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchSubcategories(searchTerm);
+      if (token) fetchSubcategories(searchTerm);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [searchTerm]);
+  }, [searchTerm, token]);
 
   useEffect(() => {
     if (modalAction === "subcategory") {
       setFormName("");
+      setFormSlug("");
       setFormCategoryId(null);
       setEditId(null);
       setIsEditing(false);
@@ -61,22 +79,16 @@ export default function SubcategoryListPage() {
   const fetchSubcategories = async (search?: string) => {
     try {
       setLoading(true);
-      const response: any = await subcategoryService.getAll(search);
-      if (Array.isArray(response)) {
-        setSubcategories(response);
-      } else if (Array.isArray(response?.data)) {
-        setSubcategories(response.data);
-      } else {
-        setSubcategories([]);
-      }
+      const response: any = await subcategoryService.getAll(token!, search);
+      if (Array.isArray(response)) setSubcategories(response);
+      else if (Array.isArray(response?.data)) setSubcategories(response.data);
+      else setSubcategories([]);
     } catch (error) {
-      console.error("Failed to fetch subcategories:", error);
       setPopUpAlertData({
         isOpen: true,
         type: "error",
         message: "Failed to fetch subcategories.",
         onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-        onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
     } finally {
       setLoading(false);
@@ -85,7 +97,7 @@ export default function SubcategoryListPage() {
 
   const fetchCategories = async () => {
     try {
-      const data: any = await categoryService.getAll();
+      const data: any = await categoryService.getAll(token!);
       if (Array.isArray(data)) setCategories(data);
       else if (Array.isArray(data?.data)) setCategories(data.data);
       else setCategories([]);
@@ -94,7 +106,7 @@ export default function SubcategoryListPage() {
     }
   };
 
-  // 🧮 Filter & Paginate
+  // Filter & Paginate
   const filteredSubcategories = useMemo(() => {
     return subcategories.filter(
       (sub) =>
@@ -110,15 +122,16 @@ export default function SubcategoryListPage() {
     startIndex + pageSize
   );
 
-  // 📝 Add / Update Subcategory
+  // Add / Update Subcategory
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formCategoryId) return;
+    if (!formName.trim() || !formSlug.trim() || !formCategoryId || !token) return;
 
     try {
       if (isEditing && editId) {
-        await subcategoryService.update(editId, {
+        await subcategoryService.update(token, editId, {
           name: formName,
+          slug: formSlug,
           categoryId: formCategoryId,
         });
         setPopUpAlertData({
@@ -126,11 +139,11 @@ export default function SubcategoryListPage() {
           type: "success",
           message: "Subcategory updated successfully!",
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-          onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       } else {
-        await subcategoryService.create({
+        await subcategoryService.create(token, {
           name: formName,
+          slug: formSlug,
           categoryId: formCategoryId,
         });
         setPopUpAlertData({
@@ -138,7 +151,6 @@ export default function SubcategoryListPage() {
           type: "success",
           message: "Subcategory added successfully!",
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-          onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       }
       setIsModalOpen(false);
@@ -149,13 +161,13 @@ export default function SubcategoryListPage() {
         type: "error",
         message: err.message || "Failed to save subcategory.",
         onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-        onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
     }
   };
 
   const handleEdit = (subcategory: Subcategory) => {
     setFormName(subcategory.name);
+    setFormSlug(subcategory.slug);
     setFormCategoryId(subcategory.categoryId);
     setEditId(subcategory.id);
     setIsEditing(true);
@@ -169,13 +181,12 @@ export default function SubcategoryListPage() {
       message: "Are you sure you want to delete this subcategory?",
       onConfirm: async () => {
         try {
-          await subcategoryService.remove(id);
+          await subcategoryService.remove(token!, id);
           setPopUpAlertData({
             isOpen: true,
             type: "success",
             message: "Subcategory deleted successfully!",
             onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-            onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
           fetchSubcategories(searchTerm);
         } catch (err: any) {
@@ -184,7 +195,6 @@ export default function SubcategoryListPage() {
             type: "error",
             message: err.message || "Failed to delete subcategory.",
             onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
-            onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
           });
         }
       },
@@ -192,10 +202,12 @@ export default function SubcategoryListPage() {
     });
   };
 
+  if (status === "loading" || loading) return <Loader />;
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header with search */}
+        {/* Header with search */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Subcategories</h1>
           <div className="relative w-full sm:w-72">
@@ -216,35 +228,34 @@ export default function SubcategoryListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
               <tr>
                 <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
                 <th className="py-3 px-3 text-center">Subcategory Name</th>
+                <th className="py-3 px-3 text-center">Slug</th>
                 <th className="py-3 px-3 text-center">Category</th>
                 <th className="py-3 px-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center text-gray-500 text-sm">
-                    Loading subcategories...
-                  </td>
-                </tr>
-              ) : paginatedSubcategories.length > 0 ? (
+              {paginatedSubcategories.length > 0 ? (
                 paginatedSubcategories.map((sub, idx) => (
                   <tr
                     key={sub.id}
-                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
                     </td>
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {sub.name}
+                    </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {sub.slug}
                     </td>
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {sub.category?.name || "-"}
@@ -280,7 +291,7 @@ export default function SubcategoryListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/* Pagination */}
         {!loading && filteredSubcategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -307,7 +318,6 @@ export default function SubcategoryListPage() {
               {isEditing ? "Edit Subcategory" : "Add Subcategory"}
             </h2>
             <form onSubmit={handleSubmit}>
-              {/* Subcategory Name */}
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Subcategory Name <span className="text-red-500">*</span>
               </label>
@@ -318,7 +328,16 @@ export default function SubcategoryListPage() {
                 placeholder="e.g. Men's Wear"
               />
 
-              {/* Category Select */}
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Slug <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={formSlug}
+                onChange={(e) => setFormSlug(e.target.value)}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="e.g. Men's Wear"
+              />
+
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Category <span className="text-red-500">*</span>
               </label>
@@ -355,7 +374,7 @@ export default function SubcategoryListPage() {
         </div>
       )}
 
-      {/* ✅ Popup Alert */}
+      {/* Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

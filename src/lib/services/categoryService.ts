@@ -9,25 +9,38 @@ export interface Category {
 }
 
 export const categoryService = {
-  getAll: (): Promise<Category[]> => apiFetch("/api/categories"),
+  getAll: (token: string): Promise<Category[]> =>
+    apiFetch("/api/categories", {}, token),
 
-  getById: (id: number): Promise<Category> =>
-    apiFetch(`/api/categories/${id}`),
+  getById: (token: string, id: number): Promise<Category> =>
+    apiFetch(`/api/categories/${id}`, {}, token),
 
-  create: (data: Partial<Category>): Promise<Category> =>
-    apiFetch("/api/categories", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  create: (token: string, data: Partial<Category>): Promise<Category> =>
+    apiFetch(
+      "/api/categories",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
 
-  update: (id: number, data: Partial<Category>): Promise<Category> =>
-    apiFetch(`/api/categories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+  update: (token: string, id: number, data: Partial<Category>): Promise<Category> =>
+    apiFetch(
+      `/api/categories/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
 
-  remove: (id: number): Promise<{ message: string }> =>
-    apiFetch(`/api/categories/${id}`, {
-      method: "DELETE",
-    }),
+  remove: (token: string, id: number): Promise<{ message: string }> =>
+    apiFetch(
+      `/api/categories/${id}`,
+      {
+        method: "DELETE",
+      },
+      token
+    ),
 };

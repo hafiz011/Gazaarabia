@@ -3,16 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
 import Pagination from "@/components/admin/Pagination";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
-import { deliveryOptionService } from "@/lib/services/deliveryOptionService"; // ✅ Import API service
+import { deliveryOptionService } from "@/lib/services/deliveryOptionService";
+import { ROUTES } from "@/constants/routes";
 
 export default function DeliveryOptionsListPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
-  // ✅ State
   const [deliveryOptions, setDeliveryOptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,15 +33,26 @@ export default function DeliveryOptionsListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
-  // ✅ Fetch data from API
+  // 🟡 Redirect unauthorized users
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
+  // 🟡 Fetch all delivery options with token
   const fetchDeliveryOptions = async () => {
+    if (!session?.user?.token) return;
     try {
       setLoading(true);
-      const data = await deliveryOptionService.getAll();
-      setDeliveryOptions(data);
+      const data :any = await deliveryOptionService.getAll(session.user.token);
+      setDeliveryOptions(data?.data ?? null);
     } catch (error: any) {
-      console.error("❌ Error fetching delivery options:", error);
       setAlertMessageData({
         isOpen: true,
         type: "error",
@@ -51,10 +64,10 @@ export default function DeliveryOptionsListPage() {
   };
 
   useEffect(() => {
-    fetchDeliveryOptions();
-  }, []);
+    if (session?.user?.token) fetchDeliveryOptions();
+  }, [session?.user?.token]);
 
-  // ✅ Search logic
+  // 🟡 Filter & pagination
   const filteredOptions = useMemo(() => {
     return deliveryOptions.filter(
       (opt) =>
@@ -67,7 +80,7 @@ export default function DeliveryOptionsListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedOptions = filteredOptions.slice(startIndex, startIndex + pageSize);
 
-  // ✅ Delete delivery option
+  // 🟡 Delete with token
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -75,53 +88,42 @@ export default function DeliveryOptionsListPage() {
       message: "Are you sure you want to delete this delivery option?",
       onConfirm: async () => {
         try {
-          await deliveryOptionService.remove(id);
+          await deliveryOptionService.remove(session?.user?.token as string, id);
           setDeliveryOptions((prev) => prev.filter((d) => d.id !== id));
           setPopUpAlertData({
             isOpen: true,
             type: "success",
             message: "Delivery option deleted successfully!",
-            onConfirm: () =>
-              setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+            onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
           });
         } catch (error: any) {
-          console.error("❌ Delete error:", error);
           setPopUpAlertData({
             isOpen: true,
             type: "error",
             message: error.message || "Failed to delete delivery option",
-            onConfirm: () =>
-              setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+            onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
           });
         }
       },
-      onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+      onCancel: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
     });
   };
 
-  // ✅ Edit
   const handleEdit = (id: number) => {
     router.push(`/admin/delivery-options/form/${id}`);
   };
 
-  // ✅ 3-dot action menu state
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* ✅ Alert */}
-      {alertMessageData.isOpen && alertMessageData.type && (
+      {(alertMessageData.isOpen && alertMessageData.type) && (
         <AlertMessage
           type={alertMessageData.type}
           message={alertMessageData.message}
-          onClose={() =>
-            setAlertMessageData((prev) => ({ ...prev, isOpen: false }))
-          }
+          onClose={() => setAlertMessageData((p) => ({ ...p, isOpen: false }))}
         />
       )}
 
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">
             Manage Delivery Options
@@ -144,7 +146,6 @@ export default function DeliveryOptionsListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -164,7 +165,7 @@ export default function DeliveryOptionsListPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-gray-500 text-sm">
+                  <td colSpan={10} className="py-12 text-center text-gray-500">
                     Loading delivery options...
                   </td>
                 </tr>
@@ -176,21 +177,17 @@ export default function DeliveryOptionsListPage() {
                       idx % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-gray-100 transition relative`}
                   >
-                    <td className="py-3 px-5 text-gray-600">
-                      {startIndex + idx + 1}
-                    </td>
-                    <td className="py-3 px-5 font-medium text-gray-800">
-                      {option.name}
-                    </td>
-                    <td className="py-3 px-5 text-gray-600">{option.description}</td>
-                    <td className="py-3 px-5 text-gray-600">{option.minTime}</td>
-                    <td className="py-3 px-5 text-gray-600">{option.maxTime}</td>
-                    <td className="py-3 px-5 text-gray-600">{option.cutOffTime}</td>
-                    <td className="py-3 px-5 text-gray-600">₹ {option.cost}</td>
-                    <td className="py-3 px-5 text-gray-600">
+                    <td className="py-3 px-5">{startIndex + idx + 1}</td>
+                    <td className="py-3 px-5 font-medium">{option.name}</td>
+                    <td className="py-3 px-5">{option.description}</td>
+                    <td className="py-3 px-5">{option.minTime}</td>
+                    <td className="py-3 px-5">{option.maxTime}</td>
+                    <td className="py-3 px-5">{option.cutOffTime}</td>
+                    <td className="py-3 px-5">₹ {option.cost}</td>
+                    <td className="py-3 px-5">
                       {option.freeOver > 0 ? `₹ ${option.freeOver}` : "-"}
                     </td>
-                    <td className="py-3 px-5 text-gray-600">{option.status}</td>
+                    <td className="py-3 px-5">{option.status}</td>
                     <td className="py-3 px-3 text-right relative">
                       <button
                         onClick={() =>
@@ -227,7 +224,7 @@ export default function DeliveryOptionsListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-gray-500 text-sm">
+                  <td colSpan={10} className="py-12 text-center text-gray-500">
                     No delivery options found
                   </td>
                 </tr>
@@ -236,7 +233,6 @@ export default function DeliveryOptionsListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
         {!loading && filteredOptions.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -249,7 +245,6 @@ export default function DeliveryOptionsListPage() {
         )}
       </div>
 
-      {/* ✅ Popup */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

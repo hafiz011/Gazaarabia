@@ -10,7 +10,7 @@ export const cartService = {
     });
 
     if (!res.ok) throw new Error("Failed to fetch cart items");
-    return res.json(); // 👈 will now contain subtotal
+    return res.json(); //  will now contain subtotal
   },
 
   async add(token: string, productId: number, quantity = 1) {
@@ -36,7 +36,7 @@ export const cartService = {
       body: JSON.stringify({ productId }),
     });
     if (!res.ok) throw new Error("Failed to remove from cart");
-    return res.json(); // 👈 can include new subtotal
+    return res.json(); //  can include new subtotal
   },
 
   async updateQuantity(token: string, productId: number, quantity: number) {
@@ -49,6 +49,6 @@ export const cartService = {
       body: JSON.stringify({ productId, quantity }),
     });
     if (!res.ok) throw new Error("Failed to update quantity");
-    return res.json(); // 👈 can include new subtotal too
+    return res.json(); //  can include new subtotal too
   },
 };

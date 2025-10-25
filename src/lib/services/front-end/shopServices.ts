@@ -8,7 +8,7 @@ export const shopService = {
         cache: "no-store",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }), // ✅ only send token if present
+          ...(token && { Authorization: `Bearer ${token}` }), // only send token if present
         },
       }
     );

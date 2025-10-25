@@ -7,6 +7,7 @@ import { Upload } from "lucide-react";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
+import { useSession } from "next-auth/react";
 
 export default function MaterialCareFormPage() {
   const router = useRouter();
@@ -14,7 +15,9 @@ export default function MaterialCareFormPage() {
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
-  // 📝 Form State
+  const { data: session } = useSession();
+  const token = session?.user?.token;
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -23,41 +26,31 @@ export default function MaterialCareFormPage() {
     icon: "",
   });
 
-  // 📸 Image Preview
   const [preview, setPreview] = useState<string>("");
-
-  // ⚡ Loading States
   const [fetching, setFetching] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // 📤 File Input Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ⚠️ Alerts
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
     message: "",
   });
+
   const [alertMessageData, setAlertMessageData] = useState<AlertInterface>({
     isOpen: false,
     type: "",
     message: "",
   });
 
-  // 🧭 Fetch existing record if editing
   useEffect(() => {
-    if (isEditMode) {
-      fetchMaterialCare();
-    }
-  }, [id]);
+    if (isEditMode && token) fetchMaterialCare();
+  }, [id, token]);
 
   const fetchMaterialCare = async () => {
     try {
       setFetching(true);
-      const response = await materialCareService.getById(Number(id));
-      const data = response.data ?? response;
-
+      const data = await materialCareService.getById(token!, Number(id));
       setFormData({
         title: data.title || "",
         description: data.description || "",
@@ -65,9 +58,8 @@ export default function MaterialCareFormPage() {
         material: data.material || "",
         icon: data.icon || "",
       });
-
       setPreview(data.icon || "");
-    } catch (error) {
+    } catch {
       setAlertMessageData({
         isOpen: true,
         type: "error",
@@ -78,9 +70,7 @@ export default function MaterialCareFormPage() {
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -97,12 +87,10 @@ export default function MaterialCareFormPage() {
     try {
       const form = new FormData();
       form.append("file", file);
-
       const res = await fetch("/api/upload?folder=material-care", {
         method: "POST",
         body: form,
       });
-
       if (!res.ok) throw new Error("Failed to upload image");
       const data = await res.json();
       setFormData((prev) => ({ ...prev, icon: data.url }));
@@ -117,32 +105,27 @@ export default function MaterialCareFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // ✅ Basic validation
-    if (!formData.title.trim() || !formData.description.trim()) {
+    if (!formData.title.trim() || !formData.description.trim() || !token) {
       setPopUpAlertData({
         isOpen: true,
         type: "warning",
         message: "Title and description are required.",
-        onConfirm: () =>
-          setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+        onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
       });
       return;
     }
 
     try {
       setSubmitting(true);
-      setAlertMessageData({ isOpen: false, type: "", message: "" });
-
       if (isEditMode) {
-        await materialCareService.update(Number(id), formData);
+        await materialCareService.update(token, Number(id), formData);
         setAlertMessageData({
           isOpen: true,
           type: "success",
           message: "Material care updated successfully!",
         });
       } else {
-        await materialCareService.create(formData);
+        await materialCareService.create(token, formData);
         setAlertMessageData({
           isOpen: true,
           type: "success",
@@ -150,10 +133,7 @@ export default function MaterialCareFormPage() {
         });
       }
 
-      // Redirect after short delay
-      setTimeout(() => {
-        router.push("/admin/material-cares");
-      }, 1000);
+      setTimeout(() => router.push("/admin/material-cares"), 1000);
     } catch (err: any) {
       setAlertMessageData({
         isOpen: true,
@@ -172,18 +152,14 @@ export default function MaterialCareFormPage() {
           {isEditMode ? "Edit Material Care" : "Add Material Care"}
         </h1>
 
-        {/* ✅ Alert Message */}
         {(alertMessageData.isOpen && alertMessageData.type) && (
           <AlertMessage
             type={alertMessageData.type}
             message={alertMessageData.message}
-            onClose={() =>
-              setAlertMessageData((prev) => ({ ...prev, isOpen: false }))
-            }
+            onClose={() => setAlertMessageData((prev) => ({ ...prev, isOpen: false }))}
           />
         )}
 
-        {/* ⏳ Show loader only on initial fetch */}
         {fetching && isEditMode && !formData.title ? (
           <p>Loading...</p>
         ) : (
@@ -198,7 +174,6 @@ export default function MaterialCareFormPage() {
               onChange={handleChange}
               className="w-full border rounded px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
               placeholder="e.g. Cotton Care"
-              required
             />
 
             {/* Care Type + Material */}
@@ -211,7 +186,7 @@ export default function MaterialCareFormPage() {
                   name="careType"
                   value={formData.careType}
                   onChange={handleChange}
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
+                  className="w-full border rounded px-3 py-2"
                   placeholder="e.g. Wash, Dry, Iron..."
                 />
               </div>
@@ -223,7 +198,7 @@ export default function MaterialCareFormPage() {
                   name="material"
                   value={formData.material}
                   onChange={handleChange}
-                  className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
+                  className="w-full border rounded px-3 py-2"
                   placeholder="e.g. 100% Cotton"
                 />
               </div>
@@ -266,10 +241,9 @@ export default function MaterialCareFormPage() {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-[var(--brand-secondary)]"
+              className="w-full border rounded px-3 py-2 mb-6"
               rows={4}
               placeholder="e.g. Machine wash at 30°C. Do not bleach. Tumble dry low."
-              required
             ></textarea>
 
             {/* Actions */}
@@ -301,7 +275,6 @@ export default function MaterialCareFormPage() {
           </form>
         )}
 
-        {/* 🆕 Popup Alert */}
         <PopupAlert
           type={popUpAlertData.type as any}
           message={popUpAlertData.message}

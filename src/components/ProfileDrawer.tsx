@@ -44,7 +44,7 @@ export default function ProfileDrawer({ isOpen, onClose }: Props) {
     { label: "My Orders", href: "/account/orders", icon: <ShoppingBag size={18} /> },
     { label: "My Details", href: "/account/details", icon: <User size={18} /> },
     { label: "Loyalty Dashboard", href: "/loyalty", icon: <Settings size={18} /> },
-    { label: "My Wishlist (1)", href: "/account/wishlist", icon: <Heart size={18} /> },
+    { label: "My Wishlist (1)", href: "/wishlist", icon: <Heart size={18} /> },
   ];
 
   return (

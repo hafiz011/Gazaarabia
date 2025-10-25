@@ -18,10 +18,13 @@ import AlertMessage from "@/components/AlertMessage";
 import { blogService } from "@/lib/services/blogService";
 import { blogCategoryService } from "@/lib/services/blogCategoryService";
 import type { Category } from "@/lib/services/categoryService";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
 export default function AddOrEditBlogPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session, status } = useSession();
   const blogId = params?.id; // undefined when creating, defined when editing
 
   const [form, setForm] = useState({
@@ -54,11 +57,21 @@ export default function AddOrEditBlogPage() {
     "& .MuiInputLabel-root.Mui-focused": { color: "var(--brand-secondary)" },
   };
 
+  // 🔐 Redirect unauthorized users
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
   // 🧭 Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await blogCategoryService.getAll();
+        const data = await blogCategoryService.getAll(session?.user?.token as string);
         setCategories(data);
       } catch (err: any) {
         setAlert({
@@ -68,15 +81,15 @@ export default function AddOrEditBlogPage() {
         });
       }
     };
-    fetchCategories();
-  }, []);
+    if (session?.user?.token) fetchCategories();
+  }, [session?.user?.token]);
 
   // 🧾 Fetch blog if editing
   useEffect(() => {
-    if (!blogId) return;
+    if (!blogId || !session?.user?.token) return;
     const fetchBlog = async () => {
       try {
-        const data :any = await blogService.getById(Number(blogId));
+        const data: any = await blogService.getById(session?.user?.token as string, Number(blogId));
         setForm({
           title: data.title,
           slug: data.slug,
@@ -94,7 +107,7 @@ export default function AddOrEditBlogPage() {
       }
     };
     fetchBlog();
-  }, [blogId]);
+  }, [blogId, session?.user?.token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -144,10 +157,11 @@ export default function AddOrEditBlogPage() {
 
     try {
       setLoading(true);
+      const token = session?.user?.token as string;
 
       if (blogId) {
         // ✏️ Update
-        await blogService.update(Number(blogId), {
+        await blogService.update(token, Number(blogId), {
           title: form.title,
           slug: form.slug,
           content: form.content,
@@ -157,7 +171,7 @@ export default function AddOrEditBlogPage() {
         setAlert({ isOpen: true, type: "success", message: "Blog updated successfully!" });
       } else {
         // 🆕 Create
-        await blogService.create({
+        await blogService.create(token, {
           title: form.title,
           slug: form.slug,
           content: form.content,

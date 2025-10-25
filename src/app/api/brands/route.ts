@@ -1,24 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
+const prisma :any= new PrismaClient();
 
-export async function GET(req: Request) {
+// 🔐 GET - List all brands (with optional search)
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // 🕵️ Extract search query
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
-    // 🧠 Build search filter (no `mode`)
     const where = search
       ? {
-          OR: [
-            { name: { contains: search } },
-          ],
+          OR: [{ name: { contains: search } }],
         }
       : {};
 
-    // 🗃️ Fetch brands with optional search
     const brands = await prisma.brand.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -34,11 +36,16 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+// 🔐 POST - Create new brand
+export async function POST(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { name, logo, isTrending } = await req.json();
 
-    // ✅ Basic validation
     if (!name || name.trim() === "") {
       return NextResponse.json(
         { success: false, message: "Brand name is required." },
@@ -46,7 +53,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Create new brand
     const brand = await prisma.brand.create({
       data: {
         name: name.trim(),
@@ -59,7 +65,6 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("❌ POST Brand Error:", error);
 
-    // ✅ Handle unique constraint
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
         { success: false, message: "A brand with this name already exists." },

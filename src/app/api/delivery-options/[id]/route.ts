@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
 /**
  * @route GET /api/delivery-options/:id
- * @desc Get delivery option by ID
+ * @desc Get delivery option by ID (Protected)
  */
 export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const optionId = Number(id);
 
     if (!optionId) {
-      return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
     const option = await prisma.deliveryOptions.findUnique({
@@ -22,14 +28,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
     });
 
     if (!option) {
-      return NextResponse.json({ message: "Not found" }, { status: 404 });
+      return NextResponse.json({ success: false, message: "Delivery option not found" }, { status: 404 });
     }
 
-    return NextResponse.json(option);
+    return NextResponse.json({ success: true, data: option });
   } catch (error: any) {
     console.error("❌ GET delivery option error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { success: false, message: "Failed to fetch delivery option", error: error.message },
       { status: 500 }
     );
   }
@@ -37,9 +43,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
 /**
  * @route PUT /api/delivery-options/:id
- * @desc Update delivery option by ID
+ * @desc Update delivery option (Protected)
  */
 export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const optionId = Number(id);
@@ -48,7 +59,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     if (!name || !minTime || !maxTime || !cutOffTime || cost === undefined) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -68,13 +79,14 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     });
 
     return NextResponse.json({
+      success: true,
       message: "Delivery option updated successfully",
       data: updated,
     });
   } catch (error: any) {
     console.error("❌ PUT delivery option error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { success: false, message: "Failed to update delivery option", error: error.message },
       { status: 500 }
     );
   }
@@ -82,26 +94,40 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
 /**
  * @route DELETE /api/delivery-options/:id
- * @desc Delete delivery option by ID
+ * @desc Delete delivery option (Protected)
  */
 export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const optionId = Number(id);
 
     if (!optionId) {
-      return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
+    }
+
+    const existing = await prisma.deliveryOptions.findUnique({
+      where: { id: optionId },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ success: false, message: "Delivery option not found" }, { status: 404 });
     }
 
     await prisma.deliveryOptions.delete({ where: { id: optionId } });
 
     return NextResponse.json({
+      success: true,
       message: "Delivery option deleted successfully",
     });
   } catch (error: any) {
     console.error("❌ DELETE delivery option error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { success: false, message: "Failed to delete delivery option", error: error.message },
       { status: 500 }
     );
   }

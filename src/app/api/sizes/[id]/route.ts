@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET Size by ID
-export async function GET(_req: NextRequest, context: RouteContext) {
+// GET Size by ID (Protected)
+export async function GET(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const sizeId = Number(id);
@@ -30,8 +36,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ PUT - Update Size
+// ✅ PUT - Update Size (Protected)
 export async function PUT(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const sizeId = Number(id);
@@ -43,10 +54,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const { name, description } = await req.json();
 
     if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     const updated = await prisma.sizes.update({
@@ -64,8 +72,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ DELETE - Delete Size
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+// ✅ DELETE - Delete Size (Protected)
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await context.params;
     const sizeId = Number(id);

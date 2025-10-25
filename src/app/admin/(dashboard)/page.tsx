@@ -14,11 +14,21 @@ import {
   Ruler,
   Grid,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
-  // 🧮 Counts (Mock Data — Replace with API calls)
+  // Redirect if not logged in
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
+    else if (status === "authenticated" && session?.user?.role !== "admin") router.replace(ROUTES.HOME);
+  }, [status, session, router]);
+
+  //  Counts (Mock Data — Replace with API calls)
   const [counts, setCounts] = useState({
     blogs: 45,
     blogCategories: 8,
@@ -48,7 +58,7 @@ export default function DashboardPage() {
     { key: "products", label: "Products", icon: <ShoppingBag size={28} />, path: "/admin/products" },
   ];
 
-  // 🪄 You can fetch real counts here
+  //  You can fetch real counts here
   useEffect(() => {
     // Example:
     // const res = await fetch("/api/dashboard/counts")
@@ -57,15 +67,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      {/* 📊 Page Title */}
-      {/* <div>
-        <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Dashboard</h2>
-        <p className="text-[var(--text-muted)] mt-1">
-          Overview of your store content and modules.
-        </p>
-      </div> */}
 
-      {/* ⚡ Quick Access Section */}
+      {/* Quick Access Section */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
         {sections.map((item, idx) => (
           <button

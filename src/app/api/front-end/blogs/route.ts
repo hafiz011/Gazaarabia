@@ -6,10 +6,6 @@ const prisma = new PrismaClient();
 
 //  GET - Protected (List all blogs with optional filters)
 export async function GET(request: NextRequest) {
-  const userId = await checkAuth(request);
-  if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -42,34 +38,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-//  POST - Protected (Create new blog)
-export async function POST(req: NextRequest) {
-  const userId = await checkAuth(req);
-  if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
 
-  try {
-    const body = await req.json();
-    const { title, slug, content, image, categoryId } = body;
-
-    if (!title || !content || !categoryId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    const blog = await prisma.blogs.create({
-      data: {
-        title,
-        slug: slug || title.toLowerCase().replace(/\s+/g, "-"),
-        content,
-        image: image || null,
-        categoryId: Number(categoryId),
-      },
-    });
-
-    return NextResponse.json({ success: true, data: blog });
-  } catch (err) {
-    console.error("Error creating blog:", err);
-    return NextResponse.json({ error: "Failed to create blog" }, { status: 500 });
-  }
-}

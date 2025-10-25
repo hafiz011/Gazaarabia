@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { FaCalendarAlt, FaUserAlt, FaChevronRight, FaRegFrown } from "react-icons/fa";
 import Pagination from "@/components/Pagination";
-import { blogService } from "@/lib/services/blogService";
-import { blogCategoryService } from "@/lib/services/blogCategoryService";
+// import { blogService } from "@/lib/services/blogService";
+// import { blogCategoryService } from "@/lib/services/blogCategoryService";
+import { blogsService } from "@/lib/services/front-end/blogsService";
 
 interface Blog {
     id: number;
@@ -35,7 +36,7 @@ export default function BlogsPage() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const cats = await blogCategoryService.getAll();
+                const cats = await blogsService.getAllCategory();
                 setCategories(cats);
             } catch (err) {
                 console.error("Failed to fetch categories", err);
@@ -52,7 +53,7 @@ export default function BlogsPage() {
                 const params: any = {};
                 if (activeCategory !== "All") params.categoryId = activeCategory;
                 if (searchTerm.trim()) params.search = searchTerm;
-                const data: any = await blogService.getAll(params);
+                const data: any = await blogsService.getAllBlogs(params);
                 setBlogs(data);
             } catch (err) {
                 console.error("Failed to fetch blogs", err);

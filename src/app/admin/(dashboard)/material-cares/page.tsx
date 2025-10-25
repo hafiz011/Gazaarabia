@@ -7,9 +7,14 @@ import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { materialCareService, MaterialCare } from "@/lib/services/materialCareService";
+import { useSession } from "next-auth/react";
+import Loader from "@/components/Loader";
 
 export default function MaterialCareListPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const token = session?.user?.token;
+
   const [materialCares, setMaterialCares] = useState<MaterialCare[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,34 +25,28 @@ export default function MaterialCareListPage() {
     isOpen: false,
     type: "",
     message: "",
-    onConfirm: undefined,
-    onCancel: undefined,
   });
 
   // ✅ Fetch Material Cares initially
   useEffect(() => {
-    fetchMaterialCares();
-  }, []);
+    if (token) fetchMaterialCares();
+  }, [token]);
 
   // ✅ Debounced Search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchMaterialCares(searchTerm);
+      if (token) fetchMaterialCares(searchTerm);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [searchTerm]);
+  }, [searchTerm, token]);
 
   const fetchMaterialCares = async (search?: string) => {
     try {
       setLoading(true);
-      const response: any = await materialCareService.getAll(search);
-      if (Array.isArray(response)) {
-        setMaterialCares(response);
-      } else if (Array.isArray(response?.data)) {
-        setMaterialCares(response.data);
-      } else {
-        setMaterialCares([]);
-      }
+      const response: any = await materialCareService.getAll(token!, search);
+      if (Array.isArray(response)) setMaterialCares(response);
+      else if (Array.isArray(response?.data)) setMaterialCares(response.data);
+      else setMaterialCares([]);
     } catch (error) {
       console.error("Failed to fetch material care:", error);
     } finally {
@@ -67,7 +66,7 @@ export default function MaterialCareListPage() {
       message: "Are you sure you want to delete this material care?",
       onConfirm: async () => {
         try {
-          await materialCareService.remove(id);
+          await materialCareService.remove(token!, id);
           setPopUpAlertData({
             isOpen: true,
             type: "success",
@@ -88,13 +87,14 @@ export default function MaterialCareListPage() {
     });
   };
 
+  if (status === "loading" || loading) return <Loader />;
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
         {/* ✅ Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-800">List</h1>
-
+          <h1 className="text-xl font-semibold text-gray-800">Material Care List</h1>
           <div className="relative w-full sm:w-72">
             <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
             <input
@@ -128,13 +128,7 @@ export default function MaterialCareListPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500 text-sm">
-                    Loading...
-                  </td>
-                </tr>
-              ) : paginatedData.length > 0 ? (
+              {paginatedData.length > 0 ? (
                 paginatedData.map((item: any, idx) => (
                   <tr
                     key={item.id}
@@ -145,8 +139,6 @@ export default function MaterialCareListPage() {
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
                     </td>
-
-                    {/* ✅ Icon column */}
                     <td className="py-3 px-3 text-center">
                       {item.icon ? (
                         <img
@@ -158,7 +150,6 @@ export default function MaterialCareListPage() {
                         <span className="text-gray-400 text-xs italic">—</span>
                       )}
                     </td>
-
                     <td className="py-3 px-3 text-center font-medium text-gray-800">
                       {item.title}
                     </td>
@@ -199,7 +190,7 @@ export default function MaterialCareListPage() {
         </div>
 
         {/* ✅ Pagination */}
-        {!loading && materialCares.length > 0 && (
+        {materialCares.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -211,7 +202,6 @@ export default function MaterialCareListPage() {
         )}
       </div>
 
-      {/* ✅ Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

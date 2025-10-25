@@ -1,71 +1,68 @@
 export const productService = {
-  async getAll(search?: string) {
-    try {
-      const url = search ? `/api/products?search=${encodeURIComponent(search)}` : `/api/products`;
-      const res = await fetch(url, { cache: "no-store" });
+  async getAll(token: string, search?: any) {
+    const url = search
+      ? `/api/products?search=${encodeURIComponent(search)}`
+      : `/api/products`;
 
-      if (!res.ok) throw new Error("Failed to fetch products");
-      return await res.json();
-    } catch (err) {
-      console.error("❌ getAll Products Error:", err);
-      throw err;
-    }
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch products");
+    return await res.json();
   },
 
-  async getById(id: number) {
-    try {
-      const res = await fetch(`/api/products/${id}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch product");
-      return await res.json();
-    } catch (err) {
-      console.error("❌ getById Product Error:", err);
-      throw err;
-    }
+  async getById(token: string, id: number) {
+    const res = await fetch(`/api/products/${id}`, {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch product");
+    return await res.json();
   },
 
-  async create(data: any) {
-    try {
-      const res = await fetch(`/api/products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+  async create(token: string, data: any) {
+    const res = await fetch(`/api/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
-      if (!res.ok) throw new Error("Failed to create product");
-      return await res.json();
-    } catch (err) {
-      console.error("❌ create Product Error:", err);
-      throw err;
-    }
+    if (!res.ok) throw new Error("Failed to create product");
+    return await res.json();
   },
 
-  async update(id: number, data: any) {
-    try {
-      const res = await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+  async update(token: string, id: number, data: any) {
+    const res = await fetch(`/api/products/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
-      if (!res.ok) throw new Error("Failed to update product");
-      return await res.json();
-    } catch (err) {
-      console.error("❌ update Product Error:", err);
-      throw err;
-    }
+    if (!res.ok) throw new Error("Failed to update product");
+    return await res.json();
   },
 
-  async remove(id: number) {
-    try {
-      const res = await fetch(`/api/products/${id}`, {
-        method: "DELETE",
-      });
+  async remove(token: string, id: number) {
+    const res = await fetch(`/api/products/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!res.ok) throw new Error("Failed to delete product");
-      return await res.json();
-    } catch (err) {
-      console.error("❌ delete Product Error:", err);
-      throw err;
-    }
+    if (!res.ok) throw new Error("Failed to delete product");
+    return await res.json();
   },
 };

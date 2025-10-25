@@ -1,13 +1,16 @@
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 
-export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+export async function apiFetch<T>(
+  url: string,
+  options?: RequestInit,
+  token?: string      // ✅ Accept token as optional third argument
+): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${url}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),  // ✅ use token if provided
       ...options?.headers,
     },
     cache: "no-store",
@@ -21,7 +24,6 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
   }
 
   if (!res.ok) {
-    // ✅ Clean error message extraction
     const message =
       result?.message ||
       result?.error ||

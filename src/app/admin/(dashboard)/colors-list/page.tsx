@@ -1,42 +1,55 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Pencil, Trash2, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { colorService, Color } from "@/lib/services/colorService";
 import { PopUpInterface } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
+import Loader from "@/components/Loader";
 
 export default function ColorListPage() {
-    const router = useRouter();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const token = session?.user?.token;
+
   const [colors, setColors] = useState<Color[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
-
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
     message: "",
   });
 
-  const fetchColors = async () => {
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
+    else if (status === "authenticated" && session?.user?.role !== "admin")
+      router.replace(ROUTES.HOME);
+  }, [status, session, router]);
+
+  const fetchColors = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      const data = await colorService.getAll();
-      setColors(data);
+      const data :any = await colorService.getAll(token);
+      setColors(data?.data ?? null);
     } catch (error) {
       console.error("Error fetching colors:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchColors();
-  }, []);
+  }, [fetchColors]);
 
   const filteredColors = useMemo(() => {
     return colors.filter(
@@ -57,7 +70,7 @@ export default function ColorListPage() {
       message: "Are you sure you want to delete this color?",
       onConfirm: async () => {
         try {
-          await colorService.remove(id);
+          await colorService.remove(token!, id);
           setColors((prev) => prev.filter((c) => c.id !== id));
           setPopUpAlertData({
             isOpen: true,
@@ -78,15 +91,14 @@ export default function ColorListPage() {
     });
   };
 
-  const handleEdit = (id: number) => {
-    console.log("Edit color", id);
-    router.push(`/admin/color?id=${id}`);
-  };
+  const handleEdit = (id: number) => router.push(`/admin/color?id=${id}`);
+
+  if (status === "loading" || loading) return <Loader />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Colors</h1>
           <div className="relative w-full sm:w-72">
@@ -107,7 +119,7 @@ export default function ColorListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -121,19 +133,11 @@ export default function ColorListPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-500 text-sm">
-                    Loading colors...
-                  </td>
-                </tr>
-              ) : paginatedColors.length > 0 ? (
+              {paginatedColors.length > 0 ? (
                 paginatedColors.map((color, idx) => (
                   <tr
                     key={color.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-5 text-gray-600">{startIndex + idx + 1}</td>
                     <td className="py-3 px-5 font-medium text-gray-800 flex items-center gap-2">
@@ -148,7 +152,6 @@ export default function ColorListPage() {
                     <td className="py-3 px-5 text-gray-600">
                       {new Date(color.createdAt).toLocaleDateString()}
                     </td>
-                    {/* <td className="py-3 px-5 text-right flex justify-end gap-3"> */}
                     <td className="py-3 px-3 text-right">
                       <button
                         onClick={() => handleEdit(color.id)}
@@ -185,7 +188,7 @@ export default function ColorListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/* Pagination */}
         {!loading && filteredColors.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -198,7 +201,6 @@ export default function ColorListPage() {
         )}
       </div>
 
-      {/* ✅ Popup */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

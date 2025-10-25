@@ -1,17 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
+import AlertMessage from "@/components/AlertMessage";
 
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession(); // get session info
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", remember: true });
   const [errors, setErrors] = useState<{ email?: string; password?: string; root?: string }>({});
+  const [alert, setAlert] = useState<{
+    isOpen: boolean;
+    type: "success" | "error" | "";
+    message: string;
+  }>({
+    isOpen: false,
+    type: "",
+    message: "",
+  });
 
   const validate = () => {
     const e: typeof errors = {};
@@ -25,25 +38,68 @@ export default function AdminLoginPage() {
     return Object.keys(e).length === 0;
   };
 
+
+  // Redirect if user already logged in
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "authenticated") {
+      if (session?.user?.role === "admin") {
+        router.replace(ROUTES.ADMIN.DASHBOARD); //  redirect to profile
+      } else {
+        router.replace("/"); // or some other route for admins
+      }
+    }
+  }, [status, session, router]);
+
   const onSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
 
-    setLoading(true);
-    setErrors((p) => ({ ...p, root: undefined }));
 
-    const res = await signIn("credentials", {
-      redirect: false, // so we can handle the redirect manually
-      email: form.email,
-      password: form.password,
-    });
+    if (!form.email.trim() || !form.password.trim()) {
+      setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Please enter both email and password.",
+      });
+      return;
+    }
 
-    setLoading(false);
+    try {
+      setLoading(true);
+      const response: any = await signIn("credentials", {
+        redirect: false,
+        email: form.email,
+        password: form.password,
+      });
 
-    if (res?.error) {
-      setErrors((p) => ({ ...p, root: "Invalid email or password" }));
-    } else {
-      router.push("/admin/dashboard"); // ✅ Protected page
+      if (response?.error) {
+        setAlert({
+          isOpen: true,
+          type: "error",
+          message: response?.error?.message || "Invalid email or password.",
+        });
+        return;
+      }
+
+      setAlert({
+        isOpen: true,
+        type: "success",
+        message: "Login successful! Redirecting...",
+      });
+
+      setTimeout(() => {
+        router.push(ROUTES.ADMIN.DASHBOARD); //  redirect after login
+      }, 1000);
+    } catch (err: any) {
+      setAlert({
+        isOpen: true,
+        type: "error",
+        message: err.message || "Invalid email or password.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,11 +121,23 @@ export default function AdminLoginPage() {
             <p className="text-sm opacity-90 mt-1">Access your admin dashboard securely</p>
           </div>
 
+
           {/* Form */}
           <form onSubmit={onSubmit} className="px-6 py-8 space-y-6 bg-white">
             {errors.root && (
               <div className="text-sm text-white bg-[var(--brand-primary)] rounded-lg px-4 py-2 text-center">
                 {errors.root}
+              </div>
+            )}
+
+            {/* Alert */}
+            {alert.isOpen && alert.type && (
+              <div className="mb-4">
+                <AlertMessage
+                  type={alert.type}
+                  message={alert.message}
+                  onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
+                />
               </div>
             )}
 

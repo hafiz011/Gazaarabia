@@ -121,13 +121,6 @@ export async function POST(req: Request) {
       token,
     });
 
-    res.cookies.set("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
     return res;
   } catch (err) {
     console.error("Login error:", err);
