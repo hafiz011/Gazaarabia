@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma :any= new PrismaClient();
 
-// 🔐 GET - List all brands (with optional search)
+// GET - List all brands (with optional search)
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: brands });
   } catch (error) {
-    console.error("❌ GET Brand Error:", error);
+    console.error("GET Brand Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch brands" },
       { status: 500 }
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 🔐 POST - Create new brand
+// POST - Create new brand
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: brand }, { status: 201 });
   } catch (error: any) {
-    console.error("❌ POST Brand Error:", error);
+    console.error("POST Brand Error:", error);
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(

@@ -24,7 +24,7 @@ export async function GET(
     let subcategories: any[] = [];
     let parentCategory: any = null;
 
-    // 🧭 Check if slug is category or subcategory
+    // Check if slug is category or subcategory
     const category = await prisma.categories.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true },
@@ -93,7 +93,7 @@ export async function GET(
       });
     }
 
-    // ❤️ Wishlist check (using helper)
+    //  Wishlist check (using helper)
     if (userId) {
       const wishlistIds = await getWishlistProductIds(userId);
       products = products.map((p) => ({

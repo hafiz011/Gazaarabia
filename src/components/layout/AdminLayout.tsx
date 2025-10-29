@@ -8,11 +8,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[#f5f6fa] relative overflow-x-auto">
+      {/* Sidebar */}
       <AdminSidebar isOpen={sidebarOpen} />
-      <div className="flex flex-col flex-1">
+
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 min-h-screen relative z-10">
+        {/* Header */}
         <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+
+        {/* Main Area */}
+        <main className="flex-1 p-6 bg-[#f5f6fa] overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

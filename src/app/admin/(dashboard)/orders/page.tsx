@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
 import { orderAdminService } from "@/lib/services/orderAdminService";
+import React from "react";
 
 interface Variant {
   sku?: string;
@@ -17,6 +18,7 @@ interface Variant {
 
 interface Product {
   title: string;
+  productimage?: { url: string }[];
 }
 
 interface OrderItem {
@@ -25,6 +27,8 @@ interface OrderItem {
   price: number;
   product: Product;
   variant?: Variant;
+  reviewed: boolean;
+  review?: any;
 }
 
 interface User {
@@ -40,11 +44,7 @@ interface Order {
   totalAmount: number;
   status: string;
   createdAt: string;
-
-  // 🧑 Customer
   user: User;
-
-  // 🏡 Address fields
   firstName: string;
   lastName: string | null;
   company?: string | null;
@@ -54,15 +54,8 @@ interface Order {
   country: string;
   postalCode: string;
   phone?: string | null;
-
-  // 🧾 Order items
   orderItems: OrderItem[];
-
-  // Optional fields
-  tax?: number;
-  shipping?: number;
 }
-
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -77,8 +70,8 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedReview, setSelectedReview] = useState<any | null>(null);
 
-  // 🕒 Debounce search term (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -87,7 +80,6 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // 🧭 Fetch Orders with search
   useEffect(() => {
     if (!token) return;
     const isInitial = debouncedSearch === "";
@@ -95,7 +87,6 @@ export default function OrdersPage() {
       try {
         if (isInitial) setInitialLoading(true);
         else setSearchLoading(true);
-
         const res = await orderAdminService.getAll(token, debouncedSearch);
         setOrders(res.data || []);
       } catch (error) {
@@ -126,15 +117,6 @@ export default function OrdersPage() {
   const formatGBP = (amount: number) =>
     new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
-  // const getTotals = (items: OrderItem[]) => {
-  //   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  //   const tax = subtotal * 0.2;
-  //   const shipping = 4.99;
-  //   const total = subtotal + tax + shipping;
-  //   return { subtotal, tax, shipping, total };
-  // };
-
-  // 🛡 Access Control & Initial Loader
   if (status === "loading" || initialLoading) return <Loader />;
   if (status === "unauthenticated") {
     router.replace(ROUTES.ADMIN.LOGIN);
@@ -147,7 +129,7 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* 🔍 Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Orders Management</h1>
         <div className="relative w-full sm:w-80">
@@ -163,7 +145,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* 📊 Table */}
+      {/* Orders Table */}
       <div className="bg-white rounded-xl shadow border border-[var(--soft-gray)] overflow-hidden">
         <div className="overflow-x-auto relative">
           {searchLoading && (
@@ -171,7 +153,6 @@ export default function OrdersPage() {
               <span className="text-gray-600 text-sm font-medium">Searching...</span>
             </div>
           )}
-
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-medium border-b">
               <tr>
@@ -189,11 +170,10 @@ export default function OrdersPage() {
               {paginatedOrders.length > 0 ? (
                 paginatedOrders.map((order, idx) => (
                   <tr key={idx} className="border-b last:border-0 hover:bg-gray-50 transition">
-                    {/* <td className="py-3 px-5">{startIndex + idx + 1}</td> */}
                     <td className="py-3 px-5 font-medium">{order.id}</td>
-                    <td className="py-3 px-5 font-medium">{order.transactionId ?? "N/A"}</td>
+                    <td className="py-3 px-5">{order.transactionId ?? "N/A"}</td>
                     <td className="py-3 px-5 text-gray-600">{order.user.name ?? "N/A"}</td>
-                    <td className="py-3 px-5 text-gray-800 font-medium">{formatGBP(order.totalAmount)}</td>
+                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.totalAmount)}</td>
                     <td className="py-3 px-5 text-gray-600">{order.paymentMethod ?? "N/A"}</td>
                     <td className="py-3 px-5">
                       <span
@@ -201,7 +181,7 @@ export default function OrdersPage() {
                           order.status
                         )}`}
                       >
-                        {order.status ?? "N/A"}
+                        {order.status}
                       </span>
                     </td>
                     <td className="py-3 px-5 text-gray-600">
@@ -240,165 +220,232 @@ export default function OrdersPage() {
         )}
       </div>
 
-        {/* 🪟 Modal */}
+      {/* 🪟 Order Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
-          <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl w-full max-w-2xl shadow-lg overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="flex justify-between items-start px-6 py-5 border-b sticky top-0 bg-white/80 backdrop-blur-xl z-10">
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-                  Order #{selectedOrder.id}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Placed on{" "}
-                  {new Date(selectedOrder.createdAt).toLocaleString("en-GB")}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-semibold rounded-full shadow-sm ${getStatusClass(
-                    selectedOrder.status
-                  )}`}
-                >
-                  {selectedOrder.status}
-                </span>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="text-gray-500 hover:text-[var(--brand-primary)] transition"
-                >
-                  <X size={22} />
-                </button>
-              </div>
-            </div>
+        <OrderModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onViewReview={setSelectedReview}
+          formatGBP={formatGBP}
+          getStatusClass={getStatusClass}
+        />
+      )}
 
-            {/* Body */}
-            <div className="overflow-y-auto px-6 py-5 space-y-8">
-              {/* 💳 Payment Info */}
-              <section>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Payment Details
-                </h3>
-                <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-2">
-                  <p>
-                    <span className="text-gray-500">Method:</span>{" "}
-                    {selectedOrder.paymentMethod.toUpperCase()}
-                  </p>
-                  <p>
-                    <span className="text-gray-500">Transaction ID:</span>{" "}
-                    {selectedOrder.transactionId ?? "N/A"}
-                  </p>
-                  <p>
-                    <span className="text-gray-500">Email:</span>{" "}
-                    {selectedOrder.user.email}
-                  </p>
-                </div>
-              </section>
+      {/* 💬 Review Modal */}
+      {selectedReview && <ReviewModal review={selectedReview} onClose={() => setSelectedReview(null)} />}
+    </div>
+  );
+}
 
-              {/* 📍 Delivery Address */}
-              <section>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Delivery Address
-                </h3>
-                <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-1">
-                  <p>
-                    {selectedOrder.firstName} {selectedOrder.lastName}
-                  </p>
-                  {selectedOrder.company && <p>{selectedOrder.company}</p>}
-                  <p>{selectedOrder.address1}</p>
-                  {selectedOrder.address2 && <p>{selectedOrder.address2}</p>}
-                  <p>
-                    {selectedOrder.city}, {selectedOrder.country}
-                  </p>
-                  <p>{selectedOrder.postalCode}</p>
-                  {selectedOrder.phone && <p>📞 {selectedOrder.phone}</p>}
-                </div>
-              </section>
-
-              {/* 🛍️ Order Items */}
-              <section>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Order Items
-                </h3>
-                <div className="border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100 border-b text-gray-700 text-xs uppercase tracking-wide">
-                      <tr>
-                        <th className="py-2 px-3 text-left">Item</th>
-                        <th className="py-2 px-3 text-left">Variant</th>
-                        <th className="py-2 px-3 text-center w-16">Qty</th>
-                        <th className="py-2 px-3 text-right">Price</th>
-                        <th className="py-2 px-3 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedOrder.orderItems?.map((item, idx) => (
-                        <tr
-                          key={idx}
-                          className={`${
-                            idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                          } hover:bg-gray-100/60 transition`}
-                        >
-                          <td className="py-2 px-3">{item.product.title}</td>
-                          <td className="py-2 px-3 text-left">
-                            {item.variant?.sku || "N/A"}
-                            {item.variant?.color?.name && (
-                              <span className="ml-2 text-gray-500">
-                                ({item.variant.color.name})
-                              </span>
-                            )}
-                            {item.variant?.size?.name && (
-                              <span className="ml-1 text-gray-500">
-                                - {item.variant.size.name}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-2 px-3 text-center">
-                            {item.quantity}
-                          </td>
-                          <td className="py-2 px-3 text-right">
-                            {formatGBP(item.price)}
-                          </td>
-                          <td className="py-2 px-3 text-right font-medium">
-                            {formatGBP(item.price * item.quantity)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              {/* 💰 Totals */}
-              <section className="flex justify-end">
-                <div className="w-full sm:w-2/3 space-y-2 text-sm rounded-xl p-5 bg-gradient-to-br from-gray-50 to-gray-100 border shadow-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">
-                      {formatGBP(selectedOrder.totalAmount)}
-                    </span>
-                  </div>
-                  <div className="border-t my-2"></div>
-                  <div className="flex justify-between font-semibold text-gray-900 text-lg">
-                    <span>Total</span>
-                    <span>{formatGBP(selectedOrder.totalAmount)}</span>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 flex justify-end gap-3 bg-white/80 sticky bottom-0 border-t backdrop-blur-xl">
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-red-700 transition font-medium"
-              >
-                Close
-              </button>
-            </div>
+/* ---------------------------------------------------
+   🧩 Order Modal Component
+--------------------------------------------------- */
+function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }: any) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
+      <div className="relative bg-white/80 rounded-2xl w-full max-w-3xl shadow-lg overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex justify-between items-start px-6 py-5 border-b sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Order #{order.id}</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Placed on {new Date(order.createdAt).toLocaleString("en-GB")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-semibold rounded-full ${getStatusClass(
+                order.status
+              )}`}
+            >
+              {order.status}
+            </span>
+            <button onClick={onClose} className="text-gray-500 hover:text-[var(--brand-primary)]">
+              <X size={22} />
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Body */}
+        <div className="overflow-y-auto px-6 py-5 space-y-8">
+          {/* Payment Info */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Payment Details</h3>
+            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-2">
+              <p>Method: {order.paymentMethod.toUpperCase()}</p>
+              <p>Transaction ID: {order.transactionId ?? "N/A"}</p>
+              <p>Email: {order.user.email}</p>
+            </div>
+          </section>
+
+          {/* Address */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Delivery Address</h3>
+            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-1">
+              <p>
+                {order.firstName} {order.lastName}
+              </p>
+              {order.company && <p>{order.company}</p>}
+              <p>{order.address1}</p>
+              {order.address2 && <p>{order.address2}</p>}
+              <p>
+                {order.city}, {order.country}
+              </p>
+              <p>{order.postalCode}</p>
+              {order.phone && <p>📞 {order.phone}</p>}
+            </div>
+          </section>
+
+          {/* Order Items */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
+            <div className="border rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 border-b text-gray-700 text-xs uppercase tracking-wide">
+                  <tr>
+                    <th className="py-2 px-3 text-left">Item</th>
+                    <th className="py-2 px-3 text-left">Variant</th>
+                    <th className="py-2 px-3 text-center w-16">Qty</th>
+                    <th className="py-2 px-3 text-right">Price</th>
+                    <th className="py-2 px-3 text-right">Subtotal</th>
+                    <th className="py-2 px-3 text-center w-24">Review</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.orderItems?.length > 0 ? (
+                    order.orderItems.map((item: OrderItem, idx: number) => (
+                      <tr key={idx} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100/60`}>
+                        <td className="py-3 px-4 font-medium text-gray-900">{item.product?.title}</td>
+                        <td className="py-3 px-4 text-left text-gray-700">
+                          {item.variant?.sku || "N/A"}
+                          {item.variant?.color?.name && (
+                            <span className="ml-2 text-gray-500">({item.variant.color.name})</span>
+                          )}
+                          {item.variant?.size?.name && (
+                            <span className="ml-1 text-gray-500">- {item.variant.size.name}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">{item.quantity}</td>
+                        <td className="py-3 px-4 text-right">{formatGBP(item.price)}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-gray-900">
+                          {formatGBP(item.price * item.quantity)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {item.reviewed && item.review ? (
+                            <button
+                              onClick={() => onViewReview(item.review)}
+                              className="text-[var(--brand-primary)] text-xs font-medium hover:underline"
+                            >
+                              View
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="text-center py-5 text-gray-500">
+                        No order items found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex justify-end gap-3 bg-white border-t">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-red-700 transition font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------
+   💬 Review Modal Component
+--------------------------------------------------- */
+function ReviewModal({ review, onClose }: any) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="relative bg-white/90 rounded-2xl w-full max-w-md shadow-lg overflow-hidden border border-gray-200">
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-white">
+          <h2 className="text-lg font-semibold text-gray-800">Customer Review</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-[var(--brand-primary)] transition">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <svg
+                key={star}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill={star <= review.rating ? "#FACC15" : "#E5E7EB"}
+                className="w-5 h-5"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.959a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.959c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.54-1.118l1.287-3.959a1 1 0 00-.364-1.118L2.064 9.386c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.285-3.959z" />
+              </svg>
+            ))}
+          </div>
+
+          {/* Product */}
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+              {review.product?.productimage?.[0]?.url ? (
+                <img
+                  src={review.product.productimage[0].url}
+                  alt={review.product.title}
+                  className="w-full h-full object-contain bg-white"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                  No Image
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                {review.product?.title || "Product Title"}
+              </p>
+              {review.variant?.sku && (
+                <p className="text-xs text-gray-500">SKU: {review.variant.sku}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Comment */}
+          <p className="text-sm text-gray-700 leading-relaxed italic border-t pt-3">
+            “{review.comment || "No comment provided."}”
+          </p>
+
+          {/* Info */}
+          <div className="text-xs text-gray-500 border-t pt-3">
+            <p>
+              <span className="font-medium text-gray-700">Reviewer:</span>{" "}
+              {review.user?.name || "Customer"}{" "}
+              <span className="text-gray-400">({review.user?.email})</span>
+            </p>
+            <p>
+              <span className="font-medium text-gray-700">Date:</span>{" "}
+              {new Date(review.createdAt).toLocaleDateString("en-GB")}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

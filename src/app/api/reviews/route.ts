@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma :any = new PrismaClient();
 
-// ✅ CREATE a new review
+//  CREATE a new review
 export async function POST(req: NextRequest) {
   try {
     const userId = await checkAuth(req);
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
-    // 🚫 Optional: Prevent duplicate reviews for same product+variant by same user
+    // Optional: Prevent duplicate reviews for same product+variant by same user
     const existing = await prisma.review.findFirst({
       where: {
         userId,
@@ -46,15 +46,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-   // ✅ Update the reviewed flag on the specific order item
+   // Update the reviewed flag on the specific order item
     await prisma.orderItem.update({
-      where: { id: orderItemId }, // ✅ Correct field name
+      where: { id: orderItemId }, // 
       data: { reviewed: true },
     });
 
     return NextResponse.json({ success: true, data: review });
   } catch (error) {
-    console.error("❌ Review POST Error:", error);
+    console.error(" Review POST Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create review" },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ✅ GET all reviews (admin or listing purpose)
+//  GET all reviews (admin or listing purpose)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: reviews });
   } catch (error) {
-    console.error("❌ Review GET Error:", error);
+    console.error("Review GET Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch reviews" },
       { status: 500 }

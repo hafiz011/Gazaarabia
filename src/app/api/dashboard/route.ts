@@ -4,7 +4,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-// ✅ GET Dashboard Counts
+//  GET Dashboard Counts
 export async function GET(req: Request) {
   const token: any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);
@@ -38,8 +38,8 @@ export async function GET(req: Request) {
       prisma.deliveryOptions.count(),
       prisma.materialCare.count(),
       prisma.products.count(),
-      prisma.users.count(),     // ✅ New
-      prisma.orders.count(),    // ✅ New
+      prisma.users.count(),    
+      prisma.orders.count(),  
     ]);
 
     const recentBlogs = await prisma.blogs.findMany({

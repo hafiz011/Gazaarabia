@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     const product = await prisma.products.create({
       data: {
-        slug: body.slug.trim(),            // 🆕 Slug added here
+        slug: body.slug.trim(),            // Slug added here
         title: body.title,
         shortDescription: body.shortDescription,
         description: body.description,
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
           ? parseInt(body.subcategoryId)
           : null,
 
-        // 🖼️ Product Images
+        // Product Images
         productimage: {
           create:
             body.images?.map((img: any) => ({
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
             })) || [],
         },
 
-        // 🧩 Product Variants
+        //  Product Variants
         productvariant: {
           create:
             body.variants?.map((v: any) => ({
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("❌ POST products error:", error);
+    console.error("POST products error:", error);
     if (error.code === "P2002" && error.meta?.target?.includes("slug")) {
       return NextResponse.json(
         { success: false, message: "Slug must be unique. This one already exists." },

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: size });
   } catch (error) {
-    console.error("❌ GET Size Error:", error);
+    console.error(" GET Size Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch size" },
       { status: 500 }
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ PUT - Update Size (Protected)
+//  PUT - Update Size (Protected)
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -64,7 +64,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("❌ PUT Size Error:", error);
+    console.error(" PUT Size Error:", error);
     return NextResponse.json(
       { error: "Failed to update size" },
       { status: 500 }
@@ -72,7 +72,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ DELETE - Delete Size (Protected)
+//  DELETE - Delete Size (Protected)
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -96,7 +96,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       message: "Size deleted successfully",
     });
   } catch (error) {
-    console.error("❌ DELETE Size Error:", error);
+    console.error(" DELETE Size Error:", error);
     return NextResponse.json(
       { error: "Failed to delete size" },
       { status: 500 }

@@ -4,7 +4,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 const prisma :any= new PrismaClient();
 
-// 🧮 Helper to calculate subtotal
+//  Helper to calculate subtotal
 async function calculateSubtotal(userId: any) {
   const items = await prisma.cart.findMany({
     where: { userId },
@@ -16,7 +16,7 @@ async function calculateSubtotal(userId: any) {
   );
 }
 
-// 🛒 Add product to cart
+//  Add product to cart
 export async function POST(req: Request) {
   try {
     const token: any = getTokenFromHeader(req);
@@ -80,7 +80,7 @@ if (existing) {
   }
 }
 
-// ❌ Remove product from cart
+//  Remove product from cart
 // export async function DELETE(req: Request) {
 //   try {
 //     const token: any = getTokenFromHeader(req);
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // 🧠 Add selectedVariantData for each cart item
+    //  Add selectedVariantData for each cart item
     const enrichedItems = items.map((item:any) => {
       const selectedVariant = item.product.productvariant.find(
         (variant: any) => variant.id === item.variantId
@@ -166,13 +166,13 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ cart: enrichedItems, subtotal });
   } catch (error: any) {
-    console.error("❌ Get cart error:", error);
+    console.error("Get cart error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 
-// // ✏️ Update quantity
+// //  Update quantity
 // export async function PUT(req: Request) {
 //   try {
 //     const token = getTokenFromHeader(req);
@@ -201,13 +201,13 @@ export async function GET(req: Request) {
 //     const subtotal = await calculateSubtotal(userId);
 //     return NextResponse.json({ message: "Quantity updated", subtotal });
 //   } catch (error: any) {
-//     console.error("❌ PUT /cart error:", error);
+//     console.error( PUT /cart error:", error);
 //     return NextResponse.json({ error: error.message || "Failed to update quantity" }, { status: 500 });
 //   }
 // }
 
 
-// ✏️ Update quantity
+//  Update quantity
 export async function PUT(req: Request) {
   try {
     const token = getTokenFromHeader(req);
@@ -242,7 +242,7 @@ export async function PUT(req: Request) {
 }
 
 
-// ❌ Remove product from cart
+// Remove product from cart
 export async function DELETE(req: Request) {
   try {
     const token: any = getTokenFromHeader(req);
@@ -306,7 +306,7 @@ export async function DELETE(req: Request) {
     const subtotal = await calculateSubtotal(userId);
     return NextResponse.json({ message: "Product removed from cart", cart:enrichedItems,  subtotal });
   } catch (error: any) {
-    console.error("❌ Remove from cart error:", error);
+    console.error("Remove from cart error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

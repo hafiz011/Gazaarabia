@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: option });
   } catch (error: any) {
-    console.error("❌ GET delivery option error:", error);
+    console.error(" GET delivery option error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch delivery option", error: error.message },
       { status: 500 }
@@ -84,7 +84,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       data: updated,
     });
   } catch (error: any) {
-    console.error("❌ PUT delivery option error:", error);
+    console.error(" PUT delivery option error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update delivery option", error: error.message },
       { status: 500 }
@@ -125,7 +125,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       message: "Delivery option deleted successfully",
     });
   } catch (error: any) {
-    console.error("❌ DELETE delivery option error:", error);
+    console.error(" DELETE delivery option error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete delivery option", error: error.message },
       { status: 500 }

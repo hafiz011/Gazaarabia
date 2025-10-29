@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma :any = new PrismaClient();
 
-// 🔐 POST - Create a new category
+//POST - Create a new category
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🧭 Check if category already exists
+    // Check if category already exists
     const existing = await prisma.categories.findUnique({
       where: { slug: slug.trim() },
     });
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error) {
-    console.error("❌ POST Category Error:", error);
+    console.error(" POST Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create category." },
       { status: 500 }
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 🔐 GET - List all categories
+//  GET - List all categories
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: categories });
   } catch (error) {
-    console.error("❌ GET Category Error:", error);
+    console.error(" GET Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch categories." },
       { status: 500 }

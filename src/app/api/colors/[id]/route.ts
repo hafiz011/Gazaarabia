@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// 🟡 GET - Single color (Protected)
+//  GET - Single color (Protected)
 export async function GET(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: color });
   } catch (error) {
-    console.error("❌ GET Color Error:", error);
+    console.error(" GET Color Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch color." },
       { status: 500 }
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✏️ PUT - Update color (Protected)
+//  PUT - Update color (Protected)
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -72,7 +72,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       data: updated,
     });
   } catch (error) {
-    console.error("❌ PUT Color Error:", error);
+    console.error(" PUT Color Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update color." },
       { status: 500 }
@@ -80,7 +80,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// 🗑️ DELETE - Remove color (Protected)
+// DELETE - Remove color (Protected)
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -108,7 +108,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       message: "Color deleted successfully.",
     });
   } catch (error) {
-    console.error("❌ DELETE Color Error:", error);
+    console.error("DELETE Color Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete color." },
       { status: 500 }

@@ -1,69 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
-
-const prisma = new PrismaClient();
-
-// export async function GET(req: NextRequest) {
-//   try {
-//     // 🔐 Authentication check
-//     const userId = await checkAuth(req);
-//     if (!userId) {
-//       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const { searchParams } = new URL(req.url);
-//     const search = searchParams.get("search")?.trim() || "";
-
-//     // 🕵️ Search conditions — removed mode for MySQL
-//     const where = search
-//       ? {
-//           OR: [
-//             { transactionId: { contains: search } },
-//             { status: { contains: search } },
-//             { paymentMethod: { contains: search } },
-//             ...(isNaN(Number(search)) ? [] : [{ id: Number(search) }]),
-//             {
-//               user: {
-//                 name: { contains: search },
-//               },
-//             },
-//           ],
-//         }
-//       : {};
-
-//     // 🧾 Fetch orders
-//     const orders = await prisma.orders.findMany({
-//       where,
-//       include: {
-//         user: {
-//           select: { id: true, name: true, email: true },
-//         },
-//         orderItems: {
-//           select: {
-//             id: true,
-//             quantity: true,
-//             price: true,
-//             product: { select: { title: true } },
-//           },
-//         },
-//       },
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//     });
-
-//     return NextResponse.json({ success: true, data: orders });
-//   } catch (error) {
-//     console.error("❌ Orders GET Error:", error);
-//     return NextResponse.json(
-//       { success: false, message: "Failed to fetch orders" },
-//       { status: 500 }
-//     );
-//   }
-// }
+import { getReviewDetails } from "@/lib/helpers/getReviewByOrderItemId";
 
 
+const prisma :any = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,7 +17,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
-    // 🕵️ Search conditions
+    // 🕵️ Search conditions — removed mode for MySQL
     const where = search
       ? {
           OR: [
@@ -93,7 +34,7 @@ export async function GET(req: NextRequest) {
         }
       : {};
 
-    // 🧾 Fetch orders with variant details
+    // 🧾 Fetch orders
     const orders = await prisma.orders.findMany({
       where,
       include: {
@@ -106,13 +47,14 @@ export async function GET(req: NextRequest) {
             quantity: true,
             price: true,
             product: { select: { title: true } },
-            variant: {                                 // ✅ added this
+             variant: {                                 // ✅ added this
               select: {
                 sku: true,
                 color: { select: { name: true } },
                 size: { select: { name: true } },
               },
             },
+            reviewed:true
           },
         },
       },
@@ -121,7 +63,27 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, data: orders });
+     // 🧠 Add review data per order item using your helper
+    const formattedOrders = await Promise.all(
+      orders.map(async (order:any) => {
+        const updatedItems = await Promise.all(
+          order.orderItems.map(async (item:any) => {
+            const review = await getReviewDetails(item.id);
+
+            return {
+              ...item,
+              review: review,
+              // reviewed: !!review, // ✅ true if a review exists
+            };
+          })
+        );
+
+        return { ...order, orderItems: updatedItems };
+      })
+    );
+
+    return NextResponse.json({ success: true, data: formattedOrders  });
+    // return NextResponse.json({ success: true, data: orders });
   } catch (error) {
     console.error("❌ Orders GET Error:", error);
     return NextResponse.json(
@@ -130,3 +92,66 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+
+
+
+// export async function GET(req: NextRequest) {
+//   try {
+//     const userId = await checkAuth(req);
+//     if (!userId) {
+//       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+//     }
+
+//     const orders = await prisma.orders.findMany({
+//       where: { userId: Number(userId) },
+//       include: {
+//         orderItems: {
+//           include: {
+//             product: {
+//               select: {
+//                 id: true,
+//                 title: true,
+//                 productimage: { select: { url: true }, take: 1 },
+//               },
+//             },
+//             variant: {
+//               select: {
+//                 id: true,
+//                 sku: true,
+//                 color: { select: { name: true } },
+//                 size: { select: { name: true } },
+//               },
+//             },
+//           },
+//         },
+//       },
+//       orderBy: { createdAt: "desc" },
+//     });
+
+//     // 🧠 Attach review data for each item using helper
+//     const formattedOrders = await Promise.all(
+//       orders.map(async (order:any) => ({
+//         ...order,
+//         orderItems: await Promise.all(
+//           order.orderItems.map(async (item:any) => {
+//             const reviewDetails = await getReviewDetails(item.id, Number(userId));
+//             return {
+//               ...item,
+//               review: reviewDetails,
+//               reviewed: !!reviewDetails,
+//             };
+//           })
+//         ),
+//       }))
+//     );
+
+//     return NextResponse.json({ success: true, data: formattedOrders });
+//   } catch (error) {
+//     console.error("❌ Orders GET Error:", error);
+//     return NextResponse.json(
+//       { success: false, message: "Failed to fetch orders" },
+//       { status: 500 }
+//     );
+//   }
+// }

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: options });
   } catch (error: any) {
-    console.error("❌ GET all delivery options error:", error);
+    console.error(" GET all delivery options error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch delivery options", error: error.message },
       { status: 500 }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       data: newOption,
     });
   } catch (error: any) {
-    console.error("❌ POST delivery option error:", error);
+    console.error("POST delivery option error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create delivery option", error: error.message },
       { status: 500 }

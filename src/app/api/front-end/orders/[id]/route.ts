@@ -10,23 +10,23 @@ const prisma = new PrismaClient();
  */
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> } // 👈 make params a Promise
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ✅ Authenticate user
+    //  Authenticate user
     const userId = await checkAuth(req);
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ Await params before using
+    // Await params before using
     const { id } = await context.params;
     const orderId = Number(id);
     if (isNaN(orderId)) {
       return NextResponse.json({ message: "Invalid order ID" }, { status: 400 });
     }
 
-    // ✅ Fetch order with products and variants
+    //  Fetch order with products and variants
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
       include: {
@@ -55,12 +55,12 @@ export async function GET(
       );
     }
 
-    // ✅ Ensure user can only access their own order
+    //  Ensure user can only access their own order
     if (order.userId !== userId) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // 🧠 Enrich orderItems with selected variant details
+    // Enrich orderItems with selected variant details
     const enrichedOrderItems = order.orderItems.map((item: any) => {
       const selectedVariant = item.product.productvariant.find(
         (variant: any) => variant.id === item.variantId
@@ -96,7 +96,7 @@ export async function GET(
       data: enrichedOrder,
     });
   } catch (error) {
-    console.error("❌ GET Order by ID Error:", error);
+    console.error(" GET Order by ID Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch order" },
       { status: 500 }

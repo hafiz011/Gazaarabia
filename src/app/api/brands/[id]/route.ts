@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// 🔐 GET - Get single brand by ID
+// GET - Get single brand by ID
 export async function GET(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: brand });
   } catch (error) {
-    console.error("❌ GET Brand Error:", error);
+    console.error("GET Brand Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch brand" },
       { status: 500 }
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// 🔐 PUT - Update brand
+//  PUT - Update brand
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("❌ PUT Brand Error:", error);
+    console.error("PUT Brand Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update brand" },
       { status: 500 }
@@ -66,7 +66,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// 🔐 DELETE - Delete brand
+// DELETE - Delete brand
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -82,7 +82,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, message: "Brand deleted" });
   } catch (error) {
-    console.error("❌ DELETE Brand Error:", error);
+    console.error("DELETE Brand Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete brand" },
       { status: 500 }

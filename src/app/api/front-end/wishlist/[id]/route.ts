@@ -5,7 +5,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// ❌ DELETE product from wishlist
+//  DELETE product from wishlist
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, message: "Product removed from wishlist" });
   } catch (error: any) {
-    console.error("❌ DELETE wishlist error:", error);
+    console.error(" DELETE wishlist error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to remove product from wishlist" },
       { status: 500 }

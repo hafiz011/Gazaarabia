@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// 🔐 GET blog by ID or slug (Protected)
+// GET blog by ID or slug (Protected)
 export async function GET(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -36,12 +36,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: blog });
   } catch (err) {
-    console.error("❌ Error fetching blog:", err);
+    console.error("Error fetching blog:", err);
     return NextResponse.json({ error: "Failed to fetch blog" }, { status: 500 });
   }
 }
 
-// 🔐 UPDATE blog
+//  UPDATE blog
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -59,12 +59,12 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (err) {
-    console.error("❌ Error updating blog:", err);
+    console.error("Error updating blog:", err);
     return NextResponse.json({ error: "Failed to update blog" }, { status: 500 });
   }
 }
 
-// 🔐 DELETE blog
+// DELETE blog
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -80,7 +80,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, message: "Blog deleted successfully" });
   } catch (err) {
-    console.error("❌ Error deleting blog:", err);
+    console.error(" Error deleting blog:", err);
     return NextResponse.json({ error: "Failed to delete blog" }, { status: 500 });
   }
 }

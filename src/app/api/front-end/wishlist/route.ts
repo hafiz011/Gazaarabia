@@ -4,7 +4,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 const prisma:any = new PrismaClient();
 
-// 🛍️ GET - Fetch user's wishlist
+//  GET - Fetch user's wishlist
 
 export async function GET(req: Request) {
   try {
@@ -15,13 +15,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔸 Get pagination params
+    // Get pagination params
     const { searchParams } = new URL(req.url);
     const page = Number(searchParams.get("page")) || 1;
     const limit = Number(searchParams.get("limit")) || 12;
     const skip = (page - 1) * limit;
 
-    // 🧾 Get wishlist items with pagination
+    //  Get wishlist items with pagination
     const [wishlist, total] = await Promise.all([
       prisma.wishlist.findMany({
         where: { userId },
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    // 🧮 Calculate total pages
+    // Calculate total pages
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
@@ -86,7 +86,7 @@ export async function GET(req: Request) {
 //   return NextResponse.json(wishlist);
 // }
 
-// 🛍️ POST - Add product to wishlist
+// POST - Add product to wishlist
 export async function POST(req: Request) {
   const token:any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);

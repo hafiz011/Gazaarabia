@@ -23,14 +23,14 @@
 //       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
 //     }
 
-//     // ✅ Generate JWT
+//     //  Generate JWT
 //     const token = jwt.sign(
 //       { id: user.id, email: user.email, roleId: user.roleId },
 //       process.env.JWT_SECRET as string,
 //       { expiresIn: "7d" }
 //     );
 
-//     // ✅ Set cookie and return response
+//     //  Set cookie and return response
 //     const res = NextResponse.json({
 //       message: "Login successful",
 //       user: {
@@ -75,10 +75,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 👇 Fetch the user and include the related role record
+    // Fetch the user and include the related role record
     const user = await prisma.users.findUnique({
       where: { email },
-      include: { role: true }, // ✅ this brings the role name
+      include: { role: true }, //  this brings the role name
     });
 
     if (!user) {
@@ -96,13 +96,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Generate JWT with role name
+    //  Generate JWT with role name
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         roleId: user.roleId,
-        roleName: user.role.name, // 👈 added role name
+        roleName: user.role.name,
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
         name: user.name,
         email: user.email,
         roleId: user.roleId,
-        roleName: user.role.name, // 👈 here it is
+        roleName: user.role.name, 
       },
       token,
     });

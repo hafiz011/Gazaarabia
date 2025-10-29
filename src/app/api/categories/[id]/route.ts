@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-// 📝 PUT - Update category (Protected)
+// PUT - Update category (Protected)
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       );
     }
 
-    // ✅ Optional duplicate check
+    // Optional duplicate check
     const duplicate = await prisma.categories.findFirst({
       where: { slug: slug.trim(), NOT: { id: categoryId } },
     });
@@ -54,7 +54,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error("❌ PUT Category Error:", error);
+    console.error("PUT Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update category." },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-// 🗑️ DELETE - Delete category (Protected)
+// DELETE - Delete category (Protected)
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -93,7 +93,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       message: "Category deleted successfully.",
     });
   } catch (error) {
-    console.error("❌ DELETE Category Error:", error);
+    console.error("DELETE Category Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete category." },
       { status: 500 }

@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 const prisma: any = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// ✅ GET product by ID (Protected)
+//  GET product by ID (Protected)
 export async function GET(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: product });
   } catch (error) {
-    console.error("❌ GET Product Error:", error);
+    console.error(" GET Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch product" },
       { status: 500 }
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// // ✅ PUT - Update product (Protected)
+// //  PUT - Update product (Protected)
 // export async function PUT(req: NextRequest, context: RouteContext) {
 //   const userId = await checkAuth(req);
 //   if (!userId) {
@@ -124,7 +124,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 // }
 
 
-// ✅ PUT - Update product (Hard delete old variants & images)
+// PUT - Update product (Hard delete old variants & images)
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -141,7 +141,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const body = await req.json();
 
-    // 1️⃣ Delete dependent records (Cart + Order Items) before variants
+    // 1️ Delete dependent records (Cart + Order Items) before variants
     await prisma.cart.deleteMany({
       where: { variant: { productId } },
     });
@@ -150,11 +150,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       where: { variant: { productId } },
     });
 
-    // 2️⃣ Delete images & variants
+    // 2️ Delete images & variants
     await prisma.productimage.deleteMany({ where: { productId } });
     await prisma.productvariant.deleteMany({ where: { productId } });
 
-    // 3️⃣ Update product with new values
+    // 3️ Update product with new values
     const updated = await prisma.products.update({
       where: { id: productId },
       data: {
@@ -175,7 +175,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         categoryId: body.categoryId ? parseInt(body.categoryId) : null,
         subcategoryId: body.subcategoryId ? parseInt(body.subcategoryId) : null,
 
-        // 🖼️ Re-create images
+        //  Re-create images
         productimage: {
           create:
             body.images?.map((img: any) => ({
@@ -186,7 +186,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
             })) || [],
         },
 
-        // 🧩 Re-create variants
+        //  Re-create variants
         productvariant: {
           create:
             body.variants?.map((v: any) => ({
@@ -211,7 +211,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       data: updated,
     });
   } catch (error: any) {
-    console.error("❌ PUT Product Error:", error);
+    console.error(" PUT Product Error:", error);
 
     if (error.code === "P2002" && error.meta?.target?.includes("slug")) {
       return NextResponse.json(
@@ -228,7 +228,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 }
 
 
-// ✅ DELETE product (Protected)
+// DELETE product (Protected)
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -254,7 +254,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.error("❌ DELETE Product Error:", error);
+    console.error(" DELETE Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete product" },
       { status: 500 }

@@ -5,7 +5,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 const prisma = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-// 📝 UPDATE Address
+// UPDATE Address
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ message: "Address updated successfully" });
   } catch (error) {
-    console.error("❌ PUT /address/[id] error:", error);
+    console.error(" PUT /address/[id] error:", error);
     return NextResponse.json(
       { message: "Failed to update address" },
       { status: 500 }
@@ -38,7 +38,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ❌ DELETE Address
+//  DELETE Address
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -60,7 +60,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ message: "Address deleted successfully" });
   } catch (error) {
-    console.error("❌ DELETE /address/[id] error:", error);
+    console.error(" DELETE /address/[id] error:", error);
     return NextResponse.json(
       { message: "Failed to delete address" },
       { status: 500 }

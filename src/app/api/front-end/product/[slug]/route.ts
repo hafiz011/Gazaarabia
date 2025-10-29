@@ -11,12 +11,12 @@ export async function GET(
 ) {
   const { slug } = await context.params;
 
-  // 🧭 Get userId if logged in
+  //Get userId if logged in
   const token = getTokenFromHeader(req);
   const userId = token ? getUserIdFromToken(token) : null;
 
   try {
-    // ✅ Get product details by slug and include material care
+    //  Get product details by slug and include material care
     const product = await prisma.products.findUnique({
       where: { slug },
       include: {
@@ -33,7 +33,7 @@ export async function GET(
         materialCare: true,
 
 
-         // 📝 Include reviews and user info
+         //  Include reviews and user info
         reviews: {
           include: {
             user: {
@@ -59,7 +59,7 @@ export async function GET(
       );
     }
 
-        // 🧮 2. Get aggregate review data
+        //  2. Get aggregate review data
     const reviewStats = await prisma.review.aggregate({
       where: { productId: product.id },
       _avg: { rating: true },
@@ -70,7 +70,7 @@ export async function GET(
     const totalReviews = reviewStats._count.id;
 
 
-    // ❤️ Check if this product is in the user's wishlist
+    //  Check if this product is in the user's wishlist
     let isInWishlist = false;
     if (userId) {
       isInWishlist = await isProductInWishlist(userId, product.id);
@@ -86,7 +86,7 @@ export async function GET(
       isInWishlist,
     });
   } catch (error: any) {
-    console.error("❌ Error fetching product by slug:", error);
+    console.error("Error fetching product by slug:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch product" },
       { status: 500 }

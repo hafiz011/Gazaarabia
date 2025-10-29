@@ -16,13 +16,13 @@ const authOptions :any = {
             throw new Error("Email and password are required");
           }
 
-          // 🔐 Call your custom login API
+          //  Call your custom login API
           const res = await authService.login({
             email: credentials.email,
             password: credentials.password,
           });
 
-          // ✅ Check response structure
+          // Check response structure
           if (res && res.token && res.user) {
             return {
               id: res.user.id.toString(),
@@ -34,7 +34,7 @@ const authOptions :any = {
             };
           }
 
-          // ❌ If invalid credentials
+          // If invalid credentials
           return null;
         } catch (error: any) {
           console.error("Authorization error:", error);
@@ -45,7 +45,7 @@ const authOptions :any = {
   ],
 
   pages: {
-    signIn: "/account/login", // ✅ use your login page route
+    signIn: "/account/login", // use your login page route
   },
 
   session: {
@@ -81,7 +81,7 @@ const authOptions :any = {
     },
 
     async redirect({ url, baseUrl }:any) {
-      // 🚀 Smart redirect after login
+      //  Smart redirect after login
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;

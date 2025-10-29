@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       data: materialCares,
     });
   } catch (error) {
-    console.error("❌ GET MaterialCare Error:", error);
+    console.error(" GET MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch material care records." },
       { status: 500 }
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       data: newItem,
     });
   } catch (error) {
-    console.error("❌ POST MaterialCare Error:", error);
+    console.error(" POST MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create material care item." },
       { status: 500 }

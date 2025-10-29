@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: Number(userId),
 
-        // 🧾 Payment & totals
+        //  Payment & totals
         totalAmount: payment.totalAmount,
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         status: (payment.paymentStatus || "completed").toLowerCase(),
         paypalResponse: payment.paypalResponse,
 
-        // 📍 Address snapshot
+        //  Address snapshot
         addressId: address.id,
         firstName: address.firstName,
         lastName: address.lastName,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
-        // 🛍 Order items
+        //  Order items
         orderItems: {
           create: orderItems.map((item: any) => ({
             productId: item.productId,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       data: newOrder,
     });
   } catch (error) {
-    console.error("❌ POST Orders Error:", error);
+    console.error("POST Orders Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create order." },
       { status: 500 }
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
       data: orders,
     });
   } catch (error) {
-    console.error("❌ GET Orders Error:", error);
+    console.error("GET Orders Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch orders." },
       { status: 500 }

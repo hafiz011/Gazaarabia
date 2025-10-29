@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true, data: item });
   } catch (error) {
-    console.error("❌ GET MaterialCare by ID Error:", error);
+    console.error("GET MaterialCare by ID Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch material care item." },
       { status: 500 }
@@ -94,7 +94,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       data: updatedItem,
     });
   } catch (error) {
-    console.error("❌ PUT MaterialCare Error:", error);
+    console.error(" PUT MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update material care item." },
       { status: 500 }
@@ -143,7 +143,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       message: "Material care item deleted successfully.",
     });
   } catch (error) {
-    console.error("❌ DELETE MaterialCare Error:", error);
+    console.error("DELETE MaterialCare Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete material care item." },
       { status: 500 }

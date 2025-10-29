@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-// 🔐 GET - Protected
+// GET - Protected
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: categories });
   } catch (error) {
-    console.error("❌ GET Categories Error:", error);
+    console.error(" GET Categories Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch categories." },
       { status: 500 }
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 🔐 POST - Protected
+// POST - Protected
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -44,13 +44,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Auto-generate slug if not provided
+    // Auto-generate slug if not provided
     const finalSlug =
       slug && slug.trim() !== ""
         ? slug
         : slugify(name, { lower: true, strict: true });
 
-    // ✅ Check duplicate
+    //  Check duplicate
     const existing = await prisma.blogCategories.findFirst({
       where: {
         OR: [{ name }, { slug: finalSlug }],
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.error("❌ POST Category Error:", error);
+    console.error("POST Category Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error." },
       { status: 500 }

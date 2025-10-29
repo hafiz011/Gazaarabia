@@ -108,7 +108,7 @@ export default function ProductCard({
       {/* 🏷️ Product Title */}
       <h3
         onClick={handleCardClick}
-        className="mt-4 text-sm font-medium text-[var(--text-primary)] line-clamp-2 pointer-events-auto"
+        className="mt-4 text-sm font-medium text-[var(--text-primary)] line-clamp-1 pointer-events-auto"
       >
         {product.title}
       </h3>

@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-// 📌 GET all colors (Protected)
+//  GET all colors (Protected)
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: colors });
   } catch (error) {
-    console.error("❌ GET Colors Error:", error);
+    console.error(" GET Colors Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch colors." },
       { status: 500 }
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 🟢 POST - Create new color (Protected)
+// POST - Create new color (Protected)
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       data: color,
     });
   } catch (error: any) {
-    console.error("❌ POST Color Error:", error);
+    console.error("POST Color Error:", error);
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
