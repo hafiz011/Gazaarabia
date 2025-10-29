@@ -15,6 +15,7 @@ interface Product {
   sellingPrice: number;
   brand?: { name: string };
   category?: { name: string };
+  categories:any,
   // images?: { url: string }[];
   productimage?: { url: string }[];
   active: boolean;
@@ -151,8 +152,8 @@ export default function ProductListPage() {
                     </td>
                     <td className="py-3 px-5 truncate max-w-[180px]">{p.title}</td>
                     <td className="py-3 px-5">{p.brand?.name || "-"}</td>
-                    <td className="py-3 px-5">{p.category?.name || "-"}</td>
-                    <td className="py-3 px-5">₹{p.sellingPrice}</td>
+                    <td className="py-3 px-5">{p.categories?.name || "-"}</td>
+                    <td className="py-3 px-5">£{p.sellingPrice}</td>
                     <td className="py-3 px-5">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${

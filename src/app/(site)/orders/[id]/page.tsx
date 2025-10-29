@@ -7,18 +7,39 @@ import { orderService } from "@/lib/services/front-end/orderService";
 import Loader from "@/components/Loader";
 import PopupAlert from "@/components/PopupAlert";
 import Image from "next/image";
-import { ShoppingBag, Package, Truck } from "lucide-react";
+import {
+  ShoppingBag,
+  Package,
+  Truck,
+  MapPin,
+  Phone,
+} from "lucide-react";
 import Link from "next/link";
+import ReviewModal from "@/components/ReviewModal";
+import { CheckCircle } from "lucide-react";
+
+
+interface SelectedVariantData {
+  id: number;
+  sizeId?: number;
+  colorId?: number;
+  sizeName?: string | null;
+  colorName?: string | null;
+  hexCode?: string | null;
+  price: number;
+}
 
 interface OrderItem {
   id: number;
   quantity: number;
   price: number;
+  selectedVariantData?: SelectedVariantData | null;
   product: {
     id: number;
     title: string;
     productimage?: { url: string }[];
   };
+  reviewed: boolean;
 }
 
 interface Order {
@@ -29,6 +50,15 @@ interface Order {
   platform?: string | null;
   createdAt: string;
   orderItems: OrderItem[];
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  phone?: string;
 }
 
 export default function OrderDetailsPage() {
@@ -39,6 +69,12 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [popup, setPopup] = useState({ isOpen: false, message: "", type: "" });
+
+  // ⭐ Review modal states
+  const [reviewModal, setReviewModal] = useState(false);
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState<number>(0);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -56,9 +92,9 @@ export default function OrderDetailsPage() {
       (async () => {
         try {
           const res = await orderService.getById(token, Number(id));
-          setOrder(res);
+          setOrder(res.data);
         } catch (err) {
-          console.error("Failed to fetch order", err);
+          console.error("❌ Failed to fetch order", err);
           setPopup({
             isOpen: true,
             message: "Failed to fetch order details. Please try again.",
@@ -70,6 +106,36 @@ export default function OrderDetailsPage() {
       })();
     }
   }, [id, session, status]);
+
+
+  const handleSuccessReviewed = () =>{
+     // 📝 1. Close the modal
+  setReviewModal(false);
+
+  // 🟢 2. Optimistically update the reviewed status in the UI
+  setOrder((prevOrder) => {
+    if (!prevOrder) return prevOrder;
+
+    return {
+      ...prevOrder,
+      orderItems: prevOrder.orderItems.map((orderItem) =>
+        orderItem.product.id === selectedProductId &&
+        orderItem.selectedVariantData?.id === selectedVariantId
+          ? { ...orderItem, reviewed: true }  // 👈 set reviewed to true
+          : orderItem
+      ),
+    };
+  });
+
+  // 🪄 3. Show success popup
+  setTimeout(() => {
+    setPopup({
+      isOpen: true,
+      message: "Thank you for your review!",
+      type: "success",
+    });
+  }, 300);
+  }
 
   if (loading) return <Loader />;
 
@@ -113,12 +179,14 @@ export default function OrderDetailsPage() {
 
         <ul className="divide-y divide-[var(--mid-gray)]">
           {order.orderItems.map((item) => (
+
+
             <li
               key={item.id}
-              className="flex justify-between items-stretch gap-4 py-4"
+              className="flex flex-col md:flex-row gap-4 py-4 border-b border-[var(--mid-gray)]"
             >
-              {/* 🖼 Image Section (CartDrawer Style) */}
-              <div className="flex items-stretch gap-4">
+              {/* 🖼️ Product Image */}
+              <div className="flex gap-4 w-full md:w-auto">
                 <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                   {item.product?.productimage?.[0]?.url ? (
                     <Image
@@ -134,22 +202,70 @@ export default function OrderDetailsPage() {
                   )}
                 </div>
 
-                {/* 📝 Product Info */}
-                <div className="flex flex-col justify-center">
-                  <p className="font-semibold text-[var(--text-primary)] line-clamp-2">
-                    {item.product.title}
-                  </p>
-                  <p className="text-[var(--text-muted)] text-sm mt-1">
-                    Qty: {item.quantity}
-                  </p>
+                {/* 📄 Product Info */}
+                <div className="flex-1 flex flex-col justify-start w-full">
+                  {/* 🏷 Title (left) + Price (right) */}
+                  <div className="flex items-start justify-between w-full">
+                    <p className="font-semibold text-[var(--text-primary)] text-base leading-snug line-clamp-2 flex-1 pr-2">
+                      {item.product.title}
+                    </p>
+                    <div className="font-semibold text-[var(--brand-primary)] text-sm md:text-base whitespace-nowrap">
+                      £{item.price.toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* 🎨 Color/Size/Qty (left) + Write Review (right) */}
+                  <div className="flex items-center justify-between mt-1 w-full flex-wrap gap-2">
+                    {/* Left section */}
+                    <div className="text-xs text-[var(--text-secondary)] flex flex-wrap items-center gap-2">
+                      {item.selectedVariantData?.colorName && (
+                        <span className="flex items-center gap-1">
+                          Color: {item.selectedVariantData.colorName}
+                          {item.selectedVariantData.hexCode && (
+                            <span
+                              className="inline-block w-3 h-3 rounded-full border"
+                              style={{
+                                backgroundColor: item.selectedVariantData.hexCode,
+                              }}
+                            />
+                          )}
+                        </span>
+                      )}
+                      {item.selectedVariantData?.sizeName && (
+                        <span>Size: {item.selectedVariantData.sizeName}</span>
+                      )}
+                      <span>Qty: {item.quantity}</span>
+                    </div>
+
+                    {/* Right section */}
+                    {order.status === "completed" && (
+                      <div className="ml-auto">
+                        {item.reviewed ? (
+                          <div className="flex items-center gap-1 text-green-600 bg-green-50 border border-green-300 rounded-full px-3 py-1 text-xs font-medium">
+                            <CheckCircle size={14} className="text-green-600" />
+                            <span>Review Submitted</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setSelectedOrderItemId(item.id);
+                              setSelectedProductId(item.product.id);
+                              setSelectedVariantId(item.selectedVariantData?.id || null);
+                              setReviewModal(true);
+                            }}
+                            className="text-xs px-3 py-1 border border-[var(--brand-primary)] text-[var(--brand-primary)] rounded-full hover:bg-[var(--brand-primary)] hover:text-white transition whitespace-nowrap"
+                          >
+                            Write Review
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* 💰 Price */}
-              <div className="font-semibold text-[var(--brand-primary)] whitespace-nowrap self-center">
-                £{item.price.toFixed(2)}
-              </div>
             </li>
+
+
           ))}
         </ul>
 
@@ -164,7 +280,7 @@ export default function OrderDetailsPage() {
       </div>
 
       {/* 💳 Payment & Shipping */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="p-5 bg-white rounded-xl border shadow-sm">
           <h3 className="text-lg font-semibold mb-3 text-[var(--text-primary)]">
             Payment Information
@@ -172,7 +288,6 @@ export default function OrderDetailsPage() {
           <p className="text-[var(--text-secondary)]">
             Method: <span className="font-medium">{order.paymentMethod}</span>
           </p>
-          
           <p className="text-[var(--text-secondary)] capitalize">
             Status:{" "}
             <span className="font-medium text-[var(--brand-secondary)]">
@@ -192,6 +307,30 @@ export default function OrderDetailsPage() {
         </div>
       </div>
 
+      {/* 🏠 Delivery Address */}
+      <div className="p-5 bg-white rounded-xl border shadow-sm mb-10">
+        <h3 className="text-lg font-semibold mb-3 text-[var(--text-primary)] flex items-center gap-2">
+          <MapPin size={20} className="text-[var(--brand-primary)]" />
+          Delivery Address
+        </h3>
+        <div className="text-[var(--text-secondary)] space-y-1">
+          <p className="font-medium">
+            {order.firstName} {order.lastName}
+          </p>
+          {order.company && <p>{order.company}</p>}
+          <p>{order.address1}</p>
+          {order.address2 && <p>{order.address2}</p>}
+          <p>
+            {order.city}, {order.country} {order.postalCode}
+          </p>
+          {order.phone && (
+            <p className="flex items-center gap-2">
+              <Phone size={14} /> {order.phone}
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* 🛍 CTA */}
       <div className="mt-10 flex justify-end">
         <Link
@@ -203,13 +342,29 @@ export default function OrderDetailsPage() {
         </Link>
       </div>
 
+      {/* ✨ Review Modal */}
+      {reviewModal && (
+        <ReviewModal
+          orderItemId={selectedOrderItemId}
+          productId={selectedProductId}
+          variantId={selectedVariantId}
+          token={session?.user?.token as string}
+          onClose={() => setReviewModal(false)}
+          onSuccess={() => {
+           handleSuccessReviewed()
+          }}
+        />
+      )}
+
+      {/* Popup Alert */}
       <PopupAlert
         type={popup.type as any}
         message={popup.message}
         confirmText="OK"
-        onConfirm={() => setPopup((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={() => setPopup((prev) => ({ ...prev, isOpen: false }))}  // ✅ close popup
         show={popup.isOpen}
       />
+
     </section>
   );
 }

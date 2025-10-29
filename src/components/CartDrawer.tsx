@@ -3,11 +3,9 @@
 import {
   Drawer,
   IconButton,
-  Select,
-  MenuItem,
   Divider,
 } from "@mui/material";
-import { X, Trash2, ShoppingBag, Truck, ArrowRight } from "lucide-react";
+import { X, Trash2, ShoppingBag, Truck, ArrowRight, Plus, Minus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -27,8 +25,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [subtotal, setSubtotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [drawerWidth, setDrawerWidth] = useState("360px");
-
-  const quantityList = Array.from({ length: 30 }, (_, i) => i + 1);
 
   // 🧭 Responsive drawer width
   useEffect(() => {
@@ -69,30 +65,36 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const remaining = Math.max(0, freeShippingThreshold - subtotal);
 
   // 🗑 Remove item
-  const removeItem = async (productId: number) => {
+  const removeItem = async (productId: number,variantId: number) => {
     if (!token) return;
     try {
-      const res = await cartService.remove(token, productId);
-      setItems((prev) => prev.filter((item) => item.productId !== productId));
+      const res = await cartService.remove(token, productId, variantId);
+      setItems(res.cart || []);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
     } catch (err) {
       console.error("❌ Failed to remove item", err);
     }
   };
 
-  // ✏️ Update quantity
-  const handleQuantity = async (productId: number, value: number) => {
-    if (!token) return;
+  // ➕➖ Update quantity
+  const handleQuantityChange = async (productId: number, variantId:number, newQty: number) => {
+    if (!token || newQty < 1) return;
+
+    const item = items.find((i) => i.productId === productId);
+    if (!item) return;
+
+    const stock = item?.productvariant?.stock ?? item.stock ?? 1;
+    if (newQty > stock) return;
 
     // Optimistic UI update
     setItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, quantity: value } : item
+      prev.map((i) =>
+        i.productId === productId ? { ...i, quantity: newQty } : i
       )
     );
 
     try {
-      const res = await cartService.updateQuantity(token, productId, value);
+      const res = await cartService.updateQuantity(token, productId,variantId, newQty);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
     } catch (err) {
       console.error("Failed to update quantity", err);
@@ -149,76 +151,88 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </div>
         )}
 
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-stretch gap-4 border border-[var(--soft-gray)] rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
-          >
-            {/* 🖼️ Image */}
-            <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
-              <Image
-                src={
-                  item.product.productimage[0]?.url || "/images/placeholder.png"
-                }
-                alt={item.product.title}
-                fill
-                className="object-contain p-1"
-              />
-            </div>
+        {items.map((item) => {
+          const stock = item?.productvariant?.stock ?? item.stock ?? 1;
+          const disablePlus = item.quantity >= stock;
 
-            {/* 📄 Content */}
-            <div className="flex-1 flex flex-col justify-between">
-              <p className="text-sm font-semibold leading-tight line-clamp-1">
-                {item.product.title}
-              </p>
-              <p className="mt-1 text-[15px] font-semibold text-[var(--brand-primary)]">
-                £{(item.product.sellingPrice * item.quantity).toFixed(2)}
-              </p>
+          return (
+            <div
+              key={item.id}
+              className="flex items-stretch gap-4 border border-[var(--soft-gray)] rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
+            >
+              {/* 🖼️ Image */}
+              <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
+                <Image
+                  src={item.product.productimage[0]?.url || "/images/placeholder.png"}
+                  alt={item.product.title}
+                  fill
+                  className="object-contain p-1"
+                />
+              </div>
 
-              <div className="flex items-center justify-between mt-3">
-                <Select
-                  size="small"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleQuantity(item.productId, Number(e.target.value))
-                  }
-                  sx={{
-                    minWidth: 60,
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "var(--soft-gray)",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "var(--brand-primary)",
-                    },
-                  }}
-                >
-                  {quantityList.map((n) => (
-                    <MenuItem key={n} value={n}>
-                      {n}
-                    </MenuItem>
-                  ))}
-                </Select>
+              {/* 📄 Content */}
+              <div className="flex-1 flex flex-col justify-between">
+                <p className="text-sm font-semibold leading-tight line-clamp-1">
+                  {item.product.title}
+                </p>
+                <p className="mt-1 text-[15px] font-semibold text-[var(--brand-primary)]">
+                  £{(item.product.sellingPrice * item.quantity).toFixed(2)}
+                </p>
 
-                <IconButton
-                  onClick={() => removeItem(item.productId)}
-                  sx={{
-                    backgroundColor: "var(--soft-gray)",
-                    color: "var(--brand-primary)",
-                    "&:hover": {
-                      backgroundColor: "var(--brand-primary)",
-                      color: "#fff",
-                    },
-                    width: 34,
-                    height: 34,
-                    transition: "0.2s",
-                  }}
-                >
-                  <Trash2 size={16} />
-                </IconButton>
+                <div className="flex items-center justify-between mt-3">
+                  {/* ➖➕ Quantity */}
+                  <div className="flex items-center border rounded-lg overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity - 1)}
+                      disabled={item.quantity <= 1}
+                      className="px-2 py-1 text-gray-600 hover:text-[var(--brand-primary)] disabled:opacity-40"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="px-3 text-sm font-medium">{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity + 1)}
+                      disabled={disablePlus}
+                      className={`px-2 py-1 ${
+                        disablePlus
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-600 hover:text-[var(--brand-primary)]"
+                      }`}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  <IconButton
+                    onClick={() => removeItem(item.productId,item.variantId)}
+                    sx={{
+                      backgroundColor: "var(--soft-gray)",
+                      color: "var(--brand-primary)",
+                      "&:hover": {
+                        backgroundColor: "var(--brand-primary)",
+                        color: "#fff",
+                      },
+                      width: 34,
+                      height: 34,
+                      transition: "0.2s",
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </IconButton>
+                </div>
+
+                {/* 🏷 Stock Info */}
+                <p className="mt-1 text-xs text-gray-500">
+                  {stock > 0
+                    ? `In stock: ${stock}`
+                    : "Out of stock"}
+                </p>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 📊 Footer */}

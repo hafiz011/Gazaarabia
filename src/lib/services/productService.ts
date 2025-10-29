@@ -26,19 +26,29 @@ export const productService = {
     return await res.json();
   },
 
-  async create(token: string, data: any) {
-    const res = await fetch(`/api/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
+async create(token: string, data: any) {
+  const res = await fetch(`/api/products`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-    if (!res.ok) throw new Error("Failed to create product");
-    return await res.json();
-  },
+  const result = await res.json(); // 🆕 Parse the response body
+  console.log('result')
+
+  if (!res.ok) {
+    // 🧠 Use the API's error message if available
+    const errorMessage =
+      result?.message || result?.error || "Failed to create product";
+    throw new Error(errorMessage);
+  }
+
+  return result;
+}
+,
 
   async update(token: string, id: number, data: any) {
     const res = await fetch(`/api/products/${id}`, {

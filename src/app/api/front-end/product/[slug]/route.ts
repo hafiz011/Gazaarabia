@@ -24,12 +24,31 @@ export async function GET(
         productvariant: {
           include: {
             color: true,
+            size: true,
           },
         },
         brand: true,
         categories: true,
         subcategories: true,
         materialCare: true,
+
+
+         // 📝 Include reviews and user info
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+
       },
     });
 
@@ -40,6 +59,17 @@ export async function GET(
       );
     }
 
+        // 🧮 2. Get aggregate review data
+    const reviewStats = await prisma.review.aggregate({
+      where: { productId: product.id },
+      _avg: { rating: true },
+      _count: { id: true },
+    });
+
+    const averageRating = reviewStats._avg.rating || 0;
+    const totalReviews = reviewStats._count.id;
+
+
     // ❤️ Check if this product is in the user's wishlist
     let isInWishlist = false;
     if (userId) {
@@ -48,7 +78,12 @@ export async function GET(
 
     return NextResponse.json({
       ...product,
-      isInWishlist, // ✅ added field
+      reviewsData: {
+        averageRating: Number(averageRating.toFixed(1)),
+        totalReviews,
+        list: product.reviews, // all reviews with user info
+      }, 
+      isInWishlist,
     });
   } catch (error: any) {
     console.error("❌ Error fetching product by slug:", error);

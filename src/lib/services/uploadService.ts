@@ -22,4 +22,22 @@ export const uploadService = {
     const data = await res.json();
     return data.url;
   },
+
+   // 🆕 MULTIPLE IMAGE UPLOAD
+  async uploadMultiple(files: File[], folder: string) {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    const res = await fetch(`/api/uploads?folder=${folder}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload failed");
+    return data.urls; // returns array of urls
+  },
+
 };

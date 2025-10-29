@@ -2,58 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma:any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
-/**
- * @route GET /api/orders
- * @desc Get all orders for the authenticated user (Protected)
- */
-export async function GET(req: NextRequest) {
-  const userId = await checkAuth(req);
-  if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const orders = await prisma.orders.findMany({
-      where: { userId: Number(userId) },
-      include: {
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                title: true,
-                sellingPrice: true,
-                productimage: { select: { url: true }, take: 1 },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: orders.length
-        ? "Orders fetched successfully."
-        : "No orders found.",
-      data: orders,
-    });
-  } catch (error) {
-    console.error(" GET Orders Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch orders." },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * @route POST /api/orders
- * @desc Create a new order (Protected)
- */
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -61,10 +11,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { totalAmount, paymentMethod,paypalOrderId, paymentStatus, orderItems } =
-      await req.json();
+    const { payment, address, orderItems } = await req.json();
 
-    if (!totalAmount || !paymentMethod || !orderItems || orderItems.length === 0) {
+    if (!payment?.totalAmount || !orderItems || orderItems.length === 0) {
       return NextResponse.json(
         { success: false, message: "Missing required fields." },
         { status: 400 }
@@ -74,32 +23,101 @@ export async function POST(req: NextRequest) {
     const newOrder = await prisma.orders.create({
       data: {
         userId: Number(userId),
-        totalAmount,
-        paymentMethod,
-        transactionId: paypalOrderId,
-        status: (paymentStatus || "completed").toLowerCase(),
+
+        // 🧾 Payment & totals
+        totalAmount: payment.totalAmount,
+        itemsTotal: payment.itemsTotal,
+        subtotal: payment.subtotal,
+        paymentMethod: payment.paymentMethod,
+        transactionId: payment.paypalOrderId,
+        status: (payment.paymentStatus || "completed").toLowerCase(),
+        paypalResponse: payment.paypalResponse,
+
+        // 📍 Address snapshot
+        addressId: address.id,
+        firstName: address.firstName,
+        lastName: address.lastName,
+        company: address.company,
+        address1: address.address1,
+        address2: address.address2,
+        city: address.city,
+        country: address.country,
+        postalCode: address.postalCode,
+        phone: address.phone,
+
+        // 🛍 Order items
         orderItems: {
           create: orderItems.map((item: any) => ({
             productId: item.productId,
+            variantId: item.variantId,
+            colorId: item.colorId,
+            sizeId: item.sizeId,
             quantity: item.quantity,
             price: item.price,
+            subtotal: item.subtotal,
           })),
         },
       },
+      include: { orderItems: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Order created successfully",
+      data: newOrder,
+    });
+  } catch (error) {
+    console.error("❌ POST Orders Error:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to create order." },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+export async function GET(req: NextRequest) {
+  const userId = await checkAuth(req);
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const orders = await prisma.orders.findMany({
+      where: {
+        userId: Number(userId),
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
       include: {
-        orderItems: true,
+        orderItems: {
+          include: {
+            product: {
+              include: {
+                productimage: true,
+                productvariant: {
+                  include: {
+                    color: true,
+                    size: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Order created successfully.",
-      data: newOrder,
+      data: orders,
     });
   } catch (error) {
-    console.error("POST Orders Error:", error);
+    console.error("❌ GET Orders Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to create order." },
+      { success: false, message: "Failed to fetch orders." },
       { status: 500 }
     );
   }

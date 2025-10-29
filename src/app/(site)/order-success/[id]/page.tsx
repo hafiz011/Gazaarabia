@@ -11,11 +11,22 @@ import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import Image from "next/image";
 
+interface SelectedVariantData {
+  id: number;
+  sizeId?: number;
+  colorId?: number;
+  sizeName?: string | null;
+  colorName?: string | null;
+  hexCode?: string | null;
+  price: number;
+}
+
 interface OrderItem {
   id: number;
   productId: number;
   quantity: number;
   price: number;
+  selectedVariantData?: SelectedVariantData | null;
   product?: {
     id: number;
     title: string;
@@ -65,9 +76,10 @@ export default function OrderSuccessPage() {
       (async () => {
         try {
           const res = await orderService.getById(token, Number(id));
-          setOrder(res);
+          console.log('res.data:>',res)
+          setOrder(res.data);
         } catch (error) {
-          console.error("Failed to fetch order:", error);
+          console.error("❌ Failed to fetch order:", error);
           setPopUpAlertData({
             isOpen: true,
             type: "error",
@@ -124,22 +136,16 @@ export default function OrderSuccessPage() {
     <section className="max-w-7xl mx-auto px-5 lg:px-10 py-16 bg-[var(--soft-gray)]/30 rounded-2xl">
       {/* ✅ Hero Section */}
       <div className="text-center mb-8">
-        {/* ✅ Success Icon */}
         <div className="flex justify-center mb-3">
           <div className="bg-white shadow-sm rounded-full p-3 border border-[var(--soft-gray)] flex items-center justify-center">
-            <CheckCircle2
-              size={48}
-              className="text-[var(--brand-secondary)]"
-            />
+            <CheckCircle2 size={48} className="text-[var(--brand-secondary)]" />
           </div>
         </div>
 
-        {/* 🪄 Heading */}
         <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] leading-tight mb-1">
           Order Confirmed
         </h1>
 
-        {/* ✨ Subtext */}
         <p className="text-[var(--text-secondary)] text-base">
           Thank you for your purchase!
         </p>
@@ -193,6 +199,30 @@ export default function OrderSuccessPage() {
                     <p className="font-medium text-[var(--text-primary)] text-base line-clamp-2">
                       {item.product?.title}
                     </p>
+
+                    {(item.selectedVariantData?.colorName ||
+                      item.selectedVariantData?.sizeName) && (
+                      <div className="text-xs text-[var(--text-secondary)] mt-1 flex flex-wrap items-center gap-2">
+                        {item.selectedVariantData?.colorName && (
+                          <span className="flex items-center gap-1">
+                            Color: {item.selectedVariantData.colorName}
+                            {item.selectedVariantData.hexCode && (
+                              <span
+                                className="inline-block w-3 h-3 rounded-full border"
+                                style={{
+                                  backgroundColor:
+                                    item.selectedVariantData.hexCode,
+                                }}
+                              />
+                            )}
+                          </span>
+                        )}
+                        {item.selectedVariantData?.sizeName && (
+                          <span>Size: {item.selectedVariantData.sizeName}</span>
+                        )}
+                      </div>
+                    )}
+
                     <p className="text-[var(--text-muted)] text-sm mt-1">
                       Qty: {item.quantity}
                     </p>
@@ -206,7 +236,6 @@ export default function OrderSuccessPage() {
               </li>
             ))}
           </ul>
-
         </div>
 
         {/* 📄 Right - Summary */}

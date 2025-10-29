@@ -26,8 +26,9 @@ model Users {
 
   addresses Address[]
   wishlist  Wishlist[]
-  carts     Cart[]  
+  carts     Cart[]
   orders    Orders[]
+  reviews Review[]
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
@@ -36,9 +37,12 @@ model Users {
 model Sizes {
   id          Int      @id @default(autoincrement())
   name        String   @unique
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  description String?
+
+  productvariant productvariant[]
+  carts          Cart[]
 
   @@map("sizes")
 }
@@ -52,6 +56,7 @@ model Colors {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   productvariant productvariant[]
+  carts          Cart[]
 
   @@map("colors")
 }
@@ -165,12 +170,10 @@ model products {
   id               Int              @id @default(autoincrement())
   slug             String           @unique
   description      String?
-  createdAt        DateTime         @default(now())
   active           Boolean          @default(true)
   barcode          String?
   baseQty          Int
   brandId          Int?
-  careAdvice       String?
   categoryId       Int?
   costPrice        Float
   discountPrice    Float?
@@ -179,7 +182,8 @@ model products {
   shortDescription String?
   subcategoryId    Int?
   title            String
-  updatedAt        DateTime
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   productimage     productimage[]
   brand            brand?           @relation(fields: [brandId], references: [id], map: "Products_brandId_fkey")
   categories       Categories?      @relation(fields: [categoryId], references: [id], map: "Products_categoryId_fkey")
@@ -189,9 +193,10 @@ model products {
   materialCareId Int?
   materialCare   MaterialCare? @relation(fields: [materialCareId], references: [id])
 
-  wishlist Wishlist[]
-  carts     Cart[]
-  orderItems  OrderItem[]
+  wishlist   Wishlist[]
+  carts      Cart[]
+  orderItems OrderItem[]
+  reviews Review[]
 
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
@@ -199,16 +204,22 @@ model products {
 }
 
 model productvariant {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   sku       String
   price     Float
   stock     Int
-  isActive  Boolean  @default(true)
+  isActive  Boolean @default(true)
   colorId   Int?
   sizeId    Int?
   productId Int
-  products  products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
-  color     Colors?  @relation(fields: [colorId], references: [id])
+
+  products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
+  color    Colors?  @relation(fields: [colorId], references: [id])
+  size     Sizes?   @relation(fields: [sizeId], references: [id])
+
+  carts      Cart[]
+  orderItems OrderItem[] // ✅ 👈 This is required to complete the relation
+  reviews Review[]
 
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
@@ -249,48 +260,128 @@ model Wishlist {
   @@map("wishlist")
 }
 
-
 model Cart {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  productId  Int
-  quantity   Int       @default(1)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  colorId   Int?
+  sizeId    Int?
+  variantId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user    Users    @relation(fields: [userId], references: [id])
-  product products @relation(fields: [productId], references: [id])
+  user    Users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product products       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color   Colors?        @relation(fields: [colorId], references: [id])
+  size    Sizes?         @relation(fields: [sizeId], references: [id])
+  variant productvariant @relation(fields: [variantId], references: [id])
 
-  @@unique([userId, productId])
+  @@unique([userId, variantId]) // Prevent duplicate variant entries in the cart
   @@map("carts")
 }
 
-
-
 model Orders {
-  id            Int          @id @default(autoincrement())
-  userId        Int
-  totalAmount   Float
-  paymentMethod String
-  transactionId String?
-  status        String       @default("pending")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id     Int @id @default(autoincrement())
+  userId Int
 
-  user        Users       @relation(fields: [userId], references: [id])
-  orderItems  OrderItem[]
+  // 💰 Amount Details
+  itemsTotal    Float
+  subtotal      Float 
+  shippingCost  Float  @default(0)
+  discountTotal Float  @default(0)
+  taxTotal      Float  @default(0)
+  totalAmount   Float
+  currency      String @default("GBP")
+
+  // 💳 Payment Info
+  paymentMethod  String
+  transactionId  String?
+  status         String  @default("pending")
+  paypalResponse Json?
+
+  // 🏠 Shipping Address Snapshot
+  addressId  Int?
+  firstName  String
+  lastName   String?
+  company    String?
+  address1   String
+  address2   String?
+  city       String
+  country    String
+  postalCode String
+  phone      String
+
+  // 🚚 Delivery Options
+  deliveryOptionId Int?
+  deliveryName     String?
+  deliveryEta      String?
+
+  // 📝 Meta
+  notes          String?
+  couponCode     String?
+  couponDiscount Float?  @default(0)
+
+  // ⏰ Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 🔗 Relations
+  user       Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int  @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  variantId Int // main source of truth (points to productvariant)
+  colorId   Int?
+  sizeId    Int?
+
+  quantity Int
+  price    Float
+  subtotal Float
+  sku      String?
+  title    String?
+  reviewed  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order   Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product products       @relation(fields: [productId], references: [id])
+  variant productvariant @relation(fields: [variantId], references: [id]) // ✅ matches productvariant.orderItems
+
+  reviews Review[]
+
+  @@map("orders_item")
 }
 
 
-model OrderItem {
-  id         Int       @id @default(autoincrement())
-  orderId    Int
-  productId  Int
-  quantity   Int
-  price      Float
+model Review {
+  id           Int      @id @default(autoincrement())
+  rating       Int
+  comment      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  order   Orders   @relation(fields: [orderId], references: [id])
-  product products @relation(fields: [productId], references: [id])
+  // Product Reference
+  productId    Int
+  product      products @relation(fields: [productId], references: [id])
 
-  @@map("orders_item")
+  // Variant Reference 🆕
+  variantId    Int?
+  variant      productvariant? @relation(fields: [variantId], references: [id])
+
+  // User Reference
+  userId       Int
+  user         Users @relation(fields: [userId], references: [id])
+
+  // Optional: Link back to order item
+  orderItemId  Int?
+  orderItem    OrderItem? @relation(fields: [orderItemId], references: [id])
 }

@@ -20,41 +20,64 @@ export const orderService = {
     });
     if (!res.ok) throw new Error("Failed to fetch order");
     const json = await res.json();
-    return json.data;
+    return json;
   },
 
   /**
    * Create a new order
    */
-  create: async (
-    token: any,
-    data: {
+create: async (
+  token: any,
+  data: {
+    payment: {
       totalAmount: number;
+      itemsTotal: number;
+      subtotal: number;
       paymentMethod: string;
       paymentStatus?: string;
-      orderItems: {
-        productId: number;
-        quantity: number;
-        price: number;
-      }[];
-    }
-  ) => {
-    const res = await fetch(`/api/front-end/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
+      paypalOrderId?: string;
+      paypalResponse?: any;
+    };
+    address: {
+      id?: number;
+      firstName: string;
+      lastName?: string;
+      company?: string;
+      address1: string;
+      address2?: string;
+      city: string;
+      country: string;
+      postalCode: string;
+      phone: string;
+    };
+    orderItems: {
+      productId: number;
+      variantId: number;
+      colorId?: number;
+      sizeId?: number;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }[];
+  }
+) => {
+  const res = await fetch(`/api/front-end/orders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data), // ✅ send full structured object
+  });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to create order: ${errorText}`);
-    }
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to create order: ${errorText}`);
+  }
 
-    return res.json();
-  },
+  return res.json();
+},
+
 
 
 };

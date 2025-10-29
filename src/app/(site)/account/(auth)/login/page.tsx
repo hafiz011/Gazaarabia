@@ -94,17 +94,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 pt-20 pb-10">
       <div className="mt-5 w-full max-w-md bg-white shadow-lg rounded-2xl p-8 border border-[var(--soft-gray)] transition-all duration-300 hover:shadow-xl">
-        {/* Alert */}
-        {alert.isOpen && alert.type && (
-          <div className="mb-4">
-            <AlertMessage
-              type={alert.type}
-              message={alert.message}
-              onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
-            />
-          </div>
-        )}
-
+      
         {/* Heading */}
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
@@ -114,6 +104,17 @@ export default function LoginPage() {
             Log in to your account to continue
           </p>
         </div>
+
+          {/* Alert */}
+        {alert.isOpen && alert.type && (
+          <div className="mb-4">
+            <AlertMessage
+              type={alert.type}
+              message={alert.message}
+              onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
+            />
+          </div>
+        )}
 
         {/* Form */}
         <form className="space-y-6" onSubmit={handleSubmit}>

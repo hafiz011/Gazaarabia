@@ -24,16 +24,17 @@ function ProductFormContent() {
   const router = useRouter();
   const params = useParams();
   const { data: session } = useSession();
-  const token :any= session?.user?.token; // get token
+  const token: any = session?.user?.token; // get token
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
   const [form, setForm] = useState({
+    slug: "",
     title: "",
     shortDescription: "",
     description: "",
     fitType: "",
-    careAdvice: "",
+    materialCareId: "",
     costPrice: "",
     sellingPrice: "",
     discountPrice: "",
@@ -119,11 +120,12 @@ function ProductFormContent() {
       const res = await productService.getById(token!, Number(id));
       const data = res?.data ?? null;
       setForm({
+        slug: data.slug || "",
         title: data.title || "",
         shortDescription: data.shortDescription || "",
         description: data.description || "",
         fitType: data.fitType || "",
-        careAdvice: data.careAdvice || "",
+        materialCareId: data.materialCareId || "",
         costPrice: data.costPrice || "",
         sellingPrice: data.sellingPrice || "",
         discountPrice: data.discountPrice || "",
@@ -136,7 +138,7 @@ function ProductFormContent() {
       });
       // setImages(data.images || []);
       setImages(data.productimage || []);
-      setVariants(data.variants || []);
+      setVariants(data.productvariant || []);
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -164,11 +166,20 @@ function ProductFormContent() {
 
   // 🖼️ Upload Image
   const handleFileChange = async (e: any) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []) as File[];
+    if (!files.length) return;
+
     try {
-      const url = await uploadService.uploadImage(file, "products");
-      setImages((prev) => [...prev, { url, alt: "", colorId: "", primary: false }]);
+      const urls = await uploadService.uploadMultiple(files, "products");
+      setImages((prev) => [
+        ...prev,
+        ...urls.map((url: any) => ({
+          url,
+          alt: "",
+          colorId: "",
+          primary: false,
+        })),
+      ]);
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -177,6 +188,7 @@ function ProductFormContent() {
       });
     }
   };
+
 
   // ➕ Add variant
   const handleVariantAdd = () => {
@@ -215,6 +227,16 @@ function ProductFormContent() {
         isOpen: true,
         type: "warning",
         message: "Please upload at least one image before saving the product.",
+      });
+      return;
+    }
+
+    if (variants.length == 0) {
+      setPopup({
+        isOpen: true,
+        type: "warning",
+        message:
+          "Please add at least one variant.",
       });
       return;
     }
@@ -281,7 +303,7 @@ function ProductFormContent() {
         />
       )}
 
-       {/* ✅ Full UI inside form */}
+      {/* ✅ Full UI inside form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* 🧾 Basic Info */}
@@ -301,6 +323,17 @@ function ProductFormContent() {
             {subcategories.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
           </TextField>
 
+          <TextField
+            label={<RequiredLabel text="Slug" />}
+            name="slug"
+            value={form.slug}
+            onChange={handleInputChange}
+            inputProps={{ required: true }}
+            fullWidth
+            sx={fieldStyle}
+          />
+
+
           <TextField label={<RequiredLabel text="Title" />} name="title" value={form.title}
             onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
 
@@ -312,15 +345,24 @@ function ProductFormContent() {
             value={form.description} onChange={handleInputChange} inputProps={{ required: true }}
             fullWidth multiline rows={3} sx={fieldStyle} />
 
-          <TextField select label={<RequiredLabel text="Care Advice" />} name="careAdvice"
-            value={form.careAdvice} onChange={handleInputChange} inputProps={{ required: true }}
+          <TextField select label={<RequiredLabel text="Care Advice" />} name="materialCareId"
+            value={form.materialCareId} onChange={handleInputChange} inputProps={{ required: true }}
             fullWidth sx={fieldStyle}>
             {careAdvices.map((care) => (
-              <MenuItem key={care.id} value={care.title}>
+              <MenuItem key={care.id} value={care.id}>
                 {care.title} ({care.material})
               </MenuItem>
             ))}
           </TextField>
+
+
+
+          {/* <TextField label={<RequiredLabel text="Subcategory" />} select name="subcategoryId"
+            value={form.subcategoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
+            {subcategories.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </TextField> */}
+
+
         </Box>
 
         {/* 💰 Pricing */}
@@ -367,7 +409,7 @@ function ProductFormContent() {
             >
               <Upload size={24} />
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
           </div>
         </Box>
 

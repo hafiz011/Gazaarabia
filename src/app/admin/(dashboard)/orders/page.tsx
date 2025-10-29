@@ -9,27 +9,60 @@ import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
 import { orderAdminService } from "@/lib/services/orderAdminService";
 
+interface Variant {
+  sku?: string;
+  color?: { name: string };
+  size?: { name: string };
+}
+
+interface Product {
+  title: string;
+}
+
 interface OrderItem {
-  name: string;
+  id: number;
   quantity: number;
   price: number;
+  product: Product;
+  variant?: Variant;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
 }
 
 interface Order {
   id: number;
-  orderNumber: string;
-  transactionId:any,
-  user: any;
-  totalAmount: number;
+  transactionId: string | null;
   paymentMethod: string;
+  totalAmount: number;
   status: string;
   createdAt: string;
-  // email?: string;
-  address?: string;
-  tax:any,
-  shipping:any,
-  orderItems?: OrderItem[];
+
+  // 🧑 Customer
+  user: User;
+
+  // 🏡 Address fields
+  firstName: string;
+  lastName: string | null;
+  company?: string | null;
+  address1: string;
+  address2?: string | null;
+  city: string;
+  country: string;
+  postalCode: string;
+  phone?: string | null;
+
+  // 🧾 Order items
+  orderItems: OrderItem[];
+
+  // Optional fields
+  tax?: number;
+  shipping?: number;
 }
+
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -207,10 +240,10 @@ export default function OrdersPage() {
         )}
       </div>
 
-      {/* 🪟 Modal (same design as before) */}
+        {/* 🪟 Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
-          <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl w-full max-w-2xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
+          <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl w-full max-w-2xl shadow-lg overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="flex justify-between items-start px-6 py-5 border-b sticky top-0 bg-white/80 backdrop-blur-xl z-10">
               <div>
@@ -218,7 +251,8 @@ export default function OrdersPage() {
                   Order #{selectedOrder.id}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Placed on {new Date(selectedOrder.createdAt).toLocaleString("en-GB")}
+                  Placed on{" "}
+                  {new Date(selectedOrder.createdAt).toLocaleString("en-GB")}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -240,43 +274,91 @@ export default function OrdersPage() {
 
             {/* Body */}
             <div className="overflow-y-auto px-6 py-5 space-y-8">
-              {/* Customer Info */}
+              {/* 💳 Payment Info */}
               <section>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Customer Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-                  <div className="space-y-2 text-gray-700 border p-3 rounded-lg bg-white/60">
-                    <p><span className="text-gray-500">Name:</span> {selectedOrder.user.name}</p>
-                    <p><span className="text-gray-500">Email:</span> {selectedOrder.user.email}</p>
-                  </div>
-                  <div className="space-y-2 text-gray-700 border p-3 rounded-lg bg-white/60">
-                    <p className="text-gray-500 mb-1">Address:</p>
-                    <p className="leading-snug">{selectedOrder.address ?? "N/A"}</p>
-                  </div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Payment Details
+                </h3>
+                <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-2">
+                  <p>
+                    <span className="text-gray-500">Method:</span>{" "}
+                    {selectedOrder.paymentMethod.toUpperCase()}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Transaction ID:</span>{" "}
+                    {selectedOrder.transactionId ?? "N/A"}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Email:</span>{" "}
+                    {selectedOrder.user.email}
+                  </p>
                 </div>
               </section>
 
-              {/* Items */}
+              {/* 📍 Delivery Address */}
               <section>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Delivery Address
+                </h3>
+                <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-1">
+                  <p>
+                    {selectedOrder.firstName} {selectedOrder.lastName}
+                  </p>
+                  {selectedOrder.company && <p>{selectedOrder.company}</p>}
+                  <p>{selectedOrder.address1}</p>
+                  {selectedOrder.address2 && <p>{selectedOrder.address2}</p>}
+                  <p>
+                    {selectedOrder.city}, {selectedOrder.country}
+                  </p>
+                  <p>{selectedOrder.postalCode}</p>
+                  {selectedOrder.phone && <p>📞 {selectedOrder.phone}</p>}
+                </div>
+              </section>
+
+              {/* 🛍️ Order Items */}
+              <section>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Order Items
+                </h3>
                 <div className="border rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-100 border-b text-gray-700 text-xs uppercase tracking-wide">
                       <tr>
                         <th className="py-2 px-3 text-left">Item</th>
+                        <th className="py-2 px-3 text-left">Variant</th>
                         <th className="py-2 px-3 text-center w-16">Qty</th>
                         <th className="py-2 px-3 text-right">Price</th>
                         <th className="py-2 px-3 text-right">Subtotal</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedOrder.orderItems?.map((item:any, idx) => (
+                      {selectedOrder.orderItems?.map((item, idx) => (
                         <tr
                           key={idx}
-                          className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100/60 transition`}
+                          className={`${
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          } hover:bg-gray-100/60 transition`}
                         >
                           <td className="py-2 px-3">{item.product.title}</td>
-                          <td className="py-2 px-3 text-center">{item.quantity}</td>
-                          <td className="py-2 px-3 text-right">{formatGBP(item.price)}</td>
+                          <td className="py-2 px-3 text-left">
+                            {item.variant?.sku || "N/A"}
+                            {item.variant?.color?.name && (
+                              <span className="ml-2 text-gray-500">
+                                ({item.variant.color.name})
+                              </span>
+                            )}
+                            {item.variant?.size?.name && (
+                              <span className="ml-1 text-gray-500">
+                                - {item.variant.size.name}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            {item.quantity}
+                          </td>
+                          <td className="py-2 px-3 text-right">
+                            {formatGBP(item.price)}
+                          </td>
                           <td className="py-2 px-3 text-right font-medium">
                             {formatGBP(item.price * item.quantity)}
                           </td>
@@ -287,36 +369,22 @@ export default function OrdersPage() {
                 </div>
               </section>
 
-              {/* Totals */}
-              {selectedOrder.orderItems && (
-                <section className="flex justify-end">
-                  {(() => {
-                    // const { subtotal, tax, shipping, total } = getTotals(selectedOrder.items!);
-                    return (
-                      <div className="w-full sm:w-2/3 space-y-2 text-sm rounded-xl p-5 bg-gradient-to-br from-gray-50 to-gray-100 border shadow-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Subtotal</span>
-                          {/* <span className="font-medium">{formatGBP(subtotal)}</span> */}
-                          <span className="font-medium">{formatGBP(selectedOrder.totalAmount)}</span>
-                        </div>
-                        {/* <div className="flex justify-between">
-                          <span className="text-gray-600">Tax (20%)</span>
-                          <span className="font-medium">{formatGBP(selectedOrder.tax ?? 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Shipping</span>
-                          <span className="font-medium">{formatGBP(selectedOrder.shipping ?? 0)}</span>
-                        </div> */}
-                        <div className="border-t my-2"></div>
-                        <div className="flex justify-between font-semibold text-gray-900 text-lg">
-                          <span>Total</span>
-                          <span>{formatGBP(selectedOrder.totalAmount)}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </section>
-              )}
+              {/* 💰 Totals */}
+              <section className="flex justify-end">
+                <div className="w-full sm:w-2/3 space-y-2 text-sm rounded-xl p-5 bg-gradient-to-br from-gray-50 to-gray-100 border shadow-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">
+                      {formatGBP(selectedOrder.totalAmount)}
+                    </span>
+                  </div>
+                  <div className="border-t my-2"></div>
+                  <div className="flex justify-between font-semibold text-gray-900 text-lg">
+                    <span>Total</span>
+                    <span>{formatGBP(selectedOrder.totalAmount)}</span>
+                  </div>
+                </div>
+              </section>
             </div>
 
             {/* Footer */}
