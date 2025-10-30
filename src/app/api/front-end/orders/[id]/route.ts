@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken"; // your JWT verification helper
 
-const prisma = new PrismaClient();
+const prisma :any = new PrismaClient();
 
 /**
  * @route GET /api/front-end/orders/[id]
@@ -39,6 +39,7 @@ export async function GET(
                   include: {
                     color: true,
                     size: true,
+                    variantImages: true,
                   },
                 },
               },
@@ -75,6 +76,7 @@ export async function GET(
           colorName: selectedVariant.color?.name || null,
           hexCode: selectedVariant.color?.hexCode || null,
           price: selectedVariant.price,
+          variantImages: selectedVariant.variantImages || []
         }
         : null;
 

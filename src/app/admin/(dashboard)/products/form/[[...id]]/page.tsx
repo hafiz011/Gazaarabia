@@ -28,6 +28,7 @@ function ProductFormContent() {
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
+
   const [form, setForm] = useState({
     slug: "",
     title: "",
@@ -55,6 +56,18 @@ function ProductFormContent() {
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
   const [careAdvices, setCareAdvices] = useState<any[]>([]);
+
+  // Wear with related
+
+  const [wearWith, setWearWith] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [selectedWearWith, setSelectedWearWith] = useState<number[]>([]);
+
+
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -138,7 +151,15 @@ function ProductFormContent() {
       });
       // setImages(data.images || []);
       setImages(data.productimage || []);
-      setVariants(data.productvariant || []);
+      // setVariants(data.productvariant || []);
+      setVariants(
+        (data.productvariant || []).map((v: any) => ({
+          ...v,
+          images: v.variantImages || [],
+        }))
+      );
+      setWearWith(data.wearWith || []); // load wear-with products if editing
+
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -194,7 +215,7 @@ function ProductFormContent() {
   const handleVariantAdd = () => {
     setVariants((prev) => [
       ...prev,
-      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true },
+      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true, images: [], },
     ]);
   };
 
@@ -205,7 +226,7 @@ function ProductFormContent() {
     );
   };
 
-  // 🗑️ Remove variant
+  //  Remove variant
   const handleVariantRemove = (idx: number) => {
     setVariants((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -253,7 +274,8 @@ function ProductFormContent() {
 
     try {
       setSubmitting(true);
-      const payload = { ...form, images, variants };
+      const payload = { ...form, images, variants, wearWith: wearWith.map((w) => w.id) };
+
 
       if (isEditMode) {
         await productService.update(token!, Number(id), payload);
@@ -288,6 +310,77 @@ function ProductFormContent() {
       {text} <span className="text-red-600">*</span>
     </span>
   );
+
+
+
+  //======================== Wear with section ==================
+
+  const handleSearchProducts = async (pageNum = 1) => {
+    if (!searchQuery.trim()) return;
+    try {
+      setIsSearching(true);
+      const res = await productService.getAll(token, searchQuery, pageNum, 5);
+
+      const products = res.data ?? [];
+      setHasMore(products.length === 5); // detect if next page exists
+      if (pageNum === 1) {
+        setSearchResults(products.filter((p: any) => p.id !== Number(id)));
+      } else {
+        setSearchResults((prev) => [
+          ...prev,
+          ...products.filter((p: any) => p.id !== Number(id)),
+        ]);
+      }
+      setPage(pageNum);
+    } catch {
+      setAlertMessage({
+        isOpen: true,
+        type: "error",
+        message: "Failed to search products.",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+
+  // ➕ Add product to Wear With list
+  const handleAddWearWith = (product: any) => {
+    if (!wearWith.find((p) => p.id === product.id)) {
+      setWearWith((prev) => [...prev, product]);
+    }
+    setSearchResults([]);
+    setSearchQuery("");
+  };
+
+  // ❌ Remove product from Wear With list
+  const handleRemoveWearWith = (id: number | string) => {
+    setWearWith((prev) => prev.filter((p) => p.id !== id));
+  };
+
+
+  // ✅ Toggle selection
+const toggleWearWithSelection = (id: number) => {
+  setSelectedWearWith((prev) =>
+    prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+  );
+};
+
+// ✅ Add selected to wearWith
+const handleAddSelectedWearWith = () => {
+  const selectedProducts = searchResults.filter((p) =>
+    selectedWearWith.includes(p.id)
+  );
+  setWearWith((prev) => {
+    const newOnes = selectedProducts.filter(
+      (prod) => !prev.find((p) => p.id === prod.id)
+    );
+    return [...prev, ...newOnes];
+  });
+  setSelectedWearWith([]);
+  setSearchResults([]);
+  setSearchQuery("");
+};
 
   return (
     <Box className="p-6 max-w-7xl mx-auto">
@@ -423,47 +516,342 @@ function ProductFormContent() {
           </div>
 
           {variants.map((v, idx) => (
-            <div key={idx} className="grid grid-cols-8 gap-2 items-center">
-              <TextField select label={<RequiredLabel text="Color" />} value={v.colorId}
-                onChange={(e) => handleVariantChange(idx, "colorId", e.target.value)}
-                inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-                {colors.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-              </TextField>
+            <div
+              key={idx}
+              className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              {/* 🔹 Header with title + delete button */}
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-gray-800">
+                  Variant #{idx + 1}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => handleVariantRemove(idx)}
+                  className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
+                >
+                  <Trash2 size={16} /> Remove
+                </button>
+              </div>
 
-              <TextField select label={<RequiredLabel text="Size" />} value={v.sizeId}
-                onChange={(e) => handleVariantChange(idx, "sizeId", e.target.value)}
-                inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-                {sizes.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-              </TextField>
+              {/* 🔸 Main Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <TextField
+                  select
+                  label={<RequiredLabel text="Color" />}
+                  value={v.colorId}
+                  onChange={(e) => handleVariantChange(idx, "colorId", e.target.value)}
+                  inputProps={{ required: true }}
+                  fullWidth
+                  sx={fieldStyle}
+                >
+                  {colors.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-              <TextField label={<RequiredLabel text="SKU" />} value={v.sku}
-                onChange={(e) => handleVariantChange(idx, "sku", e.target.value)}
-                inputProps={{ required: true }} sx={fieldStyle} />
+                <TextField
+                  select
+                  label={<RequiredLabel text="Size" />}
+                  value={v.sizeId}
+                  onChange={(e) => handleVariantChange(idx, "sizeId", e.target.value)}
+                  inputProps={{ required: true }}
+                  fullWidth
+                  sx={fieldStyle}
+                >
+                  {sizes.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-              <TextField label={<RequiredLabel text="Price" />} type="number" value={v.price}
-                onChange={(e) => handleVariantChange(idx, "price", e.target.value)}
-                inputProps={{ required: true }} sx={fieldStyle} />
+                <TextField
+                  label={<RequiredLabel text="SKU" />}
+                  value={v.sku}
+                  onChange={(e) => handleVariantChange(idx, "sku", e.target.value)}
+                  inputProps={{ required: true }}
+                  fullWidth
+                  sx={fieldStyle}
+                />
 
-              <TextField label={<RequiredLabel text="Stock" />} type="number" value={v.stock}
-                onChange={(e) => handleVariantChange(idx, "stock", e.target.value)}
-                inputProps={{ required: true }} sx={fieldStyle} />
+                <TextField
+                  label={<RequiredLabel text="Price" />}
+                  type="number"
+                  value={v.price}
+                  onChange={(e) => handleVariantChange(idx, "price", e.target.value)}
+                  inputProps={{ required: true }}
+                  fullWidth
+                  sx={fieldStyle}
+                />
 
-              <label className="flex justify-center items-center gap-1 col-span-1">
-                <input type="checkbox" checked={v.isActive}
-                  onChange={(e) => handleVariantChange(idx, "isActive", e.target.checked)} />
-                Active
-              </label>
+                <TextField
+                  label={<RequiredLabel text="Stock" />}
+                  type="number"
+                  value={v.stock}
+                  onChange={(e) => handleVariantChange(idx, "stock", e.target.value)}
+                  inputProps={{ required: true }}
+                  fullWidth
+                  sx={fieldStyle}
+                />
+              </div>
 
-              <button
-                type="button"
-                onClick={() => handleVariantRemove(idx)}
-                className="text-red-500 hover:text-red-700 transition flex justify-center col-span-1"
-              >
-                <Trash2 size={16} />
-              </button>
+              {/* 🖼️ Variant Images */}
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Variant Images
+                </label>
+
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {v.images?.map((img: any, i: number) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={img.url}
+                        alt=""
+                        className="w-20 h-20 object-cover rounded border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleVariantChange(
+                            idx,
+                            "images",
+                            v.images.filter((_: any, j: any) => j !== i)
+                          )
+                        }
+                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Upload Button */}
+                  <div
+                    onClick={() => document.getElementById(`variantFile${idx}`)?.click()}
+                    className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer text-gray-400 hover:text-black transition"
+                  >
+                    <Upload size={18} />
+                  </div>
+
+                  <input
+                    id={`variantFile${idx}`}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (!files.length) return;
+                      try {
+                        const urls = await uploadService.uploadMultiple(files, "variants");
+                        handleVariantChange(idx, "images", [
+                          ...(v.images || []),
+                          ...urls.map((url: any) => ({ url, alt: "" })),
+                        ]);
+                      } catch {
+                        setAlertMessage({
+                          isOpen: true,
+                          type: "error",
+                          message: "Variant image upload failed.",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* ⚙️ Footer - Active toggle */}
+              <div className="flex justify-end items-center mt-4">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={v.isActive}
+                    onChange={(e) =>
+                      handleVariantChange(idx, "isActive", e.target.checked)
+                    }
+                    className="w-4 h-4 accent-[var(--brand-secondary)]"
+                  />
+                  Active
+                </label>
+              </div>
             </div>
           ))}
+
         </Box>
+
+
+
+        {/* 👗 Wear With Section */}
+        <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-4 mt-6">
+          <h2 className="text-lg font-semibold">Wear With</h2>
+          <p className="text-sm text-gray-500">
+            Link related products that go well with this item.
+          </p>
+
+          {/* 🔍 Search Input & Button */}
+          <div className="flex items-center gap-3">
+            <TextField
+              label="Search Products"
+              placeholder="Type to search..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              fullWidth
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "42px", // ✅ Match button height
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              sx={{
+                background: "var(--brand-secondary)",
+                height: "42px",
+                whiteSpace: "nowrap",
+                textTransform: "none",
+                px: 3,
+                "&:hover": {
+                  background: "var(--brand-primary)",
+                },
+              }}
+              disabled={isSearching}
+              onClick={() => handleSearchProducts(1)}
+            >
+              {isSearching ? "Searching..." : "Search"}
+            </Button>
+          </div>
+
+          {/* 🧾 Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-3 bg-gray-50 border rounded-lg p-3 max-h-64 overflow-y-auto">
+              {searchResults.map((prod) => (
+                <label
+                  key={prod.id}
+                  className="flex justify-between items-center py-2 border-b last:border-none cursor-pointer hover:bg-gray-100 px-2 rounded-md transition"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* ✅ Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={selectedWearWith.includes(prod.id)}
+                      onChange={() => toggleWearWithSelection(prod.id)}
+                      className="w-4 h-4 text-[var(--brand-secondary)] border-gray-300 rounded focus:ring-[var(--brand-secondary)]"
+                    />
+                    <img
+                      src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
+                      alt={prod.title}
+                      className="w-10 h-10 rounded object-cover border"
+                    />
+                    <span className="text-sm font-medium text-gray-800">
+                      {prod.title}
+                    </span>
+                  </div>
+
+                  {/* 🔘 Optional Quick Add Button */}
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{
+                      background: "var(--brand-secondary)",
+                      textTransform: "none",
+                      fontSize: "13px",
+                      "&:hover": {
+                        background: "var(--brand-primary)",
+                      },
+                    }}
+                    onClick={() => handleAddWearWith(prod)}
+                  >
+                    Add
+                  </Button>
+                </label>
+              ))}
+
+              {/* ➕ Add Selected Button */}
+              {selectedWearWith.length > 0 && (
+                <div className="text-right mt-3">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      background: "var(--brand-secondary)",
+                      textTransform: "none",
+                      fontSize: "13px",
+                      px: 3,
+                      "&:hover": {
+                        background: "var(--brand-primary)",
+                      },
+                    }}
+                    onClick={handleAddSelectedWearWith}
+                  >
+                    Add Selected ({selectedWearWith.length})
+                  </Button>
+                </div>
+              )}
+
+              {/* 🔽 Load More */}
+              {hasMore && (
+                <div className="text-center mt-3">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderColor: "var(--brand-secondary)",
+                      color: "var(--brand-secondary)",
+                      textTransform: "none",
+                      fontSize: "13px",
+                      px: 3,
+                      "&:hover": {
+                        borderColor: "var(--brand-primary)",
+                        color: "var(--brand-primary)",
+                      },
+                    }}
+                    onClick={() => handleSearchProducts(page + 1)}
+                  >
+                    Load More
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ Selected Wear With Items */}
+          {wearWith.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {wearWith.map((prod) => (
+                <div
+                  key={prod.id}
+                  className="relative border rounded-lg p-2 w-32 h-40 flex flex-col items-center justify-center bg-gray-50"
+                >
+                  <img
+                    src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
+                    alt={prod.title}
+                    className="w-20 h-20 object-cover rounded mb-2"
+                  />
+                  <span className="text-xs text-center font-medium line-clamp-2">
+                    {prod.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveWearWith(prod.id)}
+                    className="absolute top-1 right-1 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Box>
+
+
+
+
 
         {/* 🆗 Actions */}
         <Box className="lg:col-span-2 flex justify-end gap-3 mt-6">

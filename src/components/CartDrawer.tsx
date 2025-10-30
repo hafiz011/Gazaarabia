@@ -163,7 +163,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               {/* 🖼️ Image */}
               <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                 <Image
-                  src={item.product.productimage[0]?.url || "/images/placeholder.png"}
+                  src={ item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url || "/images/placeholder.png"}
                   alt={item.product.title}
                   fill
                   className="object-contain p-1"
@@ -176,7 +176,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   {item.product.title}
                 </p>
                 <p className="mt-1 text-[15px] font-semibold text-[var(--brand-primary)]">
-                  £{(item.product.sellingPrice * item.quantity).toFixed(2)}
+                  £{(item.selectedVariantData?.price || item.product.sellingPrice * item.quantity).toFixed(2)}
                 </p>
 
                 <div className="flex items-center justify-between mt-3">

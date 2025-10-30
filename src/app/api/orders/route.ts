@@ -8,7 +8,7 @@ const prisma :any = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
-    // 🔐 Authentication check
+    //  Authentication check
     const userId = await checkAuth(req);
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

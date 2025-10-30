@@ -172,16 +172,16 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* 🛍 Cart Items */}
             <div className="lg:col-span-2 space-y-10">
-              {cartItems.map((item) => (
+              {cartItems.map((item,index) => (
                 <div
-                  key={item.id}
+                  key={index}
                   className="rounded-2xl border border-[var(--soft-gray)] bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group"
                 >
                   <div className="flex flex-col sm:flex-row gap-6">
                     {/* 🖼 Product Image */}
                     <div className="relative w-full sm:w-40 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] bg-white shadow-sm group-hover:shadow-md transition-all duration-300">
                       <Image
-                        src={item.product.productimage[0]?.url || "/images/placeholder.png"}
+                        src={item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url || "/images/placeholder.png"}
                         alt={item.product.title}
                         fill
                         className="object-contain"
@@ -272,8 +272,8 @@ export default function CartPage() {
               </h2>
 
               <div className="space-y-3 text-[var(--text-primary)] mb-6">
-                {cartItems.map((i) => (
-                  <div key={i.productId} className="flex justify-between text-sm">
+                {cartItems.map((i,index) => (
+                  <div key={index} className="flex justify-between text-sm">
                     <span className="inline-flex flex-col max-w-[220px]">
                       <span className="inline-flex items-center gap-1">
                         <span className="font-medium">{i.quantity}</span>

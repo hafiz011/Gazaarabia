@@ -18,6 +18,7 @@ interface OrderItem {
     title: string;
     productimage?: { url: string }[];
   };
+  selectedVariantData:any | []
 }
 
 interface Order {
@@ -166,9 +167,9 @@ export default function OrdersPage() {
                       key={item.id}
                       className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] bg-white flex-shrink-0 group-hover:border-[var(--brand-primary)] transition"
                     >
-                      {item.product?.productimage?.[0]?.url ? (
+                      {(item?.selectedVariantData?.variantImages[0]?.url ||  item.product?.productimage?.[0]?.url) ? (
                         <Image
-                          src={item.product.productimage[0].url}
+                          src={item?.selectedVariantData?.variantImages[0]?.url || item.product?.productimage?.[0]?.url}
                           alt={item.product.title}
                           fill
                           className="object-contain p-2"

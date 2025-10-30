@@ -1,12 +1,14 @@
 "use client";
 
+import SingleImgMultiColorProductCard from "./SingleImgMultiColorsProductCard";
+
 export default function WearWith() {
     const wearWithProducts = [
-        { img: "/images/shop/img2-1.jpg", title: "Hooded Abaya Black", price: "₹5,499" },
-        { img: "/images/shop/img2-2.jpg", title: "Mara Coat Black", price: "₹4,999" },
-        { img: "/images/shop/img2-3.jpg", title: "Black Jersey Hijab", price: "₹799" },
-        { img: "/images/shop/img2-4.jpg", title: "Crossover Hijab Cap", price: "₹699" },
-        { img: "/images/shop/img2-5.jpg", title: "Matte Black Pin Set", price: "₹299" },
+        {id:1, img: "/images/shop/img2-1.jpg", title: "Hooded1 Abaya Black", price: "₹5,499" },
+        { id:2, img: "/images/shop/img2-2.jpg", title: "Mara Coat Black", price: "₹4,999" },
+        { id:3, img: "/images/shop/img2-3.jpg", title: "Black Jersey Hijab", price: "₹799" },
+        { id:4, img: "/images/shop/img2-4.jpg", title: "Crossover Hijab Cap", price: "₹699" },
+        { id:5, img: "/images/shop/img2-5.jpg", title: "Matte Black Pin Set", price: "₹299" },
     ];
 
     return (
@@ -15,7 +17,7 @@ export default function WearWith() {
                 Wear With
             </h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
                 {wearWithProducts.map((item, i) => (
                     <div
                         key={i}
@@ -39,7 +41,22 @@ export default function WearWith() {
                         </button>
                     </div>
                 ))}
+            </div> */}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+                {wearWithProducts.map((item, index) => (
+                    <SingleImgMultiColorProductCard
+                        key={index}
+                        product={item}
+                        removable
+                    //   onRemove={handleRemove}
+                    //   onAddToBag={handleAddToBag}
+                    //   onToggleWishlist={handleWishlistToggle}
+                    />
+                ))}
             </div>
+
+
         </section>
     );
 }

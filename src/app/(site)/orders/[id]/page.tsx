@@ -27,6 +27,7 @@ interface SelectedVariantData {
   colorName?: string | null;
   hexCode?: string | null;
   price: number;
+  variantImages:any | []
 }
 
 interface OrderItem {
@@ -190,7 +191,7 @@ export default function OrderDetailsPage() {
                 <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                   {item.product?.productimage?.[0]?.url ? (
                     <Image
-                      src={item.product.productimage[0].url}
+                      src={item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0].url}
                       alt={item.product.title}
                       fill
                       className="object-contain p-1"

@@ -19,6 +19,7 @@ interface SelectedVariantData {
   colorName?: string | null;
   hexCode?: string | null;
   price: number;
+  variantImages:any | []
 }
 
 interface OrderItem {
@@ -168,9 +169,9 @@ export default function OrderSuccessPage() {
           </h2>
 
           <ul className="divide-y divide-[var(--soft-gray)]">
-            {order.orderItems.map((item) => (
+            {order.orderItems.map((item,index) => (
               <li
-                key={item.id}
+                key={index}
                 className="flex justify-between items-start gap-4 py-5"
               >
                 <div className="flex gap-4">
@@ -178,7 +179,7 @@ export default function OrderSuccessPage() {
                   <div className="relative w-28 aspect-square rounded-xl overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                     {item.product?.productimage?.[0]?.url ? (
                       <Image
-                        src={item.product.productimage[0].url}
+                        src={item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0].url}
                         alt={item.product.title}
                         fill
                         className="object-contain p-2"

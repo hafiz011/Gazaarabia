@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/authToken";
 const prisma: any = new PrismaClient();
 type RouteContext = { params: Promise<{ id: string }> };
 
-//  GET product by ID (Protected)
+//  ✅ GET product by ID (includes variant images)
 export async function GET(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -27,8 +27,31 @@ export async function GET(req: NextRequest, context: RouteContext) {
         categories: true,
         subcategories: true,
         productimage: true,
-        productvariant: true,
+        productvariant: {
+          include: {
+            color: true,
+            size: true,
+            variantImages: true, //  include variant images
+          },
+        },
+
         materialCare: true,
+
+
+        //  Updated for new schema (parent/child relation names)
+        asParentRelations: {
+          where: { relationType: "wear_with" },
+          include: {
+            child: {
+              include: {
+                productimage: true,
+                brand: true,
+              },
+            },
+          },
+        },
+
+
       },
     });
 
@@ -36,7 +59,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: product });
+
+// 🧩 Extract "Wear With" related products
+const wearWith = product.asParentRelations.map((r: any) => r.child);
+delete product.asParentRelations;
+
+
+    return NextResponse.json({
+      success: true,
+      data: { ...product, wearWith },
+    });
   } catch (error) {
     console.error(" GET Product Error:", error);
     return NextResponse.json(
@@ -46,85 +78,6 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// //  PUT - Update product (Protected)
-// export async function PUT(req: NextRequest, context: RouteContext) {
-//   const userId = await checkAuth(req);
-//   if (!userId) {
-//     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-//   }
-
-//   try {
-//     const { id } = await context.params;
-//     const productId = Number(id);
-
-//     if (!productId) {
-//       return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
-//     }
-
-//     const body = await req.json();
-
-//     // Delete existing images and variants before updating
-//     await prisma.productimage.deleteMany({ where: { productId } });
-//     await prisma.productvariant.deleteMany({ where: { productId } });
-
-//     const updated = await prisma.products.update({
-//       where: { id: productId },
-//       data: {
-//         title: body.title,
-//         shortDescription: body.shortDescription,
-//         description: body.description,
-//         fitType: body.fitType,
-//         careAdvice: body.careAdvice,
-//         costPrice: parseFloat(body.costPrice),
-//         sellingPrice: parseFloat(body.sellingPrice),
-//         discountPrice: body.discountPrice ? parseFloat(body.discountPrice) : null,
-//         baseQty: parseInt(body.baseQty),
-//         barcode: body.barcode,
-//         active: body.active ?? true,
-//         brandId: body.brandId ? parseInt(body.brandId) : null,
-//         categoryId: body.categoryId ? parseInt(body.categoryId) : null,
-//         subcategoryId: body.subcategoryId ? parseInt(body.subcategoryId) : null,
-
-//         productimage: {
-//           create:
-//             body.images?.map((img: any) => ({
-//               url: img.url,
-//               alt: img.alt || "",
-//               colorId: img.colorId ? parseInt(img.colorId) : null,
-//               primary: img.primary ?? false,
-//             })) || [],
-//         },
-
-//         productvariant: {
-//           create:
-//             body.variants?.map((v: any) => ({
-//               sku: v.sku,
-//               price: parseFloat(v.price),
-//               stock: parseInt(v.stock),
-//               isActive: v.isActive ?? true,
-//               colorId: v.colorId ? parseInt(v.colorId) : null,
-//               sizeId: v.sizeId ? parseInt(v.sizeId) : null,
-//             })) || [],
-//         },
-//       },
-//       include: {
-//         productimage: true,
-//         productvariant: true,
-//       },
-//     });
-
-//     return NextResponse.json({ success: true, message: "Product updated successfully", data: updated });
-//   } catch (error) {
-//     console.error("❌ PUT Product Error:", error);
-//     return NextResponse.json(
-//       { success: false, message: "Failed to update product" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-
-// PUT - Update product (Hard delete old variants & images)
 export async function PUT(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -132,29 +85,39 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   }
 
   try {
-    const { id }: any = context.params;
+    const { id } = await context.params; // ✅ await the params
     const productId = Number(id);
 
     if (!productId) {
-      return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid ID" },
+        { status: 400 }
+      );
     }
 
     const body = await req.json();
 
-    // 1️ Delete dependent records (Cart + Order Items) before variants
-    await prisma.cart.deleteMany({
-      where: { variant: { productId } },
+    // 1️⃣ Delete dependent data first (carts, orders)
+    await prisma.cart.deleteMany({ where: { variant: { productId } } });
+    await prisma.orderItem.deleteMany({ where: { variant: { productId } } });
+
+    // 2️⃣ Delete all variant images, variants, and product images
+    const variantIds = await prisma.productvariant.findMany({
+      where: { productId },
+      select: { id: true },
     });
 
-    await prisma.orderItem.deleteMany({
-      where: { variant: { productId } },
-    });
+    const variantIdsList = variantIds.map((v: any) => v.id);
+    if (variantIdsList.length > 0) {
+      await prisma.variantImage.deleteMany({
+        where: { variantId: { in: variantIdsList } },
+      });
+    }
 
-    // 2️ Delete images & variants
-    await prisma.productimage.deleteMany({ where: { productId } });
     await prisma.productvariant.deleteMany({ where: { productId } });
+    await prisma.productimage.deleteMany({ where: { productId } });
 
-    // 3️ Update product with new values
+    // 3️⃣ Update main product
     const updated = await prisma.products.update({
       where: { id: productId },
       data: {
@@ -163,19 +126,24 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         shortDescription: body.shortDescription,
         description: body.description,
         fitType: body.fitType,
-        // careAdvice: body.careAdvice,
-        materialCareId: body.materialCareId,
+        materialCareId: body.materialCareId
+          ? parseInt(body.materialCareId)
+          : null,
         costPrice: parseFloat(body.costPrice),
         sellingPrice: parseFloat(body.sellingPrice),
-        discountPrice: body.discountPrice ? parseFloat(body.discountPrice) : null,
+        discountPrice: body.discountPrice
+          ? parseFloat(body.discountPrice)
+          : null,
         baseQty: parseInt(body.baseQty),
         barcode: body.barcode,
         active: body.active ?? true,
         brandId: body.brandId ? parseInt(body.brandId) : null,
         categoryId: body.categoryId ? parseInt(body.categoryId) : null,
-        subcategoryId: body.subcategoryId ? parseInt(body.subcategoryId) : null,
+        subcategoryId: body.subcategoryId
+          ? parseInt(body.subcategoryId)
+          : null,
 
-        //  Re-create images
+        // ✅ Recreate product images
         productimage: {
           create:
             body.images?.map((img: any) => ({
@@ -186,7 +154,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
             })) || [],
         },
 
-        //  Re-create variants
+        // ✅ Recreate variants
         productvariant: {
           create:
             body.variants?.map((v: any) => ({
@@ -196,26 +164,57 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               isActive: v.isActive ?? true,
               colorId: v.colorId ? parseInt(v.colorId) : null,
               sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+              variantImages: {
+                create:
+                  v.images?.map((img: any) => ({
+                    url: img.url,
+                    alt: img.alt || "",
+                    productId: productId,
+                  })) || [],
+              },
             })) || [],
         },
       },
       include: {
         productimage: true,
-        productvariant: true,
+        productvariant: {
+          include: { variantImages: true },
+        },
       },
     });
 
+    // ✅ Update Wear With relationships
+    if (body.wearWith && Array.isArray(body.wearWith)) {
+      // Remove old ones first (use parentId now)
+      await prisma.productRelation.deleteMany({
+        where: { parentId: productId, relationType: "wear_with" },
+      });
+
+      // Create new ones (use parentId/childId instead of productId/relatedId)
+      if (body.wearWith.length > 0) {
+        const relations = body.wearWith.map((childId: number) => ({
+          parentId: productId,
+          childId,
+          relationType: "wear_with",
+        }));
+        await prisma.productRelation.createMany({ data: relations });
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Product updated successfully",
+      message: "✅ Product updated successfully",
       data: updated,
     });
   } catch (error: any) {
-    console.error(" PUT Product Error:", error);
+    console.error("❌ PUT Product Error:", error);
 
     if (error.code === "P2002" && error.meta?.target?.includes("slug")) {
       return NextResponse.json(
-        { success: false, message: "Slug must be unique. This one already exists." },
+        {
+          success: false,
+          message: "Slug must be unique. This one already exists.",
+        },
         { status: 400 }
       );
     }
@@ -228,7 +227,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 }
 
 
-// DELETE product (Protected)
+// ✅ DELETE product (removes variant images too)
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -243,18 +242,26 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
-    // 1. Delete variants
+    const variantIds = await prisma.productvariant.findMany({
+      where: { productId },
+      select: { id: true },
+    });
+
+    const variantIdsList = variantIds.map((v: any) => v.id);
+    if (variantIdsList.length > 0) {
+      await prisma.variantImage.deleteMany({ where: { variantId: { in: variantIdsList } } });
+    }
+
     await prisma.productvariant.deleteMany({ where: { productId } });
-
-    // 2. Delete images
     await prisma.productimage.deleteMany({ where: { productId } });
-
-    // 3. Delete product
     await prisma.products.delete({ where: { id: productId } });
 
-    return NextResponse.json({ success: true, message: "Product deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "✅ Product deleted successfully",
+    });
   } catch (error) {
-    console.error(" DELETE Product Error:", error);
+    console.error("❌ DELETE Product Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete product" },
       { status: 500 }

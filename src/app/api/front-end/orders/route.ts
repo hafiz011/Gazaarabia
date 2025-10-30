@@ -4,6 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma: any = new PrismaClient();
 
+// 🟢 CREATE NEW ORDER
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: Number(userId),
 
-        //  Payment & totals
+        // 💳 Payment Info
         totalAmount: payment.totalAmount,
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
         status: (payment.paymentStatus || "completed").toLowerCase(),
         paypalResponse: payment.paypalResponse,
 
-        //  Address snapshot
+        // 📦 Address Snapshot
         addressId: address.id,
         firstName: address.firstName,
         lastName: address.lastName,
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
-        //  Order items
+        // 🛒 Order Items
         orderItems: {
           create: orderItems.map((item: any) => ({
             productId: item.productId,
@@ -74,9 +75,8 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-
-
+ 
+// 🟢 GET ALL ORDERS FOR USER (with selectedVariantData)
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -84,13 +84,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Fetch all orders with nested data
     const orders = await prisma.orders.findMany({
-      where: {
-        userId: Number(userId),
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      where: { userId: Number(userId) },
+      orderBy: { createdAt: "desc" },
       include: {
         orderItems: {
           include: {
@@ -101,6 +98,7 @@ export async function GET(req: NextRequest) {
                   include: {
                     color: true,
                     size: true,
+                    variantImages: true, // ✅ include variant images here
                   },
                 },
               },
@@ -110,9 +108,38 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // ✅ Enrich orderItems like single order API
+    const enrichedOrders = orders.map((order: any) => ({
+      ...order,
+      orderItems: order.orderItems.map((item: any) => {
+        const selectedVariant = item.product.productvariant.find(
+          (variant: any) => variant.id === item.variantId
+        );
+
+        const selectedVariantData = selectedVariant
+          ? {
+              id: selectedVariant.id,
+              sizeId: selectedVariant.sizeId,
+              colorId: selectedVariant.colorId,
+              sizeName: selectedVariant.size?.name || null,
+              colorName: selectedVariant.color?.name || null,
+              hexCode: selectedVariant.color?.hexCode || null,
+              price: selectedVariant.price,
+              variantImages: selectedVariant.variantImages || [],
+            }
+          : null;
+
+        return {
+          ...item,
+          selectedVariantData,
+          reviewed: item.reviewed,
+        };
+      }),
+    }));
+
     return NextResponse.json({
       success: true,
-      data: orders,
+      data: enrichedOrders,
     });
   } catch (error) {
     console.error("GET Orders Error:", error);

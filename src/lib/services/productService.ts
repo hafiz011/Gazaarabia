@@ -1,19 +1,26 @@
 export const productService = {
-  async getAll(token: string, search?: any) {
-    const url = search
-      ? `/api/products?search=${encodeURIComponent(search)}`
-      : `/api/products`;
+  async getAll(token: string, search?: string, page: number = 1, pageSize: number = 20) {
+    try {
+      let url = `/api/products?page=${page}&pageSize=${pageSize}`;
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
 
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) throw new Error("Failed to fetch products");
-    return await res.json();
-  },
+      if (!res.ok) throw new Error("Failed to fetch products");
+      return await res.json();
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      throw error;
+    }
+  }
+  ,
 
   async getById(token: string, id: number) {
     const res = await fetch(`/api/products/${id}`, {
@@ -26,29 +33,29 @@ export const productService = {
     return await res.json();
   },
 
-async create(token: string, data: any) {
-  const res = await fetch(`/api/products`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
+  async create(token: string, data: any) {
+    const res = await fetch(`/api/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
-  const result = await res.json(); // 🆕 Parse the response body
-  console.log('result')
+    const result = await res.json(); // 🆕 Parse the response body
+    console.log('result')
 
-  if (!res.ok) {
-    // 🧠 Use the API's error message if available
-    const errorMessage =
-      result?.message || result?.error || "Failed to create product";
-    throw new Error(errorMessage);
+    if (!res.ok) {
+      // 🧠 Use the API's error message if available
+      const errorMessage =
+        result?.message || result?.error || "Failed to create product";
+      throw new Error(errorMessage);
+    }
+
+    return result;
   }
-
-  return result;
-}
-,
+  ,
 
   async update(token: string, id: number, data: any) {
     const res = await fetch(`/api/products/${id}`, {

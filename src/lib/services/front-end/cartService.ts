@@ -31,7 +31,7 @@ export const cartService = {
   token: string,
   productId: number,
   quantity = 1,
-  variantId?: number, // 👈 add variantId
+  variantId?: number, // variantId
   colorId?: number,   // optional — if you want to store color
   sizeId?: number     // optional — if you want to store size
 ) {

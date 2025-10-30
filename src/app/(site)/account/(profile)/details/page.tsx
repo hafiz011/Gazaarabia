@@ -139,8 +139,8 @@ export default function AccountDetailsPage() {
 
         <div className="space-y-4">
           {addresses.length > 0 ? (
-            addresses.map((address) => (
-              <div key={address.id} className="flex justify-between p-4 border rounded-lg">
+            addresses.map((address, index) => (
+              <div key={index} className="flex justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">
                     {address.firstName} {address.lastName}

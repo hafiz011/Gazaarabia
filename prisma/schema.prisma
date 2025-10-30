@@ -204,6 +204,13 @@ model products {
   carts      Cart[]
   orderItems OrderItem[]
   reviews    Review[]
+  variantImages VariantImage[]
+
+
+  // NEW — Back-relations for ProductRelation
+  asParentRelations ProductRelation[] @relation("ProductAsParent")
+  asChildRelations  ProductRelation[] @relation("ProductAsChild")
+
 
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
@@ -223,7 +230,8 @@ model productvariant {
   products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
   color    Colors?  @relation(fields: [colorId], references: [id])
   size     Sizes?   @relation(fields: [sizeId], references: [id])
-
+ 
+  variantImages VariantImage[]
   carts      Cart[]
   orderItems OrderItem[] // This is required to complete the relation
   reviews    Review[]
@@ -231,6 +239,24 @@ model productvariant {
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
 }
+
+
+model VariantImage {
+  id         Int              @id @default(autoincrement())
+  url        String
+  alt        String?
+  variantId  Int
+  productId  Int?
+
+  variant    productvariant   @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  product    products?        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("variant_images")
+}
+
 
 model Address {
   id         Int      @id @default(autoincrement())
@@ -434,3 +460,21 @@ model Submenus {
 
   @@map("submenus")
 }
+
+
+model ProductRelation {
+  id           Int       @id @default(autoincrement())
+  parentId     Int
+  childId      Int
+  relationType String    @default("wear_with")
+  sortOrder    Int?
+  createdAt    DateTime  @default(now())
+
+  // Properly linked relations with unique names
+  parent products @relation("ProductAsParent", fields: [parentId], references: [id], onDelete: Cascade)
+  child  products @relation("ProductAsChild", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, childId, relationType])
+  @@map("product_relations")
+}
+

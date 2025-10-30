@@ -228,9 +228,9 @@ const handlePaymentSuccess = async (details: any) => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {addresses.map((address) => (
+                  {addresses.map((address, index) => (
                     <label
-                      key={address.id}
+                      key={index}
                       className={`flex items-start gap-3 p-4 rounded-xl cursor-pointer transition border ${
                         selectedAddress?.id === address.id
                           ? "border-[var(--brand-primary)] bg-[var(--soft-gray)]/20"
@@ -280,17 +280,17 @@ const handlePaymentSuccess = async (details: any) => {
                 Order Items
               </h2>
               <div className="space-y-4">
-                {cartItems.map((item) => {
+                {cartItems.map((item, index) => {
                   
                   return (
                     <div
-                      key={item.id}
+                      key={index}
                       className="flex items-center gap-4 border-b pb-4"
                     >
                       <div className="relative w-20 h-20 rounded-lg border border-[var(--soft-gray)] overflow-hidden bg-white">
                         <Image
                           src={
-                            item.product.productimage[0]?.url ||
+                            item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url ||
                             "/images/placeholder.png"
                           }
                           alt={item.product.title}
@@ -353,10 +353,10 @@ const handlePaymentSuccess = async (details: any) => {
             </h2>
 
             <div className="space-y-3 text-[var(--text-primary)] mb-6">
-              {cartItems.map((i) => {
+              {cartItems.map((i, index) => {
                 
                 return (
-                  <div key={i.productId} className="flex justify-between text-sm">
+                  <div key={index} className="flex justify-between text-sm">
                     <span className="inline-flex flex-col max-w-[220px]">
                       <span className="inline-flex items-center gap-1">
                         <span className="font-medium">{i.quantity}</span>

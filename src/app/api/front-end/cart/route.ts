@@ -124,6 +124,7 @@ export async function GET(req: Request) {
               include: {
                 color: true,
                 size: true,
+                variantImages: true,
               },
             },
           },
@@ -147,6 +148,7 @@ export async function GET(req: Request) {
             colorName: selectedVariant.color?.name || null,
             hexCode: selectedVariant.color?.hexCode || null,
             price: selectedVariant.price,
+            variantImages: selectedVariant.variantImages || []
           }
         : null;
 
