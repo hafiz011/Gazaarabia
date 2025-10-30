@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { FaCalendarAlt, FaUserAlt, FaTag } from "react-icons/fa";
-import { blogService } from "@/lib/services/blogService";
+import { blogsService } from "@/lib/services/front-end/blogsService";
 import moment from "moment";
 
 interface Blog {
@@ -29,11 +29,11 @@ export default function BlogDetailPage() {
 
     const fetchBlog = async () => {
       try {
-        const data :any = await blogService.getBySlug(slug as string);
-        console.log("✅ Blog fetched:", data);
-        setBlog(data);
+        const data :any = await blogsService.getBlogBySlug(slug as string);
+        console.log(" Blog fetched:", data);
+        setBlog(data?.data ?? null);
       } catch (err) {
-        console.error("❌ Error fetching blog:", err);
+        console.error(" Error fetching blog:", err);
         setError("Blog not found");
       } finally {
         setLoading(false);

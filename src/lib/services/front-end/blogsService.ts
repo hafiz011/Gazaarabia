@@ -23,5 +23,10 @@ export const blogsService = {
         return apiFetch(`/api/front-end/blogs${query.toString() ? `?${query.toString()}` : ""}`);
     },
 
+     /** Get single blog by slug */
+  getBlogBySlug: async (slug: string): Promise<Blog> => {
+    if (!slug) throw new Error("Slug is required");
+    return apiFetch(`/api/front-end/blogs/${slug}`);
+  },
 
 };

@@ -11,8 +11,9 @@ import { wishlistService } from "@/lib/services/front-end/wishlistService";
 import Loader from "@/components/Loader";
 import NoData from "@/components/NoData";
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+// export default function CategoryPage({ params }: { params: { slug: string } }) {
+export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = React.use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();

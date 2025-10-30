@@ -22,10 +22,12 @@ interface BlogCategory {
     name: string;
 }
 
+type ActiveCategoryType = number | "All";
+
 export default function BlogsPage() {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [categories, setCategories] = useState<BlogCategory[]>([]);
-    const [activeCategory, setActiveCategory] = useState<number | "All">("All");
+    const [activeCategory, setActiveCategory] = useState<ActiveCategoryType | "All">("All");
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -36,8 +38,8 @@ export default function BlogsPage() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const cats = await blogsService.getAllCategory();
-                setCategories(cats);
+                const cats:any = await blogsService.getAllCategory();
+                setCategories(cats?.data ?? []);
             } catch (err) {
                 console.error("Failed to fetch categories", err);
             }
@@ -54,7 +56,7 @@ export default function BlogsPage() {
                 if (activeCategory !== "All") params.categoryId = activeCategory;
                 if (searchTerm.trim()) params.search = searchTerm;
                 const data: any = await blogsService.getAllBlogs(params);
-                setBlogs(data);
+                setBlogs(data?.data ?? []);
             } catch (err) {
                 console.error("Failed to fetch blogs", err);
             } finally {
@@ -68,7 +70,7 @@ export default function BlogsPage() {
     // 📍 Pagination logic
     const totalPages = Math.ceil(blogs.length / blogsPerPage);
     const startIndex = (currentPage - 1) * blogsPerPage;
-    const currentBlogs = blogs.slice(startIndex, startIndex + blogsPerPage);
+    const currentBlogs = Array.isArray(blogs) ? blogs.slice(startIndex, startIndex + blogsPerPage) : [];
 
     return (
         <div className="w-full text-[var(--text-primary)]">
@@ -99,7 +101,7 @@ export default function BlogsPage() {
                 >
                     All
                 </button>
-                {categories.map((cat) => (
+                {Array.isArray(categories) && categories.map((cat) => (
                     <button
                         key={cat.id}
                         onClick={() => {

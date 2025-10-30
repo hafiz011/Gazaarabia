@@ -67,6 +67,16 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage the blogs.",
       action: { label: "Add Blog",href: "/admin/blogs/form" },
     },
+   "/admin/menus": {
+      title: "Menus",
+      subtitle: "Manage the menus.",
+      action: { label: "Add Menu",href: "/admin/menus/form" },
+    },
+   "/admin/submenus": {
+      title: "Sub Menus",
+      subtitle: "Manage the submenus.",
+      action: { label: "Add Submenu",href: "/admin/submenus/form" },
+    },
   };
 
   const current = titles[pathname] || {

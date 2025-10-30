@@ -28,7 +28,7 @@ model Users {
   wishlist  Wishlist[]
   carts     Cart[]
   orders    Orders[]
-  reviews Review[]
+  reviews   Review[]
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
@@ -70,6 +70,9 @@ model Categories {
   products      products[]
   subcategories Subcategory[]
 
+  menus    Menus[]    @relation("CategoryMenus")
+  Submenus Submenus[]
+
   @@map("categories")
 }
 
@@ -82,6 +85,8 @@ model Subcategory {
   updatedAt  DateTime   @updatedAt
   products   products[]
   category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  submenus Submenus[] @relation("SubcategorySubmenus")
 
   @@index([categoryId], map: "subcategories_categoryId_fkey")
   @@map("subcategories")
@@ -125,6 +130,8 @@ model BlogCategories {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   blogs     Blogs[]
+
+  menus Menus[] @relation("BlogCategoryMenus")
 
   @@map("blog_categories")
 }
@@ -196,7 +203,7 @@ model products {
   wishlist   Wishlist[]
   carts      Cart[]
   orderItems OrderItem[]
-  reviews Review[]
+  reviews    Review[]
 
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
@@ -218,8 +225,8 @@ model productvariant {
   size     Sizes?   @relation(fields: [sizeId], references: [id])
 
   carts      Cart[]
-  orderItems OrderItem[] // ✅ 👈 This is required to complete the relation
-  reviews Review[]
+  orderItems OrderItem[] // This is required to complete the relation
+  reviews    Review[]
 
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
@@ -239,7 +246,7 @@ model Address {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  // 🔑 Relation to Users
+  //  Relation to Users
   userId Int
   user   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -285,22 +292,22 @@ model Orders {
   id     Int @id @default(autoincrement())
   userId Int
 
-  // 💰 Amount Details
+  //  Amount Details
   itemsTotal    Float
-  subtotal      Float 
+  subtotal      Float
   shippingCost  Float  @default(0)
   discountTotal Float  @default(0)
   taxTotal      Float  @default(0)
   totalAmount   Float
   currency      String @default("GBP")
 
-  // 💳 Payment Info
+  //  Payment Info
   paymentMethod  String
   transactionId  String?
   status         String  @default("pending")
   paypalResponse Json?
 
-  // 🏠 Shipping Address Snapshot
+  //  Shipping Address Snapshot
   addressId  Int?
   firstName  String
   lastName   String?
@@ -312,21 +319,21 @@ model Orders {
   postalCode String
   phone      String
 
-  // 🚚 Delivery Options
+  //  Delivery Options
   deliveryOptionId Int?
   deliveryName     String?
   deliveryEta      String?
 
-  // 📝 Meta
+  //  Meta
   notes          String?
   couponCode     String?
   couponDiscount Float?  @default(0)
 
-  // ⏰ Timestamps
+  //  Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 🔗 Relations
+  //  Relations
   user       Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
 
@@ -347,7 +354,7 @@ model OrderItem {
   subtotal Float
   sku      String?
   title    String?
-  reviewed  Boolean @default(false)
+  reviewed Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -361,27 +368,69 @@ model OrderItem {
   @@map("orders_item")
 }
 
-
 model Review {
-  id           Int      @id @default(autoincrement())
-  rating       Int
-  comment      String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Product Reference
-  productId    Int
-  product      products @relation(fields: [productId], references: [id])
+  productId Int
+  product   products @relation(fields: [productId], references: [id])
 
-  // Variant Reference 🆕
-  variantId    Int?
-  variant      productvariant? @relation(fields: [variantId], references: [id])
+  // Variant Reference 
+  variantId Int?
+  variant   productvariant? @relation(fields: [variantId], references: [id])
 
   // User Reference
-  userId       Int
-  user         Users @relation(fields: [userId], references: [id])
+  userId Int
+  user   Users @relation(fields: [userId], references: [id])
 
   // Optional: Link back to order item
-  orderItemId  Int?
-  orderItem    OrderItem? @relation(fields: [orderItemId], references: [id])
+  orderItemId Int?
+  orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
+}
+
+model Menus {
+  id              Int           @id @default(autoincrement())
+  name            String
+  slug            String        @unique
+  type            String       
+  images          Json?        
+  position  Int      @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+
+  submenus        Submenus[]
+  category        Categories?   @relation("CategoryMenus", fields: [categoryId], references: [id])
+  blogCategory    BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
+
+  categoryId      Int?
+  blogCategoryId  Int?
+
+  @@map("menus")
+}
+
+model Submenus {
+  id                   Int         @id @default(autoincrement())
+  name                 String
+  slug                 String      @unique
+  menuId               Int
+  categoryId           Int?
+  subcategoryId        Int?
+  leftSubcategories    Json?       // store selected left subcategory IDs (only if product)
+  rightSubcategories   Json?       // store selected right subcategory IDs (only if product)
+  leftCustomLinks    Json? 
+  rightCustomLinks   Json? 
+  position           Int      @default(0)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  menu         Menus         @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
+  category     Categories?   @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "submenus_categoryId_fkey")
+  subcategory  Subcategory?  @relation("SubcategorySubmenus", fields: [subcategoryId], references: [id], onDelete: Cascade, map: "submenus_subcategoryId_fkey")
+
+  @@map("submenus")
 }

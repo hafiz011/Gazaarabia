@@ -17,6 +17,7 @@ import {
   FileText,
   BookOpen,
   LogOut,
+  ListTree, PanelsTopLeft
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -26,6 +27,8 @@ import { useRouter } from "next/navigation";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/menus", label: "Menus", icon: PanelsTopLeft  },
+  { href: "/admin/submenus", label: "Sub Menus", icon: ListTree  },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/sizes", label: "Sizes", icon: Ruler },
