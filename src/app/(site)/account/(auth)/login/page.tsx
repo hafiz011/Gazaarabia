@@ -3,45 +3,49 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import AlertMessage from "@/components/AlertMessage";
 import { signIn, useSession } from "next-auth/react";
-import { ROUTES } from "@/constants/routes"; //  central URL config
+import { getSession } from "next-auth/react";
+import AlertMessage from "@/components/AlertMessage";
+import { ROUTES } from "@/constants/routes";
+import { mergeLocalCartWithServer } from "@/lib/services/front-end/cartMergeService";
+import { useCart } from "@/app/context/CartContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { data: session, status } = useSession(); // get session info
+  const { data: session, status } = useSession();
+  const { refreshCart } = useCart();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<{
-    isOpen: boolean;
-    type: "success" | "error" | "";
-    message: string;
-  }>({
+  const [alert, setAlert] = useState({
     isOpen: false,
     type: "",
     message: "",
   });
 
-  // Redirect if user already logged in
+  // ✅ React to successful login (wait until NextAuth session is ready)
   useEffect(() => {
-    if (status === "loading") return;
-
-    if (status === "authenticated") {
-      if (session?.user?.role === "customer") {
-        router.replace(ROUTES.USER.PROFILE); //  redirect to profile
-      } else {
-        router.replace("/"); // or some other route for admins
-      }
+    if (status === "authenticated" && session?.user?.token) {
+      (async () => {
+        try {
+          const token = session.user.token;
+          await mergeLocalCartWithServer(token);
+          await refreshCart(); // Updates global cart count
+          router.replace(ROUTES.USER.PROFILE);
+        } catch (err) {
+          console.warn("Cart merge or refresh failed:", err);
+        }
+      })();
     }
-  }, [status, session, router]);
+  }, [status, session]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Clean, professional login function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -56,7 +60,7 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      const response: any = await signIn("credentials", {
+      const response = await signIn("credentials", {
         redirect: false,
         email: form.email,
         password: form.password,
@@ -66,7 +70,7 @@ export default function LoginPage() {
         setAlert({
           isOpen: true,
           type: "error",
-          message: response?.error?.message || "Invalid email or password.",
+          message: response.error || "Invalid email or password.",
         });
         return;
       }
@@ -77,14 +81,14 @@ export default function LoginPage() {
         message: "Login successful! Redirecting...",
       });
 
-      setTimeout(() => {
-        router.push(ROUTES.USER.PROFILE); //  redirect after login
-      }, 1000);
+      // ⚠️ Don’t try to getSession() here — NextAuth updates asynchronously.
+      // Let useEffect handle the cart logic once the session is updated.
+
     } catch (err: any) {
       setAlert({
         isOpen: true,
         type: "error",
-        message: err.message || "Invalid email or password.",
+        message: err.message || "Something went wrong.",
       });
     } finally {
       setLoading(false);
@@ -93,11 +97,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 pt-20 pb-10">
-      <div className="mt-5 w-full max-w-md bg-white shadow-lg rounded-2xl p-8 border border-[var(--soft-gray)] transition-all duration-300 hover:shadow-xl">
-      
-        {/* Heading */}
+      <div className="mt-5 w-full max-w-md bg-white shadow-lg rounded-2xl p-8 border border-[var(--soft-gray)]">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
             Welcome Back
           </h1>
           <p className="text-[var(--text-muted)] text-sm">
@@ -105,70 +107,59 @@ export default function LoginPage() {
           </p>
         </div>
 
-          {/* Alert */}
-        {alert.isOpen && alert.type && (
+        {alert.isOpen && (
           <div className="mb-4">
             <AlertMessage
-              type={alert.type}
+              type={alert.type as any}
               message={alert.message}
               onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
             />
           </div>
         )}
 
-        {/* Form */}
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-              Email Address
-            </label>
+            <label className="block text-sm font-medium mb-1">Email Address</label>
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="Enter your email"
-              className="w-full border border-[var(--soft-gray)] rounded-md px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:outline-none transition"
+              className="w-full border rounded-md px-4 py-2.5"
               required
             />
           </div>
 
-          {/* Password */}
           <div className="relative">
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-              Password
-            </label>
+            <label className="block text-sm font-medium mb-1">Password</label>
             <input
               type={showPassword ? "text" : "password"}
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="Enter password"
-              className="w-full border border-[var(--soft-gray)] rounded-md px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:outline-none transition"
+              className="w-full border rounded-md px-4 py-2.5"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-10 text-[var(--text-muted)]"
+              className="absolute right-3 top-10 text-gray-500"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className={`w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium hover:opacity-90 active:scale-[0.98] transition ${loading && "opacity-60 cursor-not-allowed"
-              }`}
+            className={`w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium ${
+              loading && "opacity-60 cursor-not-allowed"
+            }`}
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
 
-        {/* Sign up link */}
         <p className="text-center text-sm text-[var(--text-muted)] mt-8">
           Don’t have an account?{" "}
           <a

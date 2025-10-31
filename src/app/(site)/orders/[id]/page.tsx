@@ -27,7 +27,7 @@ interface SelectedVariantData {
   colorName?: string | null;
   hexCode?: string | null;
   price: number;
-  variantImages:any | []
+  variantImages: any | []
 }
 
 interface OrderItem {
@@ -71,7 +71,7 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [popup, setPopup] = useState({ isOpen: false, message: "", type: "" });
 
-  // ⭐ Review modal states
+  //  Review modal states
   const [reviewModal, setReviewModal] = useState(false);
   const [selectedOrderItemId, setSelectedOrderItemId] = useState<number>(0);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
@@ -95,7 +95,7 @@ export default function OrderDetailsPage() {
           const res = await orderService.getById(token, Number(id));
           setOrder(res.data);
         } catch (err) {
-          console.error("❌ Failed to fetch order", err);
+          console.error("Failed to fetch order", err);
           setPopup({
             isOpen: true,
             message: "Failed to fetch order details. Please try again.",
@@ -109,33 +109,33 @@ export default function OrderDetailsPage() {
   }, [id, session, status]);
 
 
-  const handleSuccessReviewed = () =>{
-     // 📝 1. Close the modal
-  setReviewModal(false);
+  const handleSuccessReviewed = () => {
+    // 1. Close the modal
+    setReviewModal(false);
 
-  // 🟢 2. Optimistically update the reviewed status in the UI
-  setOrder((prevOrder) => {
-    if (!prevOrder) return prevOrder;
+    //  2. Optimistically update the reviewed status in the UI
+    setOrder((prevOrder) => {
+      if (!prevOrder) return prevOrder;
 
-    return {
-      ...prevOrder,
-      orderItems: prevOrder.orderItems.map((orderItem) =>
-        orderItem.product.id === selectedProductId &&
-        orderItem.selectedVariantData?.id === selectedVariantId
-          ? { ...orderItem, reviewed: true }  // 👈 set reviewed to true
-          : orderItem
-      ),
-    };
-  });
-
-  // 🪄 3. Show success popup
-  setTimeout(() => {
-    setPopup({
-      isOpen: true,
-      message: "Thank you for your review!",
-      type: "success",
+      return {
+        ...prevOrder,
+        orderItems: prevOrder.orderItems.map((orderItem) =>
+          orderItem.product.id === selectedProductId &&
+            orderItem.selectedVariantData?.id === selectedVariantId
+            ? { ...orderItem, reviewed: true }  //  set reviewed to true
+            : orderItem
+        ),
+      };
     });
-  }, 300);
+
+    // 3. Show success popup
+    setTimeout(() => {
+      setPopup({
+        isOpen: true,
+        message: "Thank you for your review!",
+        type: "success",
+      });
+    }, 300);
   }
 
   if (loading) return <Loader />;
@@ -162,7 +162,7 @@ export default function OrderDetailsPage() {
 
   return (
     <section className="max-w-4xl mx-auto p-6 md:p-10 mt-7">
-      {/* 🧾 Header */}
+      {/*  Header */}
       <div className="mb-8 text-center md:text-left">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">
           Order #{order.id}
@@ -178,15 +178,24 @@ export default function OrderDetailsPage() {
           Order Summary
         </h2>
 
-        <ul className="divide-y divide-[var(--mid-gray)]">
+        {/* <ul className="divide-y divide-[var(--mid-gray)]">
           {order.orderItems.map((item) => (
 
 
             <li
               key={item.id}
               className="flex flex-col md:flex-row gap-4 py-4 border-b border-[var(--mid-gray)]"
+            > */}
+
+
+        <ul className="divide-y divide-[var(--mid-gray)]">
+          {order.orderItems.map((item) => (
+            <li
+              key={item.id}
+              className="flex flex-col md:flex-row gap-4 py-4"
             >
-              {/* 🖼️ Product Image */}
+
+              {/* Product Image */}
               <div className="flex gap-4 w-full md:w-auto">
                 <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                   {item.product?.productimage?.[0]?.url ? (
@@ -203,9 +212,9 @@ export default function OrderDetailsPage() {
                   )}
                 </div>
 
-                {/* 📄 Product Info */}
+                {/* Product Info */}
                 <div className="flex-1 flex flex-col justify-start w-full">
-                  {/* 🏷 Title (left) + Price (right) */}
+                  {/* Title (left) + Price (right) */}
                   <div className="flex items-start justify-between w-full">
                     <p className="font-semibold text-[var(--text-primary)] text-base leading-snug line-clamp-2 flex-1 pr-2">
                       {item.product.title}
@@ -215,7 +224,7 @@ export default function OrderDetailsPage() {
                     </div>
                   </div>
 
-                  {/* 🎨 Color/Size/Qty (left) + Write Review (right) */}
+                  {/*  Color/Size/Qty (left) + Write Review (right) */}
                   <div className="flex items-center justify-between mt-1 w-full flex-wrap gap-2">
                     {/* Left section */}
                     <div className="text-xs text-[var(--text-secondary)] flex flex-wrap items-center gap-2">
@@ -278,9 +287,10 @@ export default function OrderDetailsPage() {
             £{order.totalAmount.toFixed(2)}
           </span>
         </div>
+
       </div>
 
-      {/* 💳 Payment & Shipping */}
+      {/*  Payment & Shipping */}
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="p-5 bg-white rounded-xl border shadow-sm">
           <h3 className="text-lg font-semibold mb-3 text-[var(--text-primary)]">
@@ -308,7 +318,7 @@ export default function OrderDetailsPage() {
         </div>
       </div>
 
-      {/* 🏠 Delivery Address */}
+      {/*  Delivery Address */}
       <div className="p-5 bg-white rounded-xl border shadow-sm mb-10">
         <h3 className="text-lg font-semibold mb-3 text-[var(--text-primary)] flex items-center gap-2">
           <MapPin size={20} className="text-[var(--brand-primary)]" />
@@ -332,7 +342,7 @@ export default function OrderDetailsPage() {
         </div>
       </div>
 
-      {/* 🛍 CTA */}
+      {/*  CTA */}
       <div className="mt-10 flex justify-end">
         <Link
           href="/"
@@ -343,7 +353,7 @@ export default function OrderDetailsPage() {
         </Link>
       </div>
 
-      {/* ✨ Review Modal */}
+      {/* Review Modal */}
       {reviewModal && (
         <ReviewModal
           orderItemId={selectedOrderItemId}
@@ -352,7 +362,7 @@ export default function OrderDetailsPage() {
           token={session?.user?.token as string}
           onClose={() => setReviewModal(false)}
           onSuccess={() => {
-           handleSuccessReviewed()
+            handleSuccessReviewed()
           }}
         />
       )}
@@ -362,7 +372,7 @@ export default function OrderDetailsPage() {
         type={popup.type as any}
         message={popup.message}
         confirmText="OK"
-        onConfirm={() => setPopup((prev) => ({ ...prev, isOpen: false }))}  // ✅ close popup
+        onConfirm={() => setPopup((prev) => ({ ...prev, isOpen: false }))}  //  close popup
         show={popup.isOpen}
       />
 

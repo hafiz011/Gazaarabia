@@ -13,6 +13,7 @@ import Loader from "@/components/Loader";
 import AlertMessage from "@/components/AlertMessage";
 import CartDrawer from "@/components/CartDrawer";
 import { ROUTES } from "@/constants/routes";
+import { useCart } from "@/app/context/CartContext";
 
 export default function WishlistPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function WishlistPage() {
   const { data: session, status } = useSession();
   const token = session?.user?.token || null;
 
+  const { refreshCart } = useCart();
   const [cartDrawer, setCartDrawer] = useState(false);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -37,7 +39,9 @@ export default function WishlistPage() {
     message: "",
   });
 
-  // 🧾 Fetch wishlist (only if authenticated)
+
+
+  // Fetch wishlist (only if authenticated)
   const fetchWishlist = async () => {
     if (!token) {
       setLoading(false);
@@ -107,6 +111,7 @@ export default function WishlistPage() {
 
     try {
       await cartService.add(token, Number(product.id), 1);
+      await refreshCart();
       setAlert({
         isOpen: true,
         type: "success",

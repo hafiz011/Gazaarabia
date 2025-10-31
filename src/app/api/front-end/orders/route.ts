@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
+import { sendOrderConfirmationEmail } from "@/lib/helpers/emailHelper";
+
 
 const prisma: any = new PrismaClient();
 
-// 🟢 CREATE NEW ORDER
+//  CREATE NEW ORDER
 export async function POST(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: Number(userId),
 
-        // 💳 Payment Info
+        //  Payment Info
         totalAmount: payment.totalAmount,
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
         status: (payment.paymentStatus || "completed").toLowerCase(),
         paypalResponse: payment.paypalResponse,
 
-        // 📦 Address Snapshot
+        //  Address Snapshot
         addressId: address.id,
         firstName: address.firstName,
         lastName: address.lastName,
@@ -62,8 +64,25 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
+
+    // 2️. Fetch user info for email
+    const user = await prisma.users.findUnique({
+      where: { id: Number(userId) },
+      select: { name: true, email: true },
+    });
+
+    // 3️. Send confirmation email
+    const emailResult = await sendOrderConfirmationEmail(user.email, {
+      name: user.name,
+      orderId: newOrder.id,
+      total: payment.totalAmount,
+      address: `${address.address1}, ${address.city}, ${address.country}, ${address.postalCode}`,
+      userId: user.id
+    });
+
     return NextResponse.json({
       success: true,
+      emailResult:emailResult,
       message: "Order created successfully",
       data: newOrder,
     });
@@ -75,8 +94,8 @@ export async function POST(req: NextRequest) {
     );
   }
 }
- 
-// 🟢 GET ALL ORDERS FOR USER (with selectedVariantData)
+
+//  GET ALL ORDERS FOR USER (with selectedVariantData)
 export async function GET(req: NextRequest) {
   const userId = await checkAuth(req);
   if (!userId) {
@@ -98,7 +117,7 @@ export async function GET(req: NextRequest) {
                   include: {
                     color: true,
                     size: true,
-                    variantImages: true, // ✅ include variant images here
+                    variantImages: true, //  include variant images here
                   },
                 },
               },
@@ -108,7 +127,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // ✅ Enrich orderItems like single order API
+    //  Enrich orderItems like single order API
     const enrichedOrders = orders.map((order: any) => ({
       ...order,
       orderItems: order.orderItems.map((item: any) => {
@@ -118,15 +137,15 @@ export async function GET(req: NextRequest) {
 
         const selectedVariantData = selectedVariant
           ? {
-              id: selectedVariant.id,
-              sizeId: selectedVariant.sizeId,
-              colorId: selectedVariant.colorId,
-              sizeName: selectedVariant.size?.name || null,
-              colorName: selectedVariant.color?.name || null,
-              hexCode: selectedVariant.color?.hexCode || null,
-              price: selectedVariant.price,
-              variantImages: selectedVariant.variantImages || [],
-            }
+            id: selectedVariant.id,
+            sizeId: selectedVariant.sizeId,
+            colorId: selectedVariant.colorId,
+            sizeName: selectedVariant.size?.name || null,
+            colorName: selectedVariant.color?.name || null,
+            hexCode: selectedVariant.color?.hexCode || null,
+            price: selectedVariant.price,
+            variantImages: selectedVariant.variantImages || [],
+          }
           : null;
 
         return {

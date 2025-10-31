@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { cartService } from "@/lib/services/front-end/cartService";
+import { localCartService } from "@/lib/services/front-end/localCartService";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -37,36 +38,67 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   }, []);
 
   // 🛒 Fetch cart items
+  // const fetchCart = async () => {
+  //   if (!token) {
+  //     setItems([]);
+  //     setSubtotal(0);
+  //     return;
+  //   }
+  //   try {
+  //     setLoading(true);
+  //     const data = await cartService.getAll(token);
+  //     setItems(data.cart || []);
+  //     setSubtotal(data.subtotal || 0);
+  //   } catch (err) {
+  //     console.error("❌ Failed to load cart", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchCart = async () => {
-    if (!token) {
-      setItems([]);
-      setSubtotal(0);
-      return;
-    }
+    console.log('innside the fetchCart token:>', token);
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await cartService.getAll(token);
-      setItems(data.cart || []);
-      setSubtotal(data.subtotal || 0);
-    } catch (err) {
-      console.error("❌ Failed to load cart", err);
+      if (token) {
+        console.log('token:>', token);
+        const data = await cartService.getAll(token);
+        console.log('data:>', data)
+        setItems(data.cart);
+        setSubtotal(data.subtotal);
+      } else {
+        const data = localCartService.get(); // identical structure
+        console.log('data:>', data)
+        setItems(data.cart);
+        setSubtotal(data.subtotal);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
-    if (isOpen && token) {
-      fetchCart();
+    if (isOpen) { // && token
+    fetchCart();
     }
-  }, [isOpen, token]);
+  }, [isOpen]); // token
+
 
   const freeShippingThreshold = 60;
   const remaining = Math.max(0, freeShippingThreshold - subtotal);
 
   // 🗑 Remove item
-  const removeItem = async (productId: number,variantId: number) => {
-    if (!token) return;
+  const removeItem = async (productId: number, variantId: number) => {
+    // if (!token) return;
+
+    if (!token) {
+      localCartService.remove(productId, variantId);
+      fetchCart();
+      return;
+    }
+
+
     try {
       const res = await cartService.remove(token, productId, variantId);
       setItems(res.cart || []);
@@ -76,31 +108,73 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     }
   };
 
-  // ➕➖ Update quantity
-  const handleQuantityChange = async (productId: number, variantId:number, newQty: number) => {
-    if (!token || newQty < 1) return;
+  //  Update quantity
+  // const handleQuantityChange = async (productId: number, variantId: number, newQty: number) => {
+  //   if (!token || newQty < 1) return;
 
-    const item = items.find((i) => i.productId === productId);
-    if (!item) return;
+  //   const item = items.find((i) => i.productId === productId);
+  //   if (!item) return;
 
-    const stock = item?.productvariant?.stock ?? item.stock ?? 1;
-    if (newQty > stock) return;
+  //   const stock = item?.productvariant?.stock ?? item.stock ?? 1;
+  //   if (newQty > stock) return;
 
-    // Optimistic UI update
+  //   // Optimistic UI update
+  //   setItems((prev) =>
+  //     prev.map((i) =>
+  //       i.productId === productId ? { ...i, quantity: newQty } : i
+  //     )
+  //   );
+
+  //   try {
+  //     const res = await cartService.updateQuantity(token, productId, variantId, newQty);
+  //     if (res.subtotal !== undefined) setSubtotal(res.subtotal);
+  //   } catch (err) {
+  //     console.error("Failed to update quantity", err);
+  //     fetchCart();
+  //   }
+  // };
+
+  const handleQuantityChange = async (
+    productId: number,
+    variantId: number,
+    newQty: number
+  ) => {
+    if (newQty < 1) return;
+
+    //  Optimistic UI update
     setItems((prev) =>
       prev.map((i) =>
-        i.productId === productId ? { ...i, quantity: newQty } : i
+        i.productId === productId && i.variantId === variantId
+          ? { ...i, quantity: newQty }
+          : i
       )
     );
 
+    //  Guest user (no token)
+    if (!token) {
+      localCartService.updateQuantity(productId, variantId, newQty);
+      const updated = localCartService.get();
+      setItems(updated.cart);
+      setSubtotal(updated.subtotal);
+      return;
+    }
+
+    //  Logged-in user (API)
     try {
-      const res = await cartService.updateQuantity(token, productId,variantId, newQty);
+      const res = await cartService.updateQuantity(
+        token,
+        productId,
+        variantId,
+        newQty
+      );
+      setItems(res.cart || []);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
     } catch (err) {
-      console.error("Failed to update quantity", err);
-      fetchCart();
+      console.error(" Failed to update quantity", err);
+      fetchCart(); // fallback reload
     }
   };
+
 
   return (
     <Drawer
@@ -163,7 +237,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               {/* 🖼️ Image */}
               <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                 <Image
-                  src={ item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url || "/images/placeholder.png"}
+                  src={item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url || "/images/placeholder.png"}
                   alt={item.product.title}
                   fill
                   className="object-contain p-1"
@@ -195,18 +269,17 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       type="button"
                       onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity + 1)}
                       disabled={disablePlus}
-                      className={`px-2 py-1 ${
-                        disablePlus
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "text-gray-600 hover:text-[var(--brand-primary)]"
-                      }`}
+                      className={`px-2 py-1 ${disablePlus
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-600 hover:text-[var(--brand-primary)]"
+                        }`}
                     >
                       <Plus size={14} />
                     </button>
                   </div>
 
                   <IconButton
-                    onClick={() => removeItem(item.productId,item.variantId)}
+                    onClick={() => removeItem(item.productId, item.variantId)}
                     sx={{
                       backgroundColor: "var(--soft-gray)",
                       color: "var(--brand-primary)",

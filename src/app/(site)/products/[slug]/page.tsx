@@ -26,6 +26,7 @@ import AuthPromptModal from "@/components/AuthPromptModal";
 import CartDrawer from "@/components/CartDrawer";
 import { ROUTES } from "@/constants/routes";
 import VariantWarningModal from "@/components/VariantWarningModal";
+import { useCart } from "@/app/context/CartContext";
 
 export default function ProductDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -48,6 +49,7 @@ export default function ProductDetails() {
   const [cartDrawer, setCartDrawer] = useState<boolean>(false);
   const [showVariantWarning, setShowVariantWarning] = useState<boolean>(false);
   const [images, setImages] = useState<any[]>([]);
+  const { refreshCart } = useCart();
 
   // ✅ Fetch product
   useEffect(() => {
@@ -162,27 +164,85 @@ export default function ProductDetails() {
     setQuantity(newQty);
   };
 
+  // const handleAddToCart = async () => {
+  //   if (!token) {
+  //     setShowLoginModal(true);
+  //     return;
+  //   }
+  //   if (!selectedColor || !selectedSize) {
+  //     setShowVariantWarning(true);
+  //     return;
+  //   }
+  //   if (!selectedVariant || availableStock <= 0) return;
+
+  //   try {
+  //     setAddingToCart(true);
+  //     await cartService.add(
+  //       token,
+  //       product.id,
+  //       quantity,
+  //       selectedVariant.id,
+  //       selectedColor.id,
+  //       selectedSize.id
+  //     );
+  //     setCartDrawer(true);
+  //   } catch (err) {
+  //     console.error("Failed to add to cart:", err);
+  //   } finally {
+  //     setAddingToCart(false);
+  //   }
+  // };
+
+  // 🖼 Zoom effect
+
+
   const handleAddToCart = async () => {
-    if (!token) {
-      setShowLoginModal(true);
-      return;
-    }
     if (!selectedColor || !selectedSize) {
       setShowVariantWarning(true);
       return;
     }
+
     if (!selectedVariant || availableStock <= 0) return;
 
     try {
       setAddingToCart(true);
+
+      const productData = {
+        id: product.id,
+        title: product.title,
+        slug: product.slug,
+        sellingPrice: product.sellingPrice,
+        productimage: product.productimage || [],
+      };
+
+      const variantData = {
+        id: selectedVariant.id,
+        sizeId: selectedSize.id,
+        colorId: selectedColor.id,
+        sizeName: selectedSize.name,
+        colorName: selectedColor.name,
+        hexCode: selectedColor.hexCode,
+        price: selectedVariant.price,
+        variantImages: selectedVariant.variantImages || [],
+      };
+
+
+      console.log('productData:>', productData);
+      console.log('variantData:>', variantData);
+      // return;
+
       await cartService.add(
         token,
         product.id,
         quantity,
         selectedVariant.id,
         selectedColor.id,
-        selectedSize.id
+        selectedSize.id,
+        productData,
+        variantData
       );
+      await refreshCart(); // instantly updates Header count
+
       setCartDrawer(true);
     } catch (err) {
       console.error("Failed to add to cart:", err);
@@ -191,7 +251,7 @@ export default function ProductDetails() {
     }
   };
 
-  // 🖼 Zoom effect
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = imgRef.current?.getBoundingClientRect();
     if (!rect) return;

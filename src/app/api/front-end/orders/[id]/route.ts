@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken"; // your JWT verification helper
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 /**
  * @route GET /api/front-end/orders/[id]
@@ -13,18 +13,43 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    //  Authenticate user
-    const userId = await checkAuth(req);
-    if (!userId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
-    // Await params before using
+
+
     const { id } = await context.params;
     const orderId = Number(id);
     if (isNaN(orderId)) {
-      return NextResponse.json({ message: "Invalid order ID" }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Invalid order ID" }, { status: 400 });
     }
+
+    const userIdFromToken = await checkAuth(req);
+    const guestUserId = req.nextUrl.searchParams.get("userId");
+
+    // Build where clause
+    let whereClause: any = { id: orderId };
+
+    if (userIdFromToken) {
+      whereClause.userId = userIdFromToken;
+    } else if (guestUserId) {
+      whereClause.userId = Number(guestUserId);
+    } else {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+
+    // //  Authenticate user
+    // const userId = await checkAuth(req);
+    // if (!userId) {
+    //   return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    // }
+
+    // // Await params before using
+    // const { id } = await context.params;
+    // const orderId = Number(id);
+    // if (isNaN(orderId)) {
+    //   return NextResponse.json({ message: "Invalid order ID" }, { status: 400 });
+    // }
+
 
     //  Fetch order with products and variants
     const order = await prisma.orders.findUnique({
@@ -57,7 +82,8 @@ export async function GET(
     }
 
     //  Ensure user can only access their own order
-    if (order.userId !== userId) {
+    // if (order.userId !== userId ) {
+    if (order.userId != userIdFromToken && order.userId != guestUserId) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 

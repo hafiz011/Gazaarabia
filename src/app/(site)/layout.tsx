@@ -26,6 +26,7 @@ import type { Metadata } from "next";
 import "../globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { CartProvider } from "../context/CartContext";
 
 export const metadata: Metadata = {
   title: "Gaza Arabia",
@@ -41,7 +42,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Header />
-        <main className="pt-20">{children}</main>
+        <main className="pt-20">
+          {/* <CartProvider> */}
+            {children}
+          {/* </CartProvider> */}
+          </main>
         <Footer />
       </body>
     </html>

@@ -7,6 +7,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Search, User, Heart, ShoppingBag } from "lucide-react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import CartDrawer from "@/components/CartDrawer";
+import { localCartService } from "@/lib/services/front-end/localCartService";
+import { cartService } from "@/lib/services/front-end/cartService";
+import { useSession } from "next-auth/react";
+import { useCart } from "@/app/context/CartContext";
 
 interface SubcategoryLink {
   id?: number;
@@ -40,6 +44,9 @@ export default function Header() {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
 
+  const { data: session } = useSession();
+  const token = session?.user?.token || null;
+
   const [menus, setMenus] = useState<MenuItem[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -47,20 +54,44 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
+  // const [cartCount, setCartCount] = useState(0)
+  const { cartCount } = useCart();
 
-  // ✅ Fetch Menus
+
+
+  const fetchMenus = async () => {
+    try {
+      const res = await fetch("/api/header", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success) setMenus(data.data);
+    } catch (err) {
+      console.error("Failed to load menus:", err);
+    }
+  };
+
+
+  // const fetchCart = async () => {
+  //   try {
+  //     if (token) {
+  //       console.log('token:>', token);
+  //       const data = await cartService.getAll(token);
+  //       console.log('data:>', data)
+  //       setCartCount(Array.isArray(data.cart) ? data.cart?.length : 0);
+  //     } else {
+  //       const data = localCartService.get(); // identical structure
+  //       console.log('data:>', data)
+  //       setCartCount(Array.isArray(data.cart) ? data.cart?.length : 0);
+  //     }
+  //   } catch (err) {
+  //     console.log('err:>', err)
+  //   }
+  // };
+
+
   useEffect(() => {
-    const fetchMenus = async () => {
-      try {
-        const res = await fetch("/api/header", { cache: "no-store" });
-        const data = await res.json();
-        if (data.success) setMenus(data.data);
-      } catch (err) {
-        console.error("Failed to load menus:", err);
-      }
-    };
     fetchMenus();
-  }, []);
+    // fetchCart();
+  }, [])
 
   useEffect(() => {
     setMounted(true);
@@ -92,13 +123,12 @@ export default function Header() {
 
   return (
     <header
-      className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isHomePage
-          ? isScrolled
-            ? "bg-white/90 backdrop-blur-md shadow-md"
-            : "bg-transparent"
-          : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
-      }`}
+      className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
+        ? isScrolled
+          ? "bg-white/90 backdrop-blur-md shadow-md"
+          : "bg-transparent"
+        : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
+        }`}
     >
       {/* 🔹 Top Bar */}
       <div className="bg-[var(--brand-primary)] text-white text-center text-xs py-2 tracking-wide relative z-10">
@@ -137,11 +167,10 @@ export default function Header() {
 
           {/* 🔹 Desktop Menu */}
           <nav
-            className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${
-              isHomePage && !isScrolled
-                ? "text-white"
-                : "text-[var(--text-primary)]"
-            }`}
+            className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && !isScrolled
+              ? "text-white"
+              : "text-[var(--text-primary)]"
+              }`}
           >
             {menus.map((item) => (
               <div
@@ -170,11 +199,10 @@ export default function Header() {
                               <Link
                                 key={link.slug}
                                 href={getSubmenuLink(item, link)}
-                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${
-                                  index === 0
-                                    ? "font-semibold text-gray-900"
-                                    : "text-gray-700"
-                                }`}
+                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${index === 0
+                                  ? "font-semibold text-gray-900"
+                                  : "text-gray-700"
+                                  }`}
                               >
                                 {link.name}
                               </Link>
@@ -187,11 +215,10 @@ export default function Header() {
                               <Link
                                 key={link.slug}
                                 href={getSubmenuLink(item, link)}
-                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${
-                                  index === 0
-                                    ? "font-semibold text-gray-900"
-                                    : "text-gray-700"
-                                }`}
+                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${index === 0
+                                  ? "font-semibold text-gray-900"
+                                  : "text-gray-700"
+                                  }`}
                               >
                                 {link.name}
                               </Link>
@@ -229,11 +256,10 @@ export default function Header() {
 
           {/* 🔹 Right Icons */}
           <div
-            className={`flex items-center gap-4 ${
-              isHomePage && !isScrolled
-                ? "text-white"
-                : "text-[var(--text-primary)]"
-            }`}
+            className={`flex items-center gap-4 ${isHomePage && !isScrolled
+              ? "text-white"
+              : "text-[var(--text-primary)]"
+              }`}
           >
             <div className="hidden lg:flex gap-4">
               <div className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition">
@@ -254,12 +280,26 @@ export default function Header() {
                 <Heart size={20} />
               </div>
 
-              <div
+              {/* <div
                 onClick={() => setCartDrawer(true)}
                 className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
               >
                 <ShoppingBag size={20} />
+              </div> */}
+
+              <div
+                onClick={() => setCartDrawer(true)}
+                className="relative p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
+              >
+                <ShoppingBag size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[var(--brand-primary)] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </div>
+
+
             </div>
           </div>
         </div>

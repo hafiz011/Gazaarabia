@@ -13,6 +13,7 @@ import Loader from "@/components/Loader";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { ROUTES } from "@/constants/routes";
+import { localCartService } from "@/lib/services/front-end/localCartService";
 
 export default function CartPage() {
   const { data: session } = useSession();
@@ -29,22 +30,21 @@ export default function CartPage() {
     message: "",
   });
 
-  // 🧭 Fetch Cart Items
-  const fetchCart = async () => {
-    if (!token) {
-      setCartItems([]);
-      setSubtotal(0);
-      setLoading(false);
-      return;
-    }
-
+  // Fetch Cart Items
+ const fetchCart = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await cartService.getAll(token);
-      setCartItems(data.cart || []);
-      setSubtotal(data.subtotal || 0);
+      if (token) {
+        const data = await cartService.getAll(token);
+        setCartItems(data.cart || []);
+        setSubtotal(data.subtotal || 0);
+      } else {
+        const data = localCartService.get();
+        setCartItems(data.cart || []);
+        setSubtotal(data.subtotal || 0);
+      }
     } catch (err) {
-      console.error("❌ Failed to load cart", err);
+      console.error("Failed to load cart", err);
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function CartPage() {
     fetchCart();
   }, [token]);
 
-  // ✏️ Update Quantity
+  // Update Quantity
   const handleQuantity = async (productId: number, variantId: number, value: number) => {
     if (!token) return;
 
@@ -70,7 +70,7 @@ export default function CartPage() {
       const res = await cartService.updateQuantity(token, productId, variantId, value);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
     } catch (err) {
-      console.error("❌ Failed to update quantity", err);
+      console.error("Failed to update quantity", err);
       fetchCart();
     }
   };
@@ -98,17 +98,17 @@ export default function CartPage() {
     });
   };
 
-  // 🪙 Proceed to Checkout
+  // Proceed to Checkout
   const handleCheckoutClick = () => {
-    if (!token) {
-      setPopUpAlertData({
-        isOpen: true,
-        type: "warning",
-        message: "Please login to proceed with checkout.",
-        onConfirm: () => router.push(ROUTES.USER.LOGIN),
-      });
-      return;
-    }
+    // if (!token) {
+    //   setPopUpAlertData({
+    //     isOpen: true,
+    //     type: "warning",
+    //     message: "Please login to proceed with checkout.",
+    //     onConfirm: () => router.push(ROUTES.USER.LOGIN),
+    //   });
+    //   return;
+    // }
 
     if (cartItems.length === 0) {
       setPopUpAlertData({
@@ -172,7 +172,7 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* 🛍 Cart Items */}
             <div className="lg:col-span-2 space-y-10">
-              {cartItems.map((item,index) => (
+              {cartItems.map((item, index) => (
                 <div
                   key={index}
                   className="rounded-2xl border border-[var(--soft-gray)] bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group"
@@ -272,7 +272,7 @@ export default function CartPage() {
               </h2>
 
               <div className="space-y-3 text-[var(--text-primary)] mb-6">
-                {cartItems.map((i,index) => (
+                {cartItems.map((i, index) => (
                   <div key={index} className="flex justify-between text-sm">
                     <span className="inline-flex flex-col max-w-[220px]">
                       <span className="inline-flex items-center gap-1">

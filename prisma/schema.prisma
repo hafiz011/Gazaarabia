@@ -19,8 +19,10 @@ model Users {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
+  phone     String?
   password  String
   roleId    Int
+  isGuest   Boolean  @default(false)
   createdAt DateTime @default(now())
   role      Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
@@ -29,6 +31,7 @@ model Users {
   carts     Cart[]
   orders    Orders[]
   reviews   Review[]
+  notifications notifications[]
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
@@ -269,6 +272,7 @@ model Address {
   country    String
   postalCode String
   phone      String
+  isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -478,3 +482,17 @@ model ProductRelation {
   @@map("product_relations")
 }
 
+
+
+model notifications {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  email     String?
+  subject   String
+  message   String
+  type      String   // e.g. "email", "sms", etc.
+  status    String   // "sent", "failed"
+  createdAt DateTime @default(now())
+
+  user Users? @relation(fields: [userId], references: [id])
+}

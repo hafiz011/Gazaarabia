@@ -123,7 +123,8 @@ export default function ProductCard({
 
       {/* 🛍️ Add to Bag */}
       <button
-        onClick={handleAddToBag}
+        // onClick={handleAddToBag}
+        onClick={handleCardClick}
         className="mt-3 flex items-center justify-center gap-1 text-xs font-medium border border-[var(--brand-secondary)] text-[var(--brand-secondary)] rounded-full py-2 hover:bg-[var(--brand-secondary)] hover:text-white transition pointer-events-auto"
       >
         <ShoppingBag size={14} />

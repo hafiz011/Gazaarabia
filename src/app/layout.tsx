@@ -3,6 +3,7 @@ import "./globals.css";
 import SessionProviderWrapper from "./SessionProviderWrapper";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
+import { CartProvider } from "./context/CartContext";
 
 export const metadata: Metadata = {
   title: "Gaza Arabia",
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body>
         <SessionProviderWrapper>
            <PayPalProviderWrapper>
+             <CartProvider>
              {children}
+             </CartProvider>
           </PayPalProviderWrapper>
          
         </SessionProviderWrapper>

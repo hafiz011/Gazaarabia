@@ -14,69 +14,114 @@ export const orderService = {
   /**
    * Get order details by ID
    */
-  getById: async (token: any, id: number) => {
-    const res = await fetch(`/api/front-end/orders/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Failed to fetch order");
-    const json = await res.json();
-    return json;
+  // getById: async (token: any, id: number) => {
+  //   const res = await fetch(`/api/front-end/orders/${id}`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   });
+  //   if (!res.ok) throw new Error("Failed to fetch order");
+  //   const json = await res.json();
+  //   return json;
+  // },
+
+  getById: async (
+    token: string | null,
+    id: number,
+    guestUserId?: string | null
+  ) => {
+    let url = `/api/front-end/orders/${id}`;
+    const headers: Record<string, string> = {};
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      // Guest user → use guest ID
+      if (!guestUserId) throw new Error("Missing guest user ID for guest order");
+      url += `?userId=${guestUserId}`;
+    }
+
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch order: ${res.status}`);
+    return await res.json();
   },
+
+
 
   /**
    * Create a new order
    */
-create: async (
-  token: any,
-  data: {
-    payment: {
-      totalAmount: number;
-      itemsTotal: number;
-      subtotal: number;
-      paymentMethod: string;
-      paymentStatus?: string;
-      paypalOrderId?: string;
-      paypalResponse?: any;
-    };
-    address: {
-      id?: number;
-      firstName: string;
-      lastName?: string;
-      company?: string;
-      address1: string;
-      address2?: string;
-      city: string;
-      country: string;
-      postalCode: string;
-      phone: string;
-    };
-    orderItems: {
-      productId: number;
-      variantId: number;
-      colorId?: number;
-      sizeId?: number;
-      quantity: number;
-      price: number;
-      subtotal: number;
-    }[];
-  }
-) => {
-  const res = await fetch(`/api/front-end/orders`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data), // ✅ send full structured object
-  });
+  create: async (
+    token: any,
+    data: {
+      payment: {
+        totalAmount: number;
+        itemsTotal: number;
+        subtotal: number;
+        paymentMethod: string;
+        paymentStatus?: string;
+        paypalOrderId?: string;
+        paypalResponse?: any;
+      };
+      address: {
+        id?: number;
+        firstName: string;
+        lastName?: string;
+        company?: string;
+        address1: string;
+        address2?: string;
+        city: string;
+        country: string;
+        postalCode: string;
+        phone: string;
+      };
+      orderItems: {
+        productId: number;
+        variantId: number;
+        colorId?: number;
+        sizeId?: number;
+        quantity: number;
+        price: number;
+        subtotal: number;
+      }[];
+    }
+  ) => {
+    const res = await fetch(`/api/front-end/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data), // ✅ send full structured object
+    });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Failed to create order: ${errorText}`);
-  }
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create order: ${errorText}`);
+    }
 
-  return res.json();
-},
+    return res.json();
+  },
+
+
+
+
+
+  // =====================>guest checkout ================
+  guestCheckout: async (data: any) => {
+    const res = await fetch(`/api/front-end/guest-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed guest checkout: ${errorText}`);
+    }
+
+    return res.json();
+  },
 
 
 
