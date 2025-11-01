@@ -471,11 +471,11 @@ const handleAddSelectedWearWith = () => {
           <TextField label={<RequiredLabel text="Barcode" />} name="barcode"
             value={form.barcode} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
 
-          <div className="flex items-center gap-2 pt-2">
+          {/* <div className="flex items-center gap-2 pt-2">
             <input type="checkbox" name="active" checked={form.active} onChange={handleInputChange}
               className="w-4 h-4 accent-[var(--brand-secondary)] cursor-pointer" />
             <label htmlFor="active" className="text-gray-700 font-medium cursor-pointer">Active</label>
-          </div>
+          </div> */}
         </Box>
 
         {/* 🖼️ Images */}
@@ -663,8 +663,8 @@ const handleAddSelectedWearWith = () => {
                 </div>
               </div>
 
-              {/* ⚙️ Footer - Active toggle */}
-              <div className="flex justify-end items-center mt-4">
+              {/* Footer - Active toggle */}
+              {/* <div className="flex justify-end items-center mt-4">
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
                   <input
                     type="checkbox"
@@ -676,7 +676,7 @@ const handleAddSelectedWearWith = () => {
                   />
                   Active
                 </label>
-              </div>
+              </div> */}
             </div>
           ))}
 

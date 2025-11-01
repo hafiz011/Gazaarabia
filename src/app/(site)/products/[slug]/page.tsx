@@ -27,6 +27,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { ROUTES } from "@/constants/routes";
 import VariantWarningModal from "@/components/VariantWarningModal";
 import { useCart } from "@/app/context/CartContext";
+import AlertBox from "@/components/ErrorMessage";
 
 export default function ProductDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -49,9 +50,10 @@ export default function ProductDetails() {
   const [cartDrawer, setCartDrawer] = useState<boolean>(false);
   const [showVariantWarning, setShowVariantWarning] = useState<boolean>(false);
   const [images, setImages] = useState<any[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { refreshCart } = useCart();
 
-  // ✅ Fetch product
+  //  Fetch product
   useEffect(() => {
     if (!slug || status === "loading") return;
     (async () => {
@@ -61,7 +63,7 @@ export default function ProductDetails() {
         setProduct(data);
         setWishlist(data?.isInWishlist || false);
 
-        // ✅ Find variant with images or fallback to product images
+        //  Find variant with images or fallback to product images
         if (Array.isArray(data.productvariant) && data.productvariant.length > 0) {
           const variantWithImages = data.productvariant.find(
             (v: any) => Array.isArray(v.variantImages) && v.variantImages.length > 0
@@ -103,7 +105,7 @@ export default function ProductDetails() {
     ).values()
   );
 
-  // 🟡 Auto select first color & size
+  //  Auto select first color & size
   useEffect(() => {
     if (colors.length > 0 && !selectedColor) {
       const firstColor = colors[0];
@@ -128,12 +130,12 @@ export default function ProductDetails() {
 
   const availableStock = selectedVariant?.stock || 0;
 
-  // ✅ Color change → update images + size
+  //  Color change → update images + size
   const handleColorChange = (color: any) => {
     setSelectedColor(color);
     const colorVariant = variants.find((v) => v.color?.id === color.id);
 
-    // ✅ Update images for selected color
+    //  Update images for selected color
     if (colorVariant?.variantImages?.length > 0) {
       setImages(colorVariant.variantImages);
       setActiveThumb(0);
@@ -164,38 +166,7 @@ export default function ProductDetails() {
     setQuantity(newQty);
   };
 
-  // const handleAddToCart = async () => {
-  //   if (!token) {
-  //     setShowLoginModal(true);
-  //     return;
-  //   }
-  //   if (!selectedColor || !selectedSize) {
-  //     setShowVariantWarning(true);
-  //     return;
-  //   }
-  //   if (!selectedVariant || availableStock <= 0) return;
-
-  //   try {
-  //     setAddingToCart(true);
-  //     await cartService.add(
-  //       token,
-  //       product.id,
-  //       quantity,
-  //       selectedVariant.id,
-  //       selectedColor.id,
-  //       selectedSize.id
-  //     );
-  //     setCartDrawer(true);
-  //   } catch (err) {
-  //     console.error("Failed to add to cart:", err);
-  //   } finally {
-  //     setAddingToCart(false);
-  //   }
-  // };
-
   // 🖼 Zoom effect
-
-
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedSize) {
       setShowVariantWarning(true);
@@ -231,7 +202,7 @@ export default function ProductDetails() {
       console.log('variantData:>', variantData);
       // return;
 
-      await cartService.add(
+      const res = await cartService.add(
         token,
         product.id,
         quantity,
@@ -241,11 +212,19 @@ export default function ProductDetails() {
         productData,
         variantData
       );
+      console.log('res:>', res)
+
+      if (res?.error) {
+        setErrorMsg(res.error);
+        return;
+      }
+
       await refreshCart(); // instantly updates Header count
 
       setCartDrawer(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to add to cart:", err);
+      setErrorMsg(err.message || "Unexpected error occurred.");
     } finally {
       setAddingToCart(false);
     }
@@ -285,8 +264,8 @@ export default function ProductDetails() {
                     key={index}
                     onClick={() => setActiveThumb(index)}
                     className={`relative w-20 h-20 flex-shrink-0 md:w-full md:aspect-[3/4] overflow-hidden rounded-lg border-2 transition ${activeThumb === index
-                        ? "border-[var(--brand-primary)]"
-                        : "border-gray-200 hover:border-[var(--brand-primary)]"
+                      ? "border-[var(--brand-primary)]"
+                      : "border-gray-200 hover:border-[var(--brand-primary)]"
                       }`}
                   >
                     <img
@@ -329,7 +308,7 @@ export default function ProductDetails() {
             </div>
 
 
-            {/* 🛍️ PRODUCT INFO */}
+            {/*  PRODUCT INFO */}
             <div className="flex flex-col justify-start text-left">
               <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] mb-2">
                 {product?.title}
@@ -536,7 +515,7 @@ export default function ProductDetails() {
                   </li>
                 </ul>
               </AccordionSection> */}
-              
+
             </div>
           </section>
 
@@ -618,6 +597,9 @@ export default function ProductDetails() {
 
 
           <HowWeDoIt />
+
+          {/*  Popup alert */}
+          {errorMsg && <AlertBox message={errorMsg} onClose={() => setErrorMsg(null)} />}
         </>
       )}
     </>

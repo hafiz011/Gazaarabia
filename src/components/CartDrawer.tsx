@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { cartService } from "@/lib/services/front-end/cartService";
 import { localCartService } from "@/lib/services/front-end/localCartService";
+import { useCart } from "@/app/context/CartContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,9 +26,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [items, setItems] = useState<any[]>([]);
   const [subtotal, setSubtotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const { refreshCart } = useCart();
   const [drawerWidth, setDrawerWidth] = useState("360px");
 
-  // 🧭 Responsive drawer width
+  //  Responsive drawer width
   useEffect(() => {
     const handleResize = () => {
       setDrawerWidth(window.innerWidth < 400 ? "85%" : "360px");
@@ -37,24 +39,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🛒 Fetch cart items
-  // const fetchCart = async () => {
-  //   if (!token) {
-  //     setItems([]);
-  //     setSubtotal(0);
-  //     return;
-  //   }
-  //   try {
-  //     setLoading(true);
-  //     const data = await cartService.getAll(token);
-  //     setItems(data.cart || []);
-  //     setSubtotal(data.subtotal || 0);
-  //   } catch (err) {
-  //     console.error("❌ Failed to load cart", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  // Fetch cart items
 
   const fetchCart = async () => {
     console.log('innside the fetchCart token:>', token);
@@ -80,7 +65,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   useEffect(() => {
     if (isOpen) { // && token
-    fetchCart();
+      fetchCart();
     }
   }, [isOpen]); // token
 
@@ -95,6 +80,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     if (!token) {
       localCartService.remove(productId, variantId);
       fetchCart();
+      await refreshCart();
       return;
     }
 
@@ -103,37 +89,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       const res = await cartService.remove(token, productId, variantId);
       setItems(res.cart || []);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
+      await refreshCart();
     } catch (err) {
-      console.error("❌ Failed to remove item", err);
+      console.error("Failed to remove item", err);
     }
   };
 
   //  Update quantity
-  // const handleQuantityChange = async (productId: number, variantId: number, newQty: number) => {
-  //   if (!token || newQty < 1) return;
-
-  //   const item = items.find((i) => i.productId === productId);
-  //   if (!item) return;
-
-  //   const stock = item?.productvariant?.stock ?? item.stock ?? 1;
-  //   if (newQty > stock) return;
-
-  //   // Optimistic UI update
-  //   setItems((prev) =>
-  //     prev.map((i) =>
-  //       i.productId === productId ? { ...i, quantity: newQty } : i
-  //     )
-  //   );
-
-  //   try {
-  //     const res = await cartService.updateQuantity(token, productId, variantId, newQty);
-  //     if (res.subtotal !== undefined) setSubtotal(res.subtotal);
-  //   } catch (err) {
-  //     console.error("Failed to update quantity", err);
-  //     fetchCart();
-  //   }
-  // };
-
   const handleQuantityChange = async (
     productId: number,
     variantId: number,
@@ -192,7 +154,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         },
       }}
     >
-      {/* 🧭 Header */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-[var(--soft-gray)] bg-[var(--soft-gray)]/30 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <ShoppingBag size={22} className="text-[var(--brand-primary)]" />
@@ -205,7 +167,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         </IconButton>
       </div>
 
-      {/* 🛍️ Cart Items */}
+      {/* Cart Items */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading && (
           <div className="text-center mt-10 text-[var(--text-muted)] text-sm">
@@ -234,17 +196,17 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               key={item.id}
               className="flex items-stretch gap-4 border border-[var(--soft-gray)] rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
             >
-              {/* 🖼️ Image */}
+              {/*  Image */}
               <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                 <Image
-                  src={item?.selectedVariantData?.variantImages[0]?.url || item.product.productimage[0]?.url || "/images/placeholder.png"}
+                  src={item?.selectedVariantData?.variantImages?.[0]?.url || item.product.productimage?.[0]?.url || "/images/placeholder.png"}
                   alt={item.product.title}
                   fill
                   className="object-contain p-1"
                 />
               </div>
 
-              {/* 📄 Content */}
+              {/*  Content */}
               <div className="flex-1 flex flex-col justify-between">
                 <p className="text-sm font-semibold leading-tight line-clamp-1">
                   {item.product.title}
@@ -254,7 +216,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </p>
 
                 <div className="flex items-center justify-between mt-3">
-                  {/* ➖➕ Quantity */}
+                  {/*  Quantity */}
                   <div className="flex items-center border rounded-lg overflow-hidden">
                     <button
                       type="button"
@@ -308,10 +270,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         })}
       </div>
 
-      {/* 📊 Footer */}
+      {/*  Footer */}
       {items.length > 0 && (
         <div className="border-t border-[var(--soft-gray)] bg-white">
-          {/* 🚚 Free shipping message */}
+          {/*  Free shipping message */}
           <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm bg-[var(--soft-gray)]/30">
             <Truck size={18} className="text-[var(--brand-primary)]" />
             {remaining > 0 ? (

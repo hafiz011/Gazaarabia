@@ -54,9 +54,12 @@ export const cartService = {
       body: JSON.stringify({ productId, quantity, variantId, colorId, sizeId }),
     });
 
+
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to add to cart: ${errorText}`);
+      // parse json
+      const data = await res.json().catch(() => ({}));
+      const msg = data?.error || data?.message || "Failed to add to cart.";
+      throw new Error(msg);
     }
 
     return res.json();
