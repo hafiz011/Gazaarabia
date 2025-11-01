@@ -369,7 +369,7 @@ export default function OrderSuccessPage() {
         //  Only get guest ID if user is NOT logged in
         let guestUserId: string | null = null;
         if (!token) {
-          guestUserId = localStorage.getItem("guest_user_id");
+          guestUserId = localStorage.getItem("gaza_arabia_guest_user_id");
         }
 
         const response = await orderService.getById(token, Number(id), guestUserId);
@@ -397,6 +397,23 @@ export default function OrderSuccessPage() {
 
     fetchOrder();
   }, [id, status, session?.user?.token]);
+
+
+//   // start -clear the storage when user leave the page
+// useEffect(() => {
+//   if (!session?.user?.token && id) {
+//     return () => {
+//       [
+//         "gaza_arabia_guest_cart",
+//         "gaza_arabia_guest_address",
+//         "gaza_arabia_guest_order_id",
+//         "gaza_arabia_guest_user_id",
+//       ].forEach((key) => localStorage.removeItem(key));
+//       console.log("🧹 Guest data cleared on leaving order-success page");
+//     };
+//   }
+// }, [id, session?.user?.token]);
+  // end - clear the storage 
 
 
   if (loading)

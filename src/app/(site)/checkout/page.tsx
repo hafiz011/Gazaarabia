@@ -30,7 +30,8 @@ import Loader from "@/components/Loader";
 import PaypalModal from "@/components/PaypalModal";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
-import GuestAddressModal from "@/components/GuestAddressModal"; // ✅ import new modal
+import GuestAddressModal from "@/components/GuestAddressModal"; //  import new modal
+import { useCart } from "@/app/context/CartContext";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -52,8 +53,9 @@ export default function CheckoutPage() {
     type: "",
     message: "",
   });
+  const { refreshCart } = useCart();
 
-  // ✅ Fetch cart for both guest & logged-in
+  //  Fetch cart for both guest & logged-in
   const fetchCart = async () => {
     setLoading(true);
     try {
@@ -90,28 +92,28 @@ export default function CheckoutPage() {
     fetchAddresses();
 
     if (!token) {
-      const saved = localStorage.getItem("guest_address");
+      const saved = localStorage.getItem("gaza_arabia_guest_address");
       if (saved) setGuestAddress(JSON.parse(saved));
     }
   }, [token]);
 
   // Auto-refresh local cart
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "guest_cart") {
-        const updated = localCartService.get();
-        setCartItems(updated.cart || []);
-        setSubtotal(updated.subtotal || 0);
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  // useEffect(() => {
+  //   const handleStorageChange = (e: StorageEvent) => {
+  //     if (e.key === "gaza_arabia_guest_cart") {
+  //       const updated = localCartService.get();
+  //       setCartItems(updated.cart || []);
+  //       setSubtotal(updated.subtotal || 0);
+  //     }
+  //   };
+  //   window.addEventListener("storage", handleStorageChange);
+  //   return () => window.removeEventListener("storage", handleStorageChange);
+  // }, []);
 
   // ✅ Handle guest save from modal
   const handleGuestAddressSave = (data: any) => {
     setGuestAddress(data);
-    localStorage.setItem("guest_address", JSON.stringify(data));
+    localStorage.setItem("gaza_arabia_guest_address", JSON.stringify(data));
   };
 
   // ✅ Handle PayPal success
@@ -178,14 +180,15 @@ export default function CheckoutPage() {
       if (token) {
         const result = await orderService.create(token, orderPayload);
         await cartService.clear(token);
+        await refreshCart();
         router.push(`/order-success/${result.data.id}`);
       } else {
         // Guest checkout
         const result = await orderService.guestCheckout(orderPayload);
         localCartService.clear();
-
-        localStorage.setItem("guest_order_id", result.data.order.id);
-        localStorage.setItem("guest_user_id", result.data.user.id); //store guest userId
+        await refreshCart();
+        localStorage.setItem("gaza_arabia_guest_order_id", result.data.order.id);
+        localStorage.setItem("gaza_arabia_guest_user_id", result.data.user.id); //store guest userId
 
 
 

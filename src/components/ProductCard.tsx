@@ -28,10 +28,15 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
   };
 
   return (
+    // <div
+    //   className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-full max-w-[320px]"
+    //   onClick={handleCardClick}
+    // >
     <div
-      className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-full max-w-[320px]"
-      onClick={handleCardClick}
-    >
+  className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-full max-w-full sm:max-w-[300px] overflow-hidden"
+  onClick={handleCardClick}
+>
+
       {/* 🖼 Image container */}
       <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-lg transition-all duration-300">
         {/* 🏷 Label */}

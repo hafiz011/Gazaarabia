@@ -2,100 +2,89 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma = new PrismaClient();
 
-//  CREATE a new review
+/**
+ * ADMIN: Create a new review manually
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = await checkAuth(req);
-    if (!userId) {
+    if (!userId)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
-    const { orderItemId, productId, variantId, rating, comment } = await req.json();
-
-    if (!orderItemId || !productId || !rating) {
-      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
-    }
-
-    // Optional: Prevent duplicate reviews for same product+variant by same user
-    const existing = await prisma.review.findFirst({
-      where: {
-        userId,
-        orderItemId,
-        productId,
-        ...(variantId ? { variantId } : { variantId: null }),
-      },
+    // ✅ Ensure the logged-in user is an admin
+    const adminUser = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { role: true },
     });
 
-    if (existing) {
+    if (adminUser?.role?.name.toLowerCase() !== "admin") {
       return NextResponse.json(
-        { success: false, message: "You have already reviewed this item." },
+        { success: false, message: "Access denied — Admin only." },
+        { status: 403 }
+      );
+    }
+
+    const { productId, userId: targetUserId, rating, comment, variantId } =
+      await req.json();
+
+    if (!productId || !targetUserId || !rating) {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields." },
         { status: 400 }
       );
     }
 
     const review = await prisma.review.create({
       data: {
-        orderItemId,
         productId,
-        variantId: variantId || null,
+        userId: targetUserId,
         rating,
         comment: comment || "",
-        userId,
+        variantId: variantId || null,
       },
-    });
-
-   // Update the reviewed flag on the specific order item
-    await prisma.orderItem.update({
-      where: { id: orderItemId }, // 
-      data: { reviewed: true },
     });
 
     return NextResponse.json({ success: true, data: review });
   } catch (error) {
-    console.error(" Review POST Error:", error);
+    console.error("Admin Review POST Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to create review" },
+      { success: false, message: "Failed to create review." },
       { status: 500 }
     );
   }
 }
 
-//  GET all reviews (admin or listing purpose)
+/**
+ * Get users and products (for dropdowns)
+ */
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const productId = searchParams.get("productId");
-    const variantId = searchParams.get("variantId");
+    const userId = await checkAuth(req);
+    if (!userId)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const where: any = {};
-    if (productId) where.productId = Number(productId);
-    if (variantId) where.variantId = Number(variantId);
+    const [users, products] = await Promise.all([
+      prisma.users.findMany({
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.products.findMany({
+        select: { id: true, title: true },
+        where: { active: true },
+        orderBy: { title: "asc" },
+      }),
+    ]);
 
-    const reviews = await prisma.review.findMany({
-      where,
-      include: {
-        user: { select: { id: true, name: true } },
-        product: { select: { id: true, title: true } },
-        variant: {
-          select: {
-            id: true,
-            sku: true,
-            color: { select: { name: true } },
-            size: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json({ success: true, data: reviews });
+    return NextResponse.json({ success: true, data: { users, products } });
   } catch (error) {
-    console.error("Review GET Error:", error);
+    console.error("Admin Review GET Error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch reviews" },
+      { success: false, message: "Failed to fetch data." },
       { status: 500 }
     );
   }
 }
+
+

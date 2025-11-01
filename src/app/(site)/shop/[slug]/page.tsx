@@ -109,12 +109,15 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           onCategoryChange={(cat) => router.push(`/shop/${cat}`)}
         />
 
-        <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8">
+        {/* <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8"> */}
+
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-8 overflow-x-hidden">
+
           {products.length === 0 && !loading ? (
             <NoData message="No products found for this category." />
           ) : (
             <>
-              <div
+              {/* <div
                 className="
                   grid grid-cols-1
                   sm:grid-cols-2
@@ -125,7 +128,24 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                   gap-x-4 gap-y-14
                   justify-items-center
                 "
+              > */}
+
+
+              <div
+                className="
+    grid 
+    grid-cols-2
+    sm:grid-cols-2
+    md:grid-cols-3
+    lg:grid-cols-3
+    xl:grid-cols-4
+    2xl:grid-cols-5
+    gap-x-3 gap-y-10
+    justify-items-stretch
+    w-full
+  "
               >
+
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}

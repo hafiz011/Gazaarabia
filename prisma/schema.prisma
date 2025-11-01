@@ -496,3 +496,30 @@ model notifications {
 
   user Users? @relation(fields: [userId], references: [id])
 }
+
+
+
+model FaqCategory {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  faqs Faq[] // One-to-many relation
+
+  @@map("faq_categories")
+}
+
+model Faq {
+  id          Int         @id @default(autoincrement())
+  question    String
+  answer      String
+  categoryId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("faqs")
+}

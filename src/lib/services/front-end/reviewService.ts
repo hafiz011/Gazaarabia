@@ -1,6 +1,6 @@
 export const reviewService = {
   getAll: async (token: string, productId?: number) => {
-    let url = "/api/reviews";
+    let url = "/api/front-end/reviews";
     if (productId) url += `?productId=${productId}`;
 
     const res = await fetch(url, {
@@ -12,7 +12,7 @@ export const reviewService = {
   },
 
   getById: async (token: string, id: number) => {
-    const res = await fetch(`/api/reviews/${id}`, {
+    const res = await fetch(`/api/front-end/reviews/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
@@ -24,7 +24,7 @@ create: async (
   token: string,
   data: {orderItemId:number, productId: number; rating: number; comment?: string; variantId?: number }
 ) => {
-  const res = await fetch("/api/reviews", {
+  const res = await fetch("/api/front-end/reviews", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -35,18 +35,18 @@ create: async (
 
   const responseData = await res.json();
 
-  // ❌ If API returned an error, throw it with the actual message
+  //  If API returned an error, throw it with the actual message
   if (!res.ok) {
     throw new Error(responseData?.message || "Failed to create review");
   }
 
-  // ✅ Return success response with message or data
+  //  Return success response with message or data
   return responseData;
 },
 
 
   remove: async (token: string, id: number) => {
-    const res = await fetch(`/api/reviews/${id}`, {
+    const res = await fetch(`/api/front-end/reviews/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -1,0 +1,88 @@
+"use client";
+
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+
+export default function SignatureCollection() {
+  const products = [
+    { src: "/images/home/coat1.jpg", title: "Cape Cover Up Camel", price: "£55.00" },
+    { src: "/images/home/coat2.jpg", title: "Utility Jacket Mink", price: "£49.00" },
+    { src: "/images/home/coat3.jpg", title: "Boucle Manto Camel", price: "£60.00" },
+    { src: "/images/home/coat4.jpg", title: "Tote Jacket Black", price: "£49.00" },
+    { src: "/images/home/coat5.jpg", title: "Textured Manto Taupe", price: "£58.00" },
+    { src: "/images/home/coat2.jpg", title: "Wool Cape Dusty Olive", price: "£62.00" },
+  ];
+
+  return (
+    <section className="bg-[#ffffff] pt-8 pb-16 md:pt-10 md:pb-20 overflow-hidden">
+      <div className="max-w-[1500px] mx-auto px-4 md:px-10 text-center overflow-hidden">
+        {/* Section Heading */}
+        <div className="mb-10">
+          <h2 className="text-[1.9rem] md:text-[2.4rem] font-semibold tracking-tight text-[var(--text-primary)]">
+            <span className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] bg-clip-text text-transparent">
+              Signature Collection
+            </span>
+          </h2>
+          <div className="w-20 h-[3px] bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] mx-auto mt-3 mb-5 rounded-full"></div>
+          <p className="text-[var(--text-muted)] text-sm md:text-base max-w-2xl mx-auto font-light leading-relaxed">
+            Discover our handpicked selection of elegant, timeless pieces that define modest luxury.
+          </p>
+        </div>
+
+        {/* Swiper Slider */}
+        <div className="overflow-hidden w-full">
+          <Swiper
+            modules={[Autoplay]}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            spaceBetween={20}
+            slidesPerView={1.3}
+            loop={true}
+            breakpoints={{
+              480: { slidesPerView: 2 },
+              768: { slidesPerView: 3 },
+              1024: { slidesPerView: 4 },
+              1400: { slidesPerView: 5 },
+            }}
+            className="!overflow-visible w-full"
+          >
+            {products.map((p, i) => (
+              <SwiperSlide key={i} className="!w-auto">
+                <motion.div
+                  className="overflow-hidden rounded-2xl bg-[#F8F8F8] group shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-all duration-700"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                >
+                  {/* Image */}
+                  <div className="overflow-hidden">
+                    <Image
+                      src={p.src}
+                      alt={p.title}
+                      width={400}
+                      height={500}
+                      className="object-cover w-full h-[420px] md:h-[450px] transition-transform duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-105"
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-5 text-center">
+                    <h3 className="font-medium text-[var(--text-primary)] text-base md:text-lg mb-1 group-hover:text-[var(--brand-secondary)] transition-colors duration-300">
+                      {p.title}
+                    </h3>
+                    <p className="text-[var(--brand-primary)] font-semibold text-sm md:text-base">
+                      {p.price}
+                    </p>
+                  </div>
+                </motion.div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -264,13 +264,7 @@ select:not(.MuiInputBase-input):focus {
 }
 
 
-
-
-
-/* products/slug page start */
-
-
-
+/* page-products products/slug page start */
 .swiper {
   overflow: visible !important;
 }
@@ -279,5 +273,10 @@ select:not(.MuiInputBase-input):focus {
   overflow: visible !important;
 }
 
-
 /* products/slug page end */
+
+/* page- shop: start */
+
+
+
+/* page- shop: start */

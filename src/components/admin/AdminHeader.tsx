@@ -52,6 +52,11 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage the available products.",
       action: { label: "Add Product", href: "/admin/products/form" },
     },
+   "/admin/reviews": {
+      title: "Reviews",
+      subtitle: "Manage the products reviews.",
+      action: { label: "Add Review", href: "/admin/reviews/form" },
+    },
    "/admin/delivery-options": {
       title: "Delivery Options",
       subtitle: "Manage the delivery options.",
@@ -76,6 +81,16 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       title: "Sub Menus",
       subtitle: "Manage the submenus.",
       action: { label: "Add Submenu",href: "/admin/submenus/form" },
+    },
+     "/admin/faq-categories": {
+      title: "Faq Categories",
+      subtitle: "Manage the available faq categories.",
+      action: { label: "Add Category", modalKey: "faq-category" }, 
+    },
+     "/admin/faqs": {
+      title: "FAQs",
+      subtitle: "Manage the faqs.",
+      action: { label: "Add Faq",href: "/admin/faqs/form" },
     },
   };
 

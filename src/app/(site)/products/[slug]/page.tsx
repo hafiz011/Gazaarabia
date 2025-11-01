@@ -276,16 +276,17 @@ export default function ProductDetails() {
 
           {/* ========================== PRODUCT SECTION ========================== */}
           <section className="max-w-[1600px] mx-auto px-4 lg:px-6 pt-20 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-[var(--background)]">
-            {/* 🖼️ IMAGES */}
-            <div className="relative flex gap-4 items-start h-[700px]">
-              <div className="hidden md:flex flex-col gap-3 w-20 overflow-y-auto h-full">
+            {/*  IMAGES */}
+            <div className="relative flex flex-col md:flex-row gap-4 items-start md:h-[700px]">
+              {/* Thumbnails */}
+              <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto">
                 {images.map((img: any, index: number) => (
                   <button
                     key={index}
                     onClick={() => setActiveThumb(index)}
-                    className={`relative w-full aspect-[3/4] overflow-hidden rounded-lg border-2 transition ${activeThumb === index
-                      ? "border-[var(--brand-primary)]"
-                      : "border-gray-200 hover:border-[var(--brand-primary)]"
+                    className={`relative w-20 h-20 flex-shrink-0 md:w-full md:aspect-[3/4] overflow-hidden rounded-lg border-2 transition ${activeThumb === index
+                        ? "border-[var(--brand-primary)]"
+                        : "border-gray-200 hover:border-[var(--brand-primary)]"
                       }`}
                   >
                     <img
@@ -297,9 +298,10 @@ export default function ProductDetails() {
                 ))}
               </div>
 
+              {/* Main Image */}
               <div
                 ref={imgRef}
-                className="relative flex-1 h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
+                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
                 onMouseEnter={() => setZoomVisible(true)}
                 onMouseLeave={() => setZoomVisible(false)}
                 onMouseMove={handleMouseMove}
@@ -311,11 +313,12 @@ export default function ProductDetails() {
                 />
               </div>
 
+              {/* Zoom Preview (Desktop only) */}
               {zoomVisible && images[activeThumb || 0]?.url && (
                 <div
                   className="hidden lg:block absolute top-0 left-[calc(100%+20px)] 
-                  w-[700px] h-[750px] rounded-xl border shadow-lg bg-white 
-                  bg-no-repeat bg-center z-10"
+      w-[700px] h-[750px] rounded-xl border shadow-lg bg-white 
+      bg-no-repeat bg-center z-10"
                   style={{
                     backgroundImage: `url("${images[activeThumb || 0]?.url}")`,
                     backgroundPosition,
@@ -324,6 +327,7 @@ export default function ProductDetails() {
                 />
               )}
             </div>
+
 
             {/* 🛍️ PRODUCT INFO */}
             <div className="flex flex-col justify-start text-left">
@@ -509,7 +513,7 @@ export default function ProductDetails() {
                 )}
               </AccordionSection>
 
-              <AccordionSection title="Delivery & Returns">
+              {/* <AccordionSection title="Delivery & Returns">
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center gap-2">
                     <Truck size={18} className="text-[var(--text-primary)]" />
@@ -531,7 +535,8 @@ export default function ProductDetails() {
                     <span>Discover more about the brand</span>
                   </li>
                 </ul>
-              </AccordionSection>
+              </AccordionSection> */}
+              
             </div>
           </section>
 

@@ -1,5 +1,5 @@
 // /src/services/localCartService.ts
-const LOCAL_CART_KEY = "guest_cart";
+const LOCAL_CART_KEY = "gaza_arabia_guest_cart";
 
 export const localCartService = {
   get() {

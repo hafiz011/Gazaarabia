@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -12,23 +12,29 @@ import {
   Grid,
   Droplets,
   Tag,
-  Package,
   Truck,
   FileText,
   BookOpen,
   LogOut,
-  ListTree, PanelsTopLeft
+  ListTree,
+  PanelsTopLeft,
+  Star,
+  Settings,
+  ClipboardList,
+  MessageSquare,
+  Boxes,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
-import { useRouter } from "next/navigation";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/menus", label: "Menus", icon: PanelsTopLeft  },
-  { href: "/admin/submenus", label: "Sub Menus", icon: ListTree  },
+  { href: "/admin/menus", label: "Menus", icon: PanelsTopLeft },
+  { href: "/admin/submenus", label: "Sub Menus", icon: ListTree },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/sizes", label: "Sizes", icon: Ruler },
@@ -37,13 +43,24 @@ const links = [
   { href: "/admin/subcategories", label: "Subcategories", icon: Grid },
   { href: "/admin/material-cares", label: "Material Cares", icon: Droplets },
   { href: "/admin/brands", label: "Brands", icon: Tag },
-  { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/products", label: "Products", icon: Boxes },
+  { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
-  { href: "/admin/blog-categories", label: "Blog Categories", icon: BookOpen },
-  { href: "/admin/blogs", label: "Blogs", icon: FileText },
+  { href: "/admin/blog-categories", label: "Blog Categories", icon: ClipboardList },
+  { href: "/admin/blogs", label: "Blogs", icon: BookOpen },
+  { href: "/admin/faq-categories", label: "Faq Categories", icon: Settings },
+  { href: "/admin/faqs", label: "FAQs", icon: MessageSquare },
 ];
 
-export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
+export default function AdminSidebar({
+  isOpen,
+  collapsed,
+  setCollapsed,
+}: {
+  isOpen: boolean;
+  collapsed: boolean;
+  setCollapsed: (val: boolean) => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -64,9 +81,10 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
   return (
     <>
       <aside
-        className={`fixed md:static z-40 top-0 left-0 min-h-screen w-64 transform
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col`}
+        className={`fixed z-[9999] top-0 left-0 h-screen transform transition-all duration-300 ease-in-out flex flex-col
+        ${collapsed ? "w-[80px]" : "w-64"} 
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+        md:translate-x-0`}
         style={{
           background:
             "linear-gradient(180deg, rgba(30,42,74,0.95) 0%, rgba(30,42,74,0.88) 100%)",
@@ -77,31 +95,52 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
         }}
       >
         {/* Logo Section */}
-        <div className="p-6 border-b border-[var(--dark-gray)] flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-wide text-white">
-            Gaza Arabia <span className="text-[var(--brand-primary)]">Admin</span>
-          </h2>
+        <div
+          className={`p-6 border-b border-[var(--dark-gray)] flex items-center ${
+            collapsed ? "justify-center" : "justify-between"
+          } gap-2`}
+        >
+          {!collapsed && (
+            <h2 className="text-lg font-semibold tracking-wide text-white">
+              Gaza Arabia{" "}
+              <span className="text-[var(--brand-primary)]">Admin</span>
+            </h2>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-gray-300 hover:text-white transition"
+            title={collapsed ? "Expand" : "Collapse"}
+          >
+            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
         </div>
 
-        {/* Navigation + Footer Wrapper */}
+        {/* Navigation */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 mt-4 relative z-30">
-            {links.map(({ href, label, icon: Icon }) => {
+          <nav className="flex-1 overflow-y-auto px-3 mt-5 pb-10 relative z-30">
+            {links.map(({ href, label, icon: Icon }, index) => {
               const isActive = pathname === href;
+              const isLast = index === links.length - 1;
+
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+                  className={`group flex items-center gap-3 px-4 py-[12px] rounded-xl text-sm font-medium transition-all duration-200 relative
                     ${
                       isActive
                         ? "bg-[var(--brand-primary)] text-white shadow-[0_4px_12px_rgba(232,44,63,0.4)] scale-[1.02]"
                         : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white hover:scale-[1.02]"
                     }`}
+                  style={{
+                    marginTop: "8px",
+                    marginBottom: isLast ? "20px" : "8px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    transition: "all 0.25s ease",
+                  }}
                 >
-                  <Icon size={20} />
-                  <span>{label}</span>
+                  <Icon size={20} className="shrink-0" />
+                  {!collapsed && <span className="truncate">{label}</span>}
                 </Link>
               );
             })}
@@ -111,22 +150,28 @@ export default function AdminSidebar({ isOpen }: { isOpen: boolean }) {
           <div className="border-t border-[var(--dark-gray)] bg-[rgba(30,42,74,0.98)] relative z-10">
             <button
               onClick={() => setConfirmLogout(true)}
-              className="w-full flex items-center justify-between px-4 py-3 
+              className={`w-full flex items-center justify-between px-4 py-3 
                  text-white text-sm 
                  hover:bg-[var(--brand-primary)] 
-                 transition-colors"
+                 transition-colors
+                 ${collapsed ? "justify-center" : ""}`}
             >
-              <span>© {new Date().getFullYear()} Gaza Arabia</span>
-              <div className="flex items-center gap-2">
-                <LogOut size={16} />
-                <span>Logout</span>
-              </div>
+              {collapsed ? (
+                <LogOut size={18} />
+              ) : (
+                <>
+                  <span>© {new Date().getFullYear()} Gaza Arabia</span>
+                  <div className="flex items-center gap-2">
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </div>
+                </>
+              )}
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Logout Confirmation Popup */}
       {confirmLogout && (
         <PopupAlert
           type="warning"

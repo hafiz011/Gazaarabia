@@ -172,8 +172,8 @@ export default function Footer() {
             <li className="hover:underline cursor-pointer">
               <Link href="/about">Our Story</Link>
             </li>
-            <li className="hover:underline cursor-pointer">Visit us</li>
-            <li className="hover:underline cursor-pointer">Careers</li>
+            {/* <li className="hover:underline cursor-pointer">Visit us</li> */}
+            {/* <li className="hover:underline cursor-pointer">Careers</li> */}
             <li className="hover:underline cursor-pointer">
               <Link href="/blogs/journal">Journal</Link>
             </li>
@@ -189,9 +189,9 @@ export default function Footer() {
             Customer Care
           </h3>
           <ul className="space-y-2 text-sm">
-            <li className="hover:underline cursor-pointer">Gift Card</li>
-            <li className="hover:underline cursor-pointer">Size Guide</li>
-            <li className="hover:underline cursor-pointer">Care & Repair</li>
+            {/* <li className="hover:underline cursor-pointer">Gift Card</li> */}
+            {/* <li className="hover:underline cursor-pointer">Size Guide</li> */}
+            {/* <li className="hover:underline cursor-pointer">Care & Repair</li> */}
             <li className="hover:underline cursor-pointer">
               <Link href="/faq">Frequently Asked Questions</Link>
             </li>

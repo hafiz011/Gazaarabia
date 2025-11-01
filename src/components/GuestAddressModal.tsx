@@ -55,7 +55,7 @@ export default function GuestAddressModal({ onCancel, onSave, initialData }: Gue
     try {
       setLoading(true);
       onSave(form);
-      localStorage.setItem("guest_address", JSON.stringify(form));
+      localStorage.setItem("gaza_arabia_guest_address", JSON.stringify(form));
       setAlert({
         isOpen: true,
         type: "success",

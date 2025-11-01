@@ -7,10 +7,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Search, User, Heart, ShoppingBag } from "lucide-react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import CartDrawer from "@/components/CartDrawer";
-import { localCartService } from "@/lib/services/front-end/localCartService";
-import { cartService } from "@/lib/services/front-end/cartService";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/app/context/CartContext";
+import MobileMenuDrawer from "./MobileMenuDrawer";
 
 interface SubcategoryLink {
   id?: number;
@@ -54,10 +53,8 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
-  // const [cartCount, setCartCount] = useState(0)
+
   const { cartCount } = useCart();
-
-
 
   const fetchMenus = async () => {
     try {
@@ -69,29 +66,9 @@ export default function Header() {
     }
   };
 
-
-  // const fetchCart = async () => {
-  //   try {
-  //     if (token) {
-  //       console.log('token:>', token);
-  //       const data = await cartService.getAll(token);
-  //       console.log('data:>', data)
-  //       setCartCount(Array.isArray(data.cart) ? data.cart?.length : 0);
-  //     } else {
-  //       const data = localCartService.get(); // identical structure
-  //       console.log('data:>', data)
-  //       setCartCount(Array.isArray(data.cart) ? data.cart?.length : 0);
-  //     }
-  //   } catch (err) {
-  //     console.log('err:>', err)
-  //   }
-  // };
-
-
   useEffect(() => {
     fetchMenus();
-    // fetchCart();
-  }, [])
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -104,30 +81,24 @@ export default function Header() {
   const toggleMenu = () => setIsOpen((prev) => !prev);
   const isScrolled = mounted ? scrolled : false;
 
-  // ✅ Helper to resolve menu link paths
   const getMenuLink = (menu: MenuItem) => {
     if (menu.type === "blog") return "/blogs/journal";
     if (menu.type === "product") return `/shop/${menu.slug}`;
     return "/";
   };
 
-  // ✅ Helper to resolve submenu links (left/right)
   const getSubmenuLink = (menu: MenuItem, link: SubcategoryLink) => {
-    if (menu.type === "blog") {
-      // blog → /blogs/journal/{slug}
-      return `/blogs/journal/${link.slug}`;
-    }
-    // product → /shop/{slug}
+    if (menu.type === "blog") return `/blogs/journal/${link.slug}`;
     return `/shop/${link.slug}`;
   };
 
   return (
     <header
       className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
-        ? isScrolled
-          ? "bg-white/90 backdrop-blur-md shadow-md"
-          : "bg-transparent"
-        : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
+          ? isScrolled
+            ? "bg-white/90 backdrop-blur-md shadow-md"
+            : "bg-transparent"
+          : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
         }`}
     >
       {/* 🔹 Top Bar */}
@@ -138,7 +109,7 @@ export default function Header() {
       {/* 🔹 Main Header */}
       <div className="w-full relative z-50">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[96px] relative">
-          {/* Mobile Menu */}
+          {/* Mobile Menu Button + Search */}
           <div className="flex items-center gap-3 lg:hidden z-50">
             <button onClick={toggleMenu}>
               {isOpen ? <X size={26} /> : <Menu size={26} />}
@@ -168,8 +139,8 @@ export default function Header() {
           {/* 🔹 Desktop Menu */}
           <nav
             className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && !isScrolled
-              ? "text-white"
-              : "text-[var(--text-primary)]"
+                ? "text-white"
+                : "text-[var(--text-primary)]"
               }`}
           >
             {menus.map((item) => (
@@ -190,35 +161,27 @@ export default function Header() {
                 {item.dropdown && activeMenu === item.slug && (
                   <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
                     <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
-                      {/* Left + Right Columns */}
-                      <div className="col-span-2 max-h-[55vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent pr-4">
+                      <div className="col-span-2 max-h-[55vh] overflow-y-auto pr-4">
                         <div className="grid grid-cols-2 gap-8">
-                          {/* Left Mega Menu */}
+                          {/* Left */}
                           <div className="flex flex-col space-y-3 text-sm font-medium">
                             {item.dropdown.left.map((link, index) => (
                               <Link
                                 key={link.slug}
                                 href={getSubmenuLink(item, link)}
-                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${index === 0
-                                  ? "font-semibold text-gray-900"
-                                  : "text-gray-700"
-                                  }`}
+                                className="hover:text-[var(--brand-primary)] transition-colors duration-200 hover:pl-1"
                               >
                                 {link.name}
                               </Link>
                             ))}
                           </div>
-
-                          {/* Right Mega Menu */}
+                          {/* Right */}
                           <div className="flex flex-col space-y-3 text-sm font-medium">
-                            {item.dropdown.right.map((link, index) => (
+                            {item.dropdown.right.map((link) => (
                               <Link
                                 key={link.slug}
                                 href={getSubmenuLink(item, link)}
-                                className={`transition-colors duration-200 hover:text-[var(--brand-primary)] hover:pl-1 ${index === 0
-                                  ? "font-semibold text-gray-900"
-                                  : "text-gray-700"
-                                  }`}
+                                className="hover:text-[var(--brand-primary)] transition-colors duration-200 hover:pl-1"
                               >
                                 {link.name}
                               </Link>
@@ -254,42 +217,36 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* 🔹 Right Icons */}
+          {/* 🔹 Right Icons (Desktop + Mobile) */}
           <div
             className={`flex items-center gap-4 ${isHomePage && !isScrolled
-              ? "text-white"
-              : "text-[var(--text-primary)]"
+                ? "text-white"
+                : "text-[var(--text-primary)]"
               }`}
           >
+            {/* Desktop Icons */}
             <div className="hidden lg:flex gap-4">
-              <div className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition">
+              <div className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition">
                 <Search size={20} />
               </div>
 
               <div
                 onClick={() => setProfileDrawer(true)}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
+                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
               >
                 <User size={20} />
               </div>
 
               <div
                 onClick={() => router.push("/wishlist")}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
+                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
               >
                 <Heart size={20} />
               </div>
 
-              {/* <div
-                onClick={() => setCartDrawer(true)}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
-              >
-                <ShoppingBag size={20} />
-              </div> */}
-
               <div
                 onClick={() => setCartDrawer(true)}
-                className="relative p-2 rounded-full hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] cursor-pointer transition"
+                className="relative p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
               >
                 <ShoppingBag size={20} />
                 {cartCount > 0 && (
@@ -298,19 +255,46 @@ export default function Header() {
                   </span>
                 )}
               </div>
+            </div>
 
-
+            {/* Mobile Icons */}
+            <div className="flex lg:hidden gap-3">
+              <User
+                size={22}
+                className="cursor-pointer"
+                onClick={() => setProfileDrawer(true)}
+              />
+              <Heart
+                size={22}
+                className="cursor-pointer"
+                onClick={() => router.push("/wishlist")}
+              />
+              <div
+                onClick={() => setCartDrawer(true)}
+                className="relative cursor-pointer"
+              >
+                <ShoppingBag size={22} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-[var(--brand-primary)] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Drawers */}
-      <ProfileDrawer
-        isOpen={profileDrawer}
-        onClose={() => setProfileDrawer(false)}
-      />
+      {/* 🔹 Drawers */}
+      <ProfileDrawer isOpen={profileDrawer} onClose={() => setProfileDrawer(false)} />
       <CartDrawer isOpen={cartDrawer} onClose={() => setCartDrawer(false)} />
+
+      <MobileMenuDrawer
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        menus={menus}
+        getMenuLink={getMenuLink}
+      />
     </header>
   );
 }
