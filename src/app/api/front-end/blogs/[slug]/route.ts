@@ -6,10 +6,10 @@ const prisma = new PrismaClient();
 // GET - Fetch single blog by slug (Public)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+   context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+   const { slug } = await context.params;
 
     if (!slug) {
       return NextResponse.json(

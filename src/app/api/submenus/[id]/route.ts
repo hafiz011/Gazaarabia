@@ -265,15 +265,16 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma: any = new PrismaClient();
 
-/** 🟢 GET - Single submenu by ID */
+/**  GET - Single submenu by ID */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = Number(params.id);
+    // const id = Number(params.id);
+    const { id } = await context.params;
     const submenu = await prisma.submenus.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         menu: {
           include: {
@@ -301,17 +302,18 @@ export async function GET(
   }
 }
 
-/** 🟡 PUT - Update submenu */
+/**  PUT - Update submenu */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const userId = await checkAuth(req);
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   try {
-    const id = Number(params.id);
+    // const id = Number(params.id);
+    const { id } = await context.params;
     const body = await req.json();
     const {
       name,
@@ -330,7 +332,7 @@ export async function PUT(
         { status: 400 }
       );
 
-    // 🔍 Find parent menu type
+    //  Find parent menu type
     const parentMenu = await prisma.menus.findUnique({
       where: { id: Number(menuId) },
     });
@@ -345,7 +347,7 @@ export async function PUT(
       rightCustomLinks: rightCustomLinks || [],
     };
 
-    // ✅ For Product Menus
+    //  For Product Menus
     if (type === "product") {
       data.categoryId = categoryId ? Number(categoryId) : null;
       data.leftSubcategories = Array.isArray(leftSubcategories)
@@ -356,7 +358,7 @@ export async function PUT(
         : [];
     }
 
-    // ✅ For Blog Menus
+    //  For Blog Menus
     else if (type === "blog") {
       data.categoryId = null;
       data.leftSubcategories = Array.isArray(leftSubcategories)
@@ -367,7 +369,7 @@ export async function PUT(
         : [];
     }
 
-    // ✅ For Gallery or Other types
+    //  For Gallery or Other types
     else {
       data.categoryId = null;
       data.leftSubcategories = [];
@@ -375,7 +377,7 @@ export async function PUT(
     }
 
     const updated = await prisma.submenus.update({
-      where: { id },
+      where: { id: Number(id) },
       data,
     });
 
@@ -393,18 +395,18 @@ export async function PUT(
   }
 }
 
-/** 🔴 DELETE - Hard delete submenu */
+/**  DELETE - Hard delete submenu */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const userId = await checkAuth(req);
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   try {
-    const id = Number(params.id);
-    await prisma.submenus.delete({ where: { id } });
+    const { id } = await context.params;
+    await prisma.submenus.delete({ where: { id: Number(id) } });
     return NextResponse.json({
       success: true,
       message: "Submenu deleted successfully",

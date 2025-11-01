@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
-// ✅ Get single FAQ by ID
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+//  Get single FAQ by ID
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const faq = await prisma.faq.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: { category: true },
     });
 
@@ -22,22 +23,24 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// ✅ Update FAQ
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+//  Update FAQ
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+  const { id } = await context.params;
   try {
     const { question, answer, categoryId } = await req.json();
 
-    const id = Number(params.id);
+    // const id = Number(id);
 
     const duplicate = await prisma.faq.findFirst({
       where: {
         question,
         categoryId,
-        NOT: { id },
+        // NOT: { id },
+        NOT: { id: Number(id) },
       },
     });
 
@@ -49,7 +52,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const updated = await prisma.faq.update({
-      where: { id },
+      // where: { id },
+      where: { id: Number(id) },
       data: { question, answer, categoryId },
     });
 
@@ -60,14 +64,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// ✅ Delete FAQ
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+//  Delete FAQ
+export async function DELETE(req: NextRequest,context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+
+  const { id } = await context.params;
+
   try {
-    await prisma.faq.delete({ where: { id: Number(params.id) } });
+    await prisma.faq.delete({ where: { id: Number(id) } });
     return NextResponse.json({ success: true, message: "FAQ deleted successfully." });
   } catch (error) {
     console.error("FAQ DELETE error:", error);

@@ -53,6 +53,8 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
 
   const { cartCount } = useCart();
 
@@ -94,11 +96,13 @@ export default function Header() {
 
   return (
     <header
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
-          ? isScrolled
-            ? "bg-white/90 backdrop-blur-md shadow-md"
-            : "bg-transparent"
-          : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
+        ? (isScrolled || hovered)
+          ? "bg-white/90 backdrop-blur-md shadow-md"
+          : "bg-transparent"
+        : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
         }`}
     >
       {/* 🔹 Top Bar */}
@@ -110,12 +114,26 @@ export default function Header() {
       <div className="w-full relative z-50">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[96px] relative">
           {/* Mobile Menu Button + Search */}
-          <div className="flex items-center gap-3 lg:hidden z-50">
+          {/* <div className="flex items-center gap-3 lg:hidden z-50">
             <button onClick={toggleMenu}>
               {isOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
             <Search size={22} />
+          </div> */}
+
+
+          <div
+            className={`flex items-center gap-3 lg:hidden z-50 ${isHomePage && (!isScrolled && !hovered)
+                ? "text-white"
+                : "text-[var(--text-primary)]"
+              }`}
+          >
+            <button onClick={toggleMenu} className="transition-colors duration-300">
+              {isOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+            <Search size={22} className="transition-colors duration-300" />
           </div>
+
 
           {/* Logo */}
           <div className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 z-40">
@@ -123,7 +141,7 @@ export default function Header() {
               <div className="relative w-full h-12 flex items-center justify-center">
                 <Image
                   src={
-                    isHomePage && !isScrolled
+                    isHomePage && (!isScrolled && !hovered)
                       ? "/images/logo.png"
                       : "/images/logo-dark.png"
                   }
@@ -138,9 +156,9 @@ export default function Header() {
 
           {/* 🔹 Desktop Menu */}
           <nav
-            className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && !isScrolled
-                ? "text-white"
-                : "text-[var(--text-primary)]"
+            className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && (!isScrolled && !hovered)
+              ? "text-white"
+              : "text-[var(--text-primary)]"
               }`}
           >
             {menus.map((item) => (
@@ -219,9 +237,9 @@ export default function Header() {
 
           {/* 🔹 Right Icons (Desktop + Mobile) */}
           <div
-            className={`flex items-center gap-4 ${isHomePage && !isScrolled
-                ? "text-white"
-                : "text-[var(--text-primary)]"
+            className={`flex items-center gap-4 ${isHomePage && (!isScrolled && !hovered)
+              ? "text-white"
+              : "text-[var(--text-primary)]"
               }`}
           >
             {/* Desktop Icons */}

@@ -48,12 +48,11 @@ export default function CategoryHeader({
       </h1>
 
       {/* 🔹 Description */}
-      {description && (
+      {/* {description && (
         <>
           <p
-            className={`text-[var(--text-muted)] text-sm md:text-base leading-relaxed transition-all duration-300 ${
-              expanded ? "line-clamp-none" : "line-clamp-3"
-            }`}
+            className={`text-[var(--text-muted)] text-sm md:text-base leading-relaxed transition-all duration-300 ${expanded ? "line-clamp-none" : "line-clamp-3"
+              }`}
           >
             {description}
           </p>
@@ -67,7 +66,7 @@ export default function CategoryHeader({
             </button>
           )}
         </>
-      )}
+      )} */}
 
       {/* 🔹 Category Scroller */}
       <div className="mt-8 relative w-full">
@@ -91,61 +90,59 @@ export default function CategoryHeader({
           <ChevronRight size={16} />
         </button>
 
-       {/* ✅ Swiper (Scrollable + Aligned Categories) */}
-<div className="relative w-full overflow-x-hidden">
-  <Swiper
-    modules={[Navigation, FreeMode]}
-    slidesPerView="auto"
-    spaceBetween={10}
-    navigation={{
-      nextEl: ".swiper-button-next-custom",
-      prevEl: ".swiper-button-prev-custom",
-    }}
-    freeMode={{
-      enabled: true,
-      momentumRatio: 0.3,
-    }}
-    centeredSlides={false}
-    className="w-full !px-0 sm:!px-2 md:!px-4 overflow-visible"
-  >
-    {/* “All” Button */}
-    {parentCategory && categories?.length > 0 && (
-      <SwiperSlide className="!w-auto first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6">
-        <button
-          onClick={() => handleCategoryClick(parentCategory.slug)}
-          className={`px-4 py-2 text-sm font-medium rounded-full border transition whitespace-nowrap
-            ${
-              activeCategory === parentCategory.slug
-                ? "bg-black text-white border-black"
-                : "border-gray-300 hover:border-black hover:bg-black hover:text-white"
-            }`}
-        >
-          All
-        </button>
-      </SwiperSlide>
-    )}
+        {/* ✅ Swiper (Scrollable + Aligned Categories) */}
+        <div className="relative w-full overflow-x-hidden">
+          <Swiper
+            modules={[Navigation, FreeMode]}
+            slidesPerView="auto"
+            spaceBetween={10}
+            navigation={{
+              nextEl: ".swiper-button-next-custom",
+              prevEl: ".swiper-button-prev-custom",
+            }}
+            freeMode={{
+              enabled: true,
+              momentumRatio: 0.3,
+            }}
+            centeredSlides={false}
+            className="w-full !px-0 sm:!px-2 md:!px-4 overflow-visible"
+          >
+            {/* “All” Button */}
+            {parentCategory && categories?.length > 0 && (
+              <SwiperSlide className="!w-auto first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6">
+                <button
+                  onClick={() => handleCategoryClick(parentCategory.slug)}
+                  className={`px-4 py-2 text-sm font-medium rounded-full border transition whitespace-nowrap
+            ${activeCategory === parentCategory.slug
+                      ? "bg-black text-white border-black"
+                      : "border-gray-300 hover:border-black hover:bg-black hover:text-white"
+                    }`}
+                >
+                  All
+                </button>
+              </SwiperSlide>
+            )}
 
-    {/* Category Buttons */}
-    {categories.map((cat, i) => (
-      <SwiperSlide
-        key={i}
-        className="!w-auto first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6"
-      >
-        <button
-          onClick={() => handleCategoryClick(cat.slug)}
-          className={`px-4 py-2 text-sm font-medium rounded-full border transition whitespace-nowrap
-            ${
-              activeCategory === cat.slug
-                ? "bg-black text-white border-black"
-                : "border-gray-300 hover:border-black hover:bg-black hover:text-white"
-            }`}
-        >
-          {cat.name}
-        </button>
-      </SwiperSlide>
-    ))}
-  </Swiper>
-</div>
+            {/* Category Buttons */}
+            {categories.map((cat, i) => (
+              <SwiperSlide
+                key={i}
+                className="!w-auto first:pl-4 last:pr-4 sm:first:pl-6 sm:last:pr-6"
+              >
+                <button
+                  onClick={() => handleCategoryClick(cat.slug)}
+                  className={`px-4 py-2 text-sm font-medium rounded-full border transition whitespace-nowrap
+            ${activeCategory === cat.slug
+                      ? "bg-black text-white border-black"
+                      : "border-gray-300 hover:border-black hover:bg-black hover:text-white"
+                    }`}
+                >
+                  {cat.name}
+                </button>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
 
       </div>
     </div>

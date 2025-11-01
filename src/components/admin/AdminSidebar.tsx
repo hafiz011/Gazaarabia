@@ -25,6 +25,8 @@ import {
   Boxes,
   ChevronLeft,
   ChevronRight,
+  HelpCircle,
+  MessageCircle,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -49,7 +51,8 @@ const links = [
   { href: "/admin/blog-categories", label: "Blog Categories", icon: ClipboardList },
   { href: "/admin/blogs", label: "Blogs", icon: BookOpen },
   { href: "/admin/faq-categories", label: "Faq Categories", icon: Settings },
-  { href: "/admin/faqs", label: "FAQs", icon: MessageSquare },
+  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle  },
+  { href: "/admin/contact-us", label: "Contact Us", icon: MessageCircle  },
 ];
 
 export default function AdminSidebar({

@@ -108,7 +108,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push(`/admin/blogs/${blog.id}`)}
+                  onClick={() => router.push(`/admin/blogs/form/${blog.id}`)} 
                   className="px-3 py-1 text-sm rounded-md border border-[var(--mid-gray)] text-[var(--text-primary)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] transition"
                 >
                   View

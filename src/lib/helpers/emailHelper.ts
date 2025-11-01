@@ -5,97 +5,342 @@ const prisma = new PrismaClient();
 
 //  Configure the transporter
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
 });
+
+
+const logoUrl =
+  "https://drive.google.com/uc?export=view&id=12-EA3sW2FQVQU77-roeITSncjskWChiT";
+
 
 /**
  * Generic sendEmail function
  */
 export async function sendEmail({
-    to,
-    subject,
-    html,
+  to,
+  subject,
+  html,
 }: {
-    to: string;
-    subject: string;
-    html: string;
+  to: string;
+  subject: string;
+  html: string;
 }) {
-    try {
-        await transporter.sendMail({
-            from: `"Gazaarabia" <${process.env.SMTP_USER}>`,
-            to,
-            subject,
-            html,
-        });
+  try {
+    await transporter.sendMail({
+      from: `"Gazaarabia" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
 
-        return { success: true };
-    } catch (error) {
-        console.error("Email send error:", error);
-        return { success: false };
-    }
+    return { success: true };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false };
+  }
 }
 
 /**
  *  Send Order Confirmation Email (Reusable for guest + logged-in users)
  * Also automatically logs into the notifications table
  */
-export async function sendOrderConfirmationEmail(
-    to: string,
-    details: {
-        name: string;
-        orderId: number;
-        total: number;
-        address: string;
-        userId?: number;
-    }
-) {
-    const domain = process.env.DOMAIN;
-    const subject = "Your Gazaarabia Order Confirmation";
+// export async function sendOrderConfirmationEmail(
+//   to: string,
+//   details: {
+//     name: string;
+//     orderId: number;
+//     total: number;
+//     address: string;
+//     userId?: number;
+//   }
+// ) {
+//   const domain = process.env.DOMAIN;
+//   const subject = "Your Gazaarabia Order Confirmation";
 
-    //  Build email HTML
-    const html = `
-    <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
-      <h2>Hi ${details.name || "there"},</h2>
-      <p>Thank you for your order! 🎉</p>
-      <p>Your order <strong>#${details.orderId}</strong> has been successfully placed.</p>
-      <h3>Order Summary</h3>
-      <p><strong>Total:</strong> £${details.total.toFixed(2)}</p>
-      <p><strong>Delivery Address:</strong><br>${details.address}</p>
-      <a href="${domain}/orders/${details.orderId}" 
-         style="display:inline-block;margin-top:10px;padding:10px 16px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">
-        View Your Order
-      </a>
-      <p style="margin-top:16px;">Thank you for shopping with us!<br>The Gazaarabia Team</p>
-    </div>
+//   //  Build email HTML
+//   const html = `
+//     <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+//       <h2>Hi ${details.name || "there"},</h2>
+//       <p>Thank you for your order! 🎉</p>
+//       <p>Your order <strong>#${details.orderId}</strong> has been successfully placed.</p>
+//       <h3>Order Summary</h3>
+//       <p><strong>Total:</strong> £${details.total.toFixed(2)}</p>
+//       <p><strong>Delivery Address:</strong><br>${details.address}</p>
+//       <a href="${domain}/orders/${details.orderId}" 
+//          style="display:inline-block;margin-top:10px;padding:10px 16px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">
+//         View Your Order
+//       </a>
+//       <p style="margin-top:16px;">Thank you for shopping with us!<br>The Gazaarabia Team</p>
+//     </div>
+//   `;
+
+//   // Send the email
+//   const emailResult = await sendEmail({
+//     to,
+//     subject,
+//     html,
+//   });
+
+//   //  Save notification record
+//   try {
+//     await prisma.notifications.create({
+//       data: {
+//         userId: details.userId || null,
+//         email: to,
+//         subject,
+//         message: `Order #${details.orderId} confirmation email ${emailResult.success ? "sent successfully" : "failed to send"
+//           }.`,
+//         type: "email",
+//         status: emailResult.success ? "sent" : "failed",
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Notification log error:", error);
+//   }
+
+//   return emailResult;
+// }
+
+
+export async function sendOrderConfirmationEmail(
+  to: string,
+  details: {
+    name: string;
+    orderId: number;
+    total: number;
+    address: string;
+    userId?: number;
+  }
+) {
+  const domain = process.env.DOMAIN;
+
+  const subject = `Order Confirmation — #${details.orderId} | Gazaarabia`;
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background-color:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640" 
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+      
+      <!-- Header -->
+      <tr>
+        <td style="background-color:#ffffff;text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img 
+            src="${logoUrl}" 
+            alt="Gazaarabia" 
+            width="200" 
+            style="display:block;margin:0 auto;max-width:220px;"
+          />
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding:45px 50px;">
+          <h2 style="margin:0 0 25px;font-size:22px;font-weight:600;color:#111827;">
+            Thank You for Your Order!
+          </h2>
+          <p style="font-size:15px;line-height:1.7;margin:0 0 25px;color:#374151;">
+            Hi <strong>${details.name || "there"}</strong>,  
+            your order <strong>#${details.orderId}</strong> has been placed successfully.
+          </p>
+
+          <table cellpadding="10" cellspacing="0" width="100%" 
+            style="margin:15px 0 30px;border-collapse:collapse;font-size:15px;color:#111827;border:1px solid #EAEAEA;border-radius:8px;">
+            <tr style="background-color:#f9fafb;">
+              <td style="width:35%;font-weight:600;color:#374151;">Order ID:</td>
+              <td>#${details.orderId}</td>
+            </tr>
+            <tr>
+              <td style="background-color:#ffffff;font-weight:600;color:#374151;">Customer Name:</td>
+              <td>${details.name}</td>
+            </tr>
+            <tr style="background-color:#f9fafb;">
+              <td style="font-weight:600;color:#374151;">Total Amount:</td>
+              <td style="color:#E82C3F;font-weight:600;">₹${details.total.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="background-color:#ffffff;font-weight:600;color:#374151;">Delivery Address:</td>
+              <td style="line-height:1.7;">${details.address}</td>
+            </tr>
+          </table>
+
+          <div style="text-align:center;margin:40px 0 20px;">
+            <a href="${domain}/orders/${details.orderId}"
+              style="display:inline-block;padding:12px 24px;background:#E82C3F;color:#ffffff;
+              text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
+              box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              View Your Order
+            </a>
+          </div>
+
+          <p style="font-size:14px;color:#374151;margin-top:28px;">
+            Thank you for shopping with <strong>Gazaarabia</strong> —  
+            where <em>modesty meets luxury</em>.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong>  
+            — Where Modesty Meets Luxury<br>
+            <span style="color:#9ca3af;">Crafted with care and purpose.</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
   `;
 
-    // Send the email
-    const emailResult = await sendEmail({
-        to,
+  // Send the email
+  const emailResult = await sendEmail({
+    to,
+    subject,
+    html,
+  });
+
+  // Save record in database
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: details.userId || null,
+        email: to,
         subject,
-        html,
+        message: `Order #${details.orderId} confirmation email ${emailResult.success ? "sent successfully" : "failed to send"
+          }.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
     });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
 
-    //  Save notification record
-    try {
-        await prisma.notifications.create({
-            data: {
-                userId: details.userId || null,
-                email: to,
-                subject,
-                message: `Order #${details.orderId} confirmation email ${emailResult.success ? "sent successfully" : "failed to send"
-                    }.`,
-                type: "email",
-                status: emailResult.success ? "sent" : "failed",
-            },
-        });
-    } catch (error) {
-        console.error("Notification log error:", error);
-    }
-
-    return emailResult;
+  return emailResult;
 }
+
+
+
+/**
+ * Send Contact Us Email
+ * Sends an email to the admin when a user submits the contact form
+ */
+
+export async function sendContactUsEmail({
+  name,
+  email,
+  subject,
+  message,
+}: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const adminEmail = (process.env.ADMIN_EMAIL || process.env.SMTP_USER)!;
+  const mailSubject = `New Contact Message: ${subject}`;
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background-color:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640" 
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+      
+      <!-- Elegant Header -->
+      <tr>
+        <td style="background-color:#ffffff;text-align:center;padding:30px 0;position:relative;border-bottom:4px solid #009639;">
+          <img 
+            src="${logoUrl}" 
+            alt="Gazaarabia" 
+            width="200" 
+            style="display:block;margin:0 auto;max-width:220px;"
+          />
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding:45px 50px;">
+          <h2 style="margin:0 0 25px;font-size:22px;font-weight:600;color:#111827;">
+            New Contact Form Message
+          </h2>
+          <p style="font-size:15px;line-height:1.7;margin:0 0 25px;color:#374151;">
+            You’ve received a new inquiry from <strong>Gazaarabia</strong>.  
+            Below are the details of the message:
+          </p>
+
+          <table cellpadding="10" cellspacing="0" width="100%" 
+            style="margin:10px 0 30px;border-collapse:collapse;font-size:15px;color:#111827;border:1px solid #EAEAEA;border-radius:8px;">
+            <tr style="background-color:#f9fafb;">
+              <td style="width:30%;font-weight:600;color:#374151;">Full Name:</td>
+              <td>${name}</td>
+            </tr>
+            <tr>
+              <td style="background-color:#ffffff;font-weight:600;color:#374151;">Email:</td>
+              <td><a href="mailto:${email}" style="color:#E82C3F;text-decoration:none;">${email}</a></td>
+            </tr>
+            <tr style="background-color:#f9fafb;">
+              <td style="font-weight:600;color:#374151;">Subject:</td>
+              <td>${subject}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding:15px;">
+                <p style="font-weight:600;color:#E82C3F;margin:8px 0;">Message:</p>
+                <p style="white-space:pre-line;line-height:1.7;color:#111827;margin:0;">${message}</p>
+              </td>
+            </tr>
+          </table>
+
+          <p style="font-size:13px;color:#6b7280;margin-top:25px;line-height:1.6;">
+            This email was generated automatically from the 
+            <strong>Gazaarabia Contact Form</strong>. Please review and respond accordingly.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Modern Footer -->
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong>  
+            — Where Modesty Meets Luxury<br>
+            <span style="color:#9ca3af;">Crafted with care and purpose.</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({
+    to: adminEmail,
+    subject: mailSubject,
+    html,
+  });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: null,
+        email: adminEmail,
+        subject: mailSubject,
+        message: `Contact email from ${name} (${email}) - ${emailResult.success ? "sent successfully" : "failed to send"
+          }.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+

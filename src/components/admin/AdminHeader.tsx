@@ -92,6 +92,10 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage the faqs.",
       action: { label: "Add Faq",href: "/admin/faqs/form" },
     },
+     "/admin/contact-us": {
+      title: "Contact us",
+      subtitle: "Manage the contact us.",
+    },
   };
 
   const current = titles[pathname] || {

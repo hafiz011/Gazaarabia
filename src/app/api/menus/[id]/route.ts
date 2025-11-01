@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any= new PrismaClient();
+const prisma: any = new PrismaClient();
 
-// 🟢 GET single menu
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+//  GET single menu
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
     const menu = await prisma.menus.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: { submenus: true },
     });
     if (!menu)
@@ -22,20 +22,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// 🟡 PUT update menu
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+//  PUT update menu
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   try {
-    const id = Number(params.id);
+    const { id } = await context.params;
     const { name, slug, type, images } = await req.json();
 
     if (!name || !slug || !type)
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
 
     const updated = await prisma.menus.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         name,
         slug,
@@ -51,14 +51,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// 🔴 DELETE menu
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+//  DELETE menu
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   try {
-    const id = Number(params.id);
-    await prisma.menus.delete({ where: { id } });
+    const { id } = await context.params
+    await prisma.menus.delete({ where: { id: Number(id) } });
     return NextResponse.json({ success: true, message: "Menu deleted successfully" });
   } catch (error) {
     console.error("DELETE /menus/[id] error:", error);

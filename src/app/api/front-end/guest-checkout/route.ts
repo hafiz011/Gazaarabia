@@ -152,67 +152,217 @@ export async function POST(req: NextRequest) {
 /**
  *  Helper: Send guest order confirmation email
  */
-async function sendGuestOrderEmail(
-    to: string,
-    details: {
-        name: string;
-        orderId: number;
-        total: number;
-        address: string;
-        generatedPassword?: string | null;
-    }
+// async function sendGuestOrderEmail(
+//     to: string,
+//     details: {
+//         name: string;
+//         orderId: number;
+//         total: number;
+//         address: string;
+//         generatedPassword?: string | null;
+//     }
+// ) {
+//     try {
+//         const transporter = nodemailer.createTransport({
+//             service: "gmail",
+//             auth: {
+//                 user: process.env.SMTP_USER,
+//                 pass: process.env.SMTP_PASS,
+//             },
+//         });
+
+
+//         const domain = process.env.DOMAIN;
+
+
+//         const html = `
+//       <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+//         <h2>Hi ${details.name || "there"},</h2>
+//         <p>Thank you for your order! 🎉</p>
+//         <p>Your order <strong>#${details.orderId}</strong> has been successfully placed.</p>
+//         <h3>Order Summary</h3>
+//         <p><strong>Total:</strong> £${details.total.toFixed(2)}</p>
+//         <p><strong>Delivery Address:</strong><br>${details.address}</p>
+//         ${details.generatedPassword
+//                 ? `
+//                 <h3>Your Account Details</h3>
+//                 <p>
+//                     We've created an account for you so you can track your order easily.<br/>
+//                     <strong>Username:</strong> ${to}<br/>
+//                     <strong>Temporary Password:</strong> ${details.generatedPassword}<br/>
+//                     <a href="${domain}/account/login" 
+//                         style="display:inline-block;margin-top:10px;padding:10px 16px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">
+//                         Login to Your Account
+//                     </a>
+//                 </p>
+
+//                 `
+//                 : ""
+//             }
+//         <p>Thank you for shopping with us!<br>The Gazaarabia Team</p>
+//       </div>
+//     `;
+
+//         await transporter.sendMail({
+//             from: `"Gazaarabia" <${process.env.SMTP_USER}>`,
+//             to,
+//             subject: "Your Gazaarabia Order Confirmation",
+//             html,
+//         });
+
+//         return { success: true };
+//     } catch (error) {
+//         console.error("Email sending failed:", error);
+//         return { success: false };
+//     }
+// }
+
+
+
+export async function sendGuestOrderEmail(
+  to: string,
+  details: {
+    name: string;
+    orderId: number;
+    total: number;
+    address: string;
+    generatedPassword?: string | null;
+  }
 ) {
-    try {
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
+    const domain = process.env.DOMAIN;
+    const logoUrl =
+      "https://drive.google.com/uc?export=view&id=12-EA3sW2FQVQU77-roeITSncjskWChiT";
 
-        const domain = process.env.DOMAIN;
+    const html = `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;background-color:#f7f7f7;padding:50px 0;color:#111827;">
+      <table align="center" cellpadding="0" cellspacing="0" width="640"
+        style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        
+        <!-- Header -->
+        <tr>
+          <td style="background-color:#ffffff;text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+            <img 
+              src="${logoUrl}" 
+              alt="Gazaarabia" 
+              width="200" 
+              style="display:block;margin:0 auto;max-width:220px;"
+            />
+          </td>
+        </tr>
 
+        <!-- Body -->
+        <tr>
+          <td style="padding:45px 50px;">
+            <h2 style="margin:0 0 25px;font-size:22px;font-weight:600;color:#111827;">
+              Thank You for Your Order!
+            </h2>
+            <p style="font-size:15px;line-height:1.7;margin:0 0 25px;color:#374151;">
+              Hi <strong>${details.name || "there"}</strong>,  
+              your order <strong>#${details.orderId}</strong> has been placed successfully.
+            </p>
 
-        const html = `
-      <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
-        <h2>Hi ${details.name || "there"},</h2>
-        <p>Thank you for your order! 🎉</p>
-        <p>Your order <strong>#${details.orderId}</strong> has been successfully placed.</p>
-        <h3>Order Summary</h3>
-        <p><strong>Total:</strong> £${details.total.toFixed(2)}</p>
-        <p><strong>Delivery Address:</strong><br>${details.address}</p>
-        ${details.generatedPassword
+            <table cellpadding="10" cellspacing="0" width="100%" 
+              style="margin:15px 0 30px;border-collapse:collapse;font-size:15px;color:#111827;border:1px solid #EAEAEA;border-radius:8px;">
+              <tr style="background-color:#f9fafb;">
+                <td style="width:35%;font-weight:600;color:#374151;">Order ID:</td>
+                <td>#${details.orderId}</td>
+              </tr>
+              <tr>
+                <td style="background-color:#ffffff;font-weight:600;color:#374151;">Customer Name:</td>
+                <td>${details.name}</td>
+              </tr>
+              <tr style="background-color:#f9fafb;">
+                <td style="font-weight:600;color:#374151;">Total Amount:</td>
+                <td style="color:#E82C3F;font-weight:600;">₹${details.total.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="background-color:#ffffff;font-weight:600;color:#374151;">Delivery Address:</td>
+                <td style="line-height:1.7;">${details.address}</td>
+              </tr>
+            </table>
+
+            ${
+              details.generatedPassword
                 ? `
-                <h3>Your Account Details</h3>
-                <p>
-                    We've created an account for you so you can track your order easily.<br/>
-                    <strong>Username:</strong> ${to}<br/>
-                    <strong>Temporary Password:</strong> ${details.generatedPassword}<br/>
-                    <a href="${domain}/account/login" 
-                        style="display:inline-block;margin-top:10px;padding:10px 16px;background:#000;color:#fff;text-decoration:none;border-radius:6px;">
-                        Login to Your Account
-                    </a>
+              <div style="background:#f9fafb;border-radius:10px;padding:20px 25px;margin-top:30px;">
+                <h3 style="margin:0 0 12px;font-size:18px;color:#111827;">Your Account Has Been Created</h3>
+                <p style="font-size:15px;line-height:1.8;margin:0 0 16px;color:#374151;">
+                  We’ve created a customer account for you so you can track your order and manage future purchases.
                 </p>
+                <table cellpadding="6" cellspacing="0" width="100%" 
+                  style="font-size:14px;color:#111827;">
+                  <tr>
+                    <td style="width:40%;font-weight:600;">Email:</td>
+                    <td>${to}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600;">Temporary Password:</td>
+                    <td style="color:#E82C3F;font-weight:600;">${details.generatedPassword}</td>
+                  </tr>
+                </table>
 
-                `
+                <div style="text-align:center;margin-top:25px;">
+                  <a href="${domain}/account/login" 
+                    style="display:inline-block;padding:12px 24px;background:#E82C3F;color:#ffffff;text-decoration:none;
+                    border-radius:8px;font-weight:500;letter-spacing:0.3px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                    Login to Your Account
+                  </a>
+                </div>
+              </div>
+              `
                 : ""
             }
-        <p>Thank you for shopping with us!<br>The Gazaarabia Team</p>
-      </div>
+
+            <div style="text-align:center;margin:40px 0 20px;">
+              <a href="${domain}/orders/${details.orderId}"
+                style="display:inline-block;padding:12px 24px;background:#009639;color:#ffffff;
+                text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
+                box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                View Your Order
+              </a>
+            </div>
+
+            <p style="font-size:14px;color:#374151;margin-top:28px;">
+              Thank you for shopping with <strong>Gazaarabia</strong> —  
+              where <em>modesty meets luxury</em>.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#111827;text-align:center;padding:28px 20px;">
+            <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+              &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong>  
+              — Where Modesty Meets Luxury<br>
+              <span style="color:#9ca3af;">Crafted with care and purpose.</span>
+            </p>
+            <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+          </td>
+        </tr>
+      </table>
+    </div>
     `;
 
-        await transporter.sendMail({
-            from: `"Gazaarabia" <${process.env.SMTP_USER}>`,
-            to,
-            subject: "Your Gazaarabia Order Confirmation",
-            html,
-        });
+    await transporter.sendMail({
+      from: `"Gazaarabia" <${process.env.SMTP_USER}>`,
+      to,
+      subject: `Your Gazaarabia Order Confirmation — #${details.orderId}`,
+      html,
+    });
 
-        return { success: true };
-    } catch (error) {
-        console.error("Email sending failed:", error);
-        return { success: false };
-    }
+    return { success: true };
+  } catch (error) {
+    console.error("Email sending failed:", error);
+    return { success: false };
+  }
 }
