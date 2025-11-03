@@ -70,7 +70,7 @@
 //                         <li>
 //                             <p>Email us</p>
 //                             <p className="hover:underline cursor-pointer break-words">
-//                                 admin@aabcollection.com
+//                                 admin@gazaarabia.com
 //                             </p>
 //                         </li>
 //                     </ul>
@@ -224,7 +224,7 @@ export default function Footer() {
             <li>
               <p>Email us</p>
               <p className="hover:underline cursor-pointer break-words">
-                admin@aabcollection.com
+                admin@gazaarabia.com
               </p>
             </li>
           </ul>

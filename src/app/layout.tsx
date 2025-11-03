@@ -7,7 +7,7 @@ import { CartProvider } from "./context/CartContext";
 
 export const metadata: Metadata = {
   title: "Gaza Arabia",
-  description: "Inspired by AAB Collection — Modern modest fashion",
+  // description: "Inspired by Gazaarabia — Modern modest fashion",
 };
 
 export default function RootLayout({
