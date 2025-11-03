@@ -19,7 +19,7 @@ const menuItems = [
   { key: "orders", label: "Orders", path: "/account/orders", icon: <Package size={18} /> },
   { key: "details", label: "My Details", path: "/account/details", icon: <User size={18} /> },
   { key: "rewards", label: "Rewards", path: "/account/rewards", icon: <Gift size={18} /> },
- // { key: "wishlist", label: "Wishlist", path: "/account/wishlist", icon: <Heart size={18} /> },
+  // { key: "wishlist", label: "Wishlist", path: "/account/wishlist", icon: <Heart size={18} /> },
   { key: "signout", label: "Sign Out", path: "", icon: <LogOut size={18} /> },
 ];
 
@@ -36,7 +36,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  // 🚨 Redirect if not logged in
+  //  Redirect if not logged in
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.USER.LOGIN);
@@ -80,11 +80,10 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     if (item.key === "signout") setConfirmLogout(true);
                     else router.push(item.path);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium transition text-left ${
-                    pathname === item.path
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium transition text-left ${pathname === item.path
                       ? "bg-[var(--brand-primary)] text-white shadow-sm"
                       : "text-[var(--text-secondary)] hover:bg-[var(--soft-gray)]"
-                  }`}
+                    }`}
                 >
                   {item.icon}
                   {item.label}

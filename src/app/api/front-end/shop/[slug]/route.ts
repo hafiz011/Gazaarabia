@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getWishlistProductIds } from "@/lib/helpers/wishlist";
+import {
+  getProductAvailableQuantity,
+  getVariantAvailableQuantity,
+} from "@/lib/helpers/stockHelper";
 
-const prisma: any = new PrismaClient();
+const prisma = new PrismaClient();
 
 export async function GET(
   req: Request,
@@ -24,7 +28,7 @@ export async function GET(
     let subcategories: any[] = [];
     let parentCategory: any = null;
 
-    // Check if slug is category or subcategory
+    //  Check if slug is category or subcategory
     const category = await prisma.categories.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true },
@@ -36,7 +40,9 @@ export async function GET(
           where: { categoryId: category.id },
           include: {
             productimage: true,
-            productvariant: { include: { color: true } },
+            productvariant: {
+              include: { color: true, size: true },
+            },
             brand: true,
             categories: true,
             subcategories: true,
@@ -71,7 +77,9 @@ export async function GET(
           where: { subcategoryId: subcategory.id },
           include: {
             productimage: true,
-            productvariant: { include: { color: true } },
+            productvariant: {
+              include: { color: true, size: true },
+            },
             brand: true,
             categories: true,
             subcategories: true,
@@ -93,23 +101,42 @@ export async function GET(
       });
     }
 
-    //  Wishlist check (using helper)
+    // Fetch wishlist IDs once
+    let wishlistIdsSet = new Set<number>();
     if (userId) {
       const wishlistIds = await getWishlistProductIds(userId);
-      products = products.map((p) => ({
-        ...p,
-        isInWishlist: wishlistIds.includes(p.id),
-      }));
-    } else {
-      products = products.map((p) => ({
-        ...p,
-        isInWishlist: false,
-      }));
+      wishlistIdsSet = new Set(wishlistIds);
     }
 
+    //  Enrich products with wishlist + stock in one loop
+    const enrichedProducts = await Promise.all(
+      products.map(async (product) => {
+        const isInWishlist = wishlistIdsSet.has(product.id);
+
+        // Product-level stock
+        const productAvailableStock = await getProductAvailableQuantity(product.id);
+
+        // Variant-level stock (parallel)
+        const variantsWithStock = await Promise.all(
+          product.productvariant.map(async (variant: any) => {
+            const variantStock = await getVariantAvailableQuantity(variant.id);
+            return { ...variant, availableStock: variantStock };
+          })
+        );
+
+        return {
+          ...product,
+          isInWishlist,
+          availableStock: productAvailableStock, //  product-level
+          productvariant: variantsWithStock, // variants with stock
+        };
+      })
+    );
+
+    //  Final Response
     return NextResponse.json({
       userId,
-      products,
+      products: enrichedProducts,
       total,
       totalPages: Math.ceil(total / limit),
       subcategories,
@@ -117,7 +144,7 @@ export async function GET(
       page,
     });
   } catch (error: any) {
-    console.error(error);
+    console.error("Error fetching category products:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch products" },
       { status: 500 }

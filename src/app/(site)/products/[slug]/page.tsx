@@ -27,7 +27,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { ROUTES } from "@/constants/routes";
 import VariantWarningModal from "@/components/VariantWarningModal";
 import { useCart } from "@/app/context/CartContext";
-import AlertBox from "@/components/ErrorMessage";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function ProductDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -128,7 +128,7 @@ export default function ProductDetails() {
       )
       : null;
 
-  const availableStock = selectedVariant?.stock || 0;
+  const availableStock = selectedVariant?.availableStock || 0;
 
   //  Color change → update images + size
   const handleColorChange = (color: any) => {
@@ -166,7 +166,7 @@ export default function ProductDetails() {
     setQuantity(newQty);
   };
 
-  // 🖼 Zoom effect
+  //  Zoom effect
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedSize) {
       setShowVariantWarning(true);
@@ -182,6 +182,7 @@ export default function ProductDetails() {
         id: product.id,
         title: product.title,
         slug: product.slug,
+        availableStock: product.availableStock,
         sellingPrice: product.sellingPrice,
         productimage: product.productimage || [],
       };
@@ -194,6 +195,7 @@ export default function ProductDetails() {
         colorName: selectedColor.name,
         hexCode: selectedColor.hexCode,
         price: selectedVariant.price,
+        availableStock: selectedVariant.availableStock,
         variantImages: selectedVariant.variantImages || [],
       };
 
@@ -599,7 +601,7 @@ export default function ProductDetails() {
           <HowWeDoIt />
 
           {/*  Popup alert */}
-          {errorMsg && <AlertBox message={errorMsg} onClose={() => setErrorMsg(null)} />}
+          {errorMsg && <ErrorAlert message={errorMsg} onClose={() => setErrorMsg(null)} />}
         </>
       )}
     </>

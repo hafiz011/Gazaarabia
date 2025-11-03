@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { cartService } from "@/lib/services/front-end/cartService";
 import { localCartService } from "@/lib/services/front-end/localCartService";
 import { useCart } from "@/app/context/CartContext";
+import ErrorAlert from "./ErrorAlert";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [items, setItems] = useState<any[]>([]);
   const [subtotal, setSubtotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { refreshCart } = useCart();
   const [drawerWidth, setDrawerWidth] = useState("360px");
 
@@ -42,21 +44,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   // Fetch cart items
 
   const fetchCart = async () => {
-    console.log('innside the fetchCart token:>', token);
     setLoading(true);
     try {
-      if (token) {
-        console.log('token:>', token);
-        const data = await cartService.getAll(token);
-        console.log('data:>', data)
-        setItems(data.cart);
-        setSubtotal(data.subtotal);
-      } else {
-        const data = localCartService.get(); // identical structure
-        console.log('data:>', data)
-        setItems(data.cart);
-        setSubtotal(data.subtotal);
-      }
+      console.log('token:>', token);
+      const data = await cartService.getAll(token);
+      console.log('data:>', data)
+      setItems(data.cart);
+      setSubtotal(data.subtotal);
     } finally {
       setLoading(false);
     }
@@ -73,25 +67,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const freeShippingThreshold = 60;
   const remaining = Math.max(0, freeShippingThreshold - subtotal);
 
-  // 🗑 Remove item
+  //  Remove item
   const removeItem = async (productId: number, variantId: number) => {
-    // if (!token) return;
-
-    if (!token) {
-      localCartService.remove(productId, variantId);
-      fetchCart();
-      await refreshCart();
-      return;
-    }
-
-
     try {
       const res = await cartService.remove(token, productId, variantId);
       setItems(res.cart || []);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
       await refreshCart();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to remove item", err);
+      setErrorMsg(err.message)
     }
   };
 
@@ -112,16 +97,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       )
     );
 
-    //  Guest user (no token)
-    if (!token) {
-      localCartService.updateQuantity(productId, variantId, newQty);
-      const updated = localCartService.get();
-      setItems(updated.cart);
-      setSubtotal(updated.subtotal);
-      return;
-    }
-
-    //  Logged-in user (API)
     try {
       const res = await cartService.updateQuantity(
         token,
@@ -129,12 +104,30 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         variantId,
         newQty
       );
+      console.log('guest and loggedin:>', res)
+      if (res?.error) {
+        console.log('res?.error:>', res?.error)
+        setErrorMsg(res.error);
+        return;
+      }
+
+      await refreshCart(); // instantly updates Header count
+
       setItems(res.cart || []);
       if (res.subtotal !== undefined) setSubtotal(res.subtotal);
-    } catch (err) {
+    } catch (err: any) {
       console.error(" Failed to update quantity", err);
-      fetchCart(); // fallback reload
+      setErrorMsg(err.message);
+      fetchCart();
     }
+  };
+
+  const getItemImage = (item: any) => {
+    if (item?.selectedVariantData?.variantImages?.length)
+      return item.selectedVariantData.variantImages[0].url;
+    if (item?.product?.productimage?.length)
+      return item.product.productimage[0].url;
+    return "/images/placeholder.png";
   };
 
 
@@ -188,8 +181,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         )}
 
         {items.map((item) => {
-          const stock = item?.productvariant?.stock ?? item.stock ?? 1;
+          const stock = item?.selectedVariantData?.availableStock ?? item?.availableStock ?? item.product.availableStock ?? 1;
           const disablePlus = item.quantity >= stock;
+
 
           return (
             <div
@@ -199,11 +193,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               {/*  Image */}
               <div className="relative w-24 aspect-square rounded-lg overflow-hidden border border-[var(--soft-gray)] flex-shrink-0 bg-white">
                 <Image
-                  src={item?.selectedVariantData?.variantImages?.[0]?.url || item.product.productimage?.[0]?.url || "/images/placeholder.png"}
-                  alt={item.product.title}
+                  src={getItemImage(item)}
+                  alt={item?.product?.title || "Product image"}
                   fill
                   className="object-contain p-1"
                 />
+
               </div>
 
               {/*  Content */}
@@ -258,7 +253,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </IconButton>
                 </div>
 
-                {/* 🏷 Stock Info */}
+                {/* Stock Info */}
                 <p className="mt-1 text-xs text-gray-500">
                   {stock > 0
                     ? `In stock: ${stock}`
@@ -320,6 +315,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </div>
         </div>
       )}
+
+
+      {errorMsg && <ErrorAlert message={errorMsg} onClose={() => setErrorMsg(null)} />}
+
     </Drawer>
   );
 }

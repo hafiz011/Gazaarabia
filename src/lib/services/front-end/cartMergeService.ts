@@ -27,7 +27,7 @@ export async function mergeLocalCartWithServer(token: string) {
 
     //  clear guest cart after merging
     localCartService.clear();
-    console.log("🛒 Local cart merged successfully");
+    console.log("Local cart merged successfully");
   } catch (err) {
     console.error("Failed to merge local cart:", err);
   }

@@ -8,7 +8,7 @@ interface AlertBoxProps {
   onClose: () => void;
 }
 
-export default function AlertBox({ message, onClose }: AlertBoxProps) {
+export default function ErrorAlert({ message, onClose }: AlertBoxProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-lg shadow-xl w-[90%] max-w-sm p-6 text-center animate-pop">
