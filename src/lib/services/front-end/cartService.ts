@@ -272,20 +272,20 @@ export const cartService = {
 
   const data = await res.json();
 
-  // 🧭 Guest user — clear old and save fresh
+  //  Guest user — clear old and save fresh
   if (!token && data?.syncedCart) {
     try {
       console.log("🧹 Clearing old guest cart...");
       localCartService.clear();
 
-      // ✅ Reset and save new synced cart
+      //  Reset and save new synced cart
       localCartService.save(data.syncedCart);
 
-      // ✅ Log confirmation
+      //  Log confirmation
       const newLocal = localCartService.get();
-      console.log("🧩 Local cart synced:", newLocal);
+      console.log(" Local cart synced:", newLocal);
     } catch (error) {
-      console.error("❌ Failed to update local cart after sync:", error);
+      console.error(" Failed to update local cart after sync:", error);
     }
   }
 

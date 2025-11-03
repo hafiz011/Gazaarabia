@@ -22,7 +22,7 @@ export const localCartService = {
   save(cart: any[]) {
   console.log("inside the save");
 
-  // ✅ Always prefer latest API-provided price
+  //  Always prefer latest API-provided price
   const subtotal = cart.reduce((acc, item) => {
     const price =
       item.price ??
@@ -36,7 +36,7 @@ export const localCartService = {
   const formatted = { cart, subtotal };
   localStorage.setItem(LOCAL_CART_KEY, JSON.stringify(formatted));
 
-  console.log("✅ Cart saved to localStorage:", formatted);
+  console.log("Cart saved to localStorage:", formatted);
 }
 ,
 

@@ -17,7 +17,7 @@ const config: Config = {
       scrollbar: ['rounded'],
     },
   },
-  plugins: [require('@tailwindcss/line-clamp'), require('tailwind-scrollbar')],
+  plugins: [require('tailwind-scrollbar')],
 };
 
 export default config;

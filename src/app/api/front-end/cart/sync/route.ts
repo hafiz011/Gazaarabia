@@ -5,7 +5,7 @@ import { getAvailableQuantity } from "@/lib/helpers/stockHelper";
 
 const prisma = new PrismaClient();
 
-// ---------- 🔧 Type Definitions ----------
+// ----------  Type Definitions ----------
 
 interface SelectedVariantData {
   id?: number | null;
@@ -50,7 +50,7 @@ interface SyncResponse {
   }>;
 }
 
-// ---------- 🔧 Safe findMany Helper ----------
+// ----------  Safe findMany Helper ----------
 
 async function safeFindMany<T>(
   model: any,
@@ -61,7 +61,7 @@ async function safeFindMany<T>(
   return model.findMany({ where: { id: { in: ids } }, select });
 }
 
-// ---------- 🧩 Sync Cart Route ----------
+// ----------  Sync Cart Route ----------
 
 export async function POST(req: Request): Promise<NextResponse<SyncResponse | { success: false; message: string }>> {
   try {
@@ -182,14 +182,14 @@ export async function POST(req: Request): Promise<NextResponse<SyncResponse | { 
       let availableStock = 0;
       let priceChanged = false;
 
-      // 1️⃣ Product/variant validity
+      // 1️ Product/variant validity
       if (!product || !product.active) {
         itemIssues.push("Product no longer exists or is inactive.");
       } else if (item.variantId && (!variant || !variant.isActive)) {
         itemIssues.push("Variant is no longer available.");
       }
 
-      // 2️⃣ Stock validation
+      // 2️ Stock validation
       if (itemIssues.length === 0) {
         availableStock = await getAvailableQuantity({
           productId: item.productId,
@@ -205,7 +205,7 @@ export async function POST(req: Request): Promise<NextResponse<SyncResponse | { 
         }
       }
 
-      // 3️⃣ Price validation
+      // 3️ Price validation
       const livePrice = Number(variant?.price ?? product?.sellingPrice ?? 0);
       const oldPrice = Number(item.frontendPrice ?? item.price ?? 0);
 
@@ -254,7 +254,7 @@ export async function POST(req: Request): Promise<NextResponse<SyncResponse | { 
         }
       }
 
-      // ✅ Build synced item
+      //  Build synced item
       syncedCart.push({
         ...item,
         product,
