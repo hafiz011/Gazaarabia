@@ -16,7 +16,7 @@ export const ROUTES = {
   },
   //  Affiliate routes
   AFFILIATE: {
-    LOGIN: "/admin/login",
+    LOGIN: "/affiliate/login",
     DASHBOARD: "/affiliate",
   },
 

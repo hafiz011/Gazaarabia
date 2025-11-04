@@ -79,7 +79,7 @@ export default function AffiliateSignupPage() {
                 website: "",
             });
 
-            router.push("/account/login");
+            router.push("/affiliate/login");
         } catch (err: any) {
             setAlert({
                 isOpen: true,
@@ -250,7 +250,7 @@ export default function AffiliateSignupPage() {
                 <p className="text-center text-sm text-[var(--text-muted)] mt-8">
                     Already have an account?{" "}
                     <a
-                        href="/account/login"
+                        href="/affiliate/login"
                         className="text-[var(--brand-primary)] font-medium hover:underline"
                     >
                         Log in

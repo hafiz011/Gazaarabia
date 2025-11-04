@@ -151,7 +151,7 @@ export default function CouponListPage() {
                             <tr>
                                 <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
                                 <th className="py-3 px-3 text-center">Code</th>
-                                <th className="py-3 px-3 text-center">Type</th>
+                                {/* <th className="py-3 px-3 text-center">Type</th> */}
                                 <th className="py-3 px-3 text-center">Value</th>
                                 {/* <th className="py-3 px-3 text-center">Creator</th> */}
                                 <th className="py-3 px-3 text-center">Status</th>
@@ -172,8 +172,8 @@ export default function CouponListPage() {
                                     <tr key={coupon.id} className="hover:bg-gray-100 transition">
                                         <td className="py-3 px-3 text-center">{startIndex + idx + 1}</td>
                                         <td className="py-3 px-3 text-center">{coupon.code}</td>
-                                        <td className="py-3 px-3 text-center">{coupon.discountType}</td>
-                                        <td className="py-3 px-3 text-center">{coupon.discountValue}</td>
+                                        {/* <td className="py-3 px-3 text-center">{coupon.discountType}</td> */}
+                                        <td className="py-3 px-3 text-center">{coupon.discountValue}%</td>
                                         {/* <td className="py-3 px-3 text-center">{coupon.creator?.name || "-"}</td> */}
                                         <td className="py-3 px-3 text-center">
                                             {coupon.isActive ? (

@@ -7,10 +7,9 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import AlertMessage from "@/components/AlertMessage";
 
-
-export default function AdminLoginPage() {
+export default function AffiliateLoginPage() {
   const router = useRouter();
-  const { data: session, status } = useSession(); // get session info
+  const { data: session, status } = useSession();
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,35 +37,24 @@ export default function AdminLoginPage() {
     return Object.keys(e).length === 0;
   };
 
-
-  // Redirect if user already logged in
+  // Redirect if already logged in
   useEffect(() => {
     if (status === "loading") return;
 
     if (status === "authenticated") {
-      if (session?.user?.role === "admin") {
-        router.replace(ROUTES.ADMIN.DASHBOARD); //  redirect to profile
-      } else if (session?.user?.role === "affiliate") {
+      if (session?.user?.role === "affiliate") {
         router.replace(ROUTES.AFFILIATE.DASHBOARD);
+      } else if (session?.user?.role === "admin") {
+        router.replace(ROUTES.ADMIN.DASHBOARD);
       } else {
-        router.replace("/"); // or some other route for admins
+        router.replace("/");
       }
     }
   }, [status, session, router]);
 
-  const onSubmit = async (ev: React.FormEvent) => {
-    ev.preventDefault();
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!validate()) return;
-
-
-    if (!form.email.trim() || !form.password.trim()) {
-      setAlert({
-        isOpen: true,
-        type: "error",
-        message: "Please enter both email and password.",
-      });
-      return;
-    }
 
     try {
       setLoading(true);
@@ -74,14 +62,14 @@ export default function AdminLoginPage() {
         redirect: false,
         email: form.email,
         password: form.password,
-        role:'admin'
+        role: 'affiliate'
       });
 
       if (response?.error) {
         setAlert({
           isOpen: true,
           type: "error",
-          message: response?.error?.message || "Invalid email or password.",
+          message: response.error || "Invalid email or password.",
         });
         return;
       }
@@ -93,13 +81,13 @@ export default function AdminLoginPage() {
       });
 
       setTimeout(() => {
-        router.push(ROUTES.ADMIN.DASHBOARD); //  redirect after login
+        router.push(ROUTES.AFFILIATE.DASHBOARD);
       }, 1000);
     } catch (err: any) {
       setAlert({
         isOpen: true,
         type: "error",
-        message: err.message || "Invalid email or password.",
+        message: err.message || "Something went wrong.",
       });
     } finally {
       setLoading(false);
@@ -108,7 +96,6 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden">
-      {/* Background gradient blob */}
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[400px] w-[400px] rounded-full bg-[var(--brand-primary)] opacity-10 blur-3xl" />
 
       <div className="w-full max-w-md mx-4 z-10">
@@ -117,31 +104,21 @@ export default function AdminLoginPage() {
           <div className="px-6 py-8 text-center bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white">
             <div className="mb-2 flex justify-center">
               <div className="h-14 w-14 bg-white text-[var(--brand-primary)] font-bold text-2xl flex items-center justify-center rounded-xl shadow">
-                A
+                AF
               </div>
             </div>
-            <h1 className="text-2xl font-bold">Admin Sign in</h1>
-            <p className="text-sm opacity-90 mt-1">Access your admin dashboard securely</p>
+            <h1 className="text-2xl font-bold">Affiliate Login</h1>
+            <p className="text-sm opacity-90 mt-1">Access your affiliate dashboard</p>
           </div>
-
 
           {/* Form */}
           <form onSubmit={onSubmit} className="px-6 py-8 space-y-6 bg-white">
-            {errors.root && (
-              <div className="text-sm text-white bg-[var(--brand-primary)] rounded-lg px-4 py-2 text-center">
-                {errors.root}
-              </div>
-            )}
-
-            {/* Alert */}
             {alert.isOpen && alert.type && (
-              <div className="mb-4">
-                <AlertMessage
-                  type={alert.type}
-                  message={alert.message}
-                  onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
-                />
-              </div>
+              <AlertMessage
+                type={alert.type}
+                message={alert.message}
+                onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
+              />
             )}
 
             {/* Email */}
@@ -157,7 +134,7 @@ export default function AdminLoginPage() {
                   autoComplete="email"
                   value={form.email}
                   onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="admin@yourcompany.com"
+                  placeholder="affiliate@company.com"
                   className={`w-full rounded-xl border px-10 py-2.5 text-sm focus:outline-none focus:ring-2 transition 
                     ${errors.email ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-[var(--brand-primary)]/30"}`}
                 />
@@ -167,14 +144,9 @@ export default function AdminLoginPage() {
 
             {/* Password */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <a href="#" className="text-xs text-[var(--brand-primary)] hover:underline">
-                  Forgot password?
-                </a>
-              </div>
+              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <input
@@ -191,23 +163,11 @@ export default function AdminLoginPage() {
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
-            </div>
-
-            {/* Remember Me */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.remember}
-                onChange={(e) => setForm((p) => ({ ...p, remember: e.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
-              />
-              <span className="text-sm text-gray-700">Remember me</span>
             </div>
 
             {/* Submit */}
@@ -222,9 +182,11 @@ export default function AdminLoginPage() {
               {loading ? "Signing in..." : "Sign in"}
             </button>
 
-            {/* Footnote */}
             <p className="text-xs text-center text-gray-500">
-              This page is restricted to authorized administrators only.
+              Don’t have an affiliate account?{" "}
+              <a href="/affiliate/register" className="text-[var(--brand-primary)] hover:underline font-medium">
+                Register here
+              </a>
             </p>
           </form>
         </div>

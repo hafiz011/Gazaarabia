@@ -235,7 +235,7 @@ export default function AddOrEditCouponPage() {
               inputProps={{ maxLength: 20 }}
             />
 
-            <TextField
+            {/* <TextField
               label="Discount Type"
               name="discountType"
               select
@@ -246,7 +246,7 @@ export default function AddOrEditCouponPage() {
             >
               <MenuItem value="percentage">Percentage</MenuItem>
               <MenuItem value="fixed">Fixed Amount</MenuItem>
-            </TextField>
+            </TextField> */}
 
             <TextField
               label={

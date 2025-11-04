@@ -47,7 +47,7 @@ export default function AffiliateSidebar({
     useEffect(() => {
         if (status === "loading") return;
         if (status === "unauthenticated") {
-            router.replace(ROUTES.ADMIN.LOGIN);
+            router.replace(ROUTES.AFFILIATE.LOGIN);
             return;
         }
         if (session?.user?.role !== "affiliate") {
@@ -56,7 +56,7 @@ export default function AffiliateSidebar({
     }, [status, session, router]);
 
     const handleLogout = async () => {
-        await signOut({ callbackUrl: ROUTES.ADMIN.LOGIN });
+        await signOut({ callbackUrl: ROUTES.AFFILIATE.LOGIN });
     };
 
     return (

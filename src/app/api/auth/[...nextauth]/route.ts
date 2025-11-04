@@ -2,17 +2,18 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authService } from "@/lib/services/authService";
 
-const authOptions :any = {
+const authOptions: any = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.email || !credentials?.password) {
+          if (!credentials?.email || !credentials?.password || !credentials?.role) {
             throw new Error("Email and password are required");
           }
 
@@ -20,6 +21,7 @@ const authOptions :any = {
           const res = await authService.login({
             email: credentials.email,
             password: credentials.password,
+            role: credentials.role
           });
 
           // Check response structure
@@ -54,7 +56,7 @@ const authOptions :any = {
   },
 
   callbacks: {
-    async jwt({ token, user }:any) {
+    async jwt({ token, user }: any) {
       // Attach user info to token after login
       if (user) {
         token.id = user.id;
@@ -67,7 +69,7 @@ const authOptions :any = {
       return token;
     },
 
-    async session({ session, token }:any) {
+    async session({ session, token }: any) {
       // Attach token info to session.user
       session.user = {
         id: token.id,
@@ -80,7 +82,7 @@ const authOptions :any = {
       return session;
     },
 
-    async redirect({ url, baseUrl }:any) {
+    async redirect({ url, baseUrl }: any) {
       //  Smart redirect after login
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (url.startsWith(baseUrl)) return url;

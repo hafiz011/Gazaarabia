@@ -63,6 +63,7 @@ export default function LoginPage() {
         redirect: false,
         email: form.email,
         password: form.password,
+        role: 'customer'
       });
 
       if (response?.error) {

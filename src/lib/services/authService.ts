@@ -12,7 +12,7 @@ export const authService = {
     return res.json();
   },
 
-  login: async (data: { email: string; password: string }) => {
+  login: async (data: { email: string; password: string, role: string }) => {
     const baseUrl =
       typeof window === "undefined"
         ? process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL
