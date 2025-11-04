@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Prisma } from "@prisma/client";
 
-const prisma:any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, role = "customer", phone } = await req.json();
+
     if (!name || !email || !password) {
       return NextResponse.json({ message: "All fields are required" }, { status: 400 });
     }
@@ -19,16 +20,41 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // default role can be customer or any role you have
-    const defaultRole = await prisma.roles.findFirst({ where: { name: "Customer" } });
+    // const defaultRole = await prisma.roles.findFirst({ where: { name: "customer" } });
+
+    // Get the role record dynamically
+    const selectedRole = await prisma.roles.findFirst({
+      where: { name: role.toLowerCase() },
+    });
+
+    if (!selectedRole) {
+      return NextResponse.json({ message: `Invalid role: ${role}` }, { status: 400 });
+    }
 
     const user = await prisma.users.create({
       data: {
         name,
         email,
+        phone,
         password: hashedPassword,
-        roleId: defaultRole?.id ?? 1,
+        roleId: selectedRole.id,
       },
     });
+
+
+    //If the role is affiliate → insert record into Affiliate table
+    if (role.toLowerCase() === "affiliate") {
+      await prisma.affiliate.create({
+        data: {
+          userId: user.id,
+          baseCommission: 10,     // default 10%
+          shareCommission: 7,     // default 7%
+          totalEarnings: 0,
+          pendingEarnings: 0,
+          isActive: true,
+        },
+      });
+    }
 
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (err: any) {

@@ -46,6 +46,8 @@ export default function AdminLoginPage() {
     if (status === "authenticated") {
       if (session?.user?.role === "admin") {
         router.replace(ROUTES.ADMIN.DASHBOARD); //  redirect to profile
+      } else if (session?.user?.role === "affiliate") {
+        router.replace(ROUTES.AFFILIATE.DASHBOARD);
       } else {
         router.replace("/"); // or some other route for admins
       }

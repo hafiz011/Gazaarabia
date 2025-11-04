@@ -1,5 +1,8 @@
 export const authService = {
-  signup: async (data: { name: string; email: string; password: string }) => {
+  signup: async (data: {
+    name: string; email: string; password: string, role?: string;
+    phone?: string;
+  }) => {
     const res = await fetch("/api/front-end/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,10 +32,10 @@ export const authService = {
     return res.json();
   },
 
-   getProfile: async (token:string) => {
+  getProfile: async (token: string) => {
     const res = await fetch("/api/front-end/profile", {
       method: "GET",
-           headers: {
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,  //  send token in header
       },

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { getSession } from "next-auth/react";
 import AlertMessage from "@/components/AlertMessage";
 import { ROUTES } from "@/constants/routes";
 import { mergeLocalCartWithServer } from "@/lib/services/front-end/cartMergeService";
@@ -24,7 +23,7 @@ export default function LoginPage() {
     message: "",
   });
 
-  // ✅ React to successful login (wait until NextAuth session is ready)
+  //  React to successful login (wait until NextAuth session is ready)
   useEffect(() => {
     if (status === "authenticated" && session?.user?.token) {
       (async () => {
@@ -45,7 +44,7 @@ export default function LoginPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Clean, professional login function
+  //  login function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,7 +80,7 @@ export default function LoginPage() {
         message: "Login successful! Redirecting...",
       });
 
-      // ⚠️ Don’t try to getSession() here — NextAuth updates asynchronously.
+      //  Don’t try to getSession() here — NextAuth updates asynchronously.
       // Let useEffect handle the cart logic once the session is updated.
 
     } catch (err: any) {

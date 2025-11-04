@@ -16,21 +16,24 @@ model Roles {
 }
 
 model Users {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  phone     String?
-  password  String
-  roleId    Int
-  isGuest   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  role      Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  phone          String?
+  password       String
+  roleId         Int
+  isGuest        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  role           Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdCoupons Coupon[] @relation("CouponCreator")
 
-  addresses Address[]
-  wishlist  Wishlist[]
-  carts     Cart[]
-  orders    Orders[]
-  reviews   Review[]
+  affiliate Affiliate?
+
+  addresses     Address[]
+  wishlist      Wishlist[]
+  carts         Cart[]
+  orders        Orders[]
+  reviews       Review[]
   notifications notifications[]
 
   @@index([roleId], map: "users_roleId_fkey")
@@ -203,17 +206,15 @@ model products {
   materialCareId Int?
   materialCare   MaterialCare? @relation(fields: [materialCareId], references: [id])
 
-  wishlist   Wishlist[]
-  carts      Cart[]
-  orderItems OrderItem[]
-  reviews    Review[]
+  wishlist      Wishlist[]
+  carts         Cart[]
+  orderItems    OrderItem[]
+  reviews       Review[]
   variantImages VariantImage[]
-
 
   // NEW — Back-relations for ProductRelation
   asParentRelations ProductRelation[] @relation("ProductAsParent")
   asChildRelations  ProductRelation[] @relation("ProductAsChild")
-
 
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
@@ -233,33 +234,31 @@ model productvariant {
   products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
   color    Colors?  @relation(fields: [colorId], references: [id])
   size     Sizes?   @relation(fields: [sizeId], references: [id])
- 
+
   variantImages VariantImage[]
-  carts      Cart[]
-  orderItems OrderItem[] // This is required to complete the relation
-  reviews    Review[]
+  carts         Cart[]
+  orderItems    OrderItem[] // This is required to complete the relation
+  reviews       Review[]
 
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
 }
 
-
 model VariantImage {
-  id         Int              @id @default(autoincrement())
-  url        String
-  alt        String?
-  variantId  Int
-  productId  Int?
+  id        Int     @id @default(autoincrement())
+  url       String
+  alt       String?
+  variantId Int
+  productId Int?
 
-  variant    productvariant   @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  product    products?        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant productvariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  product products?      @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("variant_images")
 }
-
 
 model Address {
   id         Int      @id @default(autoincrement())
@@ -359,6 +358,14 @@ model Orders {
   couponCode     String?
   couponDiscount Float?  @default(0)
 
+  // Coupon relation (NEW)
+  couponId Int?
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+
+  // Direct affiliate relation (NEW)
+  affiliateId Int?
+  affiliate   Affiliate? @relation(fields: [affiliateId], references: [id])
+
   //  Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -420,59 +427,59 @@ model Review {
   // Optional: Link back to order item
   orderItemId Int?
   orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
+
+  @@map("review")
 }
 
 model Menus {
-  id              Int           @id @default(autoincrement())
-  name            String
-  slug            String        @unique
-  type            String       
-  images          Json?        
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  type      String
+  images    Json?
   position  Int      @default(0)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  submenus     Submenus[]
+  category     Categories?     @relation("CategoryMenus", fields: [categoryId], references: [id])
+  blogCategory BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
 
-  submenus        Submenus[]
-  category        Categories?   @relation("CategoryMenus", fields: [categoryId], references: [id])
-  blogCategory    BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
-
-  categoryId      Int?
-  blogCategoryId  Int?
+  categoryId     Int?
+  blogCategoryId Int?
 
   @@map("menus")
 }
 
 model Submenus {
-  id                   Int         @id @default(autoincrement())
-  name                 String
-  slug                 String      @unique
-  menuId               Int
-  categoryId           Int?
-  subcategoryId        Int?
-  leftSubcategories    Json?       // store selected left subcategory IDs (only if product)
-  rightSubcategories   Json?       // store selected right subcategory IDs (only if product)
-  leftCustomLinks    Json? 
-  rightCustomLinks   Json? 
+  id                 Int      @id @default(autoincrement())
+  name               String
+  slug               String   @unique
+  menuId             Int
+  categoryId         Int?
+  subcategoryId      Int?
+  leftSubcategories  Json? // store selected left subcategory IDs (only if product)
+  rightSubcategories Json? // store selected right subcategory IDs (only if product)
+  leftCustomLinks    Json?
+  rightCustomLinks   Json?
   position           Int      @default(0)
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  menu         Menus         @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
-  category     Categories?   @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "submenus_categoryId_fkey")
-  subcategory  Subcategory?  @relation("SubcategorySubmenus", fields: [subcategoryId], references: [id], onDelete: Cascade, map: "submenus_subcategoryId_fkey")
+  menu        Menus        @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
+  category    Categories?  @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "submenus_categoryId_fkey")
+  subcategory Subcategory? @relation("SubcategorySubmenus", fields: [subcategoryId], references: [id], onDelete: Cascade, map: "submenus_subcategoryId_fkey")
 
   @@map("submenus")
 }
 
-
 model ProductRelation {
-  id           Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   parentId     Int
   childId      Int
-  relationType String    @default("wear_with")
+  relationType String   @default("wear_with")
   sortOrder    Int?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
 
   // Properly linked relations with unique names
   parent products @relation("ProductAsParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -482,22 +489,18 @@ model ProductRelation {
   @@map("product_relations")
 }
 
-
-
 model notifications {
   id        Int      @id @default(autoincrement())
   userId    Int?
   email     String?
   subject   String
   message   String
-  type      String   // e.g. "email", "sms", etc.
-  status    String   // "sent", "failed"
+  type      String // e.g. "email", "sms", etc.
+  status    String // "sent", "failed"
   createdAt DateTime @default(now())
 
   user Users? @relation(fields: [userId], references: [id])
 }
-
-
 
 model FaqCategory {
   id        Int      @id @default(autoincrement())
@@ -512,18 +515,17 @@ model FaqCategory {
 }
 
 model Faq {
-  id          Int         @id @default(autoincrement())
-  question    String
-  answer      String
-  categoryId  Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  question   String
+  answer     String
+  categoryId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   category FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@map("faqs")
 }
-
 
 model ContactUs {
   id        Int      @id @default(autoincrement())
@@ -534,4 +536,66 @@ model ContactUs {
   createdAt DateTime @default(now())
 
   @@map("contact_us")
+}
+
+model Affiliate {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            Users    @relation(fields: [userId], references: [id])
+  baseCommission  Float    @default(10) // Admin's commission percentage
+  shareCommission Float    @default(7) // Affiliate's shared portion (% discount)
+  totalEarnings   Float    @default(0)
+  pendingEarnings Float    @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Back-relations
+  payouts Payout[]
+  coupons Coupon[] // coupons owned by this affiliate
+  orders  Orders[]
+}
+
+model Payout {
+  id            Int       @id @default(autoincrement())
+  affiliateId   Int
+  affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
+  amount        Float
+  status        String    @default("pending") // pending | paid
+  paymentMethod String?
+  paymentRef    String?
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
+}
+
+model Coupon {
+  id            Int    @id @default(autoincrement())
+  code          String @unique
+  discountType  String @default("percentage") // "percentage" | "fixed"
+  discountValue Float
+
+  // Relations
+  affiliateId Int?
+  affiliate   Affiliate? @relation(fields: [affiliateId], references: [id])
+
+  creatorId Int? // who created this coupon (admin or affiliate)
+  creator   Users? @relation("CouponCreator", fields: [creatorId], references: [id])
+
+  // Usage and limits
+  usageCount     Int       @default(0)
+  maxUsage       Int?
+  perUserLimit   Int?      @default(1)
+  minOrderAmount Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  isActive       Boolean   @default(true)
+
+  //  Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //  Optional relation to Orders (if you track coupon usage per order)
+  orders Orders[]
+
+  @@map("coupon")
 }

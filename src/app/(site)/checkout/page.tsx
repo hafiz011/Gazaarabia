@@ -20,6 +20,9 @@ import {
   Smile,
   PlusCircle,
   Edit3,
+  CheckCircle,
+  Percent,
+  BadgeMinus,
 } from "lucide-react";
 
 import { cartService } from "@/lib/services/front-end/cartService";
@@ -34,6 +37,7 @@ import GuestAddressModal from "@/components/GuestAddressModal"; //  import new m
 import { useCart } from "@/app/context/CartContext";
 import UnavailableStockAlert from "@/components/UnavailableStockAlert";
 import ErrorAlert from "@/components/ErrorAlert";
+import { frontCouponService } from "@/lib/services/front-end/couponService";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -57,6 +61,36 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [unavailableItems, setUnavailableItems] = useState<any[]>([]);
   const [showUnavailableAlert, setShowUnavailableAlert] = useState(false);
+
+  // coupon related 
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+
+    try {
+      setCouponError(null);
+      const data = await frontCouponService.validate(
+        token, // first param
+        couponCode.trim().toUpperCase(),
+        subtotal
+      );
+      setAppliedCoupon(data.coupon);
+      setDiscountAmount(data.coupon.discountAmount);
+    } catch (err: any) {
+      setAppliedCoupon(null);
+      setDiscountAmount(0);
+      setCouponError(err.message || "Failed to apply coupon.");
+    }
+  };
+
+
 
 
   //  Fetch addresses for logged-in users
@@ -224,9 +258,10 @@ export default function CheckoutPage() {
 
       }
 
+      const totalAmount = subtotal - discountAmount;
       const orderPayload: any = {
         payment: {
-          totalAmount: subtotal,
+          totalAmount: totalAmount,
           itemsTotal: subtotal,
           subtotal: subtotal,
           paymentMethod: "paypal",
@@ -258,6 +293,12 @@ export default function CheckoutPage() {
             (item.selectedVariantData?.price ?? item.product.sellingPrice) *
             item.quantity,
         })),
+        coupon: appliedCoupon
+          ? {
+            code: appliedCoupon.code,
+            discountAmount: appliedCoupon.discountAmount,
+          }
+          : null,
       };
 
       if (token) {
@@ -620,10 +661,66 @@ export default function CheckoutPage() {
                 </div>
               ))}
               <Divider />
+
+
+              {/* Coupon Input */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter coupon code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    className="border border-[var(--soft-gray)] rounded-lg px-3 py-2 flex-1 text-sm focus:outline-none focus:border-[var(--brand-secondary)]"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    type="button"
+                    className="bg-[var(--brand-secondary)] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[var(--brand-primary)] transition"
+                  >
+                    Apply
+                  </button>
+                </div>
+
+                {couponError && (
+                  <p className="text-sm text-[var(--brand-primary)] mt-2">{couponError}</p>
+                )}
+
+                {appliedCoupon && (
+
+                  <div className="flex items-center gap-2 bg-[var(--brand-secondary)]/10 border border-[var(--brand-secondary)] rounded-md px-3 py-2 mt-3 text-[var(--brand-secondary)] text-sm font-medium">
+                    <CheckCircle size={16} />
+                    <span>
+                      Coupon <b>{appliedCoupon.code}</b> applied —{" "}
+                      {appliedCoupon.discountType === "percentage"
+                        ? `${appliedCoupon.discountValue}% off`
+                        : `£${appliedCoupon.discountValue.toFixed(2)} off`}
+                    </span>
+                  </div>
+
+                )}
+
+              </div>
+
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Coupon Discount ({appliedCoupon.code})</span>
+                  <span>-£{discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <Divider />
               <div className="flex justify-between font-bold pt-3 text-lg text-[var(--brand-primary)]">
+                <span>Total</span>
+                <span>£{(subtotal - discountAmount).toFixed(2)}</span>
+              </div>
+
+
+
+              {/* <div className="flex justify-between font-bold pt-3 text-lg text-[var(--brand-primary)]">
                 <span>Subtotal</span>
                 <span>£{subtotal.toFixed(2)}</span>
-              </div>
+              </div> */}
             </div>
 
             <Button
@@ -637,7 +734,7 @@ export default function CheckoutPage() {
 
             <PaypalModal
               open={paypalOpen}
-              total={subtotal}
+              total={subtotal - discountAmount}
               onClose={() => setPaypalOpen(false)}
               onSuccess={handlePaymentSuccess}
             />

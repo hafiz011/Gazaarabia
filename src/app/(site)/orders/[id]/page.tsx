@@ -43,9 +43,33 @@ interface OrderItem {
   reviewed: boolean;
 }
 
+// interface Order {
+//   id: number;
+//   totalAmount: number;
+//   status: string;
+//   paymentMethod: string;
+//   platform?: string | null;
+//   createdAt: string;
+//   orderItems: OrderItem[];
+//   firstName?: string;
+//   lastName?: string;
+//   company?: string;
+//   address1?: string;
+//   address2?: string;
+//   city?: string;
+//   country?: string;
+//   postalCode?: string;
+//   phone?: string;
+// }
+
 interface Order {
   id: number;
+  subtotal: number;
+  discountTotal: number;
+  shippingCost: number;
   totalAmount: number;
+  couponCode?: string | null;
+  couponDiscount?: number | null;
   status: string;
   paymentMethod: string;
   platform?: string | null;
@@ -61,6 +85,7 @@ interface Order {
   postalCode?: string;
   phone?: string;
 }
+
 
 export default function OrderDetailsPage() {
   const { id } = useParams();
@@ -170,6 +195,15 @@ export default function OrderDetailsPage() {
         <p className="text-[var(--text-secondary)]">
           Placed on {new Date(order.createdAt).toLocaleDateString()}
         </p>
+
+        {order.couponCode && (order.couponDiscount ?? 0) > 0 && (
+          <p className="mt-3 text-sm text-green-600 flex items-center justify-start gap-2">
+            <CheckCircle size={16} className="text-green-500" />
+            You saved <b>£{(order.couponDiscount ?? 0).toFixed(2)}</b> using coupon{" "}
+            <b>{order.couponCode}</b>!
+          </p>
+        )}
+
       </div>
 
       {/* 🛍 Order Summary */}
@@ -279,14 +313,56 @@ export default function OrderDetailsPage() {
           ))}
         </ul>
 
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-[var(--mid-gray)]">
+        {/* <div className="flex justify-between items-center mt-6 pt-4 border-t border-[var(--mid-gray)]">
           <span className="text-lg font-semibold text-[var(--text-primary)]">
             Total
           </span>
           <span className="text-xl font-bold text-[var(--brand-primary)]">
             £{order.totalAmount.toFixed(2)}
           </span>
+        </div> */}
+
+        <div className="mt-6 pt-4 border-t border-[var(--mid-gray)] space-y-2 text-sm text-[var(--text-primary)]">
+          <div className="flex justify-between">
+            <span>Subtotal</span>
+            <span>£{(order.subtotal ?? order.totalAmount).toFixed(2)}</span>
+          </div>
+
+          {/* Coupon discount line */}
+          {order.couponCode && (order.couponDiscount ?? 0) > 0 && (
+            <div className="flex justify-between text-[var(--brand-secondary)]">
+              <span className="flex items-center gap-1">
+                <CheckCircle size={14} className="text-[var(--brand-secondary)]" />
+                Coupon ({order.couponCode})
+              </span>
+              <span>-£{(order.couponDiscount ?? 0).toFixed(2)}</span>
+            </div>
+          )}
+
+          {/* Shipping (optional) */}
+          {order.shippingCost > 0 ? (
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>£{order.shippingCost.toFixed(2)}</span>
+            </div>
+          ) : (
+            <div className="flex justify-between text-[var(--text-secondary)]">
+              <span>Shipping</span>
+              <span>Free</span>
+            </div>
+          )}
+
+          {/* Final Total */}
+          <div className="flex justify-between items-center border-t border-[var(--mid-gray)] pt-3 mt-2">
+            <span className="text-lg font-semibold text-[var(--text-primary)]">
+              Total
+            </span>
+            <span className="text-xl font-bold text-[var(--brand-primary)]">
+              £{order.totalAmount.toFixed(2)}
+            </span>
+          </div>
         </div>
+
 
       </div>
 

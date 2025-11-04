@@ -14,9 +14,14 @@ export const ROUTES = {
     LOGIN: "/admin/login",
     DASHBOARD: "/admin",
   },
+  //  Affiliate routes
+  AFFILIATE: {
+    LOGIN: "/admin/login",
+    DASHBOARD: "/affiliate",
+  },
 
   // Other common pages
-//   BLOG: "/blog",
-//   CONTACT: "/contact",
-//   ABOUT: "/about",
+  //   BLOG: "/blog",
+  //   CONTACT: "/contact",
+  //   ABOUT: "/about",
 };

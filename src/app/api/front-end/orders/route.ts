@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { payment, address, orderItems } = await req.json();
+    const { payment, address, orderItems, coupon } = await req.json();
 
     if (!payment?.totalAmount || !orderItems || orderItems.length === 0) {
       return NextResponse.json(
@@ -22,6 +22,29 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // 1️. Optional: validate coupon again before saving
+    let couponData = null;
+    if (coupon?.code) {
+      couponData = await prisma.coupon.findUnique({
+        where: { code: coupon.code },
+      });
+
+      if (!couponData || !couponData.isActive) {
+        return NextResponse.json(
+          { message: "Invalid or inactive coupon." },
+          { status: 400 }
+        );
+      }
+    }
+
+
+    // Determine affiliate (if coupon belongs to one)
+    let affiliateId = null;
+    if (couponData?.affiliateId) {
+      affiliateId = couponData.affiliateId;
+    }
+
 
     const newOrder = await prisma.orders.create({
       data: {
@@ -48,7 +71,13 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
-        // 🛒 Order Items
+        // Coupon data (if applied)
+        couponId: couponData?.id || null,
+        couponCode: couponData?.code || null,
+        couponDiscount: coupon?.discountAmount ?? 0,
+        affiliateId: affiliateId,
+
+        //  Order Items
         orderItems: {
           create: orderItems.map((item: any) => ({
             productId: item.productId,
@@ -63,6 +92,16 @@ export async function POST(req: NextRequest) {
       },
       include: { orderItems: true },
     });
+
+    //  Increment coupon usage count
+    if (couponData) {
+      await prisma.coupon.update({
+        where: { id: couponData.id },
+        data: {
+          usageCount: { increment: 1 },
+        },
+      });
+    }
 
 
     // 2️. Fetch user info for email
@@ -80,9 +119,10 @@ export async function POST(req: NextRequest) {
       userId: user.id
     });
 
+
     return NextResponse.json({
       success: true,
-      emailResult:emailResult,
+      emailResult: emailResult,
       message: "Order created successfully",
       data: newOrder,
     });

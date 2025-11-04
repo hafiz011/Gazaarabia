@@ -105,7 +105,7 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
 
   const handleActionClick = () => {
     if (current.action?.modalKey) {
-      openModal(current.action.modalKey);  // ✅ fire global modal trigger
+      openModal(current.action.modalKey);  // fire global modal trigger
     }
   };
 

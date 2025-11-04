@@ -14,14 +14,6 @@ export const orderService = {
   /**
    * Get order details by ID
    */
-  // getById: async (token: any, id: number) => {
-  //   const res = await fetch(`/api/front-end/orders/${id}`, {
-  //     headers: { Authorization: `Bearer ${token}` },
-  //   });
-  //   if (!res.ok) throw new Error("Failed to fetch order");
-  //   const json = await res.json();
-  //   return json;
-  // },
 
   getById: async (
     token: string | null,

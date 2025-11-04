@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // 🛡️ Create or update roles
+  // Create or update roles
   const adminRole = await prisma.roles.upsert({
     where: { name: "admin" },
     update: {},
@@ -17,7 +17,13 @@ async function main() {
     create: { name: "customer" },
   });
 
-  // 🔑 Create only the admin user
+  await prisma.roles.upsert({
+    where: { name: "affiliate" },
+    update: {},
+    create: { name: "affiliate" },
+  });
+
+  //  Create only the admin user
   const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.users.upsert({
     where: { email: "admin@example.com" },
@@ -30,7 +36,7 @@ async function main() {
     },
   });
 
-  console.log("Seeding completed: Roles (admin, customer) + Admin user created");
+  console.log("Seeding completed: Roles (admin, customer,affiliate) + Admin user created");
 }
 
 main()
