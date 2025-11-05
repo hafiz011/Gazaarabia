@@ -27,6 +27,7 @@ import {
   ChevronRight,
   HelpCircle,
   MessageCircle,
+  BadgeDollarSign,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -39,6 +40,19 @@ const links = [
   { href: "/admin/submenus", label: "Sub Menus", icon: ListTree },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/users", label: "Users", icon: Users },
+
+{
+  label: "Affiliates",
+  icon: Star,
+  children: [
+    { href: "/admin/affiliates", label: "List Affiliates", icon: Users },
+    { href: "/admin/affiliates/payouts", label: "Payout Requests", icon: BadgeDollarSign },
+    { href: "/admin/affiliates/payouts-history", label: "Payout History", icon: BadgeDollarSign },
+    // { href: "/admin/affiliates/settings", label: "Commission Settings", icon: Settings },
+  ],
+},
+
+
   { href: "/admin/sizes", label: "Sizes", icon: Ruler },
   { href: "/admin/colors-list", label: "Colors", icon: Palette },
   { href: "/admin/category-list", label: "Categories", icon: Layers },
@@ -68,6 +82,15 @@ export default function AdminSidebar({
   const router = useRouter();
   const { data: session, status } = useSession();
   const [confirmLogout, setConfirmLogout] = useState(false);
+
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
+
+const toggleGroup = (label: string) => {
+  setOpenGroups((prev) =>
+    prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+  );
+};
+
 
   // 🔒 Auth check
   useEffect(() => {
@@ -121,7 +144,89 @@ export default function AdminSidebar({
         {/* Navigation */}
         <div className="flex flex-col flex-1 overflow-hidden">
           <nav className="flex-1 overflow-y-auto px-3 mt-5 pb-10 relative z-30">
-            {links.map(({ href, label, icon: Icon }, index) => {
+
+{links.map((item) => {
+  const isGroup = !!item.children;
+
+  // ✅ GROUP MENU
+  if (isGroup) {
+    const Icon = item.icon;
+    const isOpen = openGroups.includes(item.label);
+    const isActiveGroup = item.children.some((child) => pathname.startsWith(child.href));
+
+    return (
+      <div key={item.label} className="mb-1">
+        <button
+          onClick={() => toggleGroup(item.label)}
+          className={`flex items-center gap-3 w-full px-4 py-[12px] rounded-xl cursor-pointer transition
+            ${isActiveGroup ? "bg-[var(--brand-primary)] text-white mt-2" : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white mt-2"}          `}
+          style={{ justifyContent: collapsed ? "center" : "flex-start" }}
+        >
+          <Icon size={20} />
+          {!collapsed && (
+            <>
+              <span>{item.label}</span>
+              <ChevronRight
+                size={18}
+                className={`ml-auto transition-transform ${isOpen ? "rotate-90" : ""}`}
+              />
+            </>
+          )}
+        </button>
+
+        {/* ✅ Submenu */}
+        {!collapsed && (
+          <div
+            className="overflow-hidden transition-all"
+            style={{ maxHeight: isOpen ? `${item.children.length * 40}px` : "0px" }}
+          >
+            <div className="ml-10 mt-1 flex flex-col gap-1">
+              {item.children.map((child) => {
+                const ChildIcon = child.icon;
+                const isActive = pathname === child.href;
+
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className={`flex items-center gap-2 text-sm px-2 py-1.5 rounded-md transition
+                      ${isActive ? "text-white font-medium" : "text-gray-400 hover:text-white"}
+                    `}
+                  >
+                    <ChildIcon size={16} />
+                    {child.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ✅ NORMAL LINKS
+  const Icon = item.icon;
+  const isActive = pathname === item.href;
+
+  return (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`flex items-center gap-3 px-4 py-[12px] rounded-xl text-sm transition
+        ${isActive ? "bg-[var(--brand-primary)] text-white mt-2" : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white mt-2"}      `}
+      style={{ justifyContent: collapsed ? "center" : "flex-start" }}
+    >
+      <Icon size={20} />
+      {!collapsed && <span>{item.label}</span>}
+    </Link>
+  );
+})}
+
+
+
+
+            {/* {links.map(({ href, label, icon: Icon }, index) => {
               const isActive = pathname === href;
               const isLast = index === links.length - 1;
 
@@ -146,7 +251,7 @@ export default function AdminSidebar({
                   {!collapsed && <span className="truncate">{label}</span>}
                 </Link>
               );
-            })}
+            })} */}
           </nav>
 
           {/* Footer */}

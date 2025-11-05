@@ -23,7 +23,7 @@ export const uploadService = {
     return data.url;
   },
 
-   // 🆕 MULTIPLE IMAGE UPLOAD
+   //  MULTIPLE IMAGE UPLOAD
   async uploadMultiple(files: File[], folder: string) {
     const formData = new FormData();
     files.forEach((file) => {

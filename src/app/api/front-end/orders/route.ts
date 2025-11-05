@@ -110,6 +110,17 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
+    //  NEW: Apply affiliate earnings
+    if (affiliateId && affiliateEarning) {
+      await prisma.affiliate.update({
+        where: { id: affiliateId },
+        data: {
+          totalEarnings: { increment: affiliateEarning },
+          pendingEarnings: { increment: affiliateEarning },
+        },
+      });
+    }
+
     //  Increment coupon usage count
     if (couponData) {
       await prisma.coupon.update({

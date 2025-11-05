@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
+import tailwindScrollbar from "tailwind-scrollbar";
 
 const config: Config = {
   content: [
@@ -17,7 +19,13 @@ const config: Config = {
       scrollbar: ['rounded'],
     },
   },
-  plugins: [require('tailwind-scrollbar')],
+  // plugins: [require('tailwind-scrollbar')],
+   plugins: [
+    tailwindScrollbar,
+    plugin(function () {
+      // Your custom plugin code here
+    }),
+  ],
 };
 
 export default config;

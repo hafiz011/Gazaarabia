@@ -556,6 +556,7 @@ model Affiliate {
   payouts Payout[]
   coupons Coupon[] // coupons owned by this affiliate
   orders  Orders[]
+
 }
 
 model Payout {
@@ -566,6 +567,8 @@ model Payout {
   status        String    @default("pending") // pending | paid
   paymentMethod String?
   paymentRef    String?
+  invoiceUrl    String? 
+  periodLabel   String? 
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
 }

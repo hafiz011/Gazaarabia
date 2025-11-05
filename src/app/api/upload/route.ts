@@ -19,17 +19,18 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes);
 
     const fileName = `${Date.now()}-${file.name}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+    // const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+     const uploadDir = path.join(process.cwd(), "uploads", folder);
     await fs.mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, fileName);
     await fs.writeFile(filePath, buffer);
 
     const fileUrl = `/uploads/${folder}/${fileName}`;
-    console.log("✅ File uploaded:", fileUrl);
+    console.log("File uploaded:", fileUrl);
     return NextResponse.json({ url: fileUrl });
   } catch (error) {
-    console.error("❌ UPLOAD ERROR:", error);
+    console.error("UPLOAD ERROR:", error);
     return NextResponse.json({ error: "File upload failed" }, { status: 500 });
   }
 }

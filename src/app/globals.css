@@ -126,8 +126,15 @@ a {
 /* header profile section start  */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
@@ -184,6 +191,7 @@ a {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: var(--brand-primary);
   border-radius: 4px;
@@ -237,12 +245,14 @@ select:not(.MuiInputBase-input):focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1; /* gray-300 */
+  background-color: #cbd5e1;
+  /* gray-300 */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f5f9; /* gray-100 */
+  background-color: #f1f5f9;
+  /* gray-100 */
 }
 
 
@@ -257,6 +267,7 @@ select:not(.MuiInputBase-input):focus {
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -277,3 +288,47 @@ select:not(.MuiInputBase-input):focus {
 }
 
 /* products/slug page end */
+
+
+/* ========================= Admin Affiliate list page start ==================== */
+
+
+/* Only apply styles inside this page */
+.affiliate-page .animate-fadeIn {
+  animation: fadeIn 0.25s ease !important;
+}
+
+.affiliate-page .animate-slideUp {
+  animation: slideUp 0.25s ease !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px)
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+/* Optional: Smooth backdrop blur only in this page */
+.affiliate-page .modal-backdrop {
+  backdrop-filter: blur(6px);
+}
+
+
+
+/* ========================= Admin Affiliate list page end ==================== */
