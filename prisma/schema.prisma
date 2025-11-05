@@ -363,8 +363,10 @@ model Orders {
   coupon   Coupon? @relation(fields: [couponId], references: [id])
 
   // Direct affiliate relation (NEW)
-  affiliateId Int?
-  affiliate   Affiliate? @relation(fields: [affiliateId], references: [id])
+  affiliateId         Int?
+  affiliateCommission Float? // <-- store % used at order time
+  affiliateEarning    Float? // <-- store calculated earning (money)
+  affiliate           Affiliate? @relation(fields: [affiliateId], references: [id])
 
   //  Timestamps
   createdAt DateTime @default(now())

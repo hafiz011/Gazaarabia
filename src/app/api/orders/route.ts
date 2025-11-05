@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 import { getReviewDetails } from "@/lib/helpers/getReviewByOrderItemId";
 
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,47 +14,109 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    // ✅ Fetch user along with role & affiliate info
+    const me = await prisma.users.findUnique({
+      where: { id: Number(userId) },
+      include: {
+        role: true,
+        affiliate: { select: { id: true } },
+      },
+    });
+
+    if (!me || !me.role?.name) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const role = me.role.name.toLowerCase();
+    const isAdmin = role === "admin";
+    const isAffiliate = role === "affiliate";
+
+    // ✅ Only admin and affiliate are allowed
+    if (!isAdmin && !isAffiliate) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    // ✅ If affiliate - ensure the affiliate record exists
+    if (isAffiliate && !me.affiliate?.id) {
+      return NextResponse.json({ message: "Affiliate profile not found" }, { status: 403 });
+    }
+
+
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
-    // 🕵️ Search conditions — removed mode for MySQL
-    const where = search
+    //  Search conditions — removed mode for MySQL
+    const where: any = search
       ? {
-          OR: [
-            { transactionId: { contains: search } },
-            { status: { contains: search } },
-            { paymentMethod: { contains: search } },
-            ...(isNaN(Number(search)) ? [] : [{ id: Number(search) }]),
-            {
-              user: {
-                name: { contains: search },
-              },
+        OR: [
+          { transactionId: { contains: search } },
+          { status: { contains: search } },
+          { paymentMethod: { contains: search } },
+          ...(isNaN(Number(search)) ? [] : [{ id: Number(search) }]),
+          {
+            user: {
+              name: { contains: search },
             },
-          ],
-        }
+          },
+        ],
+      }
       : {};
 
-    // 🧾 Fetch orders
+    //  If affiliate → only show their own orders
+    if (isAffiliate) {
+      where.affiliateId = me.affiliate.id;
+    }
+
+    //  Fetch orders
     const orders = await prisma.orders.findMany({
       where,
       include: {
         user: {
           select: { id: true, name: true, email: true },
         },
+
+        //  Return affiliate info (if order came via affiliate)
+        affiliate: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+
+
+        //  Return coupon info (if coupon used)
+        coupon: {
+          select: {
+            id: true,
+            code: true,
+            discountType: true,
+            discountValue: true,
+            affiliateId: true,
+          },
+        },
+
+
         orderItems: {
           select: {
             id: true,
             quantity: true,
             price: true,
             product: { select: { title: true } },
-             variant: {                                 // ✅ added this
+            variant: {                                 // ✅ added this
               select: {
                 sku: true,
                 color: { select: { name: true } },
                 size: { select: { name: true } },
               },
             },
-            reviewed:true
+            reviewed: true
           },
         },
       },
@@ -63,11 +125,11 @@ export async function GET(req: NextRequest) {
       },
     });
 
-     // 🧠 Add review data per order item using your helper
+    // 🧠 Add review data per order item using your helper
     const formattedOrders = await Promise.all(
-      orders.map(async (order:any) => {
+      orders.map(async (order: any) => {
         const updatedItems = await Promise.all(
-          order.orderItems.map(async (item:any) => {
+          order.orderItems.map(async (item: any) => {
             const review = await getReviewDetails(item.id);
 
             return {
@@ -82,7 +144,7 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ success: true, data: formattedOrders  });
+    return NextResponse.json({ success: true, data: formattedOrders });
     // return NextResponse.json({ success: true, data: orders });
   } catch (error) {
     console.error("❌ Orders GET Error:", error);

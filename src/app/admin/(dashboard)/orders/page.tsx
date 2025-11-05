@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Eye, X } from "lucide-react";
+import { Search, Eye, X, Phone } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -55,6 +55,15 @@ interface Order {
   postalCode: string;
   phone?: string | null;
   orderItems: OrderItem[];
+  coupon?: {
+    code: string;
+    discountType: string;
+    discountValue: number;
+  } | null;
+
+  affiliate?: {
+    user: { name: string; email: string };
+  } | null;
 }
 
 export default function OrdersPage() {
@@ -278,6 +287,103 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
             </div>
           </section>
 
+          {/* Discount / Affiliate Info */}
+          {/* {(order.coupon || order.affiliate) && (
+            <section>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Discount & Affiliate Details</h3>
+              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-2">
+
+                {order.coupon && (
+                  <p>
+                    <span className="font-medium text-gray-800">Coupon Used:</span>{" "}
+                    <span className="text-[var(--brand-primary)] font-semibold">{order.coupon.code}</span>{" "}
+                    ({order.coupon.discountType === "percentage"
+                      ? `${order.coupon.discountValue}% off`
+                      : `£${order.coupon.discountValue} off`}
+                    )
+                  </p>
+                )}
+
+                {order.couponDiscount > 0 && (
+                  <p>
+                    <span className="font-medium text-gray-800">Discount Applied:</span>{" "}
+                    {formatGBP(order.couponDiscount)}
+                  </p>
+                )}
+
+                {order.affiliate && (
+                  <p>
+                    <span className="font-medium text-gray-800">Referred By:</span>{" "}
+                    {order.affiliate.user.name}{" "}
+                    <span className="text-gray-500 text-xs">({order.affiliate.user.email})</span>
+                  </p>
+                )}
+              </div>
+            </section>
+          )} */}
+
+          {/* Discount / Affiliate Info */}
+          {(order.coupon || order.couponDiscount > 0 || order.affiliate) && (
+            <section>
+
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                {order.affiliate || order.coupon?.affiliateId
+                  ? "Affiliate & Discount Details"
+                  : order.coupon || order.couponDiscount > 0
+                    ? "Discount Details"
+                    : "Affiliate Details"}
+              </h3>
+
+
+              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-2">
+
+                {/* Coupon Used */}
+                {order.coupon && (
+                  <p>
+                    <span className="font-medium text-gray-800">Coupon Used:</span>{" "}
+                    <span className="text-[var(--brand-primary)] font-semibold">{order.coupon.code}</span>{" "}
+                    ({order.coupon.discountType === "percentage"
+                      ? `${order.coupon.discountValue}% off`
+                      : `£${order.coupon.discountValue} off`}
+                    )
+                  </p>
+                )}
+
+                {/* Discount Value */}
+                {order.couponDiscount > 0 && (
+                  <p>
+                    <span className="font-medium text-gray-800">Discount Applied:</span>{" "}
+                    {formatGBP(order.couponDiscount)}
+                  </p>
+                )}
+
+                {/* Affiliate Link (Affiliate Coupon) */}
+                {order.coupon?.affiliateId && order.affiliate && (
+                  <p>
+                    <span className="font-medium text-gray-800">Referred By:</span>{" "}
+                    {order.affiliate.user.name}{" "}
+                    <span className="text-gray-500 text-xs">({order.affiliate.user.email})</span>
+                    <span className="ml-2 text-[11px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      Affiliate Coupon
+                    </span>
+                  </p>
+                )}
+
+                {/* Admin Coupon (no affiliateId) */}
+                {order.coupon && !order.coupon.affiliateId && (
+                  <p>
+                    <span className="font-medium text-gray-800">Coupon Type:</span>{" "}
+                    <span className="ml-1 text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                      Admin / Sitewide Coupon
+                    </span>
+                  </p>
+                )}
+
+              </div>
+            </section>
+          )}
+
+
           {/* Address */}
           <section>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Delivery Address</h3>
@@ -292,7 +398,13 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
                 {order.city}, {order.country}
               </p>
               <p>{order.postalCode}</p>
-              {order.phone && <p>📞 {order.phone}</p>}
+              {order.phone && (
+                <p className="flex items-center gap-2">
+                  <Phone size={16} className="text-gray-500" />
+                  {order.phone}
+                </p>
+              )}
+
             </div>
           </section>
 

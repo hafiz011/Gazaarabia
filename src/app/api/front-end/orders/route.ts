@@ -41,8 +41,23 @@ export async function POST(req: NextRequest) {
 
     // Determine affiliate (if coupon belongs to one)
     let affiliateId = null;
+    let affiliateCommission = null;
+    let affiliateEarning = null;
+
     if (couponData?.affiliateId) {
       affiliateId = couponData.affiliateId;
+
+
+      // Get affiliate account to read the current commission %
+      const affiliateInfo = await prisma.affiliate.findUnique({
+        where: { id: affiliateId },
+        select: { baseCommission: true }, // ex: 7% or 10%
+      });
+
+
+      affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
+      affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
+
     }
 
 
@@ -76,6 +91,8 @@ export async function POST(req: NextRequest) {
         couponCode: couponData?.code || null,
         couponDiscount: coupon?.discountAmount ?? 0,
         affiliateId: affiliateId,
+        affiliateCommission: affiliateCommission,
+        affiliateEarning: affiliateEarning,
 
         //  Order Items
         orderItems: {
