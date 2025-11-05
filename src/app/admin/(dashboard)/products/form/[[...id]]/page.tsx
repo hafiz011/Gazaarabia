@@ -127,7 +127,7 @@ function ProductFormContent() {
     }
   };
 
-  // 🔽 Fetch product if edit mode
+  // Fetch product if edit mode
   const fetchProduct = async () => {
     try {
       const res = await productService.getById(token!, Number(id));
@@ -464,8 +464,8 @@ const handleAddSelectedWearWith = () => {
             value={form.costPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
           <TextField label={<RequiredLabel text="Selling Price" />} name="sellingPrice" type="number"
             value={form.sellingPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField label={<RequiredLabel text="Discount Price" />} name="discountPrice" type="number"
-            value={form.discountPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
+          {/* <TextField label={<RequiredLabel text="Discount Price" />} name="discountPrice" type="number"
+            value={form.discountPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} /> */}
           <TextField label={<RequiredLabel text="Base Qty" />} name="baseQty" type="number"
             value={form.baseQty} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
           <TextField label={<RequiredLabel text="Barcode" />} name="barcode"

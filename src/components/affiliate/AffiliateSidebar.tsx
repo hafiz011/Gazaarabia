@@ -24,9 +24,9 @@ const affiliateLinks = [
     { href: "/affiliate/coupons", label: "coupons", icon: TicketPercent  },
     { href: "/affiliate/orders", label: "My Orders", icon: ShoppingCart },
     { href: "/affiliate/earnings", label: "Earnings", icon: Tag },
-    { href: "/affiliate/payouts", label: "Payouts", icon: ClipboardList },
-    { href: "/affiliate/settings", label: "Settings", icon: Settings },
-    { href: "/affiliate/support", label: "Support", icon: MessageSquare },
+    // { href: "/affiliate/payouts", label: "Payouts", icon: ClipboardList },
+    // { href: "/affiliate/settings", label: "Settings", icon: Settings },
+    // { href: "/affiliate/support", label: "Support", icon: MessageSquare },
 ];
 
 export default function AffiliateSidebar({

@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 const prisma: any = new PrismaClient();
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     //  Authenticate user
     const token: any = getTokenFromHeader(req);
     const userId = getUserIdFromToken(token);
@@ -25,7 +26,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     //  Fetch coupon with its creator + affiliate info
     const coupon = await prisma.coupon.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         creator: {
           include: { role: true },
@@ -80,8 +81,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     //  Auth check
     const token: any = getTokenFromHeader(req);
     const userId = getUserIdFromToken(token);
@@ -104,7 +106,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     //  Get the existing coupon (with creator + affiliate)
     const coupon = await prisma.coupon.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
         creator: {
           include: { affiliate: true, role: true },
@@ -177,7 +179,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     // Proceed with update
     const updated = await prisma.coupon.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         ...data,
         discountValue: newDiscountValue,
@@ -197,8 +199,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     //  Authenticate user
     const token: any = getTokenFromHeader(req);
     const userId = getUserIdFromToken(token);
@@ -219,7 +222,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     // Fetch coupon details
     const coupon = await prisma.coupon.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: { creator: { include: { role: true } } },
     });
 
@@ -257,7 +260,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     //  Perform delete
-    await prisma.coupon.delete({ where: { id: Number(params.id) } });
+    await prisma.coupon.delete({ where: { id: Number(id) } });
 
     return NextResponse.json({ message: "Deleted successfully" }, { status: 200 });
   } catch (err: any) {

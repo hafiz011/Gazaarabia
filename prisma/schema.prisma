@@ -43,7 +43,7 @@ model Users {
 model Sizes {
   id          Int      @id @default(autoincrement())
   name        String   @unique
-  description String?
+  description String?   @db.LongText
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -58,7 +58,7 @@ model Colors {
   name           String           @unique
   hexCode        String
   rgbCode        String?
-  description    String?
+  description    String?          @db.LongText
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   productvariant productvariant[]
@@ -101,7 +101,7 @@ model Subcategory {
 model MaterialCare {
   id          Int      @id @default(autoincrement())
   title       String
-  description String
+  description String   @db.LongText
   careType    String?
   material    String?
   createdAt   DateTime @default(now())
@@ -116,7 +116,7 @@ model MaterialCare {
 model DeliveryOptions {
   id          Int      @id @default(autoincrement())
   name        String
-  description String?
+  description String?  @db.LongText
   minTime     Int
   maxTime     Int
   cutOffTime  String
@@ -163,7 +163,7 @@ model brand {
   logo       String?
   isTrending Boolean    @default(false)
   createdAt  DateTime   @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime   @updatedAt
   products   products[]
 }
 
@@ -182,7 +182,7 @@ model productimage {
 model products {
   id               Int              @id @default(autoincrement())
   slug             String           @unique
-  description      String?
+  description      String?           @db.LongText
   active           Boolean          @default(true)
   barcode          String?
   baseQty          Int

@@ -73,7 +73,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 py-10">
+    <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 pt-20 pb-10"> 
       <div className="mt-5 w-full max-w-2xl bg-white shadow-lg rounded-2xl p-10 border border-[var(--soft-gray)] transition-all duration-300 hover:shadow-xl">
 
         {/* Heading */}

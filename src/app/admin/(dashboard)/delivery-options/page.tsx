@@ -50,7 +50,7 @@ export default function DeliveryOptionsListPage() {
     if (!session?.user?.token) return;
     try {
       setLoading(true);
-      const data :any = await deliveryOptionService.getAll(session.user.token);
+      const data: any = await deliveryOptionService.getAll(session.user.token);
       setDeliveryOptions(data?.data ?? null);
     } catch (error: any) {
       setAlertMessageData({
@@ -173,13 +173,15 @@ export default function DeliveryOptionsListPage() {
                 paginatedOptions.map((option, idx) => (
                   <tr
                     key={option.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition relative`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition relative`}
                   >
                     <td className="py-3 px-5">{startIndex + idx + 1}</td>
-                    <td className="py-3 px-5 font-medium">{option.name}</td>
-                    <td className="py-3 px-5">{option.description}</td>
+                    {/* <td className="py-3 px-5 font-medium">{option.name}</td>
+                    <td className="py-3 px-5">{option.description}</td> */}
+                    <td className="py-3 px-5 font-medium max-w-[180px] truncate">{option.name}</td>
+                    <td className="py-3 px-5 max-w-[280px] truncate">{option.description}</td>
+
                     <td className="py-3 px-5">{option.minTime}</td>
                     <td className="py-3 px-5">{option.maxTime}</td>
                     <td className="py-3 px-5">{option.cutOffTime}</td>
