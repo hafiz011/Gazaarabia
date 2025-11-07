@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma: any = new PrismaClient();
 
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params; // await params
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
   }
 }
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }>  }) {
   try {
     const { id } = await context.params; // affiliateId
     const affiliateId = Number(id);
@@ -95,7 +95,7 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 }
 
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }>  }) {
   try {
     const { id } = await context.params; //  await params
 
