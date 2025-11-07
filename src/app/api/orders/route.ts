@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ Fetch user along with role & affiliate info
+    //  Fetch user along with role & affiliate info
     const me = await prisma.users.findUnique({
       where: { id: Number(userId) },
       include: {
@@ -31,12 +31,12 @@ export async function GET(req: NextRequest) {
     const isAdmin = role === "admin";
     const isAffiliate = role === "affiliate";
 
-    // ✅ Only admin and affiliate are allowed
+    // Only admin and affiliate are allowed
     if (!isAdmin && !isAffiliate) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // ✅ If affiliate - ensure the affiliate record exists
+    // If affiliate - ensure the affiliate record exists
     if (isAffiliate && !me.affiliate?.id) {
       return NextResponse.json({ message: "Affiliate profile not found" }, { status: 403 });
     }
@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // 🧠 Add review data per order item using your helper
+    //  Add review data per order item using your helper
     const formattedOrders = await Promise.all(
       orders.map(async (order: any) => {
         const updatedItems = await Promise.all(
@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
             return {
               ...item,
               review: review,
-              // reviewed: !!review, // ✅ true if a review exists
+              // reviewed: !!review, //  true if a review exists
             };
           })
         );
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: formattedOrders });
     // return NextResponse.json({ success: true, data: orders });
   } catch (error) {
-    console.error("❌ Orders GET Error:", error);
+    console.error(" Orders GET Error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch orders" },
       { status: 500 }

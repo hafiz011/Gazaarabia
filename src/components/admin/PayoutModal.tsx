@@ -24,7 +24,7 @@ export default function PayoutModal({
   return (
     <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center animate-fade-in">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 animate-slide-up relative">
-        
+
         {/* Close Button */}
         <button
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
@@ -51,9 +51,8 @@ export default function PayoutModal({
           <button
             onClick={onSubmit}
             disabled={submitting}
-            className={`px-4 py-2 rounded bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)] transition flex items-center gap-2 text-sm ${
-              submitting ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+            className={`px-4 py-2 rounded bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)] transition flex items-center gap-2 text-sm ${submitting ? "opacity-70 cursor-not-allowed" : ""
+              }`}
           >
             {submitting && (
               <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>

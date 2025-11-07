@@ -185,23 +185,23 @@ export async function GET(req: Request) {
     // Fetch coupons
     let coupons;
 
-    if (roleName === "admin") {
-      //  Admin can see all coupons
-      coupons = await prisma.coupon.findMany({
-        include: {
-          affiliate: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-            },
-          },
-          creator: {
-            select: { id: true, name: true, email: true, role: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-    } else {
+    // if (roleName === "admin") {
+    //   //  Admin can see all coupons
+    //   coupons = await prisma.coupon.findMany({
+    //     include: {
+    //       affiliate: {
+    //         select: {
+    //           id: true,
+    //           user: { select: { name: true, email: true } },
+    //         },
+    //       },
+    //       creator: {
+    //         select: { id: true, name: true, email: true, role: true },
+    //       },
+    //     },
+    //     orderBy: { createdAt: "desc" },
+    //   });
+    // } else {
       //  Affiliate can see only their own coupons
       coupons = await prisma.coupon.findMany({
         where: { creatorId: creatorId },
@@ -218,7 +218,7 @@ export async function GET(req: Request) {
         },
         orderBy: { createdAt: "desc" },
       });
-    }
+    // }
 
     return NextResponse.json({ data: coupons }, { status: 200 });
   } catch (err: any) {

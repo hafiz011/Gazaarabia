@@ -55,8 +55,21 @@ export async function POST(req: NextRequest) {
       });
 
 
-      affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
-      affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
+      // affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
+      // affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
+
+      affiliateCommission = affiliateInfo?.baseCommission ?? 0;
+
+      const itemsTotal = payment.itemsTotal ?? 0;
+      const discountAmount = coupon?.discountAmount ?? 0;
+
+      // Apply percentage first, then subtract discount
+      const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
+      const finalEarning = earningBeforeDiscount - discountAmount;
+
+      // Avoid negative commission
+      affiliateEarning = Math.max(finalEarning, 0);
+
 
     }
 
@@ -109,17 +122,6 @@ export async function POST(req: NextRequest) {
       },
       include: { orderItems: true },
     });
-
-    //  NEW: Apply affiliate earnings
-    if (affiliateId && affiliateEarning) {
-      await prisma.affiliate.update({
-        where: { id: affiliateId },
-        data: {
-          totalEarnings: { increment: affiliateEarning },
-          pendingEarnings: { increment: affiliateEarning },
-        },
-      });
-    }
 
     //  Increment coupon usage count
     if (couponData) {

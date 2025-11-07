@@ -1,224 +1,303 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { payoutService } from "@/lib/services/payoutService";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-import PayoutModal from "@/components/admin/PayoutModal";
-import { Search, DollarSign } from "lucide-react";
+import { Search, Eye, CheckCircle, DollarSign } from "lucide-react";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
-import { AlertInterface, PopUpInterface } from "@/lib/types";
+import PayoutModal from "@/components/admin/PayoutModal";
+import Pagination from "@/components/admin/Pagination";
 
-export default function AffiliatePayoutPage() {
+export default function AffiliateInvoicePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const token = session?.user?.token;
 
-  const [affiliates, setAffiliates] = useState([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [affiliateFilter, setAffiliateFilter] = useState("all");
+
   const [modal, setModal] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // ✅ Alert states
-  const [alertMessageData, setAlertMessageData] = useState<AlertInterface>({
-    isOpen: false,
-    type: "",
-    message: "",
-  });
+  const [alert, setAlert] = useState<{
+    isOpen: boolean;
+    type: "success" | "error" | "";
+    message: string;
+  }>({ isOpen: false, type: "", message: "" });
 
-  const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
-    isOpen: false,
-    type: "",
-    message: "",
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setMonthFilter("all");
+    setAffiliateFilter("all");
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
 
   useEffect(() => {
     if (status === "loading") return;
-    if (status === "unauthenticated") return router.replace(ROUTES.ADMIN.LOGIN);
-    if (session?.user?.role !== "admin") return router.replace(ROUTES.HOME);
-
-    fetchAffiliates();
+    if (!session?.user || session?.user.role !== "admin")
+      return router.replace(ROUTES.ADMIN.LOGIN);
+    fetchInvoices();
   }, [status, session]);
 
-  const fetchAffiliates = async () => {
+  const fetchInvoices = async () => {
     setLoading(true);
     const data = await payoutService.list(token);
-    setAffiliates(data);
+    setInvoices(data);
     setLoading(false);
   };
 
-  const filtered = affiliates.filter((a: any) =>
-    a.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Dropdown source lists
+  const monthOptions = useMemo(() => {
+    return ["all", ...new Set(invoices.map((inv) => inv.monthLabel))];
+  }, [invoices]);
+
+  const affiliateOptions = useMemo(() => {
+    return ["all", ...new Set(invoices.map((inv) => inv.affiliate.user.name))];
+  }, [invoices]);
+
+  // Filtering logic
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      const bySearch =
+        inv.affiliate.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inv.affiliate.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const byStatus =
+        statusFilter === "all" ||
+        (statusFilter === "paid" && inv.isPaid) ||
+        (statusFilter === "unpaid" && !inv.isPaid);
+
+      const byMonth = monthFilter === "all" || inv.monthLabel === monthFilter;
+
+      const byAffiliate = affiliateFilter === "all" || inv.affiliate.user.name === affiliateFilter;
+
+      return bySearch && byStatus && byMonth && byAffiliate;
+    });
+  }, [invoices, searchTerm, statusFilter, monthFilter, affiliateFilter]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredInvoices.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + pageSize);
 
   const handleMarkPaid = async () => {
-    if (!modal.paymentMethod.trim() || !modal.paymentRef.trim()) {
-      setPopUpAlertData({
-        isOpen: true,
-        type: "warning",
-        message: "Payment Method and Transaction Reference are required.",
-        onConfirm: () => setPopUpAlertData({ ...popUpAlertData, isOpen: false }),
-      });
+    if (!modal.paymentMethod || !modal.paymentRef) {
+      setAlert({ isOpen: true, type: "error", message: "Payment details required" });
       return;
     }
 
-    try {
-      setSubmitting(true);
+    setSubmitting(true);
+    await payoutService.markPaid(token, {
+      invoiceId: modal.id,
+      paymentMethod: modal.paymentMethod,
+      paymentRef: modal.paymentRef,
+    });
 
-      await payoutService.markPaid(token, {
-        affiliateId: modal.id,
-        paymentMethod: modal.paymentMethod,
-        paymentRef: modal.paymentRef,
-      });
-
-      setAlertMessageData({
-        isOpen: true,
-        type: "success",
-        message: "Payout processed successfully!",
-      });
-
-      setModal(null);
-      fetchAffiliates();
-    } catch (err: any) {
-      setAlertMessageData({
-        isOpen: true,
-        type: "error",
-        message: err.message || "Failed to process payout.",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    setAlert({ isOpen: true, type: "success", message: "Invoice marked paid!" });
+    setModal(null);
+    fetchInvoices();
+    setSubmitting(false);
   };
 
   if (loading) return <Loader />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* ✅ Global message */}
-      {(alertMessageData.isOpen && alertMessageData.type) && (
-        <div className="mb-4">
-          <AlertMessage
-            type={alertMessageData.type}
-            message={alertMessageData.message}
-            onClose={() => setAlertMessageData({ ...alertMessageData, isOpen: false })}
-          />
-        </div>
+
+      {(alert.isOpen && alert.type) && (
+        <AlertMessage
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert({ isOpen: false, type: "", message: "" })}
+        />
       )}
 
-      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow border border-gray-200">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold">Affiliate Payouts</h1>
+        {/* FILTERS */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4">
 
-          <div className="relative w-full sm:w-72">
+          {/* LEFT: FILTERS */}
+          <div className="flex flex-wrap items-center gap-3">
+
+            {/* Status */}
+            <select
+              className="border rounded-lg px-3 py-2 text-sm"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="all">All Status</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+
+            {/* Month */}
+            <select
+              className="border rounded-lg px-3 py-2 text-sm"
+              value={monthFilter}
+              onChange={(e) => { setMonthFilter(e.target.value); setCurrentPage(1); }}
+            >
+              {monthOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m === "all" ? "All Months" : m}
+                </option>
+              ))}
+            </select>
+
+            {/* Affiliate */}
+            <select
+              className="border rounded-lg px-3 py-2 text-sm"
+              value={affiliateFilter}
+              onChange={(e) => { setAffiliateFilter(e.target.value); setCurrentPage(1); }}
+            >
+              {affiliateOptions.map((a) => (
+                <option key={a} value={a}>
+                  {a === "all" ? "All Affiliates" : a}
+                </option>
+              ))}
+            </select>
+
+            {/* ✅ Clear Filters */}
+            <button
+              onClick={clearFilters}
+              className="text-sm text-[var(--brand-primary)] underline hover:text-[var(--brand-secondary)] transition"
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          {/* RIGHT: SEARCH */}
+          <div className="relative w-full lg:w-72 ml-auto">
             <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
             <input
-              type="text"
-              placeholder="Search affiliates..."
+              className="border rounded-full pl-10 pr-4 py-2 text-sm w-full"
+              placeholder="Search invoices..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-full pl-10 pr-4 py-2 text-sm 
-              focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
 
-        <div className="border-t border-gray-200"></div>
+
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100 text-gray-700 text-xs uppercase">
+            <tr>
+              <th className="px-5 py-3 text-left">Affiliate</th>
+              <th className="px-5 py-3 text-left">Month</th>
+              <th className="px-5 py-3 text-left">Invoice</th>
+              <th className="px-5 py-3 text-left">Amount</th>
+              <th className="px-5 py-3 text-left">Status</th>
+              <th className="px-5 py-3 text-right">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {paginatedInvoices.length === 0 ? (
               <tr>
-                <th className="py-3 px-5 text-left">Affiliate</th>
-                <th className="py-3 px-5 text-left">Email</th>
-                <th className="py-3 px-5 text-left">Pending Earnings</th>
-                <th className="py-3 px-5 text-right">Action</th>
+                <td
+                  colSpan={6}
+                  className="text-center py-12 text-gray-500 text-sm"
+                >
+                  No invoices found
+                </td>
               </tr>
-            </thead>
-
-            <tbody>
-              {filtered.length > 0 ? (
-                filtered.map((a: any, idx) => (
-                  <tr
-                    key={idx}
-                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
-                  >
-                    <td className="py-3 px-5 font-medium">{a.user.name}</td>
-                    <td className="py-3 px-5 text-gray-600">{a.user.email}</td>
-                    <td className="py-3 px-5 font-semibold text-[var(--brand-primary)]">
-                      £{a.pendingEarnings.toFixed(2)}
-                    </td>
-
-                    <td className="py-3 px-5 text-right">
+            ) : (
+              paginatedInvoices.map((inv, idx) => (
+                <tr key={idx} className="border-b hover:bg-gray-50">
+                  <td className="px-5 py-3">{inv.affiliate.user.name}</td>
+                  <td className="px-5 py-3">{inv.monthLabel}</td>
+                  <td className="px-5 py-3">
+                    <a href={inv.invoiceUrl} target="_blank" className="text-[var(--brand-primary)] underline">
+                      {inv.invoiceNumber}
+                    </a>
+                  </td>
+                  <td className="px-5 py-3 font-semibold">£{inv.totalAmount.toFixed(2)}</td>
+                  <td className="px-5 py-3">
+                    {inv.isPaid ? (
+                      <span className="text-green-600 flex items-center gap-1">
+                        <CheckCircle size={14} /> Paid
+                      </span>
+                    ) : (
+                      <span className="text-red-600">Unpaid</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    {inv.isPaid ? (
+                      <a href={inv.invoiceUrl} target="_blank" className="text-sm text-blue-600 flex items-center gap-1">
+                        <Eye size={14} /> View
+                      </a>
+                    ) : (
                       <button
-                       // disabled={a.pendingEarnings <= 0}
-                        onClick={() =>
-                          setModal({ id: a.id, name: a.user.name, paymentMethod: "", paymentRef: "" })
-                        }
-                        className="inline-flex items-center gap-1 bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white px-4 py-1.5 rounded-md text-sm disabled:opacity-50"
+                        className="bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white px-4 py-1.5 rounded-md text-sm"
+                        onClick={() => setModal({ ...inv, paymentMethod: "", paymentRef: "" })}
                       >
-                        <DollarSign size={14} /> Mark Paid
+                        <DollarSign size={14} className="inline" /> Mark Paid
                       </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-6 text-center text-gray-500">
-                    No affiliates found
+                    )}
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+
+        </table>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredInvoices.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
+
       </div>
 
       {/* Modal */}
       {modal && (
         <PayoutModal
           show={true}
-          title={`Process Payout - ${modal.name}`}
-          submitText={submitting ? "Processing..." : "Confirm Payout"}
+          title={`Mark Invoice Paid - ${modal.invoiceNumber}`}
+          submitText={submitting ? "Processing..." : "Confirm Payment"}
           submitting={submitting}
           onClose={() => setModal(null)}
           onSubmit={handleMarkPaid}
         >
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Payment Method (Bank, PayPal, UPI...)"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              value={modal.paymentMethod}
-              onChange={(e) => setModal({ ...modal, paymentMethod: e.target.value })}
-            />
-
-            <input
-              type="text"
-              placeholder="Payment Reference / Transaction ID"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              value={modal.paymentRef}
-              onChange={(e) => setModal({ ...modal, paymentRef: e.target.value })}
-            />
-          </div>
+          <input
+            className="border rounded-lg w-full px-3 py-2 mb-3"
+            placeholder="Payment Method"
+            value={modal.paymentMethod}
+            onChange={(e) => setModal({ ...modal, paymentMethod: e.target.value })}
+          />
+          <input
+            className="border rounded-lg w-full px-3 py-2"
+            placeholder="Payment Reference"
+            value={modal.paymentRef}
+            onChange={(e) => setModal({ ...modal, paymentRef: e.target.value })}
+          />
         </PayoutModal>
       )}
-
-      {/* Confirmation popup */}
-      <PopupAlert
-        type={popUpAlertData.type as any}
-        message={popUpAlertData.message}
-        confirmText="OK"
-        onConfirm={popUpAlertData.onConfirm}
-        show={popUpAlertData.isOpen}
-      />
     </div>
   );
 }

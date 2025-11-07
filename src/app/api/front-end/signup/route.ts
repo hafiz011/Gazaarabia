@@ -49,8 +49,6 @@ export async function POST(req: Request) {
           userId: user.id,
           baseCommission: 10,     // default 10%
           shareCommission: 7,     // default 7%
-          totalEarnings: 0,
-          pendingEarnings: 0,
           isActive: true,
         },
       });

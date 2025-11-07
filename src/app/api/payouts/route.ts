@@ -32,65 +32,65 @@ export async function GET(req: NextRequest) {
 
 
 // POST: Mark payout as paid
-export async function POST(req: NextRequest) {
-  const { affiliateId, paymentMethod, paymentRef } = await req.json();
+// export async function POST(req: NextRequest) {
+//   const { affiliateId, paymentMethod, paymentRef } = await req.json();
 
-  const token: any = getTokenFromHeader(req);
-  const userId = getUserIdFromToken(token);
+//   const token: any = getTokenFromHeader(req);
+//   const userId = getUserIdFromToken(token);
 
-  if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+//   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.users.findUnique({
-    where: { id: userId },
-    include: { role: true },
-  });
+//   const user = await prisma.users.findUnique({
+//     where: { id: userId },
+//     include: { role: true },
+//   });
 
-  if (!user || user.role.name.toLowerCase() !== "admin")
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+//   if (!user || user.role.name.toLowerCase() !== "admin")
+//     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-  const affiliate = await prisma.affiliate.findUnique({ where: { id: affiliateId } });
-  if (!affiliate) return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
+//   const affiliate = await prisma.affiliate.findUnique({ where: { id: affiliateId } });
+//   if (!affiliate) return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
 
-  const amount = affiliate.pendingEarnings;
+//   const amount = affiliate.pendingEarnings;
 
-  if (amount <= 0)
-    return NextResponse.json({ message: "No pending earnings to payout" }, { status: 400 });
+//   if (amount <= 0)
+//     return NextResponse.json({ message: "No pending earnings to payout" }, { status: 400 });
 
-  const payoutRecord = await prisma.payout.create({
-    data: {
-      affiliateId,
-      amount,
-      paymentMethod,
-      paymentRef,
-      status: "paid",
-      paidAt: new Date(),
-    },
-    include: { affiliate: { include: { user: true } } }
-  });
+//   const payoutRecord = await prisma.payout.create({
+//     data: {
+//       affiliateId,
+//       amount,
+//       paymentMethod,
+//       paymentRef,
+//       status: "paid",
+//       paidAt: new Date(),
+//     },
+//     include: { affiliate: { include: { user: true } } }
+//   });
 
-  // === Generate Invoice ===
-  const invoiceNumber = `INV-${payoutRecord.id.toString().padStart(5, "0")}`;
-  const invoiceUrl = await generateAffiliateInvoicePDF({
-    affiliateName: payoutRecord.affiliate.user.name,
-    affiliateEmail: payoutRecord.affiliate.user.email,
-    payoutAmount: payoutRecord.amount,
-    paymentMethod: payoutRecord.paymentMethod!,
-    paymentRef: payoutRecord.paymentRef!,
-    payoutDate: payoutRecord.paidAt!.toLocaleDateString(),
-    invoiceNumber,
-  });
+//   // === Generate Invoice ===
+//   const invoiceNumber = `INV-${payoutRecord.id.toString().padStart(5, "0")}`;
+//   const invoiceUrl = await generateAffiliateInvoicePDF({
+//     affiliateName: payoutRecord.affiliate.user.name,
+//     affiliateEmail: payoutRecord.affiliate.user.email,
+//     payoutAmount: payoutRecord.amount,
+//     paymentMethod: payoutRecord.paymentMethod!,
+//     paymentRef: payoutRecord.paymentRef!,
+//     payoutDate: payoutRecord.paidAt!.toLocaleDateString(),
+//     invoiceNumber,
+//   });
 
-  //  Save invoice URL in DB
-  await prisma.payout.update({
-    where: { id: payoutRecord.id },
-    data: { invoiceUrl, status: "paid", paidAt: new Date(), }
-  });
+//   //  Save invoice URL in DB
+//   await prisma.payout.update({
+//     where: { id: payoutRecord.id },
+//     data: { invoiceUrl, status: "paid", paidAt: new Date(), }
+//   });
 
 
-  await prisma.affiliate.update({
-    where: { id: affiliateId },
-    data: { pendingEarnings: 0 },
-  });
+//   await prisma.affiliate.update({
+//     where: { id: affiliateId },
+//     data: { pendingEarnings: 0 },
+//   });
 
-  return NextResponse.json({ success: true, message: "Payout marked as paid", invoiceUrl });
-}
+//   return NextResponse.json({ success: true, message: "Payout marked as paid", invoiceUrl });
+// }

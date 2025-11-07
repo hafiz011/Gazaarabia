@@ -20,12 +20,12 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
     "/admin/category-list": {
       title: "Categories",
       subtitle: "Manage the available categories for your product catalog.",
-      action: { label: "Add Category", modalKey: "category" }, 
+      action: { label: "Add Category", modalKey: "category" },
     },
     "/admin/subcategories": {
       title: "Subcategories",
       subtitle: "Manage the available subcategories for your product catalog.",
-      action: { label: "Add Subcategory", modalKey: "subcategory" }, 
+      action: { label: "Add Subcategory", modalKey: "subcategory" },
     },
     "/admin/colors-list": {
       title: "Colors",
@@ -37,65 +37,76 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage available sizes.",
       action: { label: "Add Size", href: "/admin/size-add" },
     },
-   "/admin/material-cares": {
+    "/admin/material-cares": {
       title: "Material Cares Advice",
       subtitle: "Manage material cares advice.",
       action: { label: "Add Material Care", href: "/admin/material-cares/form" },
     },
-   "/admin/brands": {
+    "/admin/brands": {
       title: "Brands",
       subtitle: "Manage the available brands for your product catalog.",
       action: { label: "Add Brand", href: "/admin/brands/form" },
     },
-   "/admin/products": {
+    "/admin/products": {
       title: "Products",
       subtitle: "Manage the available products.",
       action: { label: "Add Product", href: "/admin/products/form" },
     },
-   "/admin/reviews": {
+    "/admin/reviews": {
       title: "Reviews",
       subtitle: "Manage the products reviews.",
       action: { label: "Add Review", href: "/admin/reviews/form" },
     },
-   "/admin/delivery-options": {
+    "/admin/delivery-options": {
       title: "Delivery Options",
       subtitle: "Manage the delivery options.",
       action: { label: "Add Delivery Option", href: "/admin/delivery-options/form" },
     },
-   "/admin/blog-categories": {
+    "/admin/blog-categories": {
       title: "Blog Categories",
       subtitle: "Manage the blog categories.",
       action: { label: "Add Category", modalKey: "blog-category" },
     },
-   "/admin/blogs": {
+    "/admin/blogs": {
       title: "Blogs",
       subtitle: "Manage the blogs.",
-      action: { label: "Add Blog",href: "/admin/blogs/form" },
+      action: { label: "Add Blog", href: "/admin/blogs/form" },
     },
-   "/admin/menus": {
+    "/admin/menus": {
       title: "Menus",
       subtitle: "Manage the menus.",
-      action: { label: "Add Menu",href: "/admin/menus/form" },
+      action: { label: "Add Menu", href: "/admin/menus/form" },
     },
-   "/admin/submenus": {
+    "/admin/submenus": {
       title: "Sub Menus",
       subtitle: "Manage the submenus.",
-      action: { label: "Add Submenu",href: "/admin/submenus/form" },
+      action: { label: "Add Submenu", href: "/admin/submenus/form" },
     },
-     "/admin/faq-categories": {
+    "/admin/faq-categories": {
       title: "Faq Categories",
       subtitle: "Manage the available faq categories.",
-      action: { label: "Add Category", modalKey: "faq-category" }, 
+      action: { label: "Add Category", modalKey: "faq-category" },
     },
-     "/admin/faqs": {
+    "/admin/faqs": {
       title: "FAQs",
       subtitle: "Manage the faqs.",
-      action: { label: "Add Faq",href: "/admin/faqs/form" },
+      action: { label: "Add Faq", href: "/admin/faqs/form" },
     },
-     "/admin/contact-us": {
+    "/admin/contact-us": {
       title: "Contact us",
       subtitle: "Manage the contact us.",
     },
+    "/admin/coupons": {
+      title: "Coupons",
+      subtitle: "Manage and track all discount codes.",
+      action: { label: "Add coupon", href: "/admin/coupons/form" },
+    },
+    "/admin/affiliates": {
+      title: "Affiliates",
+      subtitle: "Manage and track all affiliates.",
+      action: { label: "Add Affiliate", href: "/admin/affiliates/form" },
+    },
+
   };
 
   const current = titles[pathname] || {

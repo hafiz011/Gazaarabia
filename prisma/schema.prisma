@@ -368,6 +368,8 @@ model Orders {
   affiliateEarning    Float? // <-- store calculated earning (money)
   affiliate           Affiliate? @relation(fields: [affiliateId], references: [id])
 
+  affiliatePaid Boolean @default(false)
+
   //  Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -546,8 +548,7 @@ model Affiliate {
   user            Users    @relation(fields: [userId], references: [id])
   baseCommission  Float    @default(10) // Admin's commission percentage
   shareCommission Float    @default(7) // Affiliate's shared portion (% discount)
-  totalEarnings   Float    @default(0)
-  pendingEarnings Float    @default(0)
+
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -556,6 +557,7 @@ model Affiliate {
   payouts Payout[]
   coupons Coupon[] // coupons owned by this affiliate
   orders  Orders[]
+  invoices AffiliateInvoice[]
 
 }
 
@@ -603,4 +605,26 @@ model Coupon {
   orders Orders[]
 
   @@map("coupon")
+}
+
+
+model AffiliateInvoice {
+  id           Int      @id @default(autoincrement())
+  affiliateId  Int
+  affiliate    Affiliate @relation(fields: [affiliateId], references: [id])
+
+  invoiceNumber String
+  invoiceUrl    String
+  monthLabel    String
+  totalAmount   Float
+
+  // Payment
+  isPaid        Boolean  @default(false)
+  paymentMethod String?
+  paymentRef    String?
+  paidAt        DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("affiliateInvoice")
 }

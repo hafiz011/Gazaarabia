@@ -11,9 +11,9 @@ const prisma: any = new PrismaClient();
  */
 export async function POST(req: NextRequest) {
   try {
-    const { address, orderItems, payment } = await req.json();
+    const { address, orderItems, payment, coupon } = await req.json();
 
-    // 1️.  Validate incoming data
+    // Validate required fields
     if (
       !address?.email ||
       !address?.firstName ||
@@ -27,12 +27,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2️. Check if user already exists
+    // 1️. Validate coupon if sent
+    let couponData = null;
+    if (coupon?.code) {
+      couponData = await prisma.coupon.findUnique({
+        where: { code: coupon.code },
+      });
+
+      if (!couponData || !couponData.isActive) {
+        return NextResponse.json(
+          { message: "Invalid or inactive coupon." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2️. Determine affiliate info
+    let affiliateId = null;
+    let affiliateCommission = null;
+    let affiliateEarning = null;
+
+    if (couponData?.affiliateId) {
+      affiliateId = couponData.affiliateId;
+
+      const affiliateInfo = await prisma.affiliate.findUnique({
+        where: { id: affiliateId },
+        select: { baseCommission: true },
+      });
+
+      affiliateCommission = affiliateInfo?.baseCommission ?? 0;
+
+      const itemsTotal = payment.itemsTotal ?? 0;
+      const discountAmount = coupon?.discountAmount ?? 0;
+
+      const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
+      const finalEarning = earningBeforeDiscount - discountAmount;
+      affiliateEarning = Math.max(finalEarning, 0);
+    }
+
+    // 3️. Find or create user
     let user = await prisma.users.findUnique({
       where: { email: address.email },
     });
 
-    // 3️. If not, create new guest user
     let generatedPassword: string | null = null;
 
     if (!user) {
@@ -55,7 +92,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4️. Save delivery address to addresses table
+    // 4️. Save delivery address
     const deliveryAddress = await prisma.address.create({
       data: {
         userId: user.id,
@@ -72,11 +109,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 5️. Create the order
+    // 5️. Create order with coupons + affiliate fields
     const newOrder = await prisma.orders.create({
       data: {
         userId: user.id,
         addressId: deliveryAddress.id,
+
         totalAmount: payment.totalAmount,
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
@@ -85,7 +123,6 @@ export async function POST(req: NextRequest) {
         status: (payment.paymentStatus || "completed").toLowerCase(),
         paypalResponse: payment.paypalResponse,
 
-        // Store snapshot too (so even if user edits address later, order remains correct)
         firstName: address.firstName,
         lastName: address.lastName,
         company: address.company,
@@ -95,6 +132,16 @@ export async function POST(req: NextRequest) {
         country: address.country,
         postalCode: address.postalCode,
         phone: address.phone,
+
+        //  Coupon Fields
+        couponId: couponData?.id || null,
+        couponCode: couponData?.code || null,
+        couponDiscount: coupon?.discountAmount ?? 0,
+
+        // Affiliate Fields
+        affiliateId,
+        affiliateCommission,
+        affiliateEarning,
 
         orderItems: {
           create: orderItems.map((item: any) => ({
@@ -111,7 +158,15 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
-    // 6️. Send email confirmation to guest
+    // 6️. Increment coupon usage
+    if (couponData) {
+      await prisma.coupon.update({
+        where: { id: couponData.id },
+        data: { usageCount: { increment: 1 } },
+      });
+    }
+
+    // 7️. Send email confirmation
     const emailResult = await sendGuestOrderEmail(user.email, {
       name: user.name,
       orderId: newOrder.id,
@@ -120,25 +175,10 @@ export async function POST(req: NextRequest) {
       generatedPassword,
     });
 
-    // 7️. Log email notification
-    await prisma.notifications.create({
-      data: {
-        userId: user.id,
-        email: user.email,
-        subject: "Your Order Confirmation",
-        message: `Order #${newOrder.id} confirmation email sent.`,
-        type: "email",
-        status: emailResult.success ? "sent" : "failed",
-      },
-    });
-
     return NextResponse.json({
       success: true,
       message: "Guest order placed successfully",
-      data: {
-        user,
-        order: newOrder,
-      },
+      data: { user, order: newOrder },
     });
   } catch (err: any) {
     console.error("Guest Checkout Error:", err);

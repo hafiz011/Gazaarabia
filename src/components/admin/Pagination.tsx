@@ -5,7 +5,7 @@ import React from "react";
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  totalItems: number;  // ✅ make sure this line exists
+  totalItems: number;  //  make sure this line exists
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
@@ -46,7 +46,7 @@ export default function Pagination({
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
           >
-            {[5, 10, 20, 50].map((num,index) => (
+            {[5, 10, 20, 50].map((num, index) => (
               <option key={index} value={num}>
                 {num}
               </option>
@@ -57,9 +57,9 @@ export default function Pagination({
           {totalItems === 0
             ? "0 of 0"
             : `${(currentPage - 1) * pageSize + 1}–${Math.min(
-                currentPage * pageSize,
-                totalItems
-              )} of ${totalItems}`}
+              currentPage * pageSize,
+              totalItems
+            )} of ${totalItems}`}
         </span>
       </div>
 
@@ -68,11 +68,10 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`px-3 py-1 text-sm rounded-full border transition ${
-            currentPage === 1
+          className={`px-3 py-1 text-sm rounded-full border transition ${currentPage === 1
               ? "text-gray-300 bg-gray-100 cursor-not-allowed"
               : "text-gray-700 border-gray-300 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-          }`}
+            }`}
         >
           Previous
         </button>
@@ -86,11 +85,10 @@ export default function Pagination({
             <button
               key={idx}
               onClick={() => onPageChange(page as number)}
-              className={`px-3 py-1 text-sm rounded-full transition ${
-                currentPage === page
+              className={`px-3 py-1 text-sm rounded-full transition ${currentPage === page
                   ? "bg-[var(--brand-primary)] text-white shadow-sm"
                   : "text-gray-700 hover:bg-gray-100"
-              }`}
+                }`}
             >
               {page}
             </button>
@@ -100,11 +98,10 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || totalPages === 0}
-          className={`px-3 py-1 text-sm rounded-full border transition ${
-            currentPage === totalPages || totalPages === 0
+          className={`px-3 py-1 text-sm rounded-full border transition ${currentPage === totalPages || totalPages === 0
               ? "text-gray-300 bg-gray-100 cursor-not-allowed"
               : "text-gray-700 border-gray-300 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-          }`}
+            }`}
         >
           Next
         </button>

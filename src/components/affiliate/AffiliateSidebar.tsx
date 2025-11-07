@@ -13,6 +13,7 @@ import {
     ChevronLeft,
     ChevronRight,
     TicketPercent,
+    UserCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -21,7 +22,8 @@ import { ROUTES } from "@/constants/routes";
 
 const affiliateLinks = [
     { href: "/affiliate", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/affiliate/coupons", label: "coupons", icon: TicketPercent  },
+    { href: "/affiliate/profile", label: "Profile", icon: UserCircle },
+    { href: "/affiliate/coupons", label: "coupons", icon: TicketPercent },
     { href: "/affiliate/orders", label: "My Orders", icon: ShoppingCart },
     { href: "/affiliate/earnings", label: "Earnings", icon: Tag },
     // { href: "/affiliate/payouts", label: "Payouts", icon: ClipboardList },
