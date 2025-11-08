@@ -34,7 +34,10 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
         orders,
       } = data;
 
-      const invoicesDir = path.join(process.cwd(), "public", "invoices");
+      // const invoicesDir = path.join(process.cwd(), "public", "invoices");
+      const folder = "invoices";
+      const invoicesDir = path.join(process.cwd(), "uploads", folder);
+
       if (!fs.existsSync(invoicesDir)) fs.mkdirSync(invoicesDir, { recursive: true });
 
       const filePath = path.join(invoicesDir, `${invoiceNumber}.pdf`);
@@ -193,7 +196,7 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
         );
 
       doc.end();
-      stream.on("finish", () => resolve(`/invoices/${invoiceNumber}.pdf`));
+      stream.on("finish", () => resolve(`/uploads/invoices/${invoiceNumber}.pdf`));
       stream.on("error", reject);
     } catch (err) {
       reject(err);

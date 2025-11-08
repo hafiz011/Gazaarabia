@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   if (!invoice) return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
 
-  // ✅ Extract Year + Month from monthLabel (e.g. "February 2025")
+  //  Extract Year + Month from monthLabel (e.g. "February 2025")
   const [monthName, yearStr] = invoice.monthLabel.split(" ");
   const year = Number(yearStr);
   const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth(); // Converts month name to month index (0-11)
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const monthStart = new Date(year, monthIndex, 1);
   const monthEnd = new Date(year, monthIndex + 1, 1);
 
-  // ✅ Mark invoice as paid
+  // Mark invoice as paid
   await prisma.affiliateInvoice.update({
     where: { id: invoiceId },
     data: {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // ✅ Mark all orders in this month as paid
+  //  Mark all orders in this month as paid
   await prisma.orders.updateMany({
     where: {
       affiliateId: invoice.affiliateId,
