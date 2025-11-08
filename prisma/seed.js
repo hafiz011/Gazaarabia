@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
@@ -23,7 +23,7 @@ async function main() {
     create: { name: "affiliate" },
   });
 
-  //  Create only the admin user
+  // Create only the admin user
   const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.users.upsert({
     where: { email: "admin@example.com" },
@@ -36,14 +36,13 @@ async function main() {
     },
   });
 
-  console.log("Seeding completed: Roles (admin, customer,affiliate) + Admin user created");
+  console.log("Seeding completed: Roles (admin, customer, affiliate) + Admin user created");
 }
 
 main()
-  .catch((e) => {
+  .then(() => prisma.$disconnect())
+  .catch(async (e) => {
     console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
     await prisma.$disconnect();
+    process.exit(1);
   });
