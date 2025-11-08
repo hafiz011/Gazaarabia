@@ -112,12 +112,14 @@ export async function sendOrderConfirmationEmail(
     name: string;
     orderId: number;
     total: number;
+    invoiceNumber: any;
+    invoiceUrl: string;
     address: string;
     userId?: number;
   }
 ) {
   const domain = process.env.DOMAIN;
-
+  const invoiceLink = `${domain}${details.invoiceUrl}`;
   const subject = `Order Confirmation — #${details.orderId} | Gazaarabia`;
 
   const html = `
@@ -172,10 +174,18 @@ export async function sendOrderConfirmationEmail(
             <a href="${domain}/orders/${details.orderId}"
               style="display:inline-block;padding:12px 24px;background:#E82C3F;color:#ffffff;
               text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
-              box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-right:18px;">
               View Your Order
             </a>
+
+            <a href="${invoiceLink}" target="_blank"
+              style="display:inline-block;padding:12px 24px;background:#009639;color:#ffffff;
+              text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
+              box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-left:18px;">
+              Download Invoice
+            </a>
           </div>
+
 
           <p style="font-size:14px;color:#374151;margin-top:28px;">
             Thank you for shopping with <strong>Gazaarabia</strong> —  

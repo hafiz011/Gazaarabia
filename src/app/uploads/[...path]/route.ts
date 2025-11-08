@@ -2,9 +2,15 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-export async function GET(req: Request, { params }: any) {
+// export async function GET(req: Request, { params }: any) {
+
+export async function GET(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
+
+  const { path: fileParts } = await ctx.params;
+
+
   try {
-    const filePath = path.join(process.cwd(), "uploads", ...params.path);
+    const filePath = path.join(process.cwd(), "uploads", ...fileParts);
     const file:any = await fs.readFile(filePath);
 
     const ext = path.extname(filePath).slice(1);

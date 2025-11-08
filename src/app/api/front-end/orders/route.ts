@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 import { sendOrderConfirmationEmail } from "@/lib/helpers/emailHelper";
+import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 
 
 const prisma: any = new PrismaClient();
@@ -68,7 +69,9 @@ export async function POST(req: NextRequest) {
       const finalEarning = earningBeforeDiscount - discountAmount;
 
       // Avoid negative commission
-      affiliateEarning = Math.max(finalEarning, 0);
+      // affiliateEarning = Math.max(finalEarning, 0);
+      affiliateEarning = Number(Math.max(finalEarning, 0).toFixed(2));
+
 
 
     }
@@ -123,6 +126,10 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
+
+    //  Generate invoice
+    const invoice :any = await generateCustomerInvoice(newOrder.id);
+
     //  Increment coupon usage count
     if (couponData) {
       await prisma.coupon.update({
@@ -145,6 +152,8 @@ export async function POST(req: NextRequest) {
       name: user.name,
       orderId: newOrder.id,
       total: payment.totalAmount,
+      invoiceNumber: invoice?.invoiceNumber,
+      invoiceUrl: invoice?.invoiceUrl,
       address: `${address.address1}, ${address.city}, ${address.country}, ${address.postalCode}`,
       userId: user.id
     });

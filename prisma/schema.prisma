@@ -370,6 +370,9 @@ model Orders {
 
   affiliatePaid Boolean @default(false)
 
+  invoiceNumber String?   // stores invoice code like INV-000001
+  invoiceUrl    String?   // link to PDF stored locally or S3
+
   //  Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
