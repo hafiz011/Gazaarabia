@@ -1,7 +1,9 @@
 export const productService = {
-  async getAll(token: string, search?: string, page: number = 1, pageSize: number = 20) {
+  // async getAll(token: string, search?: string, page: number = 1, pageSize: number = 20) {
+  async getAll(token: string, search?: string) {
     try {
-      let url = `/api/products?page=${page}&pageSize=${pageSize}`;
+      // let url = `/api/products?page=${page}&pageSize=${pageSize}`;
+      let url = `/api/products`;
       if (search) {
         url += `&search=${encodeURIComponent(search)}`;
       }

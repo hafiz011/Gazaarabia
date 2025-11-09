@@ -47,6 +47,7 @@ export default function Header() {
   const token = session?.user?.token || null;
 
   const [menus, setMenus] = useState<MenuItem[]>([]);
+  const [toolbarText, setToolbarText] = useState<any>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -63,6 +64,9 @@ export default function Header() {
       const res = await fetch("/api/header", { cache: "no-store" });
       const data = await res.json();
       if (data.success) setMenus(data.data);
+      if (data?.headerText) {
+        setToolbarText(data?.headerText)
+      }
     } catch (err) {
       console.error("Failed to load menus:", err);
     }
@@ -105,12 +109,15 @@ export default function Header() {
         : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
         }`}
     >
-      {/* 🔹 Top Bar */}
-      <div className="bg-[var(--brand-primary)] text-white text-center text-xs py-2 tracking-wide relative z-10">
-        FREE SHIPPING ON ALL ORDERS OVER ₹1000
-      </div>
+      {/*Top Bar */}
+      {toolbarText &&
+        <div className="bg-[var(--brand-primary)] text-white text-center text-xs py-2 tracking-wide relative z-10">
+          {toolbarText}
+          {/* FREE SHIPPING ON ALL ORDERS OVER ₹1000 */}
+        </div>
+      }
 
-      {/* 🔹 Main Header */}
+      {/* Main Header */}
       <div className="w-full relative z-50">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[96px] relative">
           {/* Mobile Menu Button + Search */}
@@ -124,8 +131,8 @@ export default function Header() {
 
           <div
             className={`flex items-center gap-3 lg:hidden z-50 ${isHomePage && (!isScrolled && !hovered)
-                ? "text-white"
-                : "text-[var(--text-primary)]"
+              ? "text-white"
+              : "text-[var(--text-primary)]"
               }`}
           >
             <button onClick={toggleMenu} className="transition-colors duration-300">
@@ -154,7 +161,7 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* 🔹 Desktop Menu */}
+          {/*  Desktop Menu */}
           <nav
             className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && (!isScrolled && !hovered)
               ? "text-white"
@@ -175,7 +182,7 @@ export default function Header() {
                   {item.name}
                 </Link>
 
-                {/* 🔻 Mega Menu */}
+                {/*  Mega Menu */}
                 {item.dropdown && activeMenu === item.slug && (
                   <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
                     <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
@@ -235,7 +242,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* 🔹 Right Icons (Desktop + Mobile) */}
+          {/*  Right Icons (Desktop + Mobile) */}
           <div
             className={`flex items-center gap-4 ${isHomePage && (!isScrolled && !hovered)
               ? "text-white"
@@ -303,7 +310,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 🔹 Drawers */}
+      {/*  Drawers */}
       <ProfileDrawer isOpen={profileDrawer} onClose={() => setProfileDrawer(false)} />
       <CartDrawer isOpen={cartDrawer} onClose={() => setCartDrawer(false)} />
 

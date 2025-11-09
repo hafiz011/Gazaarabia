@@ -2,17 +2,32 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface Category {
-  src: string;
-  label: string;
+  id: number,
+  name: string,
+  slug: string,
+  image: string,
 }
 
 interface ShopByCategoryProps {
   categories: Category[];
 }
 
+
+
 export default function ShopByCategory({ categories }: ShopByCategoryProps) {
+  const router = useRouter();
+
+  const handleCardClick = (item: any) => {
+    if (item?.slug) {
+      router.push(`/shop/${item.slug}`);
+    } else {
+      console.warn("Category slug is missing:", item);
+    }
+  };
+
   return (
     <section className="bg-[#FAFAFA] pt-4 md:pt-6 pb-16 md:pb-20">
       <div className="max-w-[1500px] mx-auto px-8 lg:px-20 text-center">
@@ -40,11 +55,12 @@ export default function ShopByCategory({ categories }: ShopByCategoryProps) {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="relative group cursor-pointer overflow-hidden rounded-[1.25rem] bg-white shadow-sm hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] transition-all duration-700"
+              onClick={() => { handleCardClick(cat) }}
             >
               {/* Image */}
               <Image
-                src={cat.src}
-                alt={cat.label}
+                src={cat.image}
+                alt={cat.name}
                 width={500}
                 height={600}
                 className="w-full h-[340px] md:h-[420px] object-cover transition-transform duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-110"
@@ -57,7 +73,7 @@ export default function ShopByCategory({ categories }: ShopByCategoryProps) {
               {/* Text Content */}
               <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-8">
                 <h3 className="text-white text-base md:text-lg font-medium tracking-wide mb-1 drop-shadow-md">
-                  {cat.label}
+                  {cat.name}
                 </h3>
                 <div className="h-[2px] w-8 bg-white/70 rounded-full group-hover:w-12 transition-all duration-500"></div>
               </div>

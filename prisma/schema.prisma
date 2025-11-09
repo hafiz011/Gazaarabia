@@ -71,6 +71,7 @@ model Categories {
   id            Int           @id @default(autoincrement())
   name          String        @unique
   slug          String        @unique
+  image         String?  
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   products      products[]
@@ -630,4 +631,17 @@ model AffiliateInvoice {
   createdAt DateTime @default(now())
 
   @@map("affiliateInvoice")
+}
+
+
+model HomePageSetting {
+  id              Int      @id @default(autoincrement())
+  heroSlides      Json?
+  shopByCategory  Json?
+  midBanner       String?
+  signatureProducts Json?
+  headerText         String?  
+  updatedAt       DateTime @updatedAt
+
+  @@map("homepage_settings")
 }

@@ -29,6 +29,7 @@ import {
   MessageCircle,
   BadgeDollarSign,
   TicketPercent,
+  Home,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -37,6 +38,7 @@ import { ROUTES } from "@/constants/routes";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/home-setting", label: "Home Setting", icon: Home },
   { href: "/admin/menus", label: "Menus", icon: PanelsTopLeft },
   { href: "/admin/submenus", label: "Sub Menus", icon: ListTree },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
@@ -53,7 +55,7 @@ const links = [
     ],
   },
 
-    { href: "/admin/coupons", label: "coupons", icon: TicketPercent },
+  { href: "/admin/coupons", label: "coupons", icon: TicketPercent },
 
   { href: "/admin/sizes", label: "Sizes", icon: Ruler },
   { href: "/admin/colors-list", label: "Colors", icon: Palette },

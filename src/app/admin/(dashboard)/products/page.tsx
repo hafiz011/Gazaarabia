@@ -15,7 +15,7 @@ interface Product {
   sellingPrice: number;
   brand?: { name: string };
   category?: { name: string };
-  categories:any,
+  categories: any,
   // images?: { url: string }[];
   productimage?: { url: string }[];
   active: boolean;
@@ -44,7 +44,7 @@ export default function ProductListPage() {
       const res = await productService.getAll(token!, searchTerm);
       setProducts(res.data || res);
     } catch (error) {
-      console.error("❌ Error fetching products:", error);
+      console.error(" Error fetching products:", error);
     } finally {
       setLoading(false);
     }
@@ -134,9 +134,8 @@ export default function ProductListPage() {
                 paginatedProducts.map((p, idx) => (
                   <tr
                     key={p.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-5">{startIndex + idx + 1}</td>
                     <td className="py-3 px-5">
@@ -156,9 +155,8 @@ export default function ProductListPage() {
                     <td className="py-3 px-5">£{p.sellingPrice}</td>
                     <td className="py-3 px-5">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          }`}
                       >
                         {p.active ? "Active" : "Inactive"}
                       </span>

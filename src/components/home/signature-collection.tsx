@@ -5,16 +5,32 @@ import { motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
+import { useRouter } from "next/navigation";
 
-export default function SignatureCollection() {
-  const products = [
-    { src: "/images/home/coat1.jpg", title: "Cape Cover Up Camel", price: "£55.00" },
-    { src: "/images/home/coat2.jpg", title: "Utility Jacket Mink", price: "£49.00" },
-    { src: "/images/home/coat3.jpg", title: "Boucle Manto Camel", price: "£60.00" },
-    { src: "/images/home/coat4.jpg", title: "Tote Jacket Black", price: "£49.00" },
-    { src: "/images/home/coat5.jpg", title: "Textured Manto Taupe", price: "£58.00" },
-    { src: "/images/home/coat2.jpg", title: "Wool Cape Dusty Olive", price: "£62.00" },
-  ];
+interface Product {
+  id: number,
+  title: string,
+  slug: string,
+  sellingPrice: number,
+  productimage: any,
+}
+
+interface SignatureProductsProps {
+  products: Product[];
+}
+
+
+export default function SignatureCollection({ products }: SignatureProductsProps) {
+  const router = useRouter();
+
+  const handleCardClick = (item: any) => {
+    if (item?.slug) {
+      router.push(`/products/${item.slug}`);
+    } else {
+      console.warn("⚠️ Item slug is missing:", item);
+    }
+  };
+
 
   return (
     <section className="bg-[#ffffff] pt-8 pb-16 md:pt-10 md:pb-20 overflow-hidden">
@@ -49,7 +65,7 @@ export default function SignatureCollection() {
             className="!overflow-visible w-full"
           >
             {products.map((p, i) => (
-              <SwiperSlide key={i} className="!w-auto">
+              <SwiperSlide key={i} className="!w-auto" onClick={() => { handleCardClick(p) }}>
                 <motion.div
                   className="overflow-hidden rounded-2xl bg-[#F8F8F8] group shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-all duration-700"
                   initial={{ opacity: 0, y: 40 }}
@@ -60,7 +76,7 @@ export default function SignatureCollection() {
                   {/* Image */}
                   <div className="overflow-hidden">
                     <Image
-                      src={p.src}
+                      src={p.productimage?.[0]?.url}
                       alt={p.title}
                       width={400}
                       height={500}
@@ -74,7 +90,7 @@ export default function SignatureCollection() {
                       {p.title}
                     </h3>
                     <p className="text-[var(--brand-primary)] font-semibold text-sm md:text-base">
-                      {p.price}
+                      £{p.sellingPrice}
                     </p>
                   </div>
                 </motion.div>

@@ -9,7 +9,7 @@ import { PopUpInterface, AlertInterface } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 
-// 🧮 Convert hex to RGB
+//  Convert hex to RGB
 const hexToRgb = (hex: string) => {
   const cleanHex = hex.replace("#", "");
   const bigint = parseInt(cleanHex, 16);
@@ -60,7 +60,7 @@ export default function AddColorPage() {
     description: "e.g. Bright red shade for T-shirts",
   };
 
-  // 🛡️ Redirect non-authenticated users
+  //  Redirect non-authenticated users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
@@ -68,13 +68,14 @@ export default function AddColorPage() {
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 🟡 Prefill if editing
+  //  Prefill if editing
   useEffect(() => {
     if (colorId && token) {
       const fetchColor = async () => {
         try {
           setLoading(true);
-          const data = await colorService.getById(token, colorId);
+          const fetchRes: any = await colorService.getById(token, colorId);
+          const data = fetchRes?.data;
           setForm({
             name: data.name,
             hexCode: data.hexCode,
@@ -228,17 +229,16 @@ export default function AddColorPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            } bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white font-medium px-6 py-2 rounded-md shadow transition`}
+            className={`${loading ? "opacity-70 cursor-not-allowed" : ""
+              } bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white font-medium px-6 py-2 rounded-md shadow transition`}
           >
             {loading
               ? colorId
                 ? "Updating..."
                 : "Adding..."
               : colorId
-              ? "Update Color"
-              : "Add Color"}
+                ? "Update Color"
+                : "Add Color"}
           </button>
         </div>
       </form>

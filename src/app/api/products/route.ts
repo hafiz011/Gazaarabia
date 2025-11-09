@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    // const page = parseInt(searchParams.get("page") || "1");
+    // const pageSize = parseInt(searchParams.get("pageSize") || "20");
 
     const where = search
       ? { title: { contains: search } }
@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
       prisma.products.count({ where }),
       prisma.products.findMany({
         where,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        // skip: (page - 1) * pageSize,
+        // take: pageSize,
         include: {
           brand: true,
           categories: true,
@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       total,
-      page,
-      pageSize,
+      // page,
+      // pageSize,
       data: products,
     });
   } catch (error) {
@@ -275,14 +275,14 @@ export async function POST(req: NextRequest) {
 
 
     // ✅ NEW: Save Wear With relationships
-if (body.wearWith && Array.isArray(body.wearWith) && body.wearWith.length > 0) {
-  const relations = body.wearWith.map((relatedId: number) => ({
-    productId: product.id,
-    relatedId,
-    relationType: "wear_with",
-  }));
-  await prisma.productRelation.createMany({ data: relations });
-}
+    if (body.wearWith && Array.isArray(body.wearWith) && body.wearWith.length > 0) {
+      const relations = body.wearWith.map((relatedId: number) => ({
+        productId: product.id,
+        relatedId,
+        relationType: "wear_with",
+      }));
+      await prisma.productRelation.createMany({ data: relations });
+    }
 
     return NextResponse.json(
       {

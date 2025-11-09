@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 // PUT - Update category (Protected)
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -15,11 +15,23 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const categoryId = Number(id);
 
   try {
-    const { name, slug } = await req.json();
+    const { name, slug, image } = await req.json();
 
-    if (!name || !name.trim() || !slug || !slug.trim()) {
+    if (!name || !name.trim()) {
       return NextResponse.json(
         { success: false, message: "Category name is required." },
+        { status: 400 }
+      );
+    }
+    if (!slug || !slug.trim()) {
+      return NextResponse.json(
+        { success: false, message: "Category slug is required." },
+        { status: 400 }
+      );
+    }
+    if (!image || !image.trim()) {
+      return NextResponse.json(
+        { success: false, message: "Category image is required." },
         { status: 400 }
       );
     }
@@ -49,7 +61,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const updated = await prisma.categories.update({
       where: { id: categoryId },
-      data: { name: name.trim(), slug: slug.trim() },
+      data: { name: name.trim(), slug: slug.trim(), image },
     });
 
     return NextResponse.json({ success: true, data: updated });

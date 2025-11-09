@@ -319,7 +319,8 @@ function ProductFormContent() {
     if (!searchQuery.trim()) return;
     try {
       setIsSearching(true);
-      const res = await productService.getAll(token, searchQuery, pageNum, 5);
+      // const res = await productService.getAll(token, searchQuery, pageNum, 5);
+      const res = await productService.getAll(token, searchQuery);
 
       const products = res.data ?? [];
       setHasMore(products.length === 5); // detect if next page exists
@@ -360,27 +361,27 @@ function ProductFormContent() {
 
 
   // ✅ Toggle selection
-const toggleWearWithSelection = (id: number) => {
-  setSelectedWearWith((prev) =>
-    prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-  );
-};
-
-// ✅ Add selected to wearWith
-const handleAddSelectedWearWith = () => {
-  const selectedProducts = searchResults.filter((p) =>
-    selectedWearWith.includes(p.id)
-  );
-  setWearWith((prev) => {
-    const newOnes = selectedProducts.filter(
-      (prod) => !prev.find((p) => p.id === prod.id)
+  const toggleWearWithSelection = (id: number) => {
+    setSelectedWearWith((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
-    return [...prev, ...newOnes];
-  });
-  setSelectedWearWith([]);
-  setSearchResults([]);
-  setSearchQuery("");
-};
+  };
+
+  // ✅ Add selected to wearWith
+  const handleAddSelectedWearWith = () => {
+    const selectedProducts = searchResults.filter((p) =>
+      selectedWearWith.includes(p.id)
+    );
+    setWearWith((prev) => {
+      const newOnes = selectedProducts.filter(
+        (prod) => !prev.find((p) => p.id === prod.id)
+      );
+      return [...prev, ...newOnes];
+    });
+    setSelectedWearWith([]);
+    setSearchResults([]);
+    setSearchQuery("");
+  };
 
   return (
     <Box className="p-6 max-w-7xl mx-auto">

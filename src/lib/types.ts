@@ -47,7 +47,7 @@ export interface Order {
 export interface Size {
   id: number;
   name: string;
-   description?: string;
+  description?: string;
   createdAt: string;
 }
 
@@ -102,3 +102,30 @@ export interface Order {
   updatedAt: string;
   orderItems: OrderItem[];
 }
+
+
+
+
+// HOme page start
+
+
+export interface HeroSlide {
+  desktop: string;
+  mobile: string;
+}
+
+export interface ShopCategoryItem {
+  label: string;
+  image: string | null;
+  categoryId: number;
+}
+
+export interface HomePageData {
+  heroSlides: HeroSlide[];
+  shopByCategory: ShopCategoryItem[];
+  midBanner: string | null;
+}
+
+
+
+// HOme page end

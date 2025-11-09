@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 
 const prisma: any = new PrismaClient();
 
@@ -158,6 +159,10 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
+    // 5.5 Generate Invoice PDF
+    const invoice: any = await generateCustomerInvoice(newOrder.id);
+
+
     // 6️. Increment coupon usage
     if (couponData) {
       await prisma.coupon.update({
@@ -173,6 +178,8 @@ export async function POST(req: NextRequest) {
       total: payment.totalAmount,
       address: `${address.address1}, ${address.city}, ${address.country}, ${address.postalCode}`,
       generatedPassword,
+      invoiceNumber: invoice?.invoiceNumber,
+      invoiceUrl: invoice?.invoiceUrl
     });
 
     return NextResponse.json({
@@ -201,6 +208,8 @@ export async function sendGuestOrderEmail(
     total: number;
     address: string;
     generatedPassword?: string | null;
+    invoiceNumber?: string | null;
+    invoiceUrl?: string | null;
   }
 ) {
   try {
@@ -297,11 +306,22 @@ export async function sendGuestOrderEmail(
 
             <div style="text-align:center;margin:40px 0 20px;">
               <a href="${domain}/orders/${details.orderId}"
-                style="display:inline-block;padding:12px 24px;background:#009639;color:#ffffff;
+                style="display:inline-block;padding:12px 24px;background:#E82C3F;color:#ffffff;
                 text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
-                box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-right:18px;">
                 View Your Order
               </a>
+              ${details?.invoiceUrl
+        ? `
+                  <a href="${domain}/${details?.invoiceUrl}" target="_blank"
+                    style="display:inline-block;padding:12px 24px;background:#009639;color:#ffffff;
+                    text-decoration:none;border-radius:8px;font-weight:500;letter-spacing:0.3px;
+                    box-shadow:0 2px 6px rgba(0,0,0,0.15);margin-left:18px;">
+                    Download Invoice
+                  </a>
+                  `
+        : ""
+      }
             </div>
 
             <p style="font-size:14px;color:#374151;margin-top:28px;">

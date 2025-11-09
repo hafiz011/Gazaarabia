@@ -7,50 +7,64 @@ import "swiper/css/pagination";
 import { Star, StarHalf, StarOff } from "lucide-react";
 import { motion } from "framer-motion";
 
-const reviews = [
-  {
-    name: "Amina",
-    text: "Absolutely love the quality and modest designs! Every piece feels premium and well-made.",
-    rating: 4.5,
-    date: "2025-09-15T10:00:00Z",
-  },
-  {
-    name: "Fatima",
-    text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
-    rating: 5,
-    date: "2025-10-10T12:30:00Z",
-  },
-  {
-    name: "Layla",
-    text: "Fast delivery and stunning presentation. Will definitely shop again.",
-    rating: 4,
-    date: "2025-10-14T09:00:00Z",
-  },
-  {
-    name: "Zahra",
-    text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
-    rating: 5,
-    date: "2025-09-25T16:45:00Z",
-  },
-  {
-    name: "Fatima",
-    text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
-    rating: 5,
-    date: "2025-10-10T12:30:00Z",
-  },
-  {
-    name: "Layla",
-    text: "Fast delivery and stunning presentation. Will definitely shop again.",
-    rating: 4,
-    date: "2025-10-14T09:00:00Z",
-  },
-  {
-    name: "Zahra",
-    text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
-    rating: 5,
-    date: "2025-09-25T16:45:00Z",
-  },
-];
+// const reviews = [
+//   {
+//     name: "Amina",
+//     text: "Absolutely love the quality and modest designs! Every piece feels premium and well-made.",
+//     rating: 4.5,
+//     date: "2025-09-15T10:00:00Z",
+//   },
+//   {
+//     name: "Fatima",
+//     text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
+//     rating: 5,
+//     date: "2025-10-10T12:30:00Z",
+//   },
+//   {
+//     name: "Layla",
+//     text: "Fast delivery and stunning presentation. Will definitely shop again.",
+//     rating: 4,
+//     date: "2025-10-14T09:00:00Z",
+//   },
+//   {
+//     name: "Zahra",
+//     text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
+//     rating: 5,
+//     date: "2025-09-25T16:45:00Z",
+//   },
+//   {
+//     name: "Fatima",
+//     text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
+//     rating: 5,
+//     date: "2025-10-10T12:30:00Z",
+//   },
+//   {
+//     name: "Layla",
+//     text: "Fast delivery and stunning presentation. Will definitely shop again.",
+//     rating: 4,
+//     date: "2025-10-14T09:00:00Z",
+//   },
+//   {
+//     name: "Zahra",
+//     text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
+//     rating: 5,
+//     date: "2025-09-25T16:45:00Z",
+//   },
+// ];
+
+
+interface Review {
+  id: number,
+  rating: number,
+  comment: string,
+  user: any,
+  createdAt: string
+}
+
+interface ReviewsProps {
+  reviews: Review[];
+}
+
 
 function getTimeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -61,7 +75,7 @@ function getTimeAgo(dateString: string) {
   return `${Math.floor(diff / 30)} months ago`;
 }
 
-export default function CustomerStories() {
+export default function CustomerStories({ reviews }: ReviewsProps) {
   return (
     <section className="bg-[#FAFAFA] pt-4 pb-16 md:pt-6 md:pb-20 text-center overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 md:px-10">
@@ -103,7 +117,7 @@ export default function CustomerStories() {
               >
                 {/* Review Text */}
                 <p className="italic text-[var(--text-secondary)] leading-relaxed mb-5">
-                  “{r.text}”
+                  “{r.comment}”
                 </p>
 
                 {/* Rating */}
@@ -129,10 +143,10 @@ export default function CustomerStories() {
                 {/* Author */}
                 <div className="flex flex-col">
                   <span className="font-semibold text-[var(--brand-primary)] text-base">
-                    — {r.name}
+                    — {r?.user?.name}
                   </span>
                   <span className="text-xs text-[var(--text-muted)] mt-1">
-                    {getTimeAgo(r.date)}
+                    {getTimeAgo(r.createdAt)}
                   </span>
                 </div>
               </motion.div>

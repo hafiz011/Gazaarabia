@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, Trash2, X, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
+import { uploadService } from "@/lib/services/uploadService";
 
 export default function CategoryListPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -24,6 +25,9 @@ export default function CategoryListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [categoryImage, setCategoryImage] = useState<string | null>(null);
+
 
   const modalAction = useModalStore((state) => state.action);
   const clearModal = useModalStore((state) => state.clearModal);
@@ -40,7 +44,7 @@ export default function CategoryListPage() {
   const token = session?.user?.token;
   const router = useRouter();
 
-  // 🛡️ Auth guard
+  // Auth guard
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
@@ -48,7 +52,7 @@ export default function CategoryListPage() {
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 📥 Fetch categories
+  //  Fetch categories
   useEffect(() => {
     if (token) fetchCategories();
   }, [token]);
@@ -71,11 +75,12 @@ export default function CategoryListPage() {
     }
   };
 
-  // 🔁 Reset modal state
+  //  Reset modal state
   useEffect(() => {
     if (modalAction === "category") {
       setFormName("");
       setFormSlug("")
+      setCategoryImage(null);
       setEditId(null);
       setIsEditing(false);
       setIsModalOpen(true);
@@ -83,7 +88,7 @@ export default function CategoryListPage() {
     }
   }, [modalAction, clearModal]);
 
-  // 🧮 Filter + Paginate
+  //  Filter + Paginate
   const filteredCategories = useMemo(() => {
     return categories.filter((cat) =>
       cat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -97,15 +102,27 @@ export default function CategoryListPage() {
     startIndex + pageSize
   );
 
-  // 📝 Add / Update Category
+  // Add / Update Category
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
     if (!formSlug.trim()) return;
 
+
+    // Image required check
+    if (!categoryImage) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Category image is required.",
+        onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
+      });
+    }
+
+
     try {
       if (isEditing && editId) {
-        await categoryService.update(token!, editId, { name: formName , slug: formSlug});
+        await categoryService.update(token!, editId, { name: formName, slug: formSlug, image: categoryImage, });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -113,7 +130,7 @@ export default function CategoryListPage() {
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       } else {
-        await categoryService.create(token!, { name: formName, slug: formSlug });
+        await categoryService.create(token!, { name: formName, slug: formSlug, image: categoryImage });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -133,16 +150,28 @@ export default function CategoryListPage() {
     }
   };
 
-  // ✏️ Edit
+
+
+  const handleImageUpload = async (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = await uploadService.uploadImage(file, "categories");
+    setCategoryImage(url);
+  };
+
+
+  // Edit
   const handleEdit = (category: Category) => {
     setFormName(category.name);
     setFormSlug(category.slug);
+    setCategoryImage(category.image ?? null);
     setEditId(category.id);
     setIsEditing(true);
     setIsModalOpen(true);
   };
 
-  // 🗑️ Delete
+  //  Delete
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -176,7 +205,7 @@ export default function CategoryListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header with search */}
+        {/*  Header with search */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Categories</h1>
           <div className="relative w-full sm:w-72">
@@ -197,12 +226,13 @@ export default function CategoryListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
               <tr>
                 <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
+                <th className="py-3 px-3 text-center">Image</th>
                 <th className="py-3 px-3 text-center">Category Name</th>
                 <th className="py-3 px-3 text-center">Slug</th>
                 <th className="py-3 px-3 text-center">Action</th>
@@ -219,9 +249,23 @@ export default function CategoryListPage() {
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
                     </td>
+
+                    <td className="py-3 px-3 text-center">
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className="w-14 h-14 object-cover rounded-md border"
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">No Image</span>
+                      )}
+                    </td>
+
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {cat.name}
                     </td>
+
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {cat.slug}
                     </td>
@@ -256,7 +300,7 @@ export default function CategoryListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/*  Pagination */}
         {!loading && filteredCategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -269,12 +313,12 @@ export default function CategoryListPage() {
         )}
       </div>
 
-      {/* 🪄 Modal for Add/Edit */}
+      {/*  Modal for Add/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => { setIsModalOpen(false); setCategoryImage(null); }}
               className="absolute top-3 right-3 text-gray-500"
             >
               <X size={20} />
@@ -304,10 +348,61 @@ export default function CategoryListPage() {
                 placeholder="e.g. T-Shirts"
               />
 
+
+
+
+
+              {/* Category Image Upload */}
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Category Image
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileRef}
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+
+                <div
+                  className="relative w-28 h-28 rounded-lg overflow-hidden border bg-gray-50 cursor-pointer hover:border-[var(--brand-primary)] transition"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {/* If no image, show placeholder */}
+                  {!categoryImage ? (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                      Upload
+                    </div>
+                  ) : (
+                    <img
+                      src={categoryImage}
+                      alt="category"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                  {/* Remove button when image is present */}
+                  {categoryImage && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation(); // prevent triggering upload
+                        setCategoryImage(null);
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => { setIsModalOpen(false); setCategoryImage(null); }}
                   className="px-4 py-2 rounded border"
                 >
                   Cancel
@@ -324,7 +419,7 @@ export default function CategoryListPage() {
         </div>
       )}
 
-      {/* ✅ Popup Alert */}
+      {/* Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

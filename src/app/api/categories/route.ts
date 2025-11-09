@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 //POST - Create a new category
 export async function POST(req: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name , slug} = await req.json();
+    const { name, slug, image } = await req.json();
 
     if (!name || name.trim() === "") {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const category = await prisma.categories.create({
-      data: { name: name.trim(), slug: slug.trim() },
+      data: { name: name.trim(), slug: slug.trim(), image },
     });
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });
