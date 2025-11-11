@@ -28,6 +28,7 @@ import { ROUTES } from "@/constants/routes";
 import VariantWarningModal from "@/components/VariantWarningModal";
 import { useCart } from "@/app/context/CartContext";
 import ErrorAlert from "@/components/ErrorAlert";
+import SizeGuideModal from "@/components/home/SizeGuideModal";
 
 export default function ProductDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -52,6 +53,8 @@ export default function ProductDetails() {
   const [images, setImages] = useState<any[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { refreshCart } = useCart();
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+
 
   //  Fetch product
   useEffect(() => {
@@ -345,9 +348,21 @@ export default function ProductDetails() {
 
               {/* Size */}
               <div className="mb-6">
-                <h4 className="text-sm font-medium mb-2">
-                  Size: {selectedSize?.name || "Select"}
-                </h4>
+                {/* Title Row */}
+                <div className="flex items-center justify-between mb-3 pr-8">
+                  <h4 className="text-sm font-medium text-gray-800">
+                    Size: {selectedSize?.name || "Select"}
+                  </h4>
+
+                  <button
+                    onClick={() => setShowSizeGuide(true)}
+                    className="text-sm underline underline-offset-2 text-[var(--brand-primary)] hover:opacity-80"
+                  >
+                    Size Guide
+                  </button>
+                </div>
+
+
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((s: any) => {
                     const variantStock = variants.find(
@@ -381,6 +396,7 @@ export default function ProductDetails() {
                   })}
                 </div>
               </div>
+
 
               {/* Stock Display */}
               {selectedVariant && (
@@ -599,6 +615,9 @@ export default function ProductDetails() {
 
 
           <HowWeDoIt />
+
+          <SizeGuideModal open={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+
 
           {/*  Popup alert */}
           {errorMsg && <ErrorAlert message={errorMsg} onClose={() => setErrorMsg(null)} />}
