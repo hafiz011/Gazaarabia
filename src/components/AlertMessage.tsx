@@ -10,7 +10,7 @@ interface AlertMessageProps {
 }
 
 export default function AlertMessage({ type, message, onClose }: AlertMessageProps) {
-  // 🎨 use brand colors from :root
+  //  use brand colors from :root
   const baseClass =
     type === "success"
       ? "bg-[var(--soft-gray)] border-[var(--brand-secondary)] text-[var(--brand-secondary)]"

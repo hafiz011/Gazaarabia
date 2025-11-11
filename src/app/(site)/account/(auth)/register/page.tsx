@@ -36,6 +36,16 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+
+    if (form.password.length < 8) {
+      setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Password must be at least 8 characters long.",
+      });
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       setAlert({
         isOpen: true,
@@ -62,7 +72,7 @@ export default function SignupPage() {
         password: "",
         confirmPassword: "",
       });
-      router.push("/account");
+      router.push("/account/login");
     } catch (err: any) {
       setAlert({
         isOpen: true,
@@ -73,7 +83,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 pt-20 pb-10"> 
+    <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 pt-20 pb-10">
       <div className="mt-5 w-full max-w-2xl bg-white shadow-lg rounded-2xl p-10 border border-[var(--soft-gray)] transition-all duration-300 hover:shadow-xl">
 
         {/* Heading */}
@@ -86,7 +96,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-         {/* ✅ Alert Message */}
+        {/* Alert Message */}
         {alert.isOpen && alert.type && (
           <AlertMessage
             type={alert.type}

@@ -17,6 +17,8 @@ import {
 import Link from "next/link";
 import ReviewModal from "@/components/ReviewModal";
 import { CheckCircle } from "lucide-react";
+import ReturnRequestModal from "@/components/ReturnRequestModal.tsx";
+import ReturnStatusModal from "@/components/ReturnStatusModal";
 
 
 interface SelectedVariantData {
@@ -41,6 +43,16 @@ interface OrderItem {
     productimage?: { url: string }[];
   };
   reviewed: boolean;
+  returnRequests?: {
+    id: number;
+    status: string;
+    note?: string;
+    adminNote?: string;
+    refundAmount?: number;
+    createdAt?: string;
+    images?: string[];
+    reason: { label: string };
+  }[];
 }
 
 // interface Order {
@@ -101,6 +113,9 @@ export default function OrderDetailsPage() {
   const [selectedOrderItemId, setSelectedOrderItemId] = useState<number>(0);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [returnModal, setReturnModal] = useState(false);
+  const [returnStatusModal, setReturnStatusModal] = useState(false);
+
 
   useEffect(() => {
     if (status === "loading") return;
@@ -281,11 +296,12 @@ export default function OrderDetailsPage() {
                       <span>Qty: {item.quantity}</span>
                     </div>
 
-                    {/* Right section */}
+                    {/* Right Section */}
                     {order.status === "completed" && (
-                      <div className="ml-auto">
+                      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+
                         {item.reviewed ? (
-                          <div className="flex items-center gap-1 text-green-600 bg-green-50 border border-green-300 rounded-full px-3 py-1 text-xs font-medium">
+                          <div className="flex items-center gap-1 text-green-600 bg-green-50 border border-green-300 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap">
                             <CheckCircle size={14} className="text-green-600" />
                             <span>Review Submitted</span>
                           </div>
@@ -302,11 +318,54 @@ export default function OrderDetailsPage() {
                             Write Review
                           </button>
                         )}
+
+                        {/* Return Status */}
+                        {(() => {
+                          const rr = item.returnRequests?.[0];
+
+                          if (!rr) {
+                            return (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrderItemId(item.id);
+                                  setReturnModal(true);
+                                }}
+                                className="text-xs px-3 py-1 border border-red-500 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition whitespace-nowrap"
+                              >
+                                Return Item
+                              </button>
+                            );
+                          }
+
+                          const statusStyles: Record<string, string> = {
+                            pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+                            approved: "bg-blue-100 text-blue-700 border border-blue-300",
+                            returned: "bg-orange-100 text-orange-700 border border-orange-300",
+                            refunded: "bg-green-100 text-green-700 border border-green-300",
+                            rejected: "bg-red-100 text-red-700 border border-red-300",
+                          };
+
+                          return (
+                            <span
+                              onClick={() => { setSelectedOrderItemId(item.id); setReturnStatusModal(true) }}
+                              className={`text-xs px-3 py-1 rounded-full whitespace-nowrap ${statusStyles[rr.status]} cursor-pointer`}
+                            >
+                              {rr.status === "pending" && "Return Requested"}
+                              {rr.status === "approved" && "Approved - Awaiting Return"}
+                              {rr.status === "returned" && "Returned - Refund Pending"}
+                              {rr.status === "refunded" && "Refund Completed"}
+                              {rr.status === "rejected" && "Return Rejected"}
+                            </span>
+                          );
+                        })()}
+
                       </div>
                     )}
+
                   </div>
                 </div>
               </div>
+
             </li>
 
 
@@ -442,6 +501,33 @@ export default function OrderDetailsPage() {
           }}
         />
       )}
+
+      {/*  RETURN STATUS MODAL */}
+      {returnStatusModal && (
+        <ReturnStatusModal
+          returnRequest={order.orderItems.find(i => i.id === selectedOrderItemId)?.returnRequests?.[0] || null}
+          onClose={() => setReturnStatusModal(false)}
+        />
+      )}
+
+
+      {returnModal && (
+        <ReturnRequestModal
+          orderId={order.id}
+          orderItemId={selectedOrderItemId}
+          token={session?.user?.token as string}
+          onClose={() => setReturnModal(false)}
+          onSuccess={() => {
+            setReturnModal(false);
+            setPopup({
+              isOpen: true,
+              message: "Return request submitted successfully!",
+              type: "success",
+            });
+          }}
+        />
+      )}
+
 
       {/* Popup Alert */}
       <PopupAlert

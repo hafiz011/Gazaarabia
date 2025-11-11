@@ -6,7 +6,7 @@ export const ROUTES = {
   USER: {
     LOGIN: "/account/login",
     REGISTER: "/account/register",
-    PROFILE: "/account",
+    PROFILE: "/account/details",
   },
 
   //  Admin routes

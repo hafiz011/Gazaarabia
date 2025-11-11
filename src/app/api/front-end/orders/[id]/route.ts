@@ -13,9 +13,6 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-
-
-
     const { id } = await context.params;
     const orderId = Number(id);
     if (isNaN(orderId)) {
@@ -67,6 +64,11 @@ export async function GET(
                     variantImages: true,
                   },
                 },
+              },
+            },
+            returnRequests: {
+              include: {
+                reason: true,
               },
             },
           },

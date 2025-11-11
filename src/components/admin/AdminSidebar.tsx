@@ -54,6 +54,7 @@ const links = [
     children: [
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
       { href: "/admin/users", label: "Users", icon: Users },
+      { href: "/admin/returns", label: "Return Requests", icon: ClipboardList },
     ],
   },
 
@@ -68,6 +69,7 @@ const links = [
       { href: "/admin/subcategories", label: "Subcategories", icon: Grid },
       { href: "/admin/material-cares", label: "Material Cares", icon: Droplets },
       { href: "/admin/brands", label: "Brands", icon: Tag },
+      { href: "/admin/return-reasons", label: "Return Reasons", icon: HelpCircle },
     ],
   },
 

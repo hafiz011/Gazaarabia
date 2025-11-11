@@ -35,6 +35,8 @@ model Users {
   orders        Orders[]
   reviews       Review[]
   notifications notifications[]
+  returnRequests ReturnRequest[]
+
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
@@ -381,6 +383,8 @@ model Orders {
   //  Relations
   user       Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
+  returnRequests ReturnRequest[]
+
 
   @@index([userId])
   @@map("orders")
@@ -409,6 +413,8 @@ model OrderItem {
   variant productvariant @relation(fields: [variantId], references: [id]) // ✅ matches productvariant.orderItems
 
   reviews Review[]
+  returnRequests ReturnRequest[]
+
 
   @@map("orders_item")
 }
@@ -644,4 +650,56 @@ model HomePageSetting {
   updatedAt       DateTime @updatedAt
 
   @@map("homepage_settings")
+}
+
+
+model ReturnReason {
+  id           Int      @id @default(autoincrement())
+  label        String   @unique
+  requireImage Boolean  @default(false)
+  isActive     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  returnRequests ReturnRequest[]
+
+   @@map("return_reasons")
+}
+
+
+model ReturnRequest {
+  id           Int      @id @default(autoincrement())
+
+  // Relations
+  userId       Int
+  orderId      Int
+  orderItemId  Int
+  reasonId     Int
+
+  user         Users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order        Orders       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem    OrderItem    @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  reason       ReturnReason @relation(fields: [reasonId], references: [id], onDelete: Cascade)
+
+  // Customer Inputs
+  note         String?      // optional explanation
+  images       Json?        // store image URLs
+
+  // Process & Status Tracking
+  status       String       @default("pending") 
+  // possible values:
+  // pending → waiting admin review
+  // approved → admin approved, waiting customer to return
+  // rejected → admin rejected
+  // returned → customer completed the return
+  // refunded → refund processed
+
+  adminNote    String?
+  refundAmount Float?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("return_requests")
 }

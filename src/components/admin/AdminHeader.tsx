@@ -107,6 +107,12 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       action: { label: "Add Affiliate", href: "/admin/affiliates/form" },
     },
 
+    "/admin/return-reasons": {
+      title: "Return Reasons",
+      subtitle: "Manage the return reasons for your product catalog.",
+      action: { label: "Add Reason", modalKey: "returnReason" },
+    },
+
   };
 
   const current = titles[pathname] || {

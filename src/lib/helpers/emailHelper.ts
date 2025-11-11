@@ -354,3 +354,91 @@ export async function sendContactUsEmail({
   return emailResult;
 }
 
+
+// return order items status changed by the admin email
+
+export async function sendReturnStatusEmail({
+  to,
+  userId,
+  orderItemId,
+  status,
+  adminNote,
+  refundAmount,
+}: {
+  to: string;
+  userId: number;
+  orderItemId: number;
+  status: string;
+  adminNote?: string | null;
+  refundAmount?: number | null;
+}) {
+
+  const subject = `Your Return Request Status Has Been Updated`;
+
+  const statusText = {
+    pending: "Submitted",
+    approved: "Approved - Awaiting Return",
+    returned: "Item Returned - Refund Processing",
+    refunded: `Refund Completed${refundAmount ? ` (£${refundAmount.toFixed(2)})` : ""}`,
+    rejected: "Return Request Rejected",
+  }[status];
+
+  const html = `
+  <div style="font-family:Arial, sans-serif;background:#fafafa;padding:40px;">
+    <table align="center" width="600" style="background:white;border-radius:12px;overflow:hidden;border:1px solid #eee;">
+      <tr>
+        <td style="text-align:center;padding:25px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" width="200" alt="Gazaarabia" />
+        </td>
+      </tr>
+
+      <tr><td style="padding:30px 40px;">
+        <h2 style="margin-top:0;font-weight:600;color:#111827;">Return Request Update</h2>
+        <p style="font-size:15px;color:#374151;line-height:1.6;">
+          Your return request for <strong>Order Item #${orderItemId}</strong> has been updated.
+        </p>
+
+        <div style="margin:20px 0;padding:14px;border-left:4px solid #009639;background:#f9fafb;">
+          <strong>Status:</strong> ${statusText}
+        </div>
+
+        ${adminNote ? `
+        <p style="margin-top:15px;"><strong>Message from Support:</strong></p>
+        <p style="background:#fff6d8;padding:12px;border-radius:8px;border:1px solid #ffe7a8;">
+          ${adminNote}
+        </p>` : ""}
+
+        ${refundAmount ? `
+        <p style="margin-top:15px;"><strong>Refund Amount:</strong> £${refundAmount.toFixed(2)}</p>
+        ` : ""}
+
+        <p style="margin-top:30px;font-size:13px;color:#6b7280;">
+          If you have questions, simply reply to this email — we’re here to help ❤️
+        </p>
+      </td></tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:20px;color:white;font-size:13px;">
+          &copy; ${new Date().getFullYear()} Gazaarabia — Crafted with care.
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  await sendEmail({ to, subject, html });
+
+  // Log notification
+  await prisma.notifications.create({
+    data: {
+      userId,
+      email: to,
+      subject: `Return Request Status Updated`,
+      message: `Your return request #${orderItemId} is now: ${statusText}`,
+      type: "return-status",
+      status: "sent",
+    },
+  });
+
+  return true;
+}
