@@ -99,7 +99,7 @@ export default function OrdersPage() {
         const res = await orderAdminService.getAll(token, debouncedSearch);
         setOrders(res.data || []);
       } catch (error) {
-        console.error("❌ Failed to fetch orders:", error);
+        console.error("Failed to fetch orders:", error);
       } finally {
         if (isInitial) setInitialLoading(false);
         else setSearchLoading(false);
@@ -229,7 +229,7 @@ export default function OrdersPage() {
         )}
       </div>
 
-      {/* 🪟 Order Details Modal */}
+      {/*  Order Details Modal */}
       {selectedOrder && (
         <OrderModal
           order={selectedOrder}
@@ -240,14 +240,14 @@ export default function OrdersPage() {
         />
       )}
 
-      {/* 💬 Review Modal */}
+      {/*  Review Modal */}
       {selectedReview && <ReviewModal review={selectedReview} onClose={() => setSelectedReview(null)} />}
     </div>
   );
 }
 
 /* ---------------------------------------------------
-   🧩 Order Modal Component
+    Order Modal Component
 --------------------------------------------------- */
 function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }: any) {
   return (
@@ -484,7 +484,7 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
 }
 
 /* ---------------------------------------------------
-   💬 Review Modal Component
+   Review Modal Component
 --------------------------------------------------- */
 function ReviewModal({ review, onClose }: any) {
   return (

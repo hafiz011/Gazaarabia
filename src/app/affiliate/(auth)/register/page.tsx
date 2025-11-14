@@ -35,7 +35,7 @@ export default function AffiliateSignupPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 🌍 Global phone validation (E.164-like, but relaxed)
+    //  Global phone validation (E.164-like, but relaxed)
     const isValidPhone = (phone: string) => {
         // allows +, digits, spaces, dashes
         // ensures total digits between 7 and 15 (ITU standard)
@@ -103,7 +103,7 @@ export default function AffiliateSignupPage() {
                     </p>
                 </div>
 
-                {/* ✅ Alert Message */}
+                {/* Alert Message */}
                 {alert.isOpen && alert.type && (
                     <AlertMessage
                         type={alert.type}
@@ -146,7 +146,7 @@ export default function AffiliateSignupPage() {
                         />
                     </div>
 
-                    {/* 🌍 Phone Number */}
+                    {/*  Phone Number */}
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                             Phone Number
@@ -158,8 +158,8 @@ export default function AffiliateSignupPage() {
                             onChange={handleChange}
                             placeholder="e.g. +1 234 567 8901"
                             className={`w-full border ${form.phone && !isValidPhone(form.phone)
-                                    ? "border-red-500 focus:ring-red-400"
-                                    : "border-[var(--soft-gray)] focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+                                ? "border-red-500 focus:ring-red-400"
+                                : "border-[var(--soft-gray)] focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
                                 } rounded-md px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:outline-none transition`}
                             required
                         />

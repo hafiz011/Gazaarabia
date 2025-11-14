@@ -70,14 +70,14 @@ export default function SingleImgMultiColorProductCard({
         <Heart
           size={18}
           className={`transition ${wishlisted
-              ? "fill-[var(--brand-primary)] text-[var(--brand-primary)]"
-              : "text-[var(--text-primary)] hover:fill-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+            ? "fill-[var(--brand-primary)] text-[var(--brand-primary)]"
+            : "text-[var(--text-primary)] hover:fill-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
             }`}
         />
       </button>
 
 
-      {/* 🖼️ Product Image */}
+      {/*  Product Image */}
       <div
         onClick={handleCardClick}
         className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl bg-white flex items-center justify-center shadow-sm hover:shadow-lg transition-all duration-300 hover:ring-2 hover:ring-[var(--brand-secondary)] pointer-events-auto"
@@ -89,7 +89,7 @@ export default function SingleImgMultiColorProductCard({
         />
       </div>
 
-      {/* 🏷️ Product Title */}
+      {/*  Product Title */}
       <h3
         onClick={handleCardClick}
         className="mt-4 text-sm font-medium text-[var(--text-primary)] line-clamp-1 pointer-events-auto"
@@ -97,7 +97,7 @@ export default function SingleImgMultiColorProductCard({
         {product.title}
       </h3>
 
-      {/* 💰 Price */}
+      {/*  Price */}
       <p
         onClick={handleCardClick}
         className="mt-1 text-[var(--brand-primary)] text-sm font-semibold pointer-events-auto"
@@ -105,7 +105,7 @@ export default function SingleImgMultiColorProductCard({
         £{product.price}
       </p>
 
-      {/* 🎨 Colors Section */}
+      {/*  Colors Section */}
       <div className="h-7 mt-2 flex justify-center items-center pointer-events-auto">
         {product.colors && product.colors.length > 0 ? (
           <div className="flex justify-center gap-2">
@@ -128,12 +128,12 @@ export default function SingleImgMultiColorProductCard({
             )}
           </div>
         ) : (
-          // 🟢 Empty placeholder to maintain height
+          //  Empty placeholder to maintain height
           <div className="w-full h-full flex items-center justify-center"></div>
         )}
       </div>
 
-      {/* 🛍️ Add to Bag */}
+      {/*  Add to Bag */}
       <button
         onClick={handleCardClick}
         className="mt-3 flex items-center justify-center gap-1 text-xs font-medium border border-[var(--brand-secondary)] text-[var(--brand-secondary)] rounded-full py-2 hover:bg-[var(--brand-secondary)] hover:text-white transition pointer-events-auto"

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 // GET all subcategories with optional search (Protected)
 export async function GET(req: NextRequest) {
@@ -11,6 +11,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
@@ -18,11 +30,11 @@ export async function GET(req: NextRequest) {
     const subcategories = await prisma.subcategory.findMany({
       where: search
         ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" } },
-              { category: { name: { contains: search, mode: "insensitive" } } },
-            ],
-          }
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { category: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
         : undefined,
       orderBy: { createdAt: "desc" },
       include: { category: true },
@@ -51,6 +63,18 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const { name, slug, categoryId } = await req.json();

@@ -46,6 +46,18 @@ export async function PATCH(req: NextRequest, { params }: any) {
     const userId = await checkAuth(req);
     if (!userId) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
+    const user = await prisma.users.findUnique({
+        where: { id: userId },
+        include: { role: true }
+    });
+
+    const allowedRoles = ["admin"];
+
+    if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+
     const { status, adminNote, refundAmount } = await req.json();
 
     try {

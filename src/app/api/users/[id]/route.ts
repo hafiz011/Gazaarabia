@@ -13,6 +13,18 @@ export async function DELETE(req: Request, { params }: any) {
 
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   const currentUser = await prisma.users.findUnique({
     where: { id: Number(userId) },
     include: { role: true },

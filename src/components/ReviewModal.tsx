@@ -27,7 +27,7 @@ export default function ReviewModal({
   const [reviewText, setReviewText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ For popup alert
+  //  For popup alert
   const [alert, setAlert] = useState<{
     isOpen: boolean;
     type: "success" | "error" | "";
@@ -84,7 +84,7 @@ export default function ReviewModal({
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
       <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6 relative">
-       
+
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-[var(--brand-primary)]"
@@ -96,7 +96,7 @@ export default function ReviewModal({
           Write a Review
         </h3>
 
-         {/* 🔔 Alert Message */}
+        {/*  Alert Message */}
         {alert.isOpen && alert.type && (
           <AlertMessage
             type={alert.type}
@@ -105,23 +105,22 @@ export default function ReviewModal({
           />
         )}
 
-        {/* ⭐ Rating */}
+        {/*  Rating */}
         <div className="flex gap-2 mb-4">
           {[1, 2, 3, 4, 5].map((star) => (
             <Star
               key={star}
               size={24}
               onClick={() => setRating(star)}
-              className={`cursor-pointer ${
-                star <= rating
+              className={`cursor-pointer ${star <= rating
                   ? "fill-[var(--brand-primary)] text-[var(--brand-primary)]"
                   : "text-gray-300"
-              }`}
+                }`}
             />
           ))}
         </div>
 
-        {/* 📝 Review Text */}
+        {/*  Review Text */}
         <textarea
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
@@ -134,10 +133,9 @@ export default function ReviewModal({
           onClick={handleSubmit}
           disabled={rating === 0 || loading}
           className={`mt-4 w-full py-2 rounded-lg font-semibold transition
-            ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
+            ${loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
             }`}
         >
           {loading ? "Submitting..." : "Submit Review"}

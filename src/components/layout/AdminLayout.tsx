@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  // 🧩 Prevent background scroll when sidebar is open on mobile
+  //  Prevent background scroll when sidebar is open on mobile
   useEffect(() => {
     if (sidebarOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "auto";
@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div
         className={`flex flex-col flex-1 min-h-screen relative z-10 transition-all duration-300 ease-in-out`}
         style={{
-          // ✅ Shifts content when sidebar expands/collapses
+          //  Shifts content when sidebar expands/collapses
           marginLeft: collapsed ? "80px" : "256px",
         }}
       >

@@ -20,6 +20,12 @@ export const ROUTES = {
     DASHBOARD: "/affiliate",
   },
 
+  //  Content manager routes
+  CONTENT_MANAGER: {
+    LOGIN: "/login",
+    BLOGS: "/admin/blogs",
+  },
+
   // Other common pages
   //   BLOG: "/blog",
   //   CONTACT: "/contact",

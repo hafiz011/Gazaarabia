@@ -23,7 +23,7 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setWishlist((prev:any) => !prev);
+    setWishlist((prev: any) => !prev);
     if (onWishlistToggle) onWishlistToggle(product.id, wishlist);
   };
 
@@ -33,11 +33,11 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
     //   onClick={handleCardClick}
     // >
     <div
-  className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-full max-w-full sm:max-w-[300px] overflow-hidden"
-  onClick={handleCardClick}
->
+      className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 w-full max-w-full sm:max-w-[300px] overflow-hidden"
+      onClick={handleCardClick}
+    >
 
-      {/* 🖼 Image container */}
+      {/*  Image container */}
       <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-lg transition-all duration-300">
         {/* 🏷 Label */}
         {product.label && (
@@ -46,7 +46,7 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
           </div>
         )}
 
-        {/* ❤️ Wishlist */}
+        {/*  Wishlist */}
         <button
           type="button"
           aria-label="Add to wishlist"
@@ -55,15 +55,14 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
         >
           <Heart
             size={18}
-            className={`transition ${
-              wishlist
+            className={`transition ${wishlist
                 ? "fill-[var(--brand-primary)] text-[var(--brand-primary)]"
                 : "text-[var(--text-primary)] hover:fill-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-            }`}
+              }`}
           />
         </button>
 
-        {/* 🖼 Swiper Carousel */}
+        {/*  Swiper Carousel */}
         <Swiper
           modules={[Pagination]}
           pagination={{
@@ -89,7 +88,7 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
         </Swiper>
       </div>
 
-      {/* 📝 Product Info */}
+      {/*  Product Info */}
       <div className="mt-4">
         <h3 className="text-base md:text-lg font-medium text-[var(--text-primary)] truncate">
           {product.title}
@@ -98,7 +97,7 @@ export default function ProductCard({ product, onWishlistToggle }: ProductCardPr
           £{product.sellingPrice || product.price}
         </p>
 
-        {/* 🎨 Color Section */}
+        {/*  Color Section */}
         {product.productvariant && product.productvariant.length > 0 && (
           <div className="flex justify-center mt-3 gap-2">
             {product.productvariant.slice(0, 3).map((variant: any, index: number) => (

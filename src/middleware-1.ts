@@ -40,3 +40,10 @@
 // // export const config = {
 // //   matcher: ["/admin/:path*", "/user/:path*", "/admin/login"],
 // // };
+
+
+// if (pathname.startsWith("/content-manager")) {
+//   if (token?.user?.role !== "content_manager") {
+//     return NextResponse.redirect(new URL("/content-manager/login", req.url));
+//   }
+// }

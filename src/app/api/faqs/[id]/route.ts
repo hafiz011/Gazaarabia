@@ -29,6 +29,18 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   const { id } = await context.params;
   try {
     const { question, answer, categoryId } = await req.json();
@@ -65,10 +77,21 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 }
 
 //  Delete FAQ
-export async function DELETE(req: NextRequest,context: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const userId = await checkAuth(req);
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
 
 
   const { id } = await context.params;

@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }>  }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params; // affiliateId
     const affiliateId = Number(id);
@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     const body = await req.json();
     const { name, email, phone, password, baseCommission, shareCommission, isActive } = body;
 
-    // ✅ First fetch affiliate to get the real userId
+    //  First fetch affiliate to get the real userId
     const affiliate = await prisma.affiliate.findUnique({
       where: { id: affiliateId },
       include: { user: true },
@@ -66,7 +66,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
     }
 
-    // ✅ Update User
+    //  Update User
     await prisma.users.update({
       where: { id: affiliate.userId },
       data: {
@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       },
     });
 
-    // ✅ Update Affiliate
+    //  Update Affiliate
     await prisma.affiliate.update({
       where: { id: affiliateId },
       data: {
@@ -95,7 +95,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 }
 
 
-export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }>  }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params; //  await params
 
@@ -120,7 +120,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
     if (!affiliate) return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
 
     await prisma.$transaction([
-      prisma.affiliate.delete({ where: { id: Number(id) }}),
+      prisma.affiliate.delete({ where: { id: Number(id) } }),
       prisma.users.delete({ where: { id: affiliate.userId } }),
     ]);
 

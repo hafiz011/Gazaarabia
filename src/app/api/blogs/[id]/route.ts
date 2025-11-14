@@ -12,6 +12,17 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin", "content_manager"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const { id } = await context.params;
     const { searchParams } = new URL(req.url);
@@ -48,6 +59,18 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin", "content_manager"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const { id } = await context.params;
     const body = await req.json();
@@ -69,6 +92,18 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   const userId = await checkAuth(req);
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin", "content_manager"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   try {

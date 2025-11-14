@@ -41,7 +41,7 @@ export default function AddOrEditSizePage() {
     description: "e.g. Small size, fits chest 36-38 inches",
   };
 
-  // 🟡 Redirect if not logged in
+  // Redirect if not logged in
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
@@ -51,7 +51,7 @@ export default function AddOrEditSizePage() {
     }
   }, [status, session, router]);
 
-  // 🟡 Prefill if editing
+  // Prefill if editing
   useEffect(() => {
     if (sizeId && session?.user?.token) {
       const fetchData = async () => {

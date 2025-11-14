@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma: any = new PrismaClient();
 
-/** 🟢 GET - All submenus */
+/** GET - All submenus */
 export async function GET() {
   try {
     const submenus = await prisma.submenus.findMany({
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       data: newSubmenu,
     });
   } catch (err: any) {
-    console.error("❌ POST Submenu Error:", err);
+    console.error(" POST Submenu Error:", err);
     return NextResponse.json(
       { success: false, message: err.message || "Failed to create submenu" },
       { status: 500 }

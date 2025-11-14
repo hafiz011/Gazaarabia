@@ -37,7 +37,7 @@ export default function FaqListPage() {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [selectedFaqId, setSelectedFaqId] = useState<number | null>(null);
 
-    // 🔐 Redirect unauthorized users
+    //  Redirect unauthorized users
     useEffect(() => {
         if (status === "loading") return;
         if (status === "unauthenticated") {
@@ -47,7 +47,7 @@ export default function FaqListPage() {
         }
     }, [status, session, router]);
 
-    // 📥 Fetch FAQs
+    //  Fetch FAQs
     useEffect(() => {
         if (session?.user?.token) fetchFaqs();
     }, [session?.user?.token]);
@@ -64,7 +64,7 @@ export default function FaqListPage() {
         }
     };
 
-    // 🧮 Filter + Paginate
+    //  Filter + Paginate
     const filteredFaqs = useMemo(() => {
         const term = searchTerm.toLowerCase();
         return faqs.filter(
@@ -78,7 +78,7 @@ export default function FaqListPage() {
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedFaqs = filteredFaqs.slice(startIndex, startIndex + pageSize);
 
-    // 🗑️ Delete FAQ
+    //  Delete FAQ
     const handleDelete = (id: number) => {
         setPopUpAlertData({
             isOpen: true,
@@ -119,7 +119,7 @@ export default function FaqListPage() {
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-                {/* ✅ Header */}
+                {/*  Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
                     <h1 className="text-xl font-semibold text-gray-800">Manage FAQs</h1>
 
@@ -161,7 +161,7 @@ export default function FaqListPage() {
 
                 <div className="border-t border-gray-200"></div>
 
-                {/* ✅ Table */}
+                {/*  Table */}
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
                         <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -252,7 +252,7 @@ export default function FaqListPage() {
                 </MenuItem>
             </Menu>
 
-            {/* ✅ Popup Alert */}
+            {/* Popup Alert */}
             <PopupAlert
                 type={popUpAlertData.type as any}
                 message={popUpAlertData.message}

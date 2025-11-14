@@ -26,7 +26,7 @@ export default function ProfileDrawer({ isOpen, onClose }: Props) {
   const router = useRouter();
   const [drawerWidth, setDrawerWidth] = useState("360px");
 
-  // ✅ Responsive width like cart drawer
+  //  Responsive width like cart drawer
   useEffect(() => {
     const handleResize = () => {
       setDrawerWidth(window.innerWidth < 400 ? "85%" : "360px");
@@ -63,7 +63,7 @@ export default function ProfileDrawer({ isOpen, onClose }: Props) {
         },
       }}
     >
-      {/* 🧭 Header */}
+      {/*  Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--soft-gray)] bg-[var(--soft-gray)]/30 backdrop-blur-sm">
         <h3 className="text-lg font-semibold tracking-wide uppercase text-[var(--text-primary)]">
           My Account

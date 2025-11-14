@@ -13,6 +13,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   try {
     const [
       blogs,
@@ -38,8 +50,8 @@ export async function GET(req: Request) {
       prisma.deliveryOptions.count(),
       prisma.materialCare.count(),
       prisma.products.count(),
-      prisma.users.count(),    
-      prisma.orders.count(),  
+      prisma.users.count(),
+      prisma.orders.count(),
     ]);
 
     const recentBlogs = await prisma.blogs.findMany({
@@ -59,8 +71,8 @@ export async function GET(req: Request) {
       deliveryOptions,
       materialCares,
       products,
-      users, 
-      orders,   
+      users,
+      orders,
       recentBlogs,
     });
   } catch (error) {

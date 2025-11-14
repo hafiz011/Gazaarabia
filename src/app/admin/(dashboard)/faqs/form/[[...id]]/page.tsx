@@ -46,13 +46,13 @@ export default function AddOrEditFaqPage() {
     message: "",
   });
 
-  // 🎨 Match Blog Page field colors and border style
+  //  Match Blog Page field colors and border style
   const fieldStyle = {
     "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "var(--brand-secondary)" },
     "& .MuiInputLabel-root.Mui-focused": { color: "var(--brand-secondary)" },
   };
 
-  // 🔐 Redirect unauthorized users
+  //  Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
@@ -62,7 +62,7 @@ export default function AddOrEditFaqPage() {
     }
   }, [status, session, router]);
 
-  // 🧭 Fetch FAQ Categories
+  //  Fetch FAQ Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -79,7 +79,7 @@ export default function AddOrEditFaqPage() {
     if (session?.user?.token) fetchCategories();
   }, [session?.user?.token]);
 
-  // 🧾 Fetch FAQ if editing
+  //  Fetch FAQ if editing
   useEffect(() => {
     if (!faqId || !session?.user?.token) return;
     const fetchFaq = async () => {
@@ -102,13 +102,13 @@ export default function AddOrEditFaqPage() {
     fetchFaq();
   }, [faqId, session?.user?.token]);
 
-  // 📝 Handle field changes
+  //  Handle field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Submit form (Add / Edit)
+  //  Submit form (Add / Edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

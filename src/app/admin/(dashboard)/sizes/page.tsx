@@ -36,7 +36,7 @@ export default function SizeListPage() {
 
   const token = session?.user?.token;
 
-  // 🛡️ Redirect if not logged in
+  //  Redirect if not logged in
   useEffect(() => {
     if (status === "loading") return;
 
@@ -47,7 +47,7 @@ export default function SizeListPage() {
     }
   }, [status, session, router]);
 
-  // ✅ Fetch sizes
+  //  Fetch sizes
   const fetchSizes = useCallback(async () => {
     if (!token) return; // prevent calling without token
     try {
@@ -71,7 +71,7 @@ export default function SizeListPage() {
     fetchSizes();
   }, [fetchSizes]);
 
-  // ✅ Search + pagination
+  //  Search + pagination
   const filteredSizes = useMemo(() => {
     return sizes.filter(
       (size) =>
@@ -84,7 +84,7 @@ export default function SizeListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedSizes = filteredSizes.slice(startIndex, startIndex + pageSize);
 
-  // 🗑️ Delete confirmation + API
+  //  Delete confirmation + API
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -123,7 +123,7 @@ export default function SizeListPage() {
     });
   };
 
-  // ✏️ Edit size
+  //  Edit size
   const handleEdit = (id: number) => {
     router.push(`/admin/size-add?id=${id}`);
   };
@@ -133,7 +133,7 @@ export default function SizeListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
+        {/*  Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Sizes</h1>
           <div className="relative w-full sm:w-72">
@@ -154,7 +154,7 @@ export default function SizeListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/*  Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -171,9 +171,8 @@ export default function SizeListPage() {
                 paginatedSizes.map((size, idx) => (
                   <tr
                     key={size.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-5 text-gray-600">
                       {startIndex + idx + 1}
@@ -226,7 +225,7 @@ export default function SizeListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/*  Pagination */}
         {!loading && filteredSizes.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -239,7 +238,7 @@ export default function SizeListPage() {
         )}
       </div>
 
-      {/* ✅ Confirmation Popup */}
+      {/*  Confirmation Popup */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

@@ -5,7 +5,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
-  const token:any= getTokenFromHeader(req);
+  const token: any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 

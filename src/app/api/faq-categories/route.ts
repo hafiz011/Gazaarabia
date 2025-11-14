@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,6 +20,18 @@ export async function POST(req: NextRequest) {
   if (!userId)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   try {
     const { name, slug } = await req.json();
 
@@ -29,7 +41,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
 
-    // 🧩 Check for duplicates
+    //  Check for duplicates
     const existing = await prisma.faqCategory.findFirst({
       where: {
         OR: [{ name }, { slug }],

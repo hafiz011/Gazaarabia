@@ -26,11 +26,11 @@ export default function AffiliateDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-  // ✅ Format money
+  //  Format money
   const formatGBP = (amount: number) =>
     new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
-  // ✅ Status pill color
+  //  Status pill color
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
@@ -77,7 +77,7 @@ export default function AffiliateDashboardPage() {
   return (
     <div className="space-y-10 p-6">
 
-      {/* 💰 Stats */}
+      {/*  Stats */}
       {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6"> */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
         {stats.map((item) => (
@@ -89,7 +89,7 @@ export default function AffiliateDashboardPage() {
         ))}
       </div>
 
-      {/* 🛒 Recent Orders */}
+      {/*  Recent Orders */}
       <div className="bg-white rounded-xl shadow p-6 border">
         <h3 className="text-lg font-semibold mb-4 text-gray-800">Recent Orders</h3>
 
@@ -142,7 +142,7 @@ export default function AffiliateDashboardPage() {
         </div>
       </div>
 
-      {/* 🪟 Order Details Modal */}
+      {/*  Order Details Modal */}
       {selectedOrder && (
         <OrderDetailsModal
           order={selectedOrder}

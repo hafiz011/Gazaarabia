@@ -55,7 +55,7 @@ export default function AdminReviewListPage() {
   const token = session?.user?.token;
   const router = useRouter();
 
-  // 🛡️ Auth guard
+  //  Auth guard
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
@@ -63,7 +63,7 @@ export default function AdminReviewListPage() {
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 📥 Fetch all reviews
+  //  Fetch all reviews
   useEffect(() => {
     if (token) fetchReviews();
   }, [token]);
@@ -86,7 +86,7 @@ export default function AdminReviewListPage() {
     }
   };
 
-  // 🔍 Filter + Pagination
+  //  Filter + Pagination
   const filteredReviews = useMemo(() => {
     return reviews.filter((rev) =>
       `${rev.user?.name} ${rev.product?.title} ${rev.comment}`
@@ -113,7 +113,7 @@ export default function AdminReviewListPage() {
     setMenuReview(null);
   };
 
-  // 🗑️ Delete
+  // Delete
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -147,7 +147,7 @@ export default function AdminReviewListPage() {
     });
   };
 
-  // 👁️ View details
+  // View details
   const handleView = (review: any) => {
     setSelectedReview(review);
     setIsModalOpen(true);
@@ -158,7 +158,7 @@ export default function AdminReviewListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header with search */}
+        {/*  Header with search */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">
             Manage Product Reviews
@@ -181,7 +181,7 @@ export default function AdminReviewListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/*  Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -244,7 +244,7 @@ export default function AdminReviewListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/*  Pagination */}
         {!loading && filteredReviews.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -264,7 +264,7 @@ export default function AdminReviewListPage() {
         open={Boolean(menuAnchor)}
         onClose={handleMenuClose}
       >
-        {/* 👁️ View Option */}
+        {/*  View Option */}
         <MenuItem
           onClick={() => {
             handleMenuClose();
@@ -279,7 +279,7 @@ export default function AdminReviewListPage() {
           </ListItemText>
         </MenuItem>
 
-        {/* ✏️ Edit Option */}
+        {/*  Edit Option */}
         <MenuItem
           onClick={() => {
             handleMenuClose();
@@ -294,7 +294,7 @@ export default function AdminReviewListPage() {
           </ListItemText>
         </MenuItem>
 
-        {/* 🗑️ Delete Option */}
+        {/*  Delete Option */}
         <MenuItem
           disabled={deletingId === menuReview?.id}
           onClick={() => {
@@ -306,16 +306,16 @@ export default function AdminReviewListPage() {
             <Trash2
               size={18}
               className={`${deletingId === menuReview?.id
-                  ? "text-gray-400"
-                  : "text-[var(--brand-primary)]"
+                ? "text-gray-400"
+                : "text-[var(--brand-primary)]"
                 }`}
             />
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{
               className: `${deletingId === menuReview?.id
-                  ? "text-gray-400"
-                  : "text-[var(--brand-primary)] font-medium"
+                ? "text-gray-400"
+                : "text-[var(--brand-primary)] font-medium"
                 }`,
             }}
           >
@@ -370,7 +370,7 @@ export default function AdminReviewListPage() {
         </Dialog>
       )}
 
-      {/* ✅ Popup Alert */}
+      {/* Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

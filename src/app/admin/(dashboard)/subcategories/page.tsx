@@ -304,7 +304,7 @@ export default function SubcategoryListPage() {
         )}
       </div>
 
-      {/* 🪄 Modal for Add/Edit Subcategory */}
+      {/*  Modal for Add/Edit Subcategory */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full relative">

@@ -25,6 +25,8 @@ export default function AddOrEditBlogPage() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
+  const alowedRoles = ["admin", "content_manager"];
+
   const blogId = params?.id; // undefined when creating, defined when editing
 
   const [form, setForm] = useState({
@@ -57,21 +59,21 @@ export default function AddOrEditBlogPage() {
     "& .MuiInputLabel-root.Mui-focused": { color: "var(--brand-secondary)" },
   };
 
-  // 🔐 Redirect unauthorized users
+  // Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
       router.replace(ROUTES.ADMIN.LOGIN);
-    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+    } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
       router.replace(ROUTES.HOME);
     }
   }, [status, session, router]);
 
-  // 🧭 Fetch categories
+  //  Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data :any= await blogCategoryService.getAll(session?.user?.token as string);
+        const data: any = await blogCategoryService.getAll(session?.user?.token as string);
         setCategories(data?.data ?? null);
       } catch (err: any) {
         setAlert({
@@ -84,7 +86,7 @@ export default function AddOrEditBlogPage() {
     if (session?.user?.token) fetchCategories();
   }, [session?.user?.token]);
 
-  // 🧾 Fetch blog if editing
+  //  Fetch blog if editing
   useEffect(() => {
     if (!blogId || !session?.user?.token) return;
     const fetchBlog = async () => {
@@ -117,7 +119,7 @@ export default function AddOrEditBlogPage() {
 
   const handleUploadClick = () => fileInputRef.current?.click();
 
-  // 🖼️ Upload image
+  //  Upload image
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -139,7 +141,7 @@ export default function AddOrEditBlogPage() {
     }
   };
 
-  // ✅ Submit (Add / Update)
+  // Submit (Add / Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -161,7 +163,7 @@ export default function AddOrEditBlogPage() {
       const token = session?.user?.token as string;
 
       if (blogId) {
-        // ✏️ Update
+        //  Update
         await blogService.update(token, Number(blogId), {
           title: form.title,
           slug: form.slug,
@@ -171,7 +173,7 @@ export default function AddOrEditBlogPage() {
         });
         setAlert({ isOpen: true, type: "success", message: "Blog updated successfully!" });
       } else {
-        // 🆕 Create
+        //  Create
         await blogService.create(token, {
           title: form.title,
           slug: form.slug,

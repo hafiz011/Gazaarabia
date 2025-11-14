@@ -93,7 +93,7 @@ function ProductFormContent() {
     },
   };
 
-  // 🔽 Fetch dropdown data
+  //  Fetch dropdown data
   const fetchDropdownData = async () => {
     try {
       const [
@@ -176,7 +176,7 @@ function ProductFormContent() {
     }
   }, [token, id]);
 
-  // 📝 Handle form input
+  //  Handle form input
   const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -185,7 +185,7 @@ function ProductFormContent() {
     }));
   };
 
-  // 🖼️ Upload Image
+  //  Upload Image
   const handleFileChange = async (e: any) => {
     const files = Array.from(e.target.files || []) as File[];
     if (!files.length) return;
@@ -211,7 +211,7 @@ function ProductFormContent() {
   };
 
 
-  // ➕ Add variant
+  //  Add variant
   const handleVariantAdd = () => {
     setVariants((prev) => [
       ...prev,
@@ -219,7 +219,7 @@ function ProductFormContent() {
     ]);
   };
 
-  // ✏️ Change variant
+  //  Change variant
   const handleVariantChange = (idx: number, field: string, value: any) => {
     setVariants((prev) =>
       prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v))
@@ -239,7 +239,7 @@ function ProductFormContent() {
     return true;
   };
 
-  // 💾 Submit
+  //  Submit
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -345,7 +345,7 @@ function ProductFormContent() {
   };
 
 
-  // ➕ Add product to Wear With list
+  //  Add product to Wear With list
   const handleAddWearWith = (product: any) => {
     if (!wearWith.find((p) => p.id === product.id)) {
       setWearWith((prev) => [...prev, product]);
@@ -354,20 +354,20 @@ function ProductFormContent() {
     setSearchQuery("");
   };
 
-  // ❌ Remove product from Wear With list
+  //  Remove product from Wear With list
   const handleRemoveWearWith = (id: number | string) => {
     setWearWith((prev) => prev.filter((p) => p.id !== id));
   };
 
 
-  // ✅ Toggle selection
+  //  Toggle selection
   const toggleWearWithSelection = (id: number) => {
     setSelectedWearWith((prev) =>
       prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
   };
 
-  // ✅ Add selected to wearWith
+  //  Add selected to wearWith
   const handleAddSelectedWearWith = () => {
     const selectedProducts = searchResults.filter((p) =>
       selectedWearWith.includes(p.id)
@@ -397,10 +397,10 @@ function ProductFormContent() {
         />
       )}
 
-      {/* ✅ Full UI inside form */}
+      {/*  Full UI inside form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* 🧾 Basic Info */}
+        {/*  Basic Info */}
         <Box className="bg-white p-6 rounded-xl shadow space-y-4">
           <TextField label={<RequiredLabel text="Brand" />} select name="brandId"
             value={form.brandId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
@@ -459,7 +459,7 @@ function ProductFormContent() {
 
         </Box>
 
-        {/* 💰 Pricing */}
+        {/*  Pricing */}
         <Box className="bg-white p-6 rounded-xl shadow space-y-4">
           <TextField label={<RequiredLabel text="Cost Price" />} name="costPrice" type="number"
             value={form.costPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
@@ -479,7 +479,7 @@ function ProductFormContent() {
           </div> */}
         </Box>
 
-        {/* 🖼️ Images */}
+        {/*  Images */}
         <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow">
           <h2 className="text-lg font-semibold mb-2">
             Images <span className="text-red-600">*</span>
@@ -507,7 +507,7 @@ function ProductFormContent() {
           </div>
         </Box>
 
-        {/* 🧩 Variants */}
+        {/*  Variants */}
         <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Variants (Color × Size)</h2>
@@ -521,7 +521,7 @@ function ProductFormContent() {
               key={idx}
               className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200"
             >
-              {/* 🔹 Header with title + delete button */}
+              {/*  Header with title + delete button */}
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-semibold text-gray-800">
                   Variant #{idx + 1}
@@ -535,7 +535,7 @@ function ProductFormContent() {
                 </button>
               </div>
 
-              {/* 🔸 Main Inputs */}
+              {/*  Main Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <TextField
                   select
@@ -599,7 +599,7 @@ function ProductFormContent() {
                 />
               </div>
 
-              {/* 🖼️ Variant Images */}
+              {/*  Variant Images */}
               <div className="mt-4">
                 <label className="text-sm font-medium text-gray-700">
                   Variant Images
@@ -685,14 +685,14 @@ function ProductFormContent() {
 
 
 
-        {/* 👗 Wear With Section */}
+        {/*  Wear With Section */}
         <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="text-lg font-semibold">Wear With</h2>
           <p className="text-sm text-gray-500">
             Link related products that go well with this item.
           </p>
 
-          {/* 🔍 Search Input & Button */}
+          {/*  Search Input & Button */}
           <div className="flex items-center gap-3">
             <TextField
               label="Search Products"
@@ -705,7 +705,7 @@ function ProductFormContent() {
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  height: "42px", // ✅ Match button height
+                  height: "42px", //  Match button height
                 },
               }}
             />
@@ -728,7 +728,7 @@ function ProductFormContent() {
             </Button>
           </div>
 
-          {/* 🧾 Search Results */}
+          {/*  Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-3 bg-gray-50 border rounded-lg p-3 max-h-64 overflow-y-auto">
               {searchResults.map((prod) => (
@@ -737,7 +737,7 @@ function ProductFormContent() {
                   className="flex justify-between items-center py-2 border-b last:border-none cursor-pointer hover:bg-gray-100 px-2 rounded-md transition"
                 >
                   <div className="flex items-center gap-3">
-                    {/* ✅ Checkbox */}
+                    {/* Checkbox */}
                     <input
                       type="checkbox"
                       checked={selectedWearWith.includes(prod.id)}
@@ -754,7 +754,7 @@ function ProductFormContent() {
                     </span>
                   </div>
 
-                  {/* 🔘 Optional Quick Add Button */}
+                  {/*  Optional Quick Add Button */}
                   <Button
                     size="small"
                     variant="contained"
@@ -773,7 +773,7 @@ function ProductFormContent() {
                 </label>
               ))}
 
-              {/* ➕ Add Selected Button */}
+              {/* Add Selected Button */}
               {selectedWearWith.length > 0 && (
                 <div className="text-right mt-3">
                   <Button
@@ -795,7 +795,7 @@ function ProductFormContent() {
                 </div>
               )}
 
-              {/* 🔽 Load More */}
+              {/* Load More */}
               {hasMore && (
                 <div className="text-center mt-3">
                   <Button
@@ -821,7 +821,7 @@ function ProductFormContent() {
             </div>
           )}
 
-          {/* ✅ Selected Wear With Items */}
+          {/* Selected Wear With Items */}
           {wearWith.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-3">
               {wearWith.map((prod) => (
@@ -854,7 +854,7 @@ function ProductFormContent() {
 
 
 
-        {/* 🆗 Actions */}
+        {/* Actions */}
         <Box className="lg:col-span-2 flex justify-end gap-3 mt-6">
           <Button variant="outlined" onClick={() => router.push("/admin/products")}>
             Cancel

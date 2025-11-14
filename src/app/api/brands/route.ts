@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma :any= new PrismaClient();
+const prisma: any = new PrismaClient();
 
 // GET - List all brands (with optional search)
 export async function GET(req: NextRequest) {
@@ -11,14 +11,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
     const where = search
       ? {
-          OR: [{ name: { contains: search } }],
-        }
+        OR: [{ name: { contains: search } }],
+      }
       : {};
 
     const brands = await prisma.brand.findMany({
@@ -42,6 +55,19 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const { name, logo, isTrending } = await req.json();

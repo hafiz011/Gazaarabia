@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     if (!userId)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    // ✅ Ensure the logged-in user is an admin
+    //  Ensure the logged-in user is an admin
     const adminUser = await prisma.users.findUnique({
       where: { id: userId },
       include: { role: true },

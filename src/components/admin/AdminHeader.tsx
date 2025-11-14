@@ -112,6 +112,12 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage the return reasons for your product catalog.",
       action: { label: "Add Reason", modalKey: "returnReason" },
     },
+    "/admin/solidarity-receipts": {
+      title: "Solidarity Receipts",
+      subtitle: "Manage and organize all solidarity-related receipts and records.",
+      action: { label: "Add Receipt", modalKey: "solidarityReceipt" },
+    }
+
 
   };
 

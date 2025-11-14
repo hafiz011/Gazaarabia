@@ -7,13 +7,13 @@ export default function ReturnStatusModal({ returnRequest, onClose }: any) {
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-    // ✅ Disable background scroll when modal is open
+    //  Disable background scroll when modal is open
     useEffect(() => {
         document.body.style.overflow = "hidden";
         return () => { document.body.style.overflow = "auto"; };
     }, []);
 
-    // ✅ Disable scroll when viewing full image
+    //  Disable scroll when viewing full image
     useEffect(() => {
         if (imagePreview) document.body.style.overflow = "hidden";
         else document.body.style.overflow = "hidden"; // Keep locked for modal
@@ -36,7 +36,7 @@ export default function ReturnStatusModal({ returnRequest, onClose }: any) {
             { key: "refunded", label: "Refunded" },
         ];
 
-    // ✅ Same rejected logic as admin
+    //  Same rejected logic as admin
     let currentIndex = timeline.findIndex(t => t.key === returnRequest.status);
     if (returnRequest.status === "rejected") currentIndex = 0;
 
@@ -125,33 +125,33 @@ export default function ReturnStatusModal({ returnRequest, onClose }: any) {
                     </div>
                 </div>
 
-                {/* ✅ Reason */}
+                {/*  Reason */}
                 <p className="text-sm">
                     <strong>Reason:</strong> {returnRequest.reason.label}
                 </p>
 
-                {/* ✅ Customer Note */}
+                {/*  Customer Note */}
                 {returnRequest.note && (
                     <p className="mt-2 p-3 bg-gray-100 rounded text-sm">
                         <strong>Your Note:</strong> {returnRequest.note}
                     </p>
                 )}
 
-                {/* ✅ Admin Note */}
+                {/*  Admin Note */}
                 {returnRequest.adminNote && (
                     <p className="mt-2 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded text-sm">
                         <strong>Admin Response:</strong> {returnRequest.adminNote}
                     </p>
                 )}
 
-                {/* ✅ Refund */}
+                {/*  Refund */}
                 {returnRequest.status === "refunded" && returnRequest.refundAmount && (
                     <p className="mt-2 p-3 bg-green-50 border border-green-300 text-green-800 rounded text-sm">
                         <strong>Refunded:</strong> £{returnRequest.refundAmount.toFixed(2)}
                     </p>
                 )}
 
-                {/* ✅ Uploaded Images */}
+                {/*  Uploaded Images */}
                 {returnRequest.images?.length > 0 && (
                     <div className="mt-5">
                         <strong className="text-sm block mb-2">Submitted Images</strong>
@@ -170,7 +170,7 @@ export default function ReturnStatusModal({ returnRequest, onClose }: any) {
 
             </div>
 
-            {/* ✅ Full Image Modal */}
+            {/*  Full Image Modal */}
             {imagePreview && (
                 <div className="fixed inset-0 bg-black/80 z-[10000] flex justify-center items-center p-4">
                     <button

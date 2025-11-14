@@ -3,6 +3,6 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ No header, no sidebar, no footer
+  //  No header, no sidebar, no footer
   return <>{children}</>;
 }

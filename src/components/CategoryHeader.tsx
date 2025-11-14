@@ -42,12 +42,12 @@ export default function CategoryHeader({
       ref={containerRef}
       className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 mb-12 text-center relative pt-20"
     >
-      {/* 🔹 Title */}
+      {/*  Title */}
       <h1 className="text-3xl md:text-4xl font-semibold text-[var(--text-primary)] tracking-wide capitalize mb-4">
         {title}
       </h1>
 
-      {/* 🔹 Description */}
+      {/*  Description */}
       {/* {description && (
         <>
           <p
@@ -68,9 +68,9 @@ export default function CategoryHeader({
         </>
       )} */}
 
-      {/* 🔹 Category Scroller */}
+      {/*  Category Scroller */}
       <div className="mt-8 relative w-full">
-        {/* ✅ Prev Button */}
+        {/*  Prev Button */}
         <button
           type="button"
           className="swiper-button-prev-custom absolute left-0 sm:left-2 top-1/2 -translate-y-1/2 
@@ -80,7 +80,7 @@ export default function CategoryHeader({
           <ChevronLeft size={16} />
         </button>
 
-        {/* ✅ Next Button */}
+        {/*  Next Button */}
         <button
           type="button"
           className="swiper-button-next-custom absolute right-0 sm:right-2 top-1/2 -translate-y-1/2 
@@ -90,7 +90,7 @@ export default function CategoryHeader({
           <ChevronRight size={16} />
         </button>
 
-        {/* ✅ Swiper (Scrollable + Aligned Categories) */}
+        {/*  Swiper (Scrollable + Aligned Categories) */}
         <div className="relative w-full overflow-x-hidden">
           <Swiper
             modules={[Navigation, FreeMode]}

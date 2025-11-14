@@ -12,7 +12,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = await params; // ✅ Correct — await the param itself
+        const { id } = await params; //  Correct — await the param itself
 
         if (!id || isNaN(Number(id))) {
             return NextResponse.json(
@@ -25,7 +25,7 @@ export async function GET(
         if (!userId)
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        // ✅ Ensure admin
+        // Ensure admin
         const user = await prisma.users.findUnique({
             where: { id: userId },
             include: { role: true },
@@ -64,7 +64,7 @@ export async function GET(
 }
 
 /**
- * 🔹 PUT — Update a review by ID
+ *  PUT — Update a review by ID
  */
 export async function PUT(
     req: NextRequest,
@@ -84,7 +84,7 @@ export async function PUT(
         if (!adminId)
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        // ✅ Ensure admin
+        //  Ensure admin
         const adminUser = await prisma.users.findUnique({
             where: { id: adminId },
             include: { role: true },
@@ -143,7 +143,7 @@ export async function PUT(
 }
 
 /**
- * 🔹 DELETE — Remove a review by ID
+ * DELETE — Remove a review by ID
  */
 export async function DELETE(
     req: NextRequest,

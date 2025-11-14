@@ -14,6 +14,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
   try {
     const { searchParams } = new URL(req.url);
     const rawSearch = searchParams.get("search") || "";
@@ -21,13 +33,13 @@ export async function GET(req: NextRequest) {
 
     const where = search
       ? {
-          OR: [
-            { title: { contains: search } },
-            { careType: { contains: search } },
-            { material: { contains: search } },
-            { description: { contains: search } },
-          ],
-        }
+        OR: [
+          { title: { contains: search } },
+          { careType: { contains: search } },
+          { material: { contains: search } },
+          { description: { contains: search } },
+        ],
+      }
       : {};
 
     const materialCares = await prisma.materialCare.findMany({
@@ -60,6 +72,18 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const { title, description, careType, material, icon } = await req.json();

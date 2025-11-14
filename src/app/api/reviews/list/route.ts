@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     if (!adminId)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    // ✅ Verify admin role
+    //  Verify admin role
     const adminUser = await prisma.users.findUnique({
       where: { id: adminId },
       include: { role: true },
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     if (productId) where.productId = Number(productId);
     if (userId) where.userId = Number(userId);
 
-    // 🔍 Optional search across fields
+    //  Optional search across fields
     if (search) {
       where.OR = [
         { comment: { contains: search } },

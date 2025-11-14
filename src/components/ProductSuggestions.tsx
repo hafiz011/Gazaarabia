@@ -28,13 +28,13 @@ export default function ProductSuggestions({
 
   const token = session?.user?.token || null;
 
-  // ✅ Memoize prop to prevent re-renders
+  //  Memoize prop to prevent re-renders
   const memoizedRecentlyViewed = useMemo(
     () => recentlyViewed || [],
     [JSON.stringify(recentlyViewed)]
   );
 
-  // ✅ Load recently viewed safely (client only)
+  //  Load recently viewed safely (client only)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -63,12 +63,12 @@ export default function ProductSuggestions({
 
   const data = activeTab === "wear" ? wearWithProducts : recent;
 
-  // 🛍️ Add to Bag
+  //  Add to Bag
   const handleAddToBag = (product: Product) => {
-    console.log("🛍️ Added to bag:", product.title);
+    console.log(" Added to bag:", product.title);
   };
 
-  // ❤️ Wishlist toggle (uses product.isInWishlist instead of wishlist state)
+  //  Wishlist toggle (uses product.isInWishlist instead of wishlist state)
   const handleWishlistToggle = async (product: Product) => {
     const productId = Number(product.id);
     const currentState = product.isInWishlist ?? product.isInWishlist ?? false;
@@ -102,7 +102,7 @@ export default function ProductSuggestions({
 
   return (
     <section className="mx-auto px-4 py-16 border-t relative overflow-hidden">
-      {/* 🧭 Tabs */}
+      {/*  Tabs */}
       <div className="flex justify-center items-center gap-8 pb-2">
         {tabs.map((t) => {
           const isActive = activeTab === t.key;
@@ -127,7 +127,7 @@ export default function ProductSuggestions({
         })}
       </div>
 
-      {/* 🛍️ Product Carousel */}
+      {/* Product Carousel */}
       <div className="max-w-[1600px] mx-auto relative overflow-hidden">
         {data && data.length > 0 ? (
           <Swiper
@@ -161,7 +161,7 @@ export default function ProductSuggestions({
                         slug: item.slug,
                       }}
                       onAddToBag={handleAddToBag}
-                      // onWishlistChange={() => handleWishlistToggle(item)} // ✅ match your component’s type
+                      // onWishlistChange={() => handleWishlistToggle(item)} //  match your component’s type
                       onWishlistToggle={() => handleWishlistToggle(item)}
                     />
 

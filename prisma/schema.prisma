@@ -703,3 +703,38 @@ model ReturnRequest {
 
   @@map("return_requests")
 }
+
+
+model SolidarityReceipts {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String?
+  amount       Float
+  receiptImage String?   // store uploaded image URL
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("solidarity_receipts")
+}
+
+
+model CharityDonations {
+  id            Int       @id @default(autoincrement())
+  name          String?   // Optional donor name
+  email         String     // Required email
+  amount        Float      // Donation amount
+  anonymous     Boolean    @default(false)
+  message       String?    @db.LongText
+
+  transactionId String?    // PayPal/Stripe transaction ID
+  paymentMethod String?    // "paypal" | "stripe" | ""
+  paymentStatus String     @default("pending") 
+  // pending | success | failed
+
+  receiptUrl    String?    // Optional donation receipt PDF/image
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("charity_donations")
+}

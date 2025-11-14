@@ -49,7 +49,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     },
   };
 
-  // 🟡 Redirect unauthorized users
+  //  Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
@@ -59,7 +59,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }
   }, [status, session, router]);
 
-  // 🟡 Hydrate page & fetch data if editing
+  //  Hydrate page & fetch data if editing
   useEffect(() => {
     setHydrated(true);
     if (id && session?.user?.token) {
@@ -67,11 +67,11 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }
   }, [id, session?.user?.token]);
 
-  // ✅ Fetch existing data (edit mode)
+  //  Fetch existing data (edit mode)
   const fetchDeliveryOption = async (deliveryId: number) => {
     try {
       setLoading(true);
-      const res:any = await deliveryOptionService.getById(session?.user?.token as string, deliveryId);
+      const res: any = await deliveryOptionService.getById(session?.user?.token as string, deliveryId);
       const data = res?.data ?? null;
       setForm({
         name: data.name || "",
@@ -94,7 +94,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }
   };
 
-  // 🟡 Handle input change
+  //  Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     setForm((prev) => ({
@@ -103,7 +103,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     }));
   };
 
-  // ✅ Submit form (create or update)
+  //  Submit form (create or update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -128,7 +128,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
     try {
       const token = session?.user?.token as string;
       if (id) {
-        // 📝 Update
+        //  Update
         await deliveryOptionService.update(token, Number(id), form);
         setAlert({
           isOpen: true,
@@ -179,7 +179,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
             <p className="text-gray-500 text-sm py-4">Loading...</p>
           ) : (
             <div className="space-y-4">
-              {/* 🏷️ Name */}
+              {/*  Name */}
               <TextField
                 label="Name"
                 required
@@ -190,7 +190,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
                 sx={fieldStyle}
               />
 
-              {/* 📝 Description */}
+              {/*  Description */}
               <TextField
                 label="Description"
                 name="description"
@@ -202,7 +202,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
                 sx={fieldStyle}
               />
 
-              {/* ⏱️ Delivery Times */}
+              {/* ⏱ Delivery Times */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <TextField
                   label="Delivery time min"
@@ -237,7 +237,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
                 />
               </div>
 
-              {/* 💰 Cost & Free Over */}
+              {/*  Cost & Free Over */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField
                   label="Cost"
@@ -265,7 +265,7 @@ export default function CreateOrUpdateDeliveryOptionPage() {
                 </div>
               </div>
 
-              {/* 🆗 Actions */}
+              {/*  Actions */}
               <div className="flex justify-end gap-3 pt-6 border-t mt-6">
                 <Button
                   variant="outlined"

@@ -62,7 +62,7 @@ export default function ProductCard({
       onClick={handleCardClick}
       className="group flex flex-col text-center cursor-pointer transition-transform duration-300 hover:-translate-y-1 relative pointer-events-none"
     >
-      {/* ❤️ Remove from wishlist icon */}
+      {/*  Remove from wishlist icon */}
       {removable && (
         <button
           onClick={handleRemove}
@@ -72,28 +72,27 @@ export default function ProductCard({
         </button>
       )}
 
-      {/* 🆕 New Badge */}
+      {/* New Badge */}
       {product.isNew && (
         <span className="absolute top-3 left-3 z-20 bg-[var(--brand-primary)] text-white text-[10px] font-semibold px-2 py-1 rounded-full uppercase tracking-wide pointer-events-none">
           New In
         </span>
       )}
 
-      {/* 💖 Wishlist toggle */}
+      {/*  Wishlist toggle */}
       {!removable && (
         <button
           onClick={handleToggleWishlist}
-          className={`absolute top-3 right-3 z-20 p-1.5 rounded-full border pointer-events-auto transition ${
-            wishlisted
+          className={`absolute top-3 right-3 z-20 p-1.5 rounded-full border pointer-events-auto transition ${wishlisted
               ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]"
               : "bg-white text-[var(--text-muted)] border-[var(--soft-gray)] hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
-          }`}
+            }`}
         >
           <Heart size={16} fill={wishlisted ? "white" : "none"} />
         </button>
       )}
 
-      {/* 🖼️ Product Image */}
+      {/*  Product Image */}
       <div
         onClick={handleCardClick}
         className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl bg-white flex items-center justify-center shadow-sm hover:shadow-lg transition-all duration-300 hover:ring-2 hover:ring-[var(--brand-secondary)] pointer-events-auto"
@@ -105,7 +104,7 @@ export default function ProductCard({
         />
       </div>
 
-      {/* 🏷️ Product Title */}
+      {/*  Product Title */}
       <h3
         onClick={handleCardClick}
         className="mt-4 text-sm font-medium text-[var(--text-primary)] line-clamp-1 pointer-events-auto"
@@ -113,7 +112,7 @@ export default function ProductCard({
         {product.title}
       </h3>
 
-      {/* 💰 Price */}
+      {/*  Price */}
       <p
         onClick={handleCardClick}
         className="mt-1 text-[var(--brand-primary)] text-sm font-semibold pointer-events-auto"
@@ -121,7 +120,7 @@ export default function ProductCard({
         £{product.price}
       </p>
 
-      {/* 🛍️ Add to Bag */}
+      {/* Add to Bag */}
       <button
         // onClick={handleAddToBag}
         onClick={handleCardClick}

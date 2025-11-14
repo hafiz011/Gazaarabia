@@ -66,7 +66,7 @@ export default function AdminAddOrEditReviewPage() {
       setProductMenuWidth(productSelectRef.current.offsetWidth);
   }, [productSelectRef.current]);
 
-  // 🛡️ Auth Guard
+  //  Auth Guard
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
@@ -74,7 +74,7 @@ export default function AdminAddOrEditReviewPage() {
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 📥 Fetch dropdowns + review data
+  //  Fetch dropdowns + review data
   useEffect(() => {
     if (token) {
       fetchDropdownData();
@@ -119,7 +119,7 @@ export default function AdminAddOrEditReviewPage() {
     }
   };
 
-  // ✅ Handle Submit (Create or Update)
+  //  Handle Submit (Create or Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.userId || !form.productId || !form.rating) {

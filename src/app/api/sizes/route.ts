@@ -6,12 +6,24 @@ const prisma: any = new PrismaClient();
 
 // GET all sizes (Protected)
 export async function GET(req: Request) {
-  const token:any = getTokenFromHeader(req);
+  const token: any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);
 
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const sizes = await prisma.sizes.findMany({
@@ -30,12 +42,24 @@ export async function GET(req: Request) {
 
 // CREATE new size (Protected)
 export async function POST(req: Request) {
-  const token:any = getTokenFromHeader(req);
+  const token: any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);
 
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const { name, description } = await req.json();

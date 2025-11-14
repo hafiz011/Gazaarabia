@@ -30,11 +30,14 @@ import {
   BadgeDollarSign,
   TicketPercent,
   Home,
+  HelpingHand,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
+
+
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -83,6 +86,7 @@ const links = [
       //       // { href: "/admin/affiliates/payouts-history", label: "Payout History", icon: BadgeDollarSign },
       //       // { href: "/admin/affiliates/settings", label: "Commission Settings", icon: Settings },
       { href: "/admin/reviews", label: "Customer Reviews", icon: Star },
+      { href: "/admin/solidarity-receipts", label: "Solidarity Receipts", icon: HelpingHand }
     ],
   },
 
@@ -123,6 +127,16 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+
+  const alowedRoles = ["admin", "content_manager"];
+
+  const userRole = session?.user?.role?.toLowerCase();
+
+  const allowedForContentManager = [
+    "/admin/blog-categories",
+    "/admin/blogs"
+  ];
+
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const [openGroups, setOpenGroups] = useState<string[]>([]);
@@ -138,12 +152,16 @@ export default function AdminSidebar({
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
-    else if (status === "authenticated" && session?.user?.role !== "admin")
+    else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role))
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: ROUTES.ADMIN.LOGIN });
+    if (session?.user?.role == 'content_manager') {
+      await signOut({ callbackUrl: ROUTES.CONTENT_MANAGER.LOGIN });
+    } else {
+      await signOut({ callbackUrl: ROUTES.ADMIN.LOGIN });
+    }
   };
 
   return (
@@ -167,12 +185,28 @@ export default function AdminSidebar({
           className={`p-6 border-b border-[var(--dark-gray)] flex items-center ${collapsed ? "justify-center" : "justify-between"
             } gap-2`}
         >
-          {!collapsed && (
+          {/* {!collapsed && (
             <h2 className="text-lg font-semibold tracking-wide text-white">
               Gaza Arabia{" "}
               <span className="text-[var(--brand-primary)]">Admin</span>
             </h2>
+          )} */}
+
+          {!collapsed && (
+            <h2 className="text-lg font-semibold tracking-wide text-white">
+              Gaza Arabia{" "}
+              <span className="text-[var(--brand-primary)]">
+                {session?.user?.role === "admin" ? "Admin" : ""
+                  // ? "Admin"
+                  // : session?.user?.role === "content_manager"
+                  //   ? "Content Manager"
+                  //   : ""
+                }
+              </span>
+            </h2>
           )}
+
+
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="text-gray-300 hover:text-white transition"
@@ -248,86 +282,108 @@ export default function AdminSidebar({
               );
             })} */}
 
+            {links
+              .filter((item) => {
 
+                // Admin sees everything
+                if (userRole === "admin") return true;
 
+                // Content Manager only allowed specific pages
+                if (userRole === "content_manager") {
+                  if (!item.children) return allowedForContentManager.includes(item.href);
 
-            {links.map((item) => {
-              const isGroup = !!item.children;
+                  // If parent has blog-related children
+                  return item.children.some((c) =>
+                    allowedForContentManager.includes(c.href)
+                  );
+                }
 
-              //  GROUP MENU
-              if (isGroup) {
-                const Icon = item.icon;
-                const isOpen = openGroups.includes(item.label);
-                const isActiveGroup = item.children.some((child) => pathname.startsWith(child.href));
+                // Others see nothing
+                return false;
+              }).map((item) => {
+                const isGroup = !!item.children;
 
-                return (
-                  <div key={item.label} className="mb-1">
-                    <button
-                      onClick={() => toggleGroup(item.label)}
-                      className={`flex items-center gap-3 w-full px-4 py-[12px] rounded-xl cursor-pointer transition
+                //  GROUP MENU
+                if (isGroup) {
+                  const Icon = item.icon;
+                  const isOpen = openGroups.includes(item.label);
+                  const isActiveGroup = item.children.some((child) => pathname.startsWith(child.href));
+
+                  return (
+                    <div key={item.label} className="mb-1">
+                      <button
+                        onClick={() => toggleGroup(item.label)}
+                        className={`flex items-center gap-3 w-full px-4 py-[12px] rounded-xl cursor-pointer transition
             ${isActiveGroup ? "bg-[var(--brand-primary)] text-white mt-2" : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white mt-2"}          `}
-                      style={{ justifyContent: collapsed ? "center" : "flex-start" }}
-                    >
-                      <Icon size={20} />
-                      {!collapsed && (
-                        <>
-                          <span>{item.label}</span>
-                          <ChevronRight
-                            size={18}
-                            className={`ml-auto transition-transform ${isOpen ? "rotate-90" : ""}`}
-                          />
-                        </>
-                      )}
-                    </button>
-
-                    {/* Submenu */}
-                    {!collapsed && (
-                      <div
-                        className="overflow-hidden transition-all"
-                        style={{ maxHeight: isOpen ? `${item.children.length * 40}px` : "0px" }}
+                        style={{ justifyContent: collapsed ? "center" : "flex-start" }}
                       >
-                        <div className="ml-10 mt-1 flex flex-col gap-1">
-                          {item.children.map((child) => {
-                            const ChildIcon = child.icon;
-                            const isActive = pathname === child.href;
+                        <Icon size={20} />
+                        {!collapsed && (
+                          <>
+                            <span>{item.label}</span>
+                            <ChevronRight
+                              size={18}
+                              className={`ml-auto transition-transform ${isOpen ? "rotate-90" : ""}`}
+                            />
+                          </>
+                        )}
+                      </button>
 
-                            return (
-                              <Link
-                                key={child.href}
-                                href={child.href}
-                                className={`flex items-center gap-2 text-sm px-2 py-1.5 rounded-md transition
+                      {/* Submenu */}
+                      {!collapsed && (
+                        <div
+                          className="overflow-hidden transition-all"
+                          style={{ maxHeight: isOpen ? `${item.children.length * 40}px` : "0px" }}
+                        >
+                          <div className="ml-10 mt-1 flex flex-col gap-1">
+                            {item.children
+                              .filter((child) => {
+                                if (userRole === "admin") return true;
+                                if (userRole === "content_manager")
+                                  return allowedForContentManager.includes(child.href);
+                                return false;
+                              })
+                              .map((child) => {
+                                const ChildIcon = child.icon;
+                                const isActive = pathname === child.href;
+
+                                return (
+                                  <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    className={`flex items-center gap-2 text-sm px-2 py-1.5 rounded-md transition
                       ${isActive ? "text-white font-medium" : "text-gray-400 hover:text-white"}
                     `}
-                              >
-                                <ChildIcon size={16} />
-                                {child.label}
-                              </Link>
-                            );
-                          })}
+                                  >
+                                    <ChildIcon size={16} />
+                                    {child.label}
+                                  </Link>
+                                );
+                              })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                      )}
+                    </div>
+                  );
+                }
 
-              //  NORMAL LINKS
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
+                //  NORMAL LINKS
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-[12px] rounded-xl text-sm transition
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-[12px] rounded-xl text-sm transition
         ${isActive ? "bg-[var(--brand-primary)] text-white mt-2" : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white mt-2"}      `}
-                  style={{ justifyContent: collapsed ? "center" : "flex-start" }}
-                >
-                  <Icon size={20} />
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              );
-            })}
+                    style={{ justifyContent: collapsed ? "center" : "flex-start" }}
+                  >
+                    <Icon size={20} />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
 
 
 

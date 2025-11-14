@@ -21,6 +21,9 @@ import { ROUTES } from "@/constants/routes";
 export default function BlogListPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const alowedRoles = ["admin", "content_manager"];
+
+  const userRole = session?.user?.role?.toLowerCase();
 
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,12 +40,12 @@ export default function BlogListPage() {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedBlogId, setSelectedBlogId] = useState<number | null>(null);
 
-  // 🛡️ Redirect unauthorized users
+  //  Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
       router.replace(ROUTES.ADMIN.LOGIN);
-    } else if (status === "authenticated" && session?.user?.role !== "admin") {
+    } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
       router.replace(ROUTES.HOME);
     }
   }, [status, session, router]);
@@ -54,7 +57,7 @@ export default function BlogListPage() {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const data :any = await blogService.getAll(session?.user?.token as string);
+      const data: any = await blogService.getAll(session?.user?.token as string);
       setBlogs(data?.data ?? null);
     } catch {
       showAlert("error", "Failed to fetch blogs.");
@@ -63,7 +66,7 @@ export default function BlogListPage() {
     }
   };
 
-  // 🧮 Filter + Paginate
+  //  Filter + Paginate
   const filteredBlogs = useMemo(() => {
     const term = searchTerm.toLowerCase();
     return blogs.filter(
@@ -78,7 +81,7 @@ export default function BlogListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedBlogs = filteredBlogs.slice(startIndex, startIndex + pageSize);
 
-  // 🗑️ Delete blog
+  //  Delete blog
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -119,7 +122,7 @@ export default function BlogListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
+        {/*  Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Blogs</h1>
           <div className="relative w-full sm:w-72" suppressHydrationWarning>
@@ -144,7 +147,7 @@ export default function BlogListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -169,9 +172,8 @@ export default function BlogListPage() {
                 paginatedBlogs.map((blog, idx) => (
                   <tr
                     key={blog.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center">{startIndex + idx + 1}</td>
                     <td className="py-3 px-3 text-center">{blog.title}</td>
@@ -246,7 +248,7 @@ export default function BlogListPage() {
         </MenuItem>
       </Menu>
 
-      {/* ✅ Popup Alert */}
+      {/*  Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

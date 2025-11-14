@@ -5,7 +5,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 const prisma = new PrismaClient();
 
 /**
- * ✅ GET /api/users
+ *  GET /api/users
  * Returns all users (Admin only)
  */
 export async function GET(req: Request) {
@@ -16,7 +16,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  // 🧑‍💻 Optional: Check if user is admin
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+
+  //  Optional: Check if user is admin
   const currentUser = await prisma.users.findUnique({
     where: { id: Number(userId) },
     include: { role: true },

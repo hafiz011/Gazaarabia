@@ -23,6 +23,12 @@ async function main() {
     create: { name: "affiliate" },
   });
 
+  await prisma.roles.upsert({
+    where: { name: "content_manager" },
+    update: {},
+    create: { name: "content_manager" },
+  });
+
   // Create only the admin user
   const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.users.upsert({

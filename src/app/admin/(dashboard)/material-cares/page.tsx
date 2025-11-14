@@ -27,12 +27,12 @@ export default function MaterialCareListPage() {
     message: "",
   });
 
-  // ✅ Fetch Material Cares initially
+  //  Fetch Material Cares initially
   useEffect(() => {
     if (token) fetchMaterialCares();
   }, [token]);
 
-  // ✅ Debounced Search
+  // Debounced Search
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (token) fetchMaterialCares(searchTerm);
@@ -58,7 +58,7 @@ export default function MaterialCareListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = materialCares.slice(startIndex, startIndex + pageSize);
 
-  // 🗑️ Delete Handler
+  //  Delete Handler
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -92,7 +92,7 @@ export default function MaterialCareListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header */}
+        {/*  Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Material Care List</h1>
           <div className="relative w-full sm:w-72">
@@ -113,7 +113,7 @@ export default function MaterialCareListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/*  Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -132,9 +132,8 @@ export default function MaterialCareListPage() {
                 paginatedData.map((item: any, idx) => (
                   <tr
                     key={item.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}
@@ -189,7 +188,7 @@ export default function MaterialCareListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/*  Pagination */}
         {materialCares.length > 0 && (
           <Pagination
             currentPage={currentPage}

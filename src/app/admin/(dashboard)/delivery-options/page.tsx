@@ -35,7 +35,7 @@ export default function DeliveryOptionsListPage() {
   const [pageSize, setPageSize] = useState(10);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
-  // 🟡 Redirect unauthorized users
+  //  Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
@@ -45,7 +45,7 @@ export default function DeliveryOptionsListPage() {
     }
   }, [status, session, router]);
 
-  // 🟡 Fetch all delivery options with token
+  //  Fetch all delivery options with token
   const fetchDeliveryOptions = async () => {
     if (!session?.user?.token) return;
     try {
@@ -67,7 +67,7 @@ export default function DeliveryOptionsListPage() {
     if (session?.user?.token) fetchDeliveryOptions();
   }, [session?.user?.token]);
 
-  // 🟡 Filter & pagination
+  // Filter & pagination
   const filteredOptions = useMemo(() => {
     return deliveryOptions.filter(
       (opt) =>
@@ -80,7 +80,7 @@ export default function DeliveryOptionsListPage() {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedOptions = filteredOptions.slice(startIndex, startIndex + pageSize);
 
-  // 🟡 Delete with token
+  //  Delete with token
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,

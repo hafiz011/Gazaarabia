@@ -8,10 +8,13 @@ import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import { brandService } from "@/lib/services/brandService";
 import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
 export default function BrandListPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const alowedRoles = ["admin"];
+
   const token = session?.user?.token;
 
   const [brands, setBrands] = useState<any[]>([]);
@@ -25,6 +28,18 @@ export default function BrandListPage() {
     type: "",
     message: "",
   });
+
+
+  //  Redirect unauthorized users
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
 
   useEffect(() => {
     if (token) fetchBrands();

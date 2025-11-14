@@ -16,7 +16,7 @@ export default function ProfileDropdown({ onClose }: Props) {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // 🖱️ Close when clicking outside
+  // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

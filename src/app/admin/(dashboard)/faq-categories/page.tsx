@@ -40,7 +40,7 @@ export default function FaqCategoryListPage() {
   const token = session?.user?.token;
   const router = useRouter();
 
-  // 🛡️ Auth guard
+  //  Auth guard
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") router.replace(ROUTES.ADMIN.LOGIN);
@@ -48,7 +48,7 @@ export default function FaqCategoryListPage() {
       router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 📥 Fetch FAQ categories
+  //  Fetch FAQ categories
   useEffect(() => {
     if (token) fetchFaqCategories();
   }, [token]);
@@ -70,7 +70,7 @@ export default function FaqCategoryListPage() {
     }
   };
 
-  // 🔁 Reset modal state
+  //  Reset modal state
   useEffect(() => {
     if (modalAction === "faq-category") {
       setFormName("");
@@ -82,7 +82,7 @@ export default function FaqCategoryListPage() {
     }
   }, [modalAction, clearModal]);
 
-  // 🧮 Filter + Paginate
+  //  Filter + Paginate
   const filteredFaqCategories = useMemo(() => {
     return faqCategories.filter((cat) =>
       cat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -96,7 +96,7 @@ export default function FaqCategoryListPage() {
     startIndex + pageSize
   );
 
-  // 📝 Add / Update FAQ Category
+  //  Add / Update FAQ Category
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formSlug.trim()) return;
@@ -134,7 +134,7 @@ export default function FaqCategoryListPage() {
     }
   };
 
-  // ✏️ Edit
+  //  Edit
   const handleEdit = (category: FaqCategory) => {
     setFormName(category.name);
     setFormSlug(category.slug);
@@ -143,7 +143,7 @@ export default function FaqCategoryListPage() {
     setIsModalOpen(true);
   };
 
-  // 🗑️ Delete
+  //  Delete
   const handleDelete = (id: number) => {
     setPopUpAlertData({
       isOpen: true,
@@ -177,7 +177,7 @@ export default function FaqCategoryListPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        {/* ✅ Header with search */}
+        {/*  Header with search */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage FAQ Categories</h1>
           <div className="relative w-full sm:w-72">
@@ -198,7 +198,7 @@ export default function FaqCategoryListPage() {
 
         <div className="border-t border-gray-200"></div>
 
-        {/* ✅ Table */}
+        {/*  Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
@@ -256,7 +256,7 @@ export default function FaqCategoryListPage() {
           </table>
         </div>
 
-        {/* ✅ Pagination */}
+        {/*  Pagination */}
         {!loading && filteredFaqCategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -269,7 +269,7 @@ export default function FaqCategoryListPage() {
         )}
       </div>
 
-      {/* 🪄 Modal for Add/Edit */}
+      {/*  Modal for Add/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
@@ -323,7 +323,7 @@ export default function FaqCategoryListPage() {
         </div>
       )}
 
-      {/* ✅ Popup Alert */}
+      {/*  Popup Alert */}
       <PopupAlert
         type={popUpAlertData.type as any}
         message={popUpAlertData.message}

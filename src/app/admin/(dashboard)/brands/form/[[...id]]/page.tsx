@@ -8,6 +8,7 @@ import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
 import { brandService } from "@/lib/services/brandService";
 import { useSession } from "next-auth/react";
+import { ROUTES } from "@/constants/routes";
 
 export default function BrandFormPage() {
   const router = useRouter();
@@ -15,8 +16,10 @@ export default function BrandFormPage() {
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const token = session?.user?.token;
+  const alowedRoles = ["admin"];
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -39,6 +42,18 @@ export default function BrandFormPage() {
     type: "",
     message: "",
   });
+
+
+  //  Redirect unauthorized users
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.ADMIN.LOGIN);
+    } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
+      router.replace(ROUTES.HOME);
+    }
+  }, [status, session, router]);
+
 
   useEffect(() => {
     if (isEditMode && token) fetchBrandData();
@@ -250,8 +265,8 @@ export default function BrandFormPage() {
                     ? "Updating..."
                     : "Saving..."
                   : isEditMode
-                  ? "Update"
-                  : "Add"}
+                    ? "Update"
+                    : "Add"}
               </button>
             </div>
           </form>
