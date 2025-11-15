@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/authToken";
 
 const prisma: any = new PrismaClient();
 
-/** 🟢 GET - All Menus */
+/**  GET - All Menus */
 export async function GET() {
   try {
     const menus = await prisma.menus.findMany({

@@ -161,7 +161,7 @@ export default function AffiliatesPage() {
                   <th className="py-3 px-5">Sn.</th>
                   <th className="py-3 px-5">Name</th>
                   <th className="py-3 px-5">Email</th>
-                  <th className="py-3 px-5">Phone</th>
+                  <th className="py-3 px-5">Type</th>
                   <th className="py-3 px-5">Total Earnings</th>
                   <th className="py-3 px-5">Pending Earnings</th>
                   <th className="py-3 px-5">Status</th>
@@ -176,7 +176,7 @@ export default function AffiliatesPage() {
                       <td className="py-3 px-5">{startIndex + idx + 1}</td>
                       <td className="py-3 px-5">{aff.user?.name}</td>
                       <td className="py-3 px-5">{aff.user?.email}</td>
-                      <td className="py-3 px-5">{aff.user?.phone || "-"}</td>
+                      <td className="py-3 px-5">{aff.type || "-"}</td>
                       <td className="py-3 px-5 font-semibold">£{aff.totalEarnings?.toFixed(2) ?? 0}</td>
                       <td className="py-3 px-5 text-orange-600 font-semibold">£{aff.pendingEarnings?.toFixed(2) ?? 0}</td>
                       <td className="py-3 px-5">

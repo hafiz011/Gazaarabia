@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
+import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
 
 const prisma: any = new PrismaClient();
 
@@ -12,7 +13,7 @@ const prisma: any = new PrismaClient();
  */
 export async function POST(req: NextRequest) {
   try {
-    const { address, orderItems, payment, coupon } = await req.json();
+    const { address, orderItems, payment, coupon, charity } = await req.json();
 
     // Validate required fields
     if (
@@ -155,9 +156,41 @@ export async function POST(req: NextRequest) {
             subtotal: item.subtotal,
           })),
         },
+
+        charityAmount: charity?.amount || 0,
+
       },
       include: { orderItems: true },
     });
+
+    let donationRecord = null;
+
+    if (charity?.amount && charity.amount > 0) {
+      donationRecord = await prisma.charityDonations.create({
+        data: {
+          name: charity?.anonymous ? null : charity?.name,
+          email: address.email,
+          amount: charity.amount,
+          anonymous: charity?.anonymous || false,
+          transactionId: payment.paypalOrderId,
+          paymentMethod: "paypal",
+          paymentStatus: payment.paymentStatus || "completed",
+
+          //  IMPORTANT — link donation to order
+          orderId: newOrder.id,
+        },
+      });
+
+      // Link donation to this specific order
+      await prisma.orders.update({
+        where: { id: newOrder.id },
+        data: {
+          charityDonationId: donationRecord.id,
+        }
+      });
+
+    }
+
 
     // 5.5 Generate Invoice PDF
     const invoice: any = await generateCustomerInvoice(newOrder.id);
@@ -179,13 +212,49 @@ export async function POST(req: NextRequest) {
       address: `${address.address1}, ${address.city}, ${address.country}, ${address.postalCode}`,
       generatedPassword,
       invoiceNumber: invoice?.invoiceNumber,
-      invoiceUrl: invoice?.invoiceUrl
+      invoiceUrl: invoice?.invoiceUrl,
+      charityAmount: charity?.amount ?? 0
     });
+
+
+    // 3.5 SUBSCRIBE: create only if not exists, otherwise update (no email on update)
+    const subEmail = address.email;
+    const subscriberExists = await prisma.subscriber.findUnique({
+      where: { email: subEmail },
+    });
+
+    if (!subscriberExists) {
+      // create and send email
+      const newSubscriber = await prisma.subscriber.create({
+        data: {
+          email: subEmail,
+          name: `${address.firstName} ${address.lastName || ""}`.trim(),
+          phone: address.phone || "",
+          isActive: true,
+        },
+      });
+
+      // send confirmation email only when newly created
+      await sendSubscribeConfirmationEmail({
+        to: newSubscriber.email,
+        name: newSubscriber.name || undefined,
+      });
+    } else {
+      // update existing subscriber (no email)
+      await prisma.subscriber.update({
+        where: { email: subEmail },
+        data: {
+          name: `${address.firstName} ${address.lastName || ""}`.trim(),
+          phone: address.phone || "",
+          isActive: true,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       message: "Guest order placed successfully",
-      data: { user, order: newOrder },
+      data: { user, order: newOrder, orderEmail: emailResult },
     });
   } catch (err: any) {
     console.error("Guest Checkout Error:", err);
@@ -210,6 +279,7 @@ export async function sendGuestOrderEmail(
     generatedPassword?: string | null;
     invoiceNumber?: string | null;
     invoiceUrl?: string | null;
+    charityAmount?: number;
   }
 ) {
   try {
@@ -267,6 +337,12 @@ export async function sendGuestOrderEmail(
                 <td style="font-weight:600;color:#374151;">Total Amount:</td>
                 <td style="color:#E82C3F;font-weight:600;">₹${details.total.toFixed(2)}</td>
               </tr>
+              ${details.charityAmount && details.charityAmount > 0 ? `
+                <tr>
+                  <td style="background-color:#ffffff;font-weight:600;color:#374151;">Charity Donation:</td>
+                  <td style="color:#009639;font-weight:600;">₹${details.charityAmount.toFixed(2)}</td>
+                </tr>` : ""}
+
               <tr>
                 <td style="background-color:#ffffff;font-weight:600;color:#374151;">Delivery Address:</td>
                 <td style="line-height:1.7;">${details.address}</td>

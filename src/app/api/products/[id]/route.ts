@@ -121,25 +121,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const body = await req.json();
 
-    // 1️. Delete dependent data first (carts, orders)
-    // await prisma.cart.deleteMany({ where: { variant: { productId } } });
-    // await prisma.orderItem.deleteMany({ where: { variant: { productId } } });
-
-    // // 2️. Delete all variant images, variants, and product images
-    // const variantIds = await prisma.productvariant.findMany({
-    //   where: { productId },
-    //   select: { id: true },
-    // });
-
-    // const variantIdsList = variantIds.map((v: any) => v.id);
-    // if (variantIdsList.length > 0) {
-    //   await prisma.variantImage.deleteMany({
-    //     where: { variantId: { in: variantIdsList } },
-    //   });
-    // }
-
-    // await prisma.productvariant.deleteMany({ where: { productId } });
-    // await prisma.productimage.deleteMany({ where: { productId } });
 
     // 3️. Update main product
     const updated = await prisma.products.update({
@@ -167,44 +148,19 @@ export async function PUT(req: NextRequest, context: RouteContext) {
           ? parseInt(body.subcategoryId)
           : null,
 
-        // //  Recreate product images
-        // productimage: {
-        //   create:
-        //     body.images?.map((img: any) => ({
-        //       url: img.url,
-        //       alt: img.alt || "",
-        //       colorId: img.colorId ? parseInt(img.colorId) : null,
-        //       primary: img.primary ?? false,
-        //     })) || [],
-        // },
+        soldHighlightDuration: body.soldHighlightDuration
+          ? parseInt(body.soldHighlightDuration)
+          : null,
 
-        // //  Recreate variants
-        // productvariant: {
-        //   create:
-        //     body.variants?.map((v: any) => ({
-        //       sku: v.sku,
-        //       price: parseFloat(v.price),
-        //       stock: parseInt(v.stock),
-        //       isActive: v.isActive ?? true,
-        //       colorId: v.colorId ? parseInt(v.colorId) : null,
-        //       sizeId: v.sizeId ? parseInt(v.sizeId) : null,
-        //       variantImages: {
-        //         create:
-        //           v.images?.map((img: any) => ({
-        //             url: img.url,
-        //             alt: img.alt || "",
-        //             productId: productId,
-        //           })) || [],
-        //       },
-        //     })) || [],
-        // },
+        soldCount: body.soldCount
+          ? parseInt(body.soldCount)
+          : null,
+
+        ambassadorId: body.ambassadorId
+          ? parseInt(body.ambassadorId)
+          : null,
       },
-      // include: {
-      //   productimage: true,
-      //   productvariant: {
-      //     include: { variantImages: true },
-      //   },
-      // },
+
     });
 
 

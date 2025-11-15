@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Prisma } from "@prisma/client";
+import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
 
 const prisma: any = new PrismaClient();
 
@@ -42,17 +43,58 @@ export async function POST(req: Request) {
     });
 
 
-    //If the role is affiliate → insert record into Affiliate table
-    if (role.toLowerCase() === "affiliate") {
-      await prisma.affiliate.create({
-        data: {
-          userId: user.id,
-          baseCommission: 10,     // default 10%
-          shareCommission: 7,     // default 7%
-          isActive: true,
-        },
-      });
-    }
+
+    // Get commission values from HomePageSetting
+    const settings = await prisma.homePageSetting.findFirst();
+
+    const baseCommission = settings?.affiliateCommission || 10;
+    const shareCommission = 7;
+
+    // Create affiliate entry using dynamic commissions
+    await prisma.affiliate.create({
+      data: {
+        userId: user.id,
+        baseCommission: baseCommission,
+        shareCommission: shareCommission,
+        isActive: true,
+      },
+    });
+
+
+    // //If the role is affiliate → insert record into Affiliate table
+    // if (role.toLowerCase() === "affiliate") {
+    //   await prisma.affiliate.create({
+    //     data: {
+    //       userId: user.id,
+    //       baseCommission: 10,     // default 10%
+    //       shareCommission: 7,     // default 7%
+    //       isActive: true,
+    //     },
+    //   });
+    // }
+
+
+    //  AUTO-SUBSCRIBE LOGIC (IMPORTANT)
+    await prisma.subscriber.upsert({
+      where: { email },
+      update: {
+        name,
+        phone,
+        isActive: true,
+      },
+      create: {
+        email,
+        name,
+        phone,
+        isActive: true,
+      },
+    });
+
+    //  SEND subscriber CONFIRMATION EMAIL
+    await sendSubscribeConfirmationEmail({
+      to: email,
+      name,
+    });
 
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (err: any) {

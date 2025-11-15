@@ -61,6 +61,7 @@ export async function GET() {
         return NextResponse.json({
             success: true,
             data: {
+                affiliateCommission: settings.affiliateCommission,
                 heroSlides: settings.heroSlides,
                 shopByCategory: categories,
                 midBanner: settings.midBanner,

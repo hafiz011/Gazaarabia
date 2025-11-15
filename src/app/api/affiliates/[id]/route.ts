@@ -54,7 +54,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     const body = await req.json();
-    const { name, email, phone, password, baseCommission, shareCommission, isActive } = body;
+    const { name, email, phone, password, baseCommission, shareCommission, isActive, type } = body;
 
     //  First fetch affiliate to get the real userId
     const affiliate = await prisma.affiliate.findUnique({
@@ -81,6 +81,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     await prisma.affiliate.update({
       where: { id: affiliateId },
       data: {
+        type,
         baseCommission,
         shareCommission,
         isActive,

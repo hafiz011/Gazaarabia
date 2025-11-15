@@ -19,14 +19,29 @@ import { uploadService } from "@/lib/services/uploadService";
 import { materialCareService } from "@/lib/services/materialCareService";
 
 import { TextField, MenuItem, Box, Button } from "@mui/material";
+import { ROUTES } from "@/constants/routes";
+import { ambassadorService } from "@/lib/services/ambassadorService";
 
 function ProductFormContent() {
   const router = useRouter();
   const params = useParams();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const token: any = session?.user?.token; // get token
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
+
+  const allowedRoles = ["admin"];
+
+  useEffect(() => {
+    if (!session) return;
+
+    const userRole = session?.user?.role?.toLowerCase();
+    if (status === "authenticated" && !allowedRoles.includes(session?.user?.role)) {
+      router.replace(ROUTES.HOME);
+    }
+
+  }, [session, router]);
+
 
 
   const [form, setForm] = useState({
@@ -36,6 +51,10 @@ function ProductFormContent() {
     description: "",
     fitType: "",
     materialCareId: "",
+    ambassadorId: "",
+    soldHighlightDuration: "",
+    soldCount: "",
+
     costPrice: "",
     sellingPrice: "",
     discountPrice: "",
@@ -56,6 +75,7 @@ function ProductFormContent() {
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
   const [careAdvices, setCareAdvices] = useState<any[]>([]);
+  const [ambassadors, setAmbassadors] = useState<any[]>([]);
 
   // Wear with related
 
@@ -66,6 +86,8 @@ function ProductFormContent() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [selectedWearWith, setSelectedWearWith] = useState<number[]>([]);
+
+
 
 
 
@@ -103,6 +125,7 @@ function ProductFormContent() {
         colorsData,
         sizesData,
         careData,
+        ambassadorData,
       ]: any = await Promise.all([
         brandService.getAll(token),
         categoryService.getAll(token),
@@ -110,6 +133,7 @@ function ProductFormContent() {
         colorService.getAll(token),
         sizeService.getAll(token),
         materialCareService.getAll(token),
+        ambassadorService.getAll(token)
       ]);
 
       setBrands(brandsData.data ?? brandsData);
@@ -118,6 +142,8 @@ function ProductFormContent() {
       setColors(colorsData.data ?? colorsData);
       setSizes(sizesData.data ?? sizesData);
       setCareAdvices(careData.data ?? careData);
+      setAmbassadors(ambassadorData.data ?? ambassadorData);
+
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -138,6 +164,9 @@ function ProductFormContent() {
         shortDescription: data.shortDescription || "",
         description: data.description || "",
         fitType: data.fitType || "",
+        ambassadorId: data.ambassadorId || "",
+        soldHighlightDuration: data.soldHighlightDuration || "",
+        soldCount: data.soldCount || "",
         materialCareId: data.materialCareId || "",
         costPrice: data.costPrice || "",
         sellingPrice: data.sellingPrice || "",
@@ -449,6 +478,47 @@ function ProductFormContent() {
             ))}
           </TextField>
 
+
+
+          <TextField
+            select
+            label="Assign Ambassador"
+            name="ambassadorId"
+            value={form.ambassadorId}
+            onChange={handleInputChange}
+            fullWidth
+            sx={fieldStyle}
+          >
+            <MenuItem value="">None</MenuItem>
+            {ambassadors.map((a) => (
+              <MenuItem key={a.id} value={a.id}>
+                {a.user.name} ({a.user.email})
+              </MenuItem>
+            ))}
+          </TextField>
+
+
+          <TextField
+            label="Highlight Duration (Hours)"
+            name="soldHighlightDuration"
+            type="number"
+            value={form.soldHighlightDuration || ""}
+            onChange={handleInputChange}
+            fullWidth
+            sx={fieldStyle}
+            placeholder="Example: 24 (means 24 hours)"
+          />
+
+          <TextField
+            label="Sold Count in Duration"
+            name="soldCount"
+            type="number"
+            value={form.soldCount || ""}
+            onChange={handleInputChange}
+            fullWidth
+            sx={fieldStyle}
+            placeholder="Example: 12"
+          />
 
 
           {/* <TextField label={<RequiredLabel text="Subcategory" />} select name="subcategoryId"

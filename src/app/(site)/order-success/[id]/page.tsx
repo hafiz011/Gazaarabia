@@ -53,7 +53,11 @@ interface Order {
   totalAmount: number;
   shippingCost: number;
   couponCode?: string | null;
+
   couponDiscount?: number | null;
+
+  charityAmount?: number;
+
   status: string;
   paymentMethod: string;
   createdAt: string;
@@ -325,6 +329,14 @@ export default function OrderSuccessPage() {
                 £{order.totalAmount.toFixed(2)}
               </span>
             </div> */}
+
+            {(Number(order?.charityAmount) > 0) && (
+              <div className="flex justify-between text-sm text-[var(--text-primary)]">
+                <span>Charity Donation</span>
+                <span className="text-green-700 font-medium">+£{order?.charityAmount?.toFixed(2)}</span>
+              </div>
+            )}
+
 
 
             <div className="border-t border-[var(--soft-gray)] pt-3 flex justify-between font-semibold text-lg text-[var(--brand-primary)]">

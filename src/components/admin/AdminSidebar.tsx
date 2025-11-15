@@ -31,6 +31,8 @@ import {
   TicketPercent,
   Home,
   HelpingHand,
+  HeartHandshake,
+  UserPlus,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -58,6 +60,7 @@ const links = [
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
       { href: "/admin/users", label: "Users", icon: Users },
       { href: "/admin/returns", label: "Return Requests", icon: ClipboardList },
+      { href: "/admin/subscribers", label: "Subscribers", icon: UserPlus },
     ],
   },
 
@@ -86,6 +89,7 @@ const links = [
       //       // { href: "/admin/affiliates/payouts-history", label: "Payout History", icon: BadgeDollarSign },
       //       // { href: "/admin/affiliates/settings", label: "Commission Settings", icon: Settings },
       { href: "/admin/reviews", label: "Customer Reviews", icon: Star },
+      { href: "/admin/charity", label: "Charity", icon: HeartHandshake },
       { href: "/admin/solidarity-receipts", label: "Solidarity Receipts", icon: HelpingHand }
     ],
   },

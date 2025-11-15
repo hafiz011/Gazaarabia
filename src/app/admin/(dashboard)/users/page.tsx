@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Search, Trash2 } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
@@ -162,12 +162,11 @@ export default function UserListPage() {
             </thead>
             <tbody>
               {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user, idx) => (
+                paginatedUsers.map((user: any, idx) => (
                   <tr
                     key={user.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-5 text-gray-600">
                       {startIndex + idx + 1}
@@ -180,18 +179,46 @@ export default function UserListPage() {
                     <td className="py-3 px-5 text-gray-600">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-3 text-right">
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        title="Delete"
-                        className="text-[var(--brand-primary)] bg-transparent hover:bg-[var(--soft-gray)] 
-                                   p-2 rounded-full transition-all duration-200 
-                                   hover:scale-110 hover:shadow-sm focus:outline-none 
-                                   focus:ring-2 focus:ring-[var(--brand-primary)]/30"
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                    <td className="py-3 px-5 text-right relative">
+                      <div className="inline-block text-left">
+                        <button
+                          onClick={() =>
+                            setUsers((prev) =>
+                              prev.map((u: any) =>
+                                u.id === user.id
+                                  ? { ...u, showMenu: !u.showMenu }
+                                  : { ...u, showMenu: false }
+                              )
+                            )
+                          }
+                          className="p-2 rounded-full hover:bg-gray-200 transition"
+                        >
+                          <MoreVertical size={20} className="text-gray-600" />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {user.showMenu && (
+                          <div className="absolute right-0 mt-2 w-36 bg-white border rounded-md shadow-md z-10 py-1">
+                            <button
+                              onClick={() => router.push(`/admin/users/form/${user.id}`)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                            >
+                              <Pencil size={16} />
+                              Edit
+                            </button>
+
+                            <button
+                              onClick={() => handleDelete(user.id)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
+
                   </tr>
                 ))
               ) : (

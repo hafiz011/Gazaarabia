@@ -16,3 +16,9 @@ export function getTimeAgo(dateString: string): string {
     if (minutes > 0) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
     return "Just now";
 }
+
+
+export const GBP = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+});

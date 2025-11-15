@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { heroSlides, shopByCategory, midBanner, signatureProducts, headerText } = body;
+        const { heroSlides, shopByCategory, midBanner, signatureProducts, headerText, affiliateCommission, ambassadorCommission } = body;
 
         const updated = await prisma.homePageSetting.upsert({
             where: { id: 1 }, // If the row doesn't exist, this triggers CREATE
@@ -54,6 +54,8 @@ export async function PUT(req: NextRequest) {
                 midBanner,
                 signatureProducts,
                 headerText,
+                affiliateCommission,
+                ambassadorCommission
             },
             create: {
                 id: 1,
@@ -62,6 +64,8 @@ export async function PUT(req: NextRequest) {
                 midBanner,
                 signatureProducts,
                 headerText,
+                affiliateCommission,
+                ambassadorCommission
             },
         });
 

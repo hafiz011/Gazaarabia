@@ -383,6 +383,41 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
             </section>
           )}
 
+          {/* Charity Donation */}
+          {order.charityAmount > 0 && (
+            <section>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Charity Donation</h3>
+              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-1">
+                <p className="flex justify-between">
+                  <span className="font-medium">Amount Donated:</span>
+                  <span className="font-semibold text-[var(--brand-primary)]">
+                    {formatGBP(order.charityAmount)}
+                  </span>
+                </p>
+                {order.charityAnonymous ? (
+                  <p className="text-xs text-gray-500 italic">Donated anonymously</p>
+                ) : order.charityName || order.charityEmail ? (
+                  <div className="mt-2 text-xs text-gray-600">
+                    {order.charityName && <p>Name: {order.charityName}</p>}
+                    {order.charityEmail && <p>Email: {order.charityEmail}</p>}
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          )}
+
+          {/* Total Paid */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Total Paid</h3>
+            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-900 space-y-1">
+              <p className="flex justify-between text-base font-semibold">
+                <span>Total Amount Paid:</span>
+                <span className="text-[var(--brand-primary)]">
+                  {formatGBP(order.totalAmount)}
+                </span>
+              </p>
+            </div>
+          </section>
 
           {/* Address */}
           <section>

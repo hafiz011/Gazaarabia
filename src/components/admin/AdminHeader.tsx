@@ -116,7 +116,12 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       title: "Solidarity Receipts",
       subtitle: "Manage and organize all solidarity-related receipts and records.",
       action: { label: "Add Receipt", modalKey: "solidarityReceipt" },
-    }
+    },
+    "/admin/users": {
+      title: "Users",
+      subtitle: "Manage the system users.",
+      action: { label: "Add User", href: "/admin/users/form" },
+    },
 
 
   };

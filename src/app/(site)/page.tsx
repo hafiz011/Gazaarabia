@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/effect-fade";
 
-import { Heart, Globe2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import SignatureCollection from "@/components/home/signature-collection";
 import CustomerStories from "@/components/home/customer-stories";
-import ViewLookbook from "@/components/home/viewLookBook";
 import InfoGridSection from "@/components/home/infoGrid";
 import WearTheChange from "@/components/home/wearTheChange";
 import ShopByCategory from "@/components/home/shopByCategory";
@@ -20,6 +16,8 @@ import MoreThanFashionSection from "@/components/home/moreThanFashionSection";
 import HeroSlider from "@/components/home/heroSlider";
 import { homePageFrontend } from "@/lib/services/front-end/homePage";
 import Loader from "@/components/Loader";
+import SubscribePopup from "@/components/SubscribePopup";
+import BecomeAffiliateSection from "@/components/home/becomeAffiliateSection";
 
 export default function HomeHero() {
 
@@ -59,26 +57,11 @@ export default function HomeHero() {
   if (loading || !homeData) return <Loader />;
 
 
-  // const heroSlides = [
-  //   {
-  //     desktop: "/images/home/hero-desktop-1.jpg",
-  //     mobile: "/images/home/hero-mobile-1.jpg",
-  //   },
-  //   {
-  //     desktop: "/images/home/hero-desktop-2.jpg",
-  //     mobile: "/images/home/hero-mobile-2.jpg",
-  //   }
-  // ];
-
-  // const categories = [
-  //   { src: "/images/home/category1.jpg", label: "Abayas" },
-  //   { src: "/images/home/category2.jpg", label: "Coats & Coverups" },
-  //   { src: "/images/home/category3.jpg", label: "Hijabs" },
-  //   { src: "/images/home/category4.jpg", label: "Dresses" },
-  // ];
 
   return (
     <>
+      <SubscribePopup />
+
       <HeroSlider heroSlides={heroSlides} />
 
       <MoreThanFashionSection />
@@ -131,6 +114,11 @@ export default function HomeHero() {
 
 
       <SignatureCollection products={products} />
+
+
+      {/* Add Affiliate Section HERE */}
+      <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />
+
 
       {reviews.length > 0 && (
         <CustomerStories reviews={reviews} />

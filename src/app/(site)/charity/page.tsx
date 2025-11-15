@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import PaypalModal from "@/components/PaypalModal";
-import { charityService } from "@/lib/services/charityService";
+import { charityService } from "@/lib/services/front-end/charityService";
 
 // ALERT SYSTEM
 import AlertMessage from "@/components/AlertMessage";

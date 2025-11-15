@@ -23,6 +23,7 @@ export default function AddOrEditAffiliatePage() {
     email: "",
     phone: "",
     password: "",
+    type: "",
     baseCommission: "10",
     shareCommission: "7",
     isActive: true,
@@ -49,6 +50,7 @@ export default function AddOrEditAffiliatePage() {
           email: a.user.email,
           phone: a.user.phone || "",
           password: "",
+          type: "affiliate",
           baseCommission: String(a.baseCommission),
           shareCommission: String(a.shareCommission),
           isActive: a.isActive,
@@ -121,8 +123,18 @@ export default function AddOrEditAffiliatePage() {
             <TextField fullWidth label="Phone" value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })} sx={fieldStyle} />
 
-                 <TextField fullWidth type="number" label="Base Commission (%)" value={form.baseCommission}
+            <TextField fullWidth type="number" label="Base Commission (%)" value={form.baseCommission}
               onChange={(e) => setForm({ ...form, baseCommission: e.target.value })} sx={fieldStyle} />
+
+            <select
+              className="border p-3 rounded"
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+            >
+              <option value="affiliate">Normal Affiliate</option>
+              <option value="ambassador">Ambassador</option>
+            </select>
+
 
             {/* Password / Change Password */}
             <div className="sm:col-span-2">
@@ -182,7 +194,7 @@ export default function AddOrEditAffiliatePage() {
               )}
             </div>
 
-         
+
           </div>
 
           <Box className="mt-6 flex items-center justify-between border-t pt-4">

@@ -9,20 +9,12 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import {
   ArrowLeft,
-  Lock,
-  X,
-  Building2,
   MapPin,
-  Globe2,
-  Phone,
-  Pencil,
   ShoppingBag,
   Smile,
   PlusCircle,
   Edit3,
   CheckCircle,
-  Percent,
-  BadgeMinus,
 } from "lucide-react";
 
 import { cartService } from "@/lib/services/front-end/cartService";
@@ -31,8 +23,6 @@ import { addressService } from "@/lib/services/front-end/addressService";
 import { orderService } from "@/lib/services/front-end/orderService";
 import Loader from "@/components/Loader";
 import PaypalModal from "@/components/PaypalModal";
-import PopupAlert from "@/components/PopupAlert";
-import { PopUpInterface } from "@/lib/types";
 import GuestAddressModal from "@/components/GuestAddressModal"; //  import new modal
 import { useCart } from "@/app/context/CartContext";
 import UnavailableStockAlert from "@/components/UnavailableStockAlert";
@@ -67,6 +57,13 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+
+  const [charityAmount, setCharityAmount] = useState<string>("");
+
+  // FINAL CALCULATED TOTAL
+  const donation = parseFloat(charityAmount || "0");
+  const grandTotal = subtotal - discountAmount + donation;
+
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -261,7 +258,8 @@ export default function CheckoutPage() {
       const totalAmount = subtotal - discountAmount;
       const orderPayload: any = {
         payment: {
-          totalAmount: totalAmount,
+          // totalAmount: totalAmount,
+          totalAmount: grandTotal,
           itemsTotal: subtotal,
           subtotal: subtotal,
           paymentMethod: "paypal",
@@ -299,6 +297,13 @@ export default function CheckoutPage() {
             discountAmount: appliedCoupon.discountAmount,
           }
           : null,
+        charity: {
+          amount: parseFloat(charityAmount || "0"),
+          email: token ? session?.user.email : guestAddress.email,
+          name: token ? session?.user.name : `${guestAddress.firstName} ${guestAddress.lastName}`,
+          anonymous: false, // or based on a toggle in UI
+        },
+
       };
 
       if (token) {
@@ -709,10 +714,47 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {/*  -------------------- ADD CHARITY DONATION HERE -------------------- */}
+              {/* <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Charity Donation (optional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={charityAmount}
+                  onChange={(e) => setCharityAmount(Number(e.target.value))}
+                  className="border border-[var(--soft-gray)] rounded-lg px-3 py-2 w-full mt-1 text-sm 
+               focus:outline-none focus:border-[var(--brand-secondary)]"
+                  placeholder="Enter amount (e.g., 5.00)"
+                />
+              </div> */}
+
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Charity Donation (optional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={charityAmount}
+                  onChange={(e) => setCharityAmount(e.target.value)}
+                  className="border border-[var(--soft-gray)] rounded-lg px-3 py-2 w-full mt-1 text-sm 
+      focus:outline-none focus:border-[var(--brand-secondary)]"
+                  placeholder="Enter amount (e.g., 5.00)"
+                />
+              </div>
+
+              {/* -------------------------------------------------------------------  */}
+
               <Divider />
               <div className="flex justify-between font-bold pt-3 text-lg text-[var(--brand-primary)]">
                 <span>Total</span>
-                <span>£{(subtotal - discountAmount).toFixed(2)}</span>
+                {/* <span>£{(subtotal - discountAmount).toFixed(2)}</span> */}
+                <span>£{grandTotal.toFixed(2)}</span>
+
               </div>
 
 
@@ -734,7 +776,8 @@ export default function CheckoutPage() {
 
             <PaypalModal
               open={paypalOpen}
-              total={subtotal - discountAmount}
+              // total={subtotal - discountAmount}
+              total={grandTotal}
               onClose={() => setPaypalOpen(false)}
               onSuccess={handlePaymentSuccess}
             />

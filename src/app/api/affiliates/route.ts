@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     if (!admin || admin.role.name.toLowerCase() !== "admin")
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-    const { name, email, phone, password, baseCommission, shareCommission, isActive } =
+    const { name, email, phone, password, baseCommission, shareCommission, isActive, type } =
       await req.json();
 
     if (!password || password.length < 6)
@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     const affiliate = await prisma.affiliate.create({
       data: {
         userId: user.id,
+        type,
         baseCommission: Number(baseCommission),
         shareCommission: Number(shareCommission),
         isActive,

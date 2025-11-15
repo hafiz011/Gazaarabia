@@ -215,6 +215,14 @@ model products {
   reviews       Review[]
   variantImages VariantImage[]
 
+  soldHighlightDuration Int?     // duration in hours
+  soldCount             Int?     // number sold in this duration
+
+  ambassadorId          Int?     // assigned ambassador
+  ambassador   Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
+
+
+
   // NEW — Back-relations for ProductRelation
   asParentRelations ProductRelation[] @relation("ProductAsParent")
   asChildRelations  ProductRelation[] @relation("ProductAsChild")
@@ -375,6 +383,10 @@ model Orders {
 
   invoiceNumber String?   // stores invoice code like INV-000001
   invoiceUrl    String?   // link to PDF stored locally or S3
+
+  charityDonationId Int?
+  charityAmount Float? @default(0)
+  charityDonation CharityDonations?
 
   //  Timestamps
   createdAt DateTime @default(now())
@@ -554,10 +566,13 @@ model ContactUs {
 
 model Affiliate {
   id              Int      @id @default(autoincrement())
-  userId          Int      @unique
+  userId          Int      @unique(map: "Affiliate_userId_unique")
   user            Users    @relation(fields: [userId], references: [id])
   baseCommission  Float    @default(10) // Admin's commission percentage
   shareCommission Float    @default(7) // Affiliate's shared portion (% discount)
+
+  type        String   @default("affiliate") // "affiliate" or "ambassador"
+
 
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -569,6 +584,9 @@ model Affiliate {
   orders  Orders[]
   invoices AffiliateInvoice[]
 
+  products products[] @relation("AffiliateAmbassadorRelation")
+
+ @@map("affiliate")
 }
 
 model Payout {
@@ -646,7 +664,11 @@ model HomePageSetting {
   shopByCategory  Json?
   midBanner       String?
   signatureProducts Json?
-  headerText         String?  
+  headerText         String? 
+  affiliateCommission Int?  
+  ambassadorCommission Int?
+
+  
   updatedAt       DateTime @updatedAt
 
   @@map("homepage_settings")
@@ -733,8 +755,24 @@ model CharityDonations {
 
   receiptUrl    String?    // Optional donation receipt PDF/image
 
+  orderId       Int?       @unique 
+  order         Orders? @relation(fields: [orderId], references: [id])
+
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   @@map("charity_donations")
+}
+
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("subscribers")
 }

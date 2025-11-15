@@ -82,6 +82,9 @@ interface Order {
   totalAmount: number;
   couponCode?: string | null;
   couponDiscount?: number | null;
+
+  charityAmount?: number;
+
   status: string;
   paymentMethod: string;
   platform?: string | null;
@@ -410,6 +413,15 @@ export default function OrderDetailsPage() {
               <span>Free</span>
             </div>
           )}
+
+          {/* Charity Donation */}
+          {(Number(order?.charityAmount) > 0) && (
+            <div className="flex justify-between text-green-700">
+              <span>Charity Donation</span>
+              <span>+£{order?.charityAmount?.toFixed(2)}</span>
+            </div>
+          )}
+
 
           {/* Final Total */}
           <div className="flex justify-between items-center border-t border-[var(--mid-gray)] pt-3 mt-2">

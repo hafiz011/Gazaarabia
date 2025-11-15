@@ -24,10 +24,11 @@ import { productService } from "@/lib/services/productService";
 import { homePageService } from "@/lib/services/homePageSetting";
 import { uploadService } from "@/lib/services/uploadService";
 import { Close as CloseIcon } from "@mui/icons-material";
+import { ROUTES } from "@/constants/routes";
 
 
 export default function HomePageSettings() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const token = session?.user?.token;
 
@@ -58,6 +59,12 @@ export default function HomePageSettings() {
     const [uploadingSlideType, setUploadingSlideType] = useState<"desktop" | "mobile" | null>(null);
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [headerText, setHeaderText] = useState("");
+    const [affiliateCommission, setAffiliateCommission] = useState<number>(0);
+    const [affiliateError, setAffiliateError] = useState("");
+    const [ambassadorCommission, setAmbassadorCommission] = useState<number>(0);
+    const [ambassadorError, setAmbassadorError] = useState("");
+
+
 
 
 
@@ -67,6 +74,20 @@ export default function HomePageSettings() {
         "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "var(--brand-secondary)" },
         "& .MuiInputLabel-root.Mui-focused": { color: "var(--brand-secondary)" }
     };
+
+    const allowedRoles = ["admin"];
+
+    useEffect(() => {
+        if (!session) return;
+
+        const userRole = session?.user?.role?.toLowerCase();
+        if (status === "authenticated" && !allowedRoles.includes(session?.user?.role)) {
+            router.replace(ROUTES.HOME);
+        }
+
+    }, [session, router]);
+
+
 
     // Fetch Categories + Products
     useEffect(() => {
@@ -108,6 +129,9 @@ export default function HomePageSettings() {
                 if (!saved) return;
 
                 setHeaderText(saved.headerText || "");
+                setAffiliateCommission(saved.affiliateCommission || 0);
+                setAmbassadorCommission(saved.ambassadorCommission || 0);
+
 
                 setHeroSlides(saved.heroSlides || []);
                 setSelectedCategories(saved.shopByCategory || []);
@@ -175,6 +199,24 @@ export default function HomePageSettings() {
     };
 
     const handleSave = async () => {
+
+        if (affiliateCommission < 1 || affiliateCommission > 100) {
+            return setPopup({
+                isOpen: true,
+                type: "warning",
+                message: "Affiliate Commission must be between 1% and 100%",
+            });
+        }
+
+        if (ambassadorCommission < 1 || ambassadorCommission > 100) {
+            return setPopup({
+                isOpen: true,
+                type: "warning",
+                message: "Ambassador Commission must be between 1% and 100%",
+            });
+        }
+
+
         // Hero slider must not be empty
         if (heroSlides.length === 0) {
             setPopup({
@@ -231,6 +273,8 @@ export default function HomePageSettings() {
             midBanner,
             signatureProducts,
             headerText,
+            affiliateCommission,
+            ambassadorCommission
         };
 
         try {
@@ -253,6 +297,30 @@ export default function HomePageSettings() {
             setLoading(false);
         }
     };
+
+    const changedCommission = (e: any) => {
+        const raw = e.target.value;           // get raw input
+        if (raw === "") {
+            setAffiliateCommission(NaN);      // store empty
+            setAffiliateError("Commission is required.");
+            return;
+        }
+
+        const val = Number(raw);
+
+        if (val < 1) {
+            setAffiliateCommission(val);
+            setAffiliateError("Commission must be at least 1%.");
+        } else if (val > 100) {
+            setAffiliateCommission(val);
+            setAffiliateError("Commission cannot exceed 100%.");
+        } else {
+            setAffiliateCommission(val);
+            setAffiliateError("");
+        }
+    };
+
+
 
     return (
         <Box className="p-6 max-w-4xl mx-auto">
@@ -286,6 +354,62 @@ export default function HomePageSettings() {
                         This text will appear at the very top of your website header.
                     </p>
                 </Box>
+
+
+                <Box>
+                    <TextField
+                        label="Affiliate Commission (%)"
+                        type="number"
+                        value={isNaN(affiliateCommission) ? "" : affiliateCommission}
+                        // onChange={(e) => setAffiliateCommission(parseInt(e.target.value) || 0)}
+
+                        onChange={(e) => { changedCommission(e) }}
+
+                        fullWidth
+                        sx={fieldStyle}
+                        placeholder="Example: 30"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                        This commission applies to all affiliates (default rate).
+                    </p>
+                </Box>
+
+                <Box>
+                    <TextField
+                        label="Ambassador Commission (%)"
+                        type="number"
+                        value={isNaN(ambassadorCommission) ? "" : ambassadorCommission}
+                        onChange={(e) => {
+                            const raw = e.target.value;
+
+                            if (raw === "") {
+                                setAmbassadorCommission(NaN);
+                                setAmbassadorError("Commission is required.");
+                                return;
+                            }
+
+                            const val = Number(raw);
+                            if (val < 1) {
+                                setAmbassadorCommission(val);
+                                setAmbassadorError("Commission must be at least 1%.");
+                            } else if (val > 100) {
+                                setAmbassadorCommission(val);
+                                setAmbassadorError("Commission cannot exceed 100%.");
+                            } else {
+                                setAmbassadorCommission(val);
+                                setAmbassadorError("");
+                            }
+                        }}
+                        fullWidth
+                        sx={fieldStyle}
+                        placeholder="Example: 20"
+                    />
+                    {ambassadorError && (
+                        <p className="text-red-500 text-xs mt-1">{ambassadorError}</p>
+                    )}
+                </Box>
+
+
 
                 {/* ================= HERO SLIDER ================= */}
                 <Box>

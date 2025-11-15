@@ -217,6 +217,17 @@ export async function generateCustomerInvoice(orderId: number) {
         });
     }
 
+    // Charity Donation (NEW)
+    if (Number(order?.charityAmount) > 0) {
+        doc.moveDown(1);
+        doc.font("Regular").fontSize(10).text(
+            `Charity Donation: £${order.charityAmount.toFixed(2)}`,
+            400,
+            doc.y,
+            { width: 160, align: "right" }
+        );
+    }
+
 
     // Total Amount (Right aligned)
     doc.moveDown(1);

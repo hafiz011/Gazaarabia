@@ -4,39 +4,33 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 const prisma = new PrismaClient();
 
-/**
- *  GET /api/users
- * Returns all users (Admin only)
- */
-export async function GET(req: Request) {
+//  Helper: Admin check
+async function validateAdmin(req: Request) {
   const token: any = getTokenFromHeader(req);
   const userId = getUserIdFromToken(token);
 
-  if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!userId) return { error: "Unauthorized", status: 401 };
 
   const user = await prisma.users.findUnique({
     where: { id: userId },
-    include: { role: true }
-  });
-
-  const allowedRoles = ["admin"];
-
-  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-  }
-
-
-  //  Optional: Check if user is admin
-  const currentUser = await prisma.users.findUnique({
-    where: { id: Number(userId) },
     include: { role: true },
   });
 
-  if (!currentUser || currentUser.role.name.toLowerCase() !== "admin") {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  if (!user || user.role.name.toLowerCase() !== "admin") {
+    return { error: "Forbidden", status: 403 };
   }
+
+  return { user };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  GET ALL USERS                             */
+/* -------------------------------------------------------------------------- */
+export async function GET(req: Request) {
+  const auth = await validateAdmin(req);
+
+  if (auth.error)
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
 
   try {
     const users = await prisma.users.findMany({
@@ -46,9 +40,8 @@ export async function GET(req: Request) {
         name: true,
         email: true,
         createdAt: true,
-        role: {
-          select: { name: true },
-        },
+        roleId: true,
+        role: { select: { name: true } },
       },
     });
 
@@ -56,6 +49,64 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("GET Users Error:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  CREATE USER                               */
+/* -------------------------------------------------------------------------- */
+// POST /api/users
+export async function POST(req: Request) {
+  const auth = await validateAdmin(req);
+
+  if (auth.error)
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
+
+  try {
+    const body = await req.json();
+
+    //  Convert role name → roleId
+    const roleRecord = await prisma.roles.findFirst({
+      where: { name: body.role.toLowerCase() },
+    });
+
+    if (!roleRecord) {
+      return NextResponse.json(
+        { error: "Invalid role provided" },
+        { status: 400 }
+      );
+    }
+
+    const newUser = await prisma.users.create({
+      data: {
+        name: body.name,
+        email: body.email,
+        phone: body.phone || "",
+        password: body.password,
+        roleId: roleRecord.id, // ← FIXED
+      },
+    });
+
+    return NextResponse.json({
+      message: "User created successfully",
+      user: newUser,
+    });
+  }
+  catch (error: any) {
+    console.error("POST User Error:", error);
+
+    //  Handle unique email error (Prisma P2002)
+    if (error.code === "P2002" && error.meta?.target?.includes("email")) {
+      return NextResponse.json(
+        { error: "Email already exists, please use a different email." },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to create user" },
+      { status: 500 }
+    );
   }
 }
 

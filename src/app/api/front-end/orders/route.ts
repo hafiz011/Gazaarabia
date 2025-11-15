@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { payment, address, orderItems, coupon } = await req.json();
+    const { payment, address, orderItems, coupon, charity } = await req.json();
 
     if (!payment?.totalAmount || !orderItems || orderItems.length === 0) {
       return NextResponse.json(
@@ -122,13 +122,43 @@ export async function POST(req: NextRequest) {
             subtotal: item.subtotal,
           })),
         },
+
+        charityAmount: charity?.amount || 0,
+
       },
       include: { orderItems: true },
     });
 
+    // Store donation in CharityDonations table
+    if (charity?.amount && charity.amount > 0) {
+      const donationRecord = await prisma.charityDonations.create({
+        data: {
+          name: charity?.anonymous ? null : charity?.name,
+          email: charity?.email,
+          amount: charity.amount,
+          anonymous: charity?.anonymous || false,
+          transactionId: payment.paypalOrderId,
+          paymentMethod: "paypal",
+          paymentStatus: payment.paymentStatus || "completed",
+
+          //  IMPORTANT — link donation to order
+          orderId: newOrder.id,
+        },
+      });
+
+      // Link donation to this specific order
+      await prisma.orders.update({
+        where: { id: newOrder.id },
+        data: {
+          charityDonationId: donationRecord.id,
+        }
+      });
+
+    }
+
 
     //  Generate invoice
-    const invoice :any = await generateCustomerInvoice(newOrder.id);
+    const invoice: any = await generateCustomerInvoice(newOrder.id);
 
     //  Increment coupon usage count
     if (couponData) {
@@ -155,7 +185,9 @@ export async function POST(req: NextRequest) {
       invoiceNumber: invoice?.invoiceNumber,
       invoiceUrl: invoice?.invoiceUrl,
       address: `${address.address1}, ${address.city}, ${address.country}, ${address.postalCode}`,
-      userId: user.id
+      userId: user.id,
+      charityAmount: charity?.amount ?? 0
+
     });
 
 

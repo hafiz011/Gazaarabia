@@ -61,7 +61,7 @@ export default function AffiliateSignupPage() {
                 email: form.email,
                 password: form.password,
                 phone: form.phone,
-                role: "affiliate", // 👈 Important addition
+                role: "affiliate", //  Important addition
             });
 
             setAlert({

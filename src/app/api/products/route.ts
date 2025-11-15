@@ -120,6 +120,22 @@ export async function POST(req: NextRequest) {
           ? parseInt(body.subcategoryId)
           : null,
 
+
+        // Highlight duration & sold count
+        soldHighlightDuration: body.soldHighlightDuration
+          ? parseInt(body.soldHighlightDuration)
+          : null,
+
+        soldCount: body.soldCount
+          ? parseInt(body.soldCount)
+          : null,
+
+        // Ambassador assignment
+        ambassadorId: body.ambassadorId
+          ? parseInt(body.ambassadorId)
+          : null,
+
+
         //  Product Images
         productimage: {
           create:
