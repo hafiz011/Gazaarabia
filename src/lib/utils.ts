@@ -22,3 +22,21 @@ export const GBP = new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
 });
+
+/**
+ * Convert sold duration (hours) to a readable label
+ * Example:
+ *  - 1  => "1 hour"
+ *  - 5  => "5 hours"
+ *  - 24 => "1 day"
+ *  - 48 => "2 days"
+ */
+
+export function formatSoldDuration(hours: number | null | undefined) {
+    if (!hours || hours <= 0) return null;
+
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""}`;
+
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? "s" : ""}`;
+}

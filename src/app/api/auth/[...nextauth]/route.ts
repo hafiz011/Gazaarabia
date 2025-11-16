@@ -33,6 +33,9 @@ const authOptions: any = {
               token: res.token,
               role: res.user.roleName, // or res.user.role if you have a string role
               user_id: res.user.id,
+
+              affiliateId: res.user.affiliateId,
+              affiliateType: res.user.affiliateType,
             };
           }
 
@@ -65,6 +68,9 @@ const authOptions: any = {
         token.token = user.token;
         token.role = user.role;
         token.user_id = user.user_id;
+
+        token.affiliateId = user.affiliateId;
+        token.affiliateType = user.affiliateType;
       }
       return token;
     },
@@ -78,6 +84,9 @@ const authOptions: any = {
         token: token.token,
         role: token.role,
         user_id: token.user_id,
+        affiliateId: token.affiliateId,
+        affiliateType: token.affiliateType,
+
       };
       return session;
     },

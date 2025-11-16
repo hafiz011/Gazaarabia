@@ -51,4 +51,9 @@ export const subcategoryService = {
       },
       token
     ),
+
+  getByCategory: (token: string, categoryId: number) =>
+    apiFetch(`/api/subcategories/by-category/${categoryId}`, {}, token),
+
+
 };

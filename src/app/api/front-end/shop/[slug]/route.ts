@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getWishlistProductIds } from "@/lib/helpers/wishlist";
 import {
   getProductAvailableQuantity,
   getVariantAvailableQuantity,
 } from "@/lib/helpers/stockHelper";
+import { getProductRatingStats } from "@/lib/helpers/reviewHelper";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export async function GET(
   req: Request,
@@ -124,11 +126,15 @@ export async function GET(
           })
         );
 
+        const { averageRating, totalReviews } = await getProductRatingStats(product.id);
+
         return {
           ...product,
           isInWishlist,
           availableStock: productAvailableStock, //  product-level
           productvariant: variantsWithStock, // variants with stock
+          rating: averageRating,
+          reviewsCount: totalReviews,
         };
       })
     );

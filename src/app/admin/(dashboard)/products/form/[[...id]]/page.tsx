@@ -206,12 +206,29 @@ function ProductFormContent() {
   }, [token, id]);
 
   //  Handle form input
-  const handleInputChange = (e: any) => {
+  const handleInputChange = async (e: any) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // When category changes -> load its subcategories
+    if (name === "categoryId") {
+      setForm((prev) => ({ ...prev, subcategoryId: "" })); // reset subcategory
+
+      if (value) {
+        try {
+          const res: any = await subcategoryService.getByCategory(token, Number(value));
+          setSubcategories(res.data ?? []);
+        } catch {
+          setSubcategories([]);
+        }
+      } else {
+        setSubcategories([]);
+      }
+    }
+
   };
 
   //  Upload Image

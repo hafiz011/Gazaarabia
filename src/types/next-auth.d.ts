@@ -8,6 +8,8 @@ declare module "next-auth" {
       email: string;
       role: string;
       token: string;
+      affiliateId?: number | null;
+      affiliateType?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -15,5 +17,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
+    affiliateId?: number | null;
+    affiliateType?: string | null;
   }
 }

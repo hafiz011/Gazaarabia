@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
 import { sendOrderConfirmationEmail } from "@/lib/helpers/emailHelper";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
+import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 
 
 const prisma: any = new PrismaClient();
@@ -39,7 +40,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-
+    // ================================
+    //  AFFILIATE LOGIC
+    // ================================
     // Determine affiliate (if coupon belongs to one)
     let affiliateId = null;
     let affiliateCommission = null;
@@ -71,12 +74,54 @@ export async function POST(req: NextRequest) {
       // Avoid negative commission
       // affiliateEarning = Math.max(finalEarning, 0);
       affiliateEarning = Number(Math.max(finalEarning, 0).toFixed(2));
-
-
-
     }
 
+    // ==========================================================
+    //  AMBASSADOR LOGIC — PER PRODUCT
+    // ==========================================================
+    const orderItemsWithAmbassador = [];
 
+    for (const item of orderItems) {
+      const ambassadorInfo: any = await getAmbassadorForProduct(item.productId);
+
+      let ambassadorEarning = null;
+
+      if (ambassadorInfo.isAmbassadorProduct) {
+        ambassadorEarning = Number(
+          ((item.subtotal * ambassadorInfo.commissionPercent) / 100).toFixed(2)
+        );
+      }
+
+      orderItemsWithAmbassador.push({
+        productId: item.productId,
+        variantId: item.variantId,
+        colorId: item.colorId,
+        sizeId: item.sizeId,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+
+        // from common function
+        ambassadorId: ambassadorInfo.ambassadorId,
+        ambassadorCommission: ambassadorInfo.commissionPercent,
+        ambassadorEarning,
+        ambassadorPaid: false,
+      });
+    }
+
+    // ==========================================================
+    //  OPTIONAL: SAVE ORDER-LEVEL AMBASSADOR (first found)
+    // ==========================================================
+    const firstItemWithAmbassador = orderItemsWithAmbassador.find(
+      (i) => i.ambassadorId
+    );
+
+    const ambassadorIdForOrder = firstItemWithAmbassador?.ambassadorId || null;
+
+
+    // ===============================
+    //  CREATE ORDER
+    // ===============================
     const newOrder = await prisma.orders.create({
       data: {
         userId: Number(userId),
@@ -110,25 +155,38 @@ export async function POST(req: NextRequest) {
         affiliateCommission: affiliateCommission,
         affiliateEarning: affiliateEarning,
 
+        //  NEW — Order-level ambassador tracking
+        ambassadorId: ambassadorIdForOrder,
+        ambassadorPaid: false,
+
+
         //  Order Items
-        orderItems: {
-          create: orderItems.map((item: any) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            colorId: item.colorId,
-            sizeId: item.sizeId,
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: item.subtotal,
-          })),
-        },
+        // orderItems: {
+        //   create: orderItems.map((item: any) => ({
+        //     productId: item.productId,
+        //     variantId: item.variantId,
+        //     colorId: item.colorId,
+        //     sizeId: item.sizeId,
+        //     quantity: item.quantity,
+        //     price: item.price,
+        //     subtotal: item.subtotal,
+        //   })),
+        // },
 
         charityAmount: charity?.amount || 0,
+
+        //  INSERT order items WITH ambassador fields
+        orderItems: {
+          create: orderItemsWithAmbassador,
+        },
 
       },
       include: { orderItems: true },
     });
 
+    // -------------------------------
+    // Charity donation
+    // -------------------------------
     // Store donation in CharityDonations table
     if (charity?.amount && charity.amount > 0) {
       const donationRecord = await prisma.charityDonations.create({

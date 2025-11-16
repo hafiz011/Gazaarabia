@@ -14,6 +14,8 @@ import {
     ChevronRight,
     TicketPercent,
     UserCircle,
+    Package,
+    BadgeDollarSign,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -31,6 +33,12 @@ const affiliateLinks = [
     // { href: "/affiliate/support", label: "Support", icon: MessageSquare },
 ];
 
+//  Ambassador-specific menu (only visible when affiliateType = "ambassador")
+const ambassadorLinks = [
+    { href: "/affiliate/ambassador/orders", label: "Ambassador Order Items", icon: Package },
+    { href: "/affiliate/ambassador/earnings", label: "Ambassador Earnings", icon: BadgeDollarSign },
+];
+
 export default function AffiliateSidebar({
     isOpen,
     collapsed,
@@ -44,6 +52,9 @@ export default function AffiliateSidebar({
     const router = useRouter();
     const { data: session, status } = useSession();
     const [confirmLogout, setConfirmLogout] = useState(false);
+
+
+    const isAmbassador = session?.user?.affiliateType === "ambassador";
 
     //  Role-based access control
     useEffect(() => {
@@ -60,6 +71,33 @@ export default function AffiliateSidebar({
     const handleLogout = async () => {
         await signOut({ callbackUrl: ROUTES.AFFILIATE.LOGIN });
     };
+
+
+
+    const renderMenuItem = (href: string, label: string, Icon: any, isLast: boolean) => {
+        const isActive = pathname === href;
+
+        return (
+            <Link
+                key={href}
+                href={href}
+                className={`group flex items-center gap-3 px-4 py-[12px] rounded-xl text-sm font-medium transition-all duration-200
+                        ${isActive
+                        ? "bg-[var(--brand-primary)] text-white shadow-[0_4px_12px_rgba(232,44,63,0.4)] scale-[1.02]"
+                        : "text-[var(--soft-gray)] hover:bg-[var(--brand-secondary)] hover:text-white hover:scale-[1.02]"
+                    }`}
+                style={{
+                    marginTop: "8px",
+                    marginBottom: isLast ? "20px" : "8px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                }}
+            >
+                <Icon size={20} className="shrink-0" />
+                {!collapsed && <span className="truncate">{label}</span>}
+            </Link>
+        );
+    };
+
 
     return (
         <>
@@ -99,7 +137,7 @@ export default function AffiliateSidebar({
                 {/*  Navigation */}
                 <div className="flex flex-col flex-1 overflow-hidden">
                     <nav className="flex-1 overflow-y-auto px-3 mt-5 pb-10 relative z-30">
-                        {affiliateLinks.map(({ href, label, icon: Icon }, index) => {
+                        {/* {affiliateLinks.map(({ href, label, icon: Icon }, index) => {
                             const isActive = pathname === href;
                             const isLast = index === affiliateLinks.length - 1;
 
@@ -123,7 +161,28 @@ export default function AffiliateSidebar({
                                     {!collapsed && <span className="truncate">{label}</span>}
                                 </Link>
                             );
-                        })}
+                        })} */}
+
+
+                        {/* Normal Affiliate Menu */}
+                        {affiliateLinks.map((item, index) =>
+                            renderMenuItem(item.href, item.label, item.icon, index === affiliateLinks.length - 1)
+                        )}
+
+                        {/* Divider shown only for ambassadors */}
+                        {isAmbassador && !collapsed && (
+                            <div className="mt-6 mb-3 text-xs text-gray-300 uppercase tracking-wider opacity-80">
+                                Ambassador Panel
+                            </div>
+                        )}
+
+                        {/* Ambassador Menu */}
+                        {isAmbassador &&
+                            ambassadorLinks.map((item, index) =>
+                                renderMenuItem(item.href, item.label, item.icon, index === ambassadorLinks.length - 1)
+                            )}
+
+
                     </nav>
 
                     {/*  Footer */}

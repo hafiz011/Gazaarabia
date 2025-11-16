@@ -377,7 +377,8 @@ model Orders {
   affiliateId         Int?
   affiliateCommission Float? // <-- store % used at order time
   affiliateEarning    Float? // <-- store calculated earning (money)
-  affiliate           Affiliate? @relation(fields: [affiliateId], references: [id])
+  // Affiliate relation (coupon-based)
+  affiliate           Affiliate? @relation("OrderAffiliateRelation", fields: [affiliateId], references: [id])
 
   affiliatePaid Boolean @default(false)
 
@@ -387,6 +388,13 @@ model Orders {
   charityDonationId Int?
   charityAmount Float? @default(0)
   charityDonation CharityDonations?
+
+  ambassadorId   Int?
+  ambassadorPaid Boolean @default(false)
+
+  // Ambassador relation (product-based)
+  ambassador          Affiliate? @relation("OrderAmbassadorRelation", fields: [ambassadorId], references: [id])
+
 
   //  Timestamps
   createdAt DateTime @default(now())
@@ -416,6 +424,15 @@ model OrderItem {
   sku      String?
   title    String?
   reviewed Boolean @default(false)
+
+  //  Ambassador earning tracking per product
+  ambassadorId         Int?
+  ambassadorCommission Float?
+  ambassadorEarning    Float?
+  ambassadorPaid       Boolean @default(false)   //  NEW: paid/unpaid status
+
+  ambassador Affiliate? @relation("OrderItemAmbassadorRelation", fields: [ambassadorId], references: [id])
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -581,10 +598,20 @@ model Affiliate {
   // Back-relations
   payouts Payout[]
   coupons Coupon[] // coupons owned by this affiliate
-  orders  Orders[]
+
   invoices AffiliateInvoice[]
 
+  // Order-level commissions
+  orders            Orders[] @relation("OrderAffiliateRelation")
+  ambassadorOrders  Orders[] @relation("OrderAmbassadorRelation")
+
+  // Item-level ambassador commissions
+  orderItemAmbassadors OrderItem[] @relation("OrderItemAmbassadorRelation")
+
+  // Product-level ambassador mapping
   products products[] @relation("AffiliateAmbassadorRelation")
+
+
 
  @@map("affiliate")
 }

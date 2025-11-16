@@ -20,7 +20,16 @@ export async function POST(req: Request) {
     // Fetch the user and include the related role record
     const user = await prisma.users.findUnique({
       where: { email },
-      include: { role: true }, //  this brings the role name
+      include: {
+        role: true,
+        affiliate: {
+          select: {
+            id: true,
+            type: true,     // returns "affiliate" | "ambassador"
+          }
+        }
+
+      }, //  this brings the role name
     });
 
     if (!user) {
@@ -69,6 +78,8 @@ export async function POST(req: Request) {
         email: user.email,
         roleId: user.roleId,
         roleName: user.role.name,
+        affiliateId: user.role.name === "affiliate" ? user.affiliate?.id : null,
+        affiliateType: user.role.name === "affiliate" ? user.affiliate?.type : null,
       },
       token,
     });
