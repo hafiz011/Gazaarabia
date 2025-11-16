@@ -37,7 +37,7 @@ export const authService = {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,  //  send token in header
+        "Authorization": `Bearer ${token}`,
       },
     });
     if (!res.ok) throw new Error((await res.json()).message);
