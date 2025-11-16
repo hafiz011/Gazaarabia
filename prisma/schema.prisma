@@ -600,6 +600,8 @@ model Affiliate {
   coupons Coupon[] // coupons owned by this affiliate
 
   invoices AffiliateInvoice[]
+  ambassadorInvoices AmbassadorInvoice[]
+
 
   // Order-level commissions
   orders            Orders[] @relation("OrderAffiliateRelation")
@@ -681,7 +683,7 @@ model AffiliateInvoice {
 
   createdAt DateTime @default(now())
 
-  @@map("affiliateInvoice")
+  @@map("affiliate_invoice")
 }
 
 
@@ -802,4 +804,25 @@ model Subscriber {
   updatedAt     DateTime   @updatedAt
 
   @@map("subscribers")
+}
+
+
+model AmbassadorInvoice {
+  id            Int      @id @default(autoincrement())
+  ambassadorId  Int
+  ambassador    Affiliate @relation(fields: [ambassadorId], references: [id])
+
+  invoiceNumber String
+  invoiceUrl    String
+  monthLabel    String
+  totalAmount   Float
+
+  isPaid        Boolean  @default(false)
+  paymentMethod String?
+  paymentRef    String?
+  paidAt        DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("ambassador_invoice")
 }

@@ -49,7 +49,7 @@ export async function GET(
 
     // Fetch order item
     const item = await prisma.orderItem.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         product: {
           select: {

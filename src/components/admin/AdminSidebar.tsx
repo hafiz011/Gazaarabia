@@ -86,6 +86,7 @@ const links = [
       { href: "/admin/coupons", label: "Coupons", icon: TicketPercent },
       { href: "/admin/affiliates", label: "Affiliates", icon: Users },
       { href: "/admin/affiliates/payouts", label: "Affiliate Payouts", icon: BadgeDollarSign },
+      { href: "/admin/ambassador/payouts", label: "Ambassador Payouts", icon: BadgeDollarSign },
       //       // { href: "/admin/affiliates/payouts-history", label: "Payout History", icon: BadgeDollarSign },
       //       // { href: "/admin/affiliates/settings", label: "Commission Settings", icon: Settings },
       { href: "/admin/reviews", label: "Customer Reviews", icon: Star },

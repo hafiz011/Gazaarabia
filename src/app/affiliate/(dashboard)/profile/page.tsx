@@ -16,7 +16,15 @@ export default function AffiliateProfilePage() {
 
     useEffect(() => {
         if (status === "loading") return;
-        if (status === "unauthenticated") return router.replace(ROUTES.AFFILIATE.LOGIN);
+        if (status === "unauthenticated") {
+            router.replace(ROUTES.AFFILIATE.LOGIN);
+            return;
+        }
+
+        if (session?.user?.role !== "affiliate") {
+            router.replace(ROUTES.HOME);
+            return;
+        }
 
         (async () => {
             try {
@@ -45,14 +53,22 @@ export default function AffiliateProfilePage() {
                     <p className="text-gray-900 font-semibold">{profile.email}</p>
                 </div>
 
-        
+
                 <div className="flex justify-between">
                     <p className="text-gray-600 font-medium">Commission Rate:</p>
                     <p className="text-gray-900 font-semibold">{profile.baseCommission}%</p>
                 </div>
+
+
+                <div className="flex justify-between">
+                    <p className="text-gray-600 font-medium">Joined:</p>
+                    <p className="text-gray-800 font-semibold">
+                        {new Date(profile.joinedAt).toLocaleDateString("en-GB")}
+                    </p>
+                </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow border p-6 space-y-4">
+            {/* <div className="bg-white rounded-xl shadow border p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800">Earnings Summary</h3>
 
                 <div className="flex justify-between">
@@ -76,7 +92,7 @@ export default function AffiliateProfilePage() {
                         {new Date(profile.joinedAt).toLocaleDateString("en-GB")}
                     </p>
                 </div>
-            </div>
+            </div> */}
 
         </div>
     );

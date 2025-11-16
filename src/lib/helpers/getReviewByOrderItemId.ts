@@ -47,7 +47,7 @@ export async function getReviewDetails(orderItemId: number) {
       reviewed: true,
     };
   } catch (error) {
-    console.error("❌ Error fetching review details:", error);
+    console.error("Error fetching review details:", error);
     return null;
   }
 }

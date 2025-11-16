@@ -63,83 +63,172 @@ export default function AffiliateDashboardPage() {
   if (loading) return <Loader />;
   if (!dashboardData) return <div className="p-6 text-center text-gray-500">No dashboard data available.</div>;
 
+  // Top-level combined summary cards
+  const combinedStats = [
+    {
+      label: "Total Combined Earnings",
+      value: formatGBP(dashboardData.totalCombinedEarnings),
+      icon: <DollarSign size={28} />,
+      color: "text-green-600",
+    },
+    {
+      label: "Pending Combined",
+      value: formatGBP(dashboardData.pendingCombinedPayouts),
+      icon: <Wallet size={28} />,
+      color: "text-yellow-600",
+    },
+    {
+      label: "Total (Orders + Items)",
+      value: dashboardData.totalOrders + dashboardData.totalAmbassadorItems,
+      icon: <ClipboardCheck size={28} />,
+      color: "text-blue-600",
+    },
+    {
+      label: "Referred Customers",
+      value: dashboardData.referredCustomers,
+      icon: <Users size={28} />,
+      color: "text-orange-600",
+    },
+  ];
 
-
-  const stats = [
-    { label: "Total Earnings", value: formatGBP(dashboardData.totalEarnings), icon: <DollarSign size={28} />, color: "text-green-600" },
-    { label: "Pending Payouts", value: formatGBP(dashboardData.pendingPayouts), icon: <Wallet size={28} />, color: "text-yellow-600" },
+  const affiliateStats = [
+    { label: "Affiliate Earnings", value: formatGBP(dashboardData.totalAffiliateEarnings), icon: <DollarSign size={28} />, color: "text-green-600" },
+    { label: "Pending Payouts", value: formatGBP(dashboardData.pendingAffiliatePayouts), icon: <Wallet size={28} />, color: "text-yellow-600" },
     { label: "Total Orders", value: dashboardData.totalOrders, icon: <ClipboardCheck size={28} />, color: "text-blue-600" },
     { label: "Active Coupons", value: dashboardData.activeCoupons, icon: <Tag size={28} />, color: "text-purple-600" },
-    { label: "Referred Customers", value: dashboardData.referredCustomers, icon: <Users size={28} />, color: "text-orange-600" },
-    // { label: "Conversion Rate", value: dashboardData.conversionRate, icon: <TrendingUp size={28} />, color: "text-indigo-600" },
+  ];
+
+  const ambassadorStats = [
+    { label: "Ambassador Earnings", value: formatGBP(dashboardData.totalAmbassadorEarnings), icon: <DollarSign size={28} />, color: "text-green-600" },
+    { label: "Pending Ambassador", value: formatGBP(dashboardData.pendingAmbassadorPayouts), icon: <Wallet size={28} />, color: "text-yellow-600" },
+    { label: "Items Sold", value: dashboardData.totalAmbassadorItems, icon: <ClipboardCheck size={28} />, color: "text-blue-600" },
+    // Optionally show average commission
   ];
 
   return (
-    <div className="space-y-10 p-6">
+    <div className="space-y-8 p-6">
 
-      {/*  Stats */}
-      {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6"> */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-        {stats.map((item) => (
-          <div key={item.label} className="group bg-white rounded-xl border p-5 flex flex-col items-center shadow hover:shadow-md transition cursor-pointer">
-            <div className={`${item.color} group-hover:scale-110 transition`}>{item.icon}</div>
-            <p className="text-sm font-medium text-gray-600">{item.label}</p>
-            <p className="text-lg font-semibold text-gray-900">{item.value}</p>
+      {/* Combined Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+        {combinedStats.map((s) => (
+          <div key={s.label} className="bg-white rounded-xl border p-5 shadow flex items-center gap-4">
+            <div className={`${s.color}`}>{s.icon}</div>
+            <div>
+              <p className="text-sm text-gray-500">{s.label}</p>
+              <p className="text-lg font-semibold text-gray-900">{s.value}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/*  Recent Orders */}
-      <div className="bg-white rounded-xl shadow p-6 border">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">Recent Orders</h3>
+      {/* Two sections side-by-side on large screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-gray-600 text-xs uppercase">
-                <th className="px-5 py-3 text-left">Order ID</th>
-                <th className="px-5 py-3 text-left">Amount</th>
-                <th className="px-5 py-3 text-left">Date</th>
-                <th className="px-5 py-3 text-left">Status</th>
-                <th className="px-5 py-3 text-right">Action</th>
-              </tr>
-            </thead>
+        {/* Affiliate Section */}
+        <div className="bg-white rounded-xl border p-6 shadow">
+          <h3 className="text-lg font-semibold mb-4">Affiliate Summary</h3>
 
-            <tbody>
-              {dashboardData.recentOrders.length > 0 ? (
-                dashboardData.recentOrders.map((order: any) => (
-                  <tr key={order.id} className="border-b hover:bg-gray-50 transition">
-                    <td className="px-5 py-3 font-medium text-gray-900">{order.orderId}</td>
-                    <td className="px-5 py-3">{formatGBP(order.amount)}</td>
-                    <td className="px-5 py-3 text-gray-600">
-                      {new Date(order.date).toLocaleDateString("en-GB")}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="text-[var(--brand-primary)] hover:underline inline-flex items-center gap-1"
-                      >
-                        <Eye size={16} /> View
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
-                    No recent orders.
-                  </td>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {affiliateStats.map((st) => (
+              <div key={st.label} className="p-4 rounded-md border">
+                <p className="text-xs text-gray-500">{st.label}</p>
+                <p className="text-lg font-semibold">{st.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <h4 className="text-md font-medium mb-3">Recent Affiliate Orders</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 text-xs uppercase">
+                  <th className="px-5 py-3 text-left">Order ID</th>
+                  <th className="px-5 py-3 text-left">Amount</th>
+                  <th className="px-5 py-3 text-left">Date</th>
+                  <th className="px-5 py-3 text-left">Status</th>
+                  <th className="px-5 py-3 text-right">Action</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-
+              </thead>
+              <tbody>
+                {dashboardData.recentOrders.length > 0 ? (
+                  dashboardData.recentOrders.map((order: any) => (
+                    <tr key={order.id} className="border-b hover:bg-gray-50">
+                      <td className="px-5 py-3 font-medium text-gray-900">{order.orderId}</td>
+                      <td className="px-5 py-3">{formatGBP(order.amount)}</td>
+                      <td className="px-5 py-3 text-gray-600">
+                        {new Date(order.date).toLocaleDateString("en-GB")}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="text-[var(--brand-primary)] hover:underline inline-flex items-center gap-1"
+                        >
+                          <Eye size={16} /> View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500">No recent orders.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Ambassador Section */}
+        <div className="bg-white rounded-xl border p-6 shadow">
+          <h3 className="text-lg font-semibold mb-4">Ambassador Summary</h3>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {ambassadorStats.map((st) => (
+              <div key={st.label} className="p-4 rounded-md border">
+                <p className="text-xs text-gray-500">{st.label}</p>
+                <p className="text-lg font-semibold">{st.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <h4 className="text-md font-medium mb-3">Recent Ambassador Items</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 text-xs uppercase">
+                  <th className="px-5 py-3 text-left">Item ID</th>
+                  <th className="px-5 py-3 text-left">Order</th>
+                  <th className="px-5 py-3 text-left">Product</th>
+                  <th className="px-5 py-3 text-left">Qty</th>
+                  <th className="px-5 py-3 text-left">Earned</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData.recentAmbassadorItems.length > 0 ? (
+                  dashboardData.recentAmbassadorItems.map((it: any) => (
+                    <tr key={it.itemId} className="border-b hover:bg-gray-50">
+                      <td className="px-5 py-3 font-medium text-gray-900">{it.itemId}</td>
+                      <td className="px-5 py-3 text-gray-600">{it.orderId}</td>
+                      <td className="px-5 py-3">{it.productTitle}</td>
+                      <td className="px-5 py-3">{it.qty}</td>
+                      <td className="px-5 py-3 font-semibold">£{it.earned.toFixed(2)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500">No recent ambassador activity.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       {/*  Order Details Modal */}

@@ -9,7 +9,7 @@
 //   // Allow public routes
 //   if (pathname.startsWith("/admin/login")) {
 //     if (token) {
-//       // ✅ Redirect based on role after login
+//       //  Redirect based on role after login
 //       if (token.role === "admin") {
 //         return NextResponse.redirect(new URL("/admin/dashboard", req.url));
 //       }

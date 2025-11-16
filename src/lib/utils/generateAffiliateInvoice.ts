@@ -8,7 +8,7 @@ interface InvoiceData {
   payoutAmount: number;
   paymentMethod: string;
   paymentRef: string;
-  payoutDate: string;   // e.g. "November 2025"
+  payoutDate: string;
   invoiceNumber: string;
   orders: {
     id: number;
@@ -34,168 +34,161 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
         orders,
       } = data;
 
-      // const invoicesDir = path.join(process.cwd(), "public", "invoices");
-      const folder = "invoices";
-      const invoicesDir = path.join(process.cwd(), "uploads", folder);
-
+      const invoicesDir = path.join(process.cwd(), "uploads/invoices");
       if (!fs.existsSync(invoicesDir)) fs.mkdirSync(invoicesDir, { recursive: true });
 
       const filePath = path.join(invoicesDir, `${invoiceNumber}.pdf`);
 
-      // Assets
-      const fontPath = path.resolve("public/fonts/Roboto-Regular.ttf");
+      const fontRegular = path.resolve("public/fonts/Roboto-Regular.ttf");
+      const fontBold = path.resolve("public/fonts/Roboto-Bold.ttf");
+      const logoPath = path.resolve("public/images/logo-dark.png");
 
-      const logoPrimary = path.resolve("public/images/logo-dark.png");
-      const logoFallback = path.resolve("public/logo.png");
-      const logoPath = fs.existsSync(logoPrimary) ? logoPrimary : logoFallback;
+      if (!fs.existsSync(fontRegular)) throw new Error("Missing Roboto-Regular.ttf");
+      if (!fs.existsSync(fontBold)) throw new Error("Missing Roboto-Bold.ttf");
 
-      if (!fs.existsSync(fontPath)) throw new Error("Missing font: /public/fonts/Roboto-Regular.ttf");
+      /* =============== INIT (Roboto fix) ============== */
+      const doc = new PDFDocument({
+        margin: 40,
+        size: "A4",
+        font: fontRegular,
+      });
 
-      // Brand palette (matches your email)
-      const brandPrimary = "#E82C3F";   // Red underline/accent
-      const brandSecondary = "#009639"; // Green total card
-      const textDark = "#111827";
-      const textMuted = "#6B7280";
-      const borderGray = "#E5E7EB";
-      const tableHeader = "#F3F4F6";
-      const rowAlt = "#FAFAFA";
-
-      // Create PDF with Roboto as the default font (prevents Helvetica fallback)
-      const doc = new PDFDocument({ margin: 40, size: "A4", font: fontPath });
       const stream = fs.createWriteStream(filePath);
       doc.pipe(stream);
-      doc.font(fontPath);
 
-      /* ---------------- HEADER (match email) ---------------- */
-      // Logo centered
-      if (fs.existsSync(logoPath)) {
-        const logoWidth = 130;
-        const x = (doc.page.width - logoWidth) / 2;
-        doc.image(logoPath, x, 44, { width: logoWidth });
-      } else {
-        doc
-          .fontSize(22)
-          .fillColor(textDark)
-          .text("GAZAARABIA", { align: "center", baseline: "alphabetic" });
-      }
+      doc.registerFont("Regular", fontRegular);
+      doc.registerFont("Bold", fontBold);
+      doc.font("Regular");
 
-      // Red underline under logo
-      doc
-        .moveDown(4)
+      /* =============== HEADER =============== */
+      if (fs.existsSync(logoPath)) doc.image(logoPath, 40, 35, { width: 120 });
+
+      doc.y = 70;
+
+      doc.strokeColor("#D3D3D3")
+        .lineWidth(2)
         .moveTo(40, doc.y)
         .lineTo(560, doc.y)
-        .strokeColor(brandPrimary)
-        .lineWidth(2)
         .stroke();
 
-      doc.moveDown(1.8);
+      doc.strokeColor("#000").lineWidth(1);
+      doc.y += 15;
 
-      doc
-        .fontSize(20)
-        .fillColor(textDark)
-        .text("Affiliate Commission Invoice", { align: "center" });
+      doc.font("Bold").fontSize(12).text("Affiliate Commission Invoice", 40);
+      doc.font("Regular").fontSize(10).text(`Invoice Number: ${invoiceNumber}`, 40);
+      doc.text(`Invoice Date: ${payoutDate}`, 40);
 
-      doc
-        .fontSize(12)
-        .fillColor(textMuted)
-        .text(payoutDate, { align: "center" });
+      /* =============== SOLD BY / AFFILIATE INFO =============== */
 
-      doc.moveDown(2);
+      const leftX = 40;
+      const rightX = 300;
+      const rightWidth = 260;
 
-      /* ---------------- INFO CARD ---------------- */
-      const infoTop = doc.y;
+      doc.moveDown(1.4);
 
-      const infoHeight = 84;
+      const startY = doc.y;
 
-      doc
-        .roundedRect(40, infoTop, 520, infoHeight, 10)
-        .strokeColor(borderGray)
-        .lineWidth(1)
-        .stroke();
+      // Left column (Sold By)
+      doc.font("Bold").fontSize(10).text("Sold By:", leftX, startY);
+      doc.font("Regular").text("GAZAARABIA", leftX);
+      doc.text("Online Store", leftX);
+      doc.text("www.gazaarabia.com", leftX);
+      doc.text("support@gazaarabia.com", leftX);
 
-      doc
-        .fontSize(12)
-        .fillColor(textDark)
-        .text(`Invoice Number: ${invoiceNumber}`, 58, infoTop + 14);
-      doc.text(`Affiliate Name: ${affiliateName}`, 58, infoTop + 34);
-      doc.text(`Email: ${affiliateEmail}`, 58, infoTop + 54);
+      // Right column (Affiliate)
+      doc.font("Bold").fontSize(10).text("Affiliate:", rightX, startY, {
+        width: rightWidth,
+        align: "right",
+      });
 
-      // Tighten space before table
-      const tableStartY = infoTop + infoHeight + 18;
+      doc.font("Regular").text(affiliateName, rightX, undefined, {
+        width: rightWidth,
+        align: "right",
+      });
 
+      doc.text(affiliateEmail, rightX, undefined, {
+        width: rightWidth,
+        align: "right",
+      });
 
-      /* ---------------- TABLE HEADER ---------------- */
+      doc.moveDown(3);
 
-      const headers = ["Order", "Date", "Items", "Discount", "Coupon", "Value", "Rate %", "Earned"];
-      const cols = [55, 120, 190, 255, 320, 385, 450, 510];
+      // doc.font("Regular").fontSize(10);
+      // doc.text(`Payout Period: ${payoutDate}`, leftX);
+      // doc.text(`Invoice No: ${invoiceNumber}`, leftX);
 
+      // doc.moveDown(1);
 
-      doc
-        .fillColor(tableHeader)
-        .rect(40, tableStartY, 520, 26)
-        .fill();
+      /* =============== TABLE HEADER =============== */
+      doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
 
-      doc.fillColor(textDark).fontSize(10);
-      headers.forEach((h, i) => doc.text(h, cols[i], tableStartY + 7));
+      const hY = doc.y + 6;
+      doc.font("Bold").fontSize(10);
 
-      /* ---------------- TABLE ROWS ---------------- */
-      let y = tableStartY + 28;
-      let alt = false;
+      const headers = ["Order ID", "Date", "Amount", "Discount", "Coupon", "Rate%", "Earned"];
+      const cols = [40, 120, 200, 280, 360, 440, 510];
 
-      orders.forEach((o) => {
+      headers.forEach((h, i) => {
+        doc.text(h, cols[i], hY, { align: "left" });
+      });
+
+      doc.moveTo(40, hY + 16).lineTo(560, hY + 16).stroke();
+
+      /* =============== TABLE ROWS =============== */
+      doc.font("Regular").fontSize(10);
+
+      let y = hY + 24;
+
+      orders.forEach(o => {
         const couponValue = o.coupon
           ? o.coupon.discountType === "percentage"
             ? `${o.coupon.discountValue}%`
             : `£${o.coupon.discountValue}`
           : "-";
 
-        // Alternating strip (subtle)
-        doc
-          .fillColor(alt ? rowAlt : "white")
-          .rect(40, y, 520, 22)
-          .fill();
-        alt = !alt;
+        doc.text(String(o.id), cols[0], y);
+        doc.text(o.createdAt.toISOString().split("T")[0], cols[1], y);
+        doc.text(`£${o.itemsTotal.toFixed(2)}`, cols[2], y);
+        doc.text(`£${(o.couponDiscount ?? 0).toFixed(2)}`, cols[3], y);
+        doc.text(o.couponCode ?? "-", cols[4], y);
+        doc.text(`${o.affiliateCommission}%`, cols[5], y);
+        doc.text(`£${(o.affiliateEarning ?? 0).toFixed(2)}`, cols[6], y, { align: "right" });
 
-        doc.fillColor(textDark).fontSize(10);
-        doc.text(String(o.id), cols[0], y + 5);
-        doc.text(o.createdAt.toISOString().split("T")[0], cols[1], y + 5);
-        doc.text(`£${o.itemsTotal.toFixed(2)}`, cols[2], y + 5);
-        doc.text(`£${(o.couponDiscount ?? 0).toFixed(2)}`, cols[3], y + 5);
-        doc.text(o.couponCode ?? "-", cols[4], y + 5);
-        doc.text(couponValue, cols[5], y + 5);
-        doc.text(`${o.affiliateCommission}%`, cols[6], y + 5);
-        doc.text(`£${(o.affiliateEarning ?? 0).toFixed(2)}`, cols[7], y + 5);
-
-        y += 22;
+        y += 18;
       });
 
-      /* ---------------- TOTAL SUMMARY (green card) ---------------- */
-      // Reduced vertical gap; professional CTA-style block
-      y += 24;
-      const cardH = 72;
-      doc
-        .roundedRect(40, y, 520, cardH, 10)
-        .fill(brandSecondary);
+      /* =============== TOTAL SECTION =============== */
+      doc.moveDown(1.5);
+      doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
+      doc.moveDown(0.8);
 
-      doc
-        .fillColor("white")
-        .fontSize(14)
-        .text("Total Commission Earned", 58, y + 18);
-      doc
-        .fontSize(26)
-        .text(`£${payoutAmount.toFixed(2)}`, 58, y + 40);
+      doc.font("Bold").fontSize(11).text(
+        `Total Affiliate Earnings: £${payoutAmount.toFixed(2)}`,
+        400,
+        doc.y,
+        { width: 160, align: "right" }
+      );
 
-      /* ---------------- FOOTER ---------------- */
-      doc.moveDown(3);
-      doc
-        .fillColor(textMuted)
-        .fontSize(9)
-        .text(
-          "This invoice is generated automatically and does not require a signature.",
-          { align: "center" }
-        );
+      doc.moveDown(1.5);
 
+      /* =============== DECLARATION =============== */
+      doc.font("Bold").fontSize(10).text("DECLARATION:", 40);
+
+      doc.font("Regular").fontSize(9).text(
+        "This invoice confirms the affiliate commission earned during the specified period.",
+        { width: 500, align: "left" }
+      );
+
+      doc.moveDown(1);
+
+      doc.font("Regular").fontSize(9).text(
+        "(This is a computer-generated invoice and does not require a physical signature.)",
+        { width: 500, align: "center" }
+      );
+
+      /* =============== END =============== */
       doc.end();
+
       stream.on("finish", () => resolve(`/uploads/invoices/${invoiceNumber}.pdf`));
       stream.on("error", reject);
     } catch (err) {
