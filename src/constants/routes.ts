@@ -17,6 +17,7 @@ export const ROUTES = {
   //  Affiliate routes
   AFFILIATE: {
     LOGIN: "/affiliate/login",
+    REGISTER: "/affiliate/register",
     DASHBOARD: "/affiliate",
   },
 

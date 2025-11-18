@@ -252,7 +252,7 @@ export default function Header() {
 
             {/* PARTNER */}
             <Link
-              href="/partner"
+              href="/become-partner"
               className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
             >
               Partner
