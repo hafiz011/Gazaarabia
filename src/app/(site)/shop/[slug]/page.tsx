@@ -32,7 +32,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     try {
       setLoading(true);
       const data: any = await shopService.getShopData(
-        token || "", // 🔑 use token only if available
+        token || "", //  use token only if available
         slug,
         currentPage,
         8
@@ -42,25 +42,25 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
       setParentCategory(data.parentCategory);
       setSubcategories(data.subcategories || []);
     } catch (error) {
-      console.error("❌ Failed to fetch products:", error);
+      console.error("Failed to fetch products:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟢 Only one API call after session has finished loading
+  //  Only one API call after session has finished loading
   useEffect(() => {
     if (status !== "loading") {
       fetchProducts();
     }
   }, [slug, currentPage, status, token]);
 
-  // 🧭 Sync pagination with URL
+  //  Sync pagination with URL
   useEffect(() => {
     router.push(`?page=${currentPage}`, { scroll: false });
   }, [currentPage, router]);
 
-  // ❤️ Handle Wishlist Toggle
+  //  Handle Wishlist Toggle
   const handleWishlistToggle = async (
     productId: number,
     isInWishlist: boolean
@@ -85,7 +85,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           await wishlistService.add(token, productId);
         }
       } catch (error) {
-        console.error("❌ Wishlist update failed:", error);
+        console.error("Wishlist update failed:", error);
         // Revert UI on error
         setProducts((prev) =>
           prev.map((p) =>

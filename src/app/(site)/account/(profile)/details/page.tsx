@@ -30,7 +30,7 @@ export default function AccountDetailsPage() {
     message: "",
   });
 
-  // 🧭 Load profile
+  //  Load profile
   useEffect(() => {
     if (status !== "authenticated") return;
     (async () => {
@@ -45,7 +45,7 @@ export default function AccountDetailsPage() {
     })();
   }, [status, session]);
 
-  // 🧭 Load addresses
+  //  Load addresses
   useEffect(() => {
     if (status !== "authenticated") return;
     (async () => {
@@ -58,7 +58,7 @@ export default function AccountDetailsPage() {
     })();
   }, [status, session]);
 
-  // 💾 Add or Update Address
+  //  Add or Update Address
   const handleSaveAddress = async (data: any) => {
     try {
       if (selectedAddress) {
@@ -75,7 +75,7 @@ export default function AccountDetailsPage() {
     }
   };
 
-  // 🗑️ Delete Address
+  // Delete Address
   const handleDeleteAddress = async (id: number) => {
     setDeleteLoading(id);
     try {
@@ -102,7 +102,7 @@ export default function AccountDetailsPage() {
         />
       )}
 
-      {/* 🧑 Profile Info */}
+      {/*  Profile Info */}
       <div className="bg-white border border-[var(--soft-gray)] p-6 md:p-8 rounded-xl shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Account Information</h2>
         {profile ? (
@@ -121,7 +121,7 @@ export default function AccountDetailsPage() {
         )}
       </div>
 
-      {/* 🏡 Saved Addresses */}
+      {/*  Saved Addresses */}
       <div className="bg-white border border-[var(--soft-gray)] p-6 md:p-8 rounded-xl shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Saved Addresses</h2>
@@ -163,11 +163,10 @@ export default function AccountDetailsPage() {
                   </button>
                   <button
                     onClick={() => setConfirmDelete({ isOpen: true, id: address.id })}
-                    className={`w-9 h-9 flex items-center justify-center rounded-full transition ${
-                      deleteLoading === address.id
+                    className={`w-9 h-9 flex items-center justify-center rounded-full transition ${deleteLoading === address.id
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-[var(--soft-pink)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white"
-                    }`}
+                      }`}
                     disabled={deleteLoading !== null}
                   >
                     {deleteLoading === address.id ? (
@@ -185,7 +184,7 @@ export default function AccountDetailsPage() {
         </div>
       </div>
 
-      {/* 📝 Address Modal */}
+      {/*  Address Modal */}
       {isEditing && (
         <AddressForm
           initialData={selectedAddress}
@@ -197,7 +196,7 @@ export default function AccountDetailsPage() {
         />
       )}
 
-      {/* 🧾 Delete Confirmation */}
+      {/*  Delete Confirmation */}
       {confirmDelete.isOpen && (
         <PopupAlert
           type="warning"

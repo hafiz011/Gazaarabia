@@ -15,7 +15,7 @@ interface affiliateProps {
 
 export default function BecomeAffiliateSection({ data }: affiliateProps) {
     return (
-        <section className="relative w-full py-20 md:py-28 bg-[var(--lavender)] overflow-hidden">
+        <section className="relative w-full py-20 md:py-28 bg-[var(--lavender-light)] overflow-hidden">
 
             {/* Background Gradient Layer */}
             <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/10 via-[var(--lavender)]/40 to-[var(--soft-pink)]/20 pointer-events-none" />

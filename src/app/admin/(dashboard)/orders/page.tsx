@@ -41,6 +41,9 @@ interface Order {
   id: number;
   transactionId: string | null;
   paymentMethod: string;
+  itemsTotal: number,
+  charityAmount: number,
+  discountTotal: number,
   totalAmount: number;
   status: string;
   createdAt: string;
@@ -168,7 +171,10 @@ export default function OrdersPage() {
                 <th className="py-3 px-5 text-left">Order Id</th>
                 <th className="py-3 px-5 text-left">Transaction Id</th>
                 <th className="py-3 px-5 text-left">Customer</th>
-                <th className="py-3 px-5 text-left">Amount</th>
+                <th className="py-3 px-5 text-left">Items Amt.</th>
+                <th className="py-3 px-5 text-left">Charity Amt.</th>
+                <th className="py-3 px-5 text-left">Discount Amt.</th>
+                <th className="py-3 px-5 text-left">Total Amt.</th>
                 <th className="py-3 px-5 text-left">Payment</th>
                 <th className="py-3 px-5 text-left">Status</th>
                 <th className="py-3 px-5 text-left">Date</th>
@@ -182,6 +188,9 @@ export default function OrdersPage() {
                     <td className="py-3 px-5 font-medium">{order.id}</td>
                     <td className="py-3 px-5">{order.transactionId ?? "N/A"}</td>
                     <td className="py-3 px-5 text-gray-600">{order.user.name ?? "N/A"}</td>
+                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.itemsTotal)}</td>
+                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.charityAmount)}</td>
+                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.discountTotal)}</td>
                     <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.totalAmount)}</td>
                     <td className="py-3 px-5 text-gray-600">{order.paymentMethod ?? "N/A"}</td>
                     <td className="py-3 px-5">
@@ -406,6 +415,18 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
             </section>
           )}
 
+          {/* order items total */}
+          <section>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Items Amount</h3>
+            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-900 space-y-1">
+              <p className="flex justify-between text-base font-semibold">
+                <span>Items Total:</span>
+                <span className="text-[var(--brand-primary)]">
+                  {formatGBP(order.itemsTotal)}
+                </span>
+              </p>
+            </div>
+          </section>
           {/* Total Paid */}
           <section>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Total Paid</h3>

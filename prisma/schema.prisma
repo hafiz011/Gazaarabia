@@ -439,7 +439,7 @@ model OrderItem {
 
   order   Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product products       @relation(fields: [productId], references: [id])
-  variant productvariant @relation(fields: [variantId], references: [id]) // ✅ matches productvariant.orderItems
+  variant productvariant @relation(fields: [variantId], references: [id]) //  matches productvariant.orderItems
 
   reviews Review[]
   returnRequests ReturnRequest[]
@@ -749,6 +749,8 @@ model ReturnRequest {
   adminNote    String?
   refundAmount Float?
 
+  expectedReturnAmount Float? @default(0) 
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -825,4 +827,29 @@ model AmbassadorInvoice {
   createdAt DateTime @default(now())
 
   @@map("ambassador_invoice")
+}
+
+
+
+model DeliverySettings {
+  id                       Int      @id @default(1)
+
+  freeDeliveryText         String?
+
+  nextDayTitle             String?
+  nextDayDeliveryTime      String?
+  nextDayCost              String?
+  nextDayOrderCutOff       String?
+
+  standardDeliveryTitle    String?
+  standardDeliveryMinDays  Int?
+  standardDeliveryMaxDays  Int?
+  standardDeliveryCost     String?
+
+  returnText               String?
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("delivery_settings")
 }

@@ -80,12 +80,12 @@ export default function ContactPage() {
 
   return (
     <div className="w-full text-[var(--text-primary)]">
-      {/* 🪄 Hero Section */}
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white py-24 md:py-28 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
         <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight tracking-wide">
-            Get in Touch with <span className="text-[var(--white)]">Gaza Arabia</span>
+            Get in Touch with <span className="text-[var(--white)]">Gazaarabia</span>
           </h1>
           <p className="max-w-2xl mx-auto text-lg text-white/90 leading-relaxed">
             Have a question about your order, products, or collaborations? Our team is here to support you every step of the way.
@@ -93,7 +93,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* 🧭 Contact Cards Section */}
+      {/*  Contact Cards Section */}
       <section className="py-20 bg-[var(--soft-gray)]">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
@@ -120,7 +120,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* 📝 Contact Form Section */}
+      {/*  Contact Form Section */}
       <section className="relative bg-white py-24 md:py-28 overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--brand-secondary)] opacity-10 rounded-full blur-3xl -translate-x-24 -translate-y-24"></div>
         <div className="absolute bottom-0 right-0 w-[28rem] h-[28rem] bg-[var(--brand-primary)] opacity-10 rounded-full blur-3xl translate-x-24 translate-y-24"></div>
@@ -223,7 +223,7 @@ export default function ContactPage() {
             show={popUpAlertData.isOpen}
           />
 
-          {/* 🌐 Social Links */}
+          {/*  Social Links */}
           <div className="flex items-center justify-center gap-6 mt-14">
             {[FaInstagram, FaFacebookF, FaTwitter].map((Icon, i) => (
               <a

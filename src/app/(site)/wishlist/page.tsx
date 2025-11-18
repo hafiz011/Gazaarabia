@@ -83,7 +83,7 @@ export default function WishlistPage() {
     }
   }, [currentPage, router, status]);
 
-  // ❌ Remove item
+  //  Remove item
   const handleRemove = async (product: Product) => {
     try {
       await wishlistService.remove(token!, Number(product.id));
@@ -98,7 +98,7 @@ export default function WishlistPage() {
     }
   };
 
-  // 🛍️ Add to bag
+  // Add to bag
   const handleAddToBag = async (product: Product) => {
     if (!token) {
       setAlert({
@@ -127,17 +127,17 @@ export default function WishlistPage() {
     }
   };
 
-  // ❤️ Wishlist toggle
+  //  Wishlist toggle
   const handleWishlistToggle = (product: Product) => {
     handleRemove(product);
   };
 
-  // 🌀 Show loader while session resolving
+  //  Show loader while session resolving
   if (status === "loading" || loading) {
     return <Loader />;
   }
 
-  // 🚨 Show login prompt if not logged in
+  //  Show login prompt if not logged in
   if (status === "unauthenticated") {
     return (
       <div className="flex flex-col items-center text-center p-6 pt-28 pb-20">
@@ -159,7 +159,7 @@ export default function WishlistPage() {
   }
 
 
-  // ✅ Authenticated user wishlist
+  //  Authenticated user wishlist
   return (
     <>
       <div className="max-w-[1400px] mx-auto px-4 py-16">
@@ -223,7 +223,7 @@ export default function WishlistPage() {
         )}
       </div>
 
-      {/* 🛒 Cart Drawer */}
+      {/* Cart Drawer */}
       <CartDrawer isOpen={cartDrawer} onClose={() => setCartDrawer(false)} />
     </>
   );

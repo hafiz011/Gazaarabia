@@ -285,7 +285,11 @@ export default function ProductDetails() {
               {/* Main Image */}
               <div
                 ref={imgRef}
-                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
+                // className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
+
+                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent"
+
+
                 onMouseEnter={() => setZoomVisible(true)}
                 onMouseLeave={() => setZoomVisible(false)}
                 onMouseMove={handleMouseMove}
@@ -509,6 +513,105 @@ export default function ProductDetails() {
                   <p>No material care information available.</p>
                 )}
               </AccordionSection>
+
+
+              {/* DELIVERY & RETURNS SECTION */}
+              <AccordionSection title="Delivery & Returns">
+                {product?.deliverySettings ? (
+                  <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
+
+                    {/* FREE DELIVERY */}
+                    <p className="font-semibold text-[var(--text-primary)]">
+                      {product.deliverySettings.freeDeliveryText}
+                    </p>
+
+                    {/* NEXT DAY DELIVERY */}
+                    <div>
+                      <h4 className="font-semibold text-[var(--text-primary)] mb-1">
+                        {product.deliverySettings.nextDayTitle}
+                      </h4>
+
+                      <p className="mb-1">
+                        Order now to receive:{" "}
+                        <span className="font-semibold">
+                          {new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString("en-UK", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long"
+                          })}
+                        </span>
+                      </p>
+
+                      <p className="mb-1">
+                        Delivery time: {product.deliverySettings.nextDayDeliveryTime}
+                      </p>
+
+                      <p className="mb-1">
+                        Cost: £{product.deliverySettings.nextDayCost}
+                      </p>
+
+                      <p className="mb-1">
+                        Order Monday–Friday before{" "}
+                        <span className="font-semibold">
+                          {product.deliverySettings.nextDayOrderCutOff}
+                        </span>{" "}
+                        for next working day delivery.
+                      </p>
+
+
+                      {/* <p className="text-gray-600">
+                        Order by {product.deliverySettings.nextDayOrderCutOff} for next working day delivery
+                      </p> */}
+                    </div>
+
+                    {/* STANDARD DELIVERY */}
+                    <div>
+                      <h4 className="font-semibold text-[var(--text-primary)] mb-1">
+                        {product.deliverySettings.standardDeliveryTitle}
+                      </h4>
+
+                      <p className="mb-1">
+                        Order now to receive:{" "}
+                        <span className="font-semibold">
+                          {(() => {
+                            const min = product.deliverySettings.standardDeliveryMinDays;
+                            const max = product.deliverySettings.standardDeliveryMaxDays;
+
+                            const start = new Date(Date.now() + min * 24 * 60 * 60 * 1000);
+                            const end = new Date(Date.now() + max * 24 * 60 * 60 * 1000);
+
+                            return `${start.toLocaleDateString("en-UK", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long"
+                            })} - ${end.toLocaleDateString("en-UK", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long"
+                            })}`;
+                          })()}
+                        </span>
+                      </p>
+
+                      <p className="mb-1">
+                        Delivery time: {product.deliverySettings.standardDeliveryMinDays}–{product.deliverySettings.standardDeliveryMaxDays} working days
+                      </p>
+
+                      <p className="mb-1">
+                        Cost: £{product.deliverySettings.standardDeliveryCost}
+                      </p>
+                    </div>
+
+                    {/* RETURNS */}
+                    <p className="font-semibold text-[var(--text-primary)]">
+                      {product.deliverySettings.returnText}
+                    </p>
+                  </div>
+                ) : (
+                  <p>No delivery information available.</p>
+                )}
+              </AccordionSection>
+
 
               {/* <AccordionSection title="Delivery & Returns">
                 <ul className="space-y-3 text-sm">

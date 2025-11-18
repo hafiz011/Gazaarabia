@@ -118,6 +118,13 @@ export async function GET(
       }));
     }
 
+
+    // Fetch delivery settings (id = 1 always)
+    const deliverySettings = await prisma.deliverySettings.findUnique({
+      where: { id: 1 },
+    });
+
+
     //  Return clean, structured response
     return NextResponse.json({
       ...product,
@@ -130,6 +137,7 @@ export async function GET(
         list: product.reviews,
       },
       isInWishlist,
+      deliverySettings
     });
   } catch (error: any) {
     console.error("Error fetching product by slug:", error);

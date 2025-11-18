@@ -135,6 +135,8 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
+        discountTotal: coupon?.discountAmount ?? 0,
+
         //  Coupon Fields
         couponId: couponData?.id || null,
         couponCode: couponData?.code || null,
@@ -335,12 +337,12 @@ export async function sendGuestOrderEmail(
               </tr>
               <tr style="background-color:#f9fafb;">
                 <td style="font-weight:600;color:#374151;">Total Amount:</td>
-                <td style="color:#E82C3F;font-weight:600;">₹${details.total.toFixed(2)}</td>
+                <td style="color:#E82C3F;font-weight:600;">£${details.total.toFixed(2)}</td>
               </tr>
               ${details.charityAmount && details.charityAmount > 0 ? `
                 <tr>
                   <td style="background-color:#ffffff;font-weight:600;color:#374151;">Charity Donation:</td>
-                  <td style="color:#009639;font-weight:600;">₹${details.charityAmount.toFixed(2)}</td>
+                  <td style="color:#009639;font-weight:600;">£${details.charityAmount.toFixed(2)}</td>
                 </tr>` : ""}
 
               <tr>

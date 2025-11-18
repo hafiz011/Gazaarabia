@@ -4,11 +4,11 @@ import SingleImgMultiColorProductCard from "./SingleImgMultiColorsProductCard";
 
 export default function WearWith() {
     const wearWithProducts = [
-        {id:1, img: "/images/shop/img2-1.jpg", title: "Hooded1 Abaya Black", price: "₹5,499" },
-        { id:2, img: "/images/shop/img2-2.jpg", title: "Mara Coat Black", price: "₹4,999" },
-        { id:3, img: "/images/shop/img2-3.jpg", title: "Black Jersey Hijab", price: "₹799" },
-        { id:4, img: "/images/shop/img2-4.jpg", title: "Crossover Hijab Cap", price: "₹699" },
-        { id:5, img: "/images/shop/img2-5.jpg", title: "Matte Black Pin Set", price: "₹299" },
+        { id: 1, img: "/images/shop/img2-1.jpg", title: "Hooded1 Abaya Black", price: "£5,499" },
+        { id: 2, img: "/images/shop/img2-2.jpg", title: "Mara Coat Black", price: "£4,999" },
+        { id: 3, img: "/images/shop/img2-3.jpg", title: "Black Jersey Hijab", price: "£799" },
+        { id: 4, img: "/images/shop/img2-4.jpg", title: "Crossover Hijab Cap", price: "£699" },
+        { id: 5, img: "/images/shop/img2-5.jpg", title: "Matte Black Pin Set", price: "£299" },
     ];
 
     return (

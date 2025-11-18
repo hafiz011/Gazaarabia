@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Plus } from "lucide-react";
+import { Download, Menu, Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useModalStore } from "@/lib/stores/modalStore";
 import Link from "next/link";
@@ -11,7 +11,7 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
 
   const titles: Record<
     string,
-    { title: string; subtitle?: string; action?: { label: string; href?: string; modalKey?: string } }
+    { title: string; subtitle?: string; action?: { label: string; href?: string; modalKey?: string, type?: string } }
   > = {
     "/admin": {
       title: "Dashboard",
@@ -122,6 +122,12 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
       subtitle: "Manage the system users.",
       action: { label: "Add User", href: "/admin/users/form" },
     },
+    "/admin/charity": {
+      title: "Charity Donations",
+      subtitle: "View and manage all charity donations.",
+      action: { label: "Download Excel", modalKey: "download-charity", type: "download" }
+    },
+
 
 
   };
@@ -165,7 +171,7 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
         </div>
       </div>
 
-      {current.action && (
+      {/* {current.action && (
         current.action.href ? (
           <Link
             href={current.action.href}
@@ -183,7 +189,47 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
             {current.action.label}
           </button>
         )
+      )} */}
+
+      {current.action && (
+        current.action.href ? (
+          /* Standard Link Button */
+          <Link
+            href={current.action.href}
+            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition
+        ${current.action.type === "download"
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
+              }`}
+          >
+            {current.action.type === "download" ? (
+              <Download size={18} />
+            ) : (
+              <Plus size={18} />
+            )}
+            {current.action.label}
+          </Link>
+        ) : (
+          /* Modal-triggering Button */
+          <button
+            onClick={handleActionClick}
+            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition
+        ${current.action.type === "download"
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
+              }`}
+          >
+            {current.action.type === "download" ? (
+              <Download size={18} />
+            ) : (
+              <Plus size={18} />
+            )}
+            {current.action.label}
+          </button>
+        )
       )}
+
+
     </header>
   );
 }

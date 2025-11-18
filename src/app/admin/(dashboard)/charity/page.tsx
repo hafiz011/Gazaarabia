@@ -10,6 +10,8 @@ import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 import { charityService } from "@/lib/services/charityService";
 import { GBP } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { useModalStore } from "@/lib/stores/modalStore";
 
 export default function CharityListPage() {
     const router = useRouter();
@@ -23,6 +25,9 @@ export default function CharityListPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [loading, setLoading] = useState(true);
+    const modalAction = useModalStore((state) => state.action);
+    const clearModal = useModalStore((state) => state.clearModal);
+
 
     const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
         isOpen: false,
@@ -72,6 +77,42 @@ export default function CharityListPage() {
         }
     };
 
+
+    useEffect(() => {
+        if (modalAction === "download-charity") {
+            exportToExcel();
+            clearModal(); // reset modal state
+        }
+    }, [modalAction, clearModal]);
+
+
+    const exportToExcel = () => {
+        if (!donations || donations.length === 0) {
+            alert("No donations to export");
+            return;
+        }
+
+        // Format data for Excel
+        const excelData = donations.map((item, index) => ({
+            SN: index + 1,
+            Transaction_ID: item.transactionId || "—",
+            Donor: item.anonymous ? "Anonymous" : item.name || "—",
+            Email: item.email,
+            Amount: item.amount,
+            Order_ID: item.orderId || "—",
+            Status: item.paymentStatus,
+            Date: new Date(item.createdAt).toLocaleString(),
+        }));
+
+        // Convert to Excel Sheet
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Donations");
+
+        // Export
+        XLSX.writeFile(workbook, "charity_donations.xlsx");
+    };
+
     const totalPages = Math.ceil(donations.length / pageSize);
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedData = donations.slice(startIndex, startIndex + pageSize);
@@ -109,6 +150,7 @@ export default function CharityListPage() {
                         <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
                             <tr>
                                 <th className="py-3 px-3 text-center w-[50px]">Sn.</th>
+                                <th className="py-3 px-3 text-center w-[50px]">Transaction Id</th>
                                 <th className="py-3 px-3 text-center w-[140px]">Donor</th>
                                 <th className="py-3 px-3 text-center">Email</th>
                                 <th className="py-3 px-3 text-center">Amount</th>
@@ -134,6 +176,9 @@ export default function CharityListPage() {
                                     >
                                         <td className="py-3 px-3 text-center">{startIndex + idx + 1}</td>
 
+                                        <td className="py-3 px-3 text-center font-medium">
+                                            {item.transactionId || "—"}
+                                        </td>
                                         <td className="py-3 px-3 text-center font-medium">
                                             {item.anonymous ? "Anonymous" : item.name || "—"}
                                         </td>

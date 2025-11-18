@@ -452,7 +452,7 @@ export default function HomePageSettings() {
                                         </IconButton>
                                     )}
 
-                                    <input type="file" id={`desktop-${idx}`} className="hidden" accept="image/*" onChange={(e) => handleSlideFile(e, idx, "desktop")} />
+                                    <input type="file" id={`desktop-${idx}`} className="hidden" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={(e) => handleSlideFile(e, idx, "desktop")} />
                                 </Box>
 
                                 {/* Mobile */}
@@ -487,7 +487,7 @@ export default function HomePageSettings() {
                                         </IconButton>
                                     )}
 
-                                    <input type="file" id={`mobile-${idx}`} className="hidden" accept="image/*" onChange={(e) => handleSlideFile(e, idx, "mobile")} />
+                                    <input type="file" id={`mobile-${idx}`} className="hidden" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={(e) => handleSlideFile(e, idx, "mobile")} />
                                 </Box>
 
                                 <IconButton onClick={() => setHeroSlides(heroSlides.filter((_, i) => i !== idx))}>
@@ -559,7 +559,7 @@ export default function HomePageSettings() {
                         )}
                     </Box>
 
-                    <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+                    <input ref={bannerRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
                 </Box>
 
                 {/* ================= SIGNATURE PRODUCTS ================= */}

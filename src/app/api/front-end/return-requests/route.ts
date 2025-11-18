@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // ✅ Ensure the order belongs to this user
+        // Ensure the order belongs to this user
         const order = await prisma.orders.findFirst({
             where: { id: orderId, userId },
         });
@@ -36,7 +36,43 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // ✅ Save images directly as JSON
+
+        //==================== canculate expected return amount start =====================
+
+        // Fetch order item
+        const orderItem = await prisma.orderItem.findUnique({
+            where: { id: orderItemId },
+        });
+
+        if (!orderItem) {
+            return NextResponse.json(
+                { success: false, message: "Invalid order item." },
+                { status: 404 }
+            );
+        }
+
+
+        // Calculate original item total (no discount)
+        const itemTotal = orderItem.price * orderItem.quantity;
+
+        // Get order-level subtotal and discount
+        const orderSubtotal = order.itemsTotal;       // full price total of items
+        const orderDiscount = order.discountTotal;    // order-level discount
+
+        // Calculate item's share of the discount
+        let itemShareDiscount = 0;
+
+        if (orderSubtotal > 0 && orderDiscount > 0) {
+            itemShareDiscount = (itemTotal / orderSubtotal) * orderDiscount;
+        }
+
+        // Final expected return amount
+        const expectedReturnAmount = itemTotal - itemShareDiscount;
+
+        //========================== canculate expected return amount end =======================
+
+
+        //  Save images directly as JSON
         await prisma.returnRequest.create({
             data: {
                 userId,
@@ -46,6 +82,7 @@ export async function POST(req: NextRequest) {
                 note: note || null,
                 images: images && images.length > 0 ? images : null,
                 status: "pending",
+                expectedReturnAmount: expectedReturnAmount,
             },
         });
 

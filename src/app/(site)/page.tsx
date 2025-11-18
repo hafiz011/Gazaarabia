@@ -64,7 +64,7 @@ export default function HomeHero() {
 
       <HeroSlider heroSlides={heroSlides} />
 
-      <MoreThanFashionSection />
+
 
       <ShopByCategory categories={categories} />
 
@@ -127,6 +127,8 @@ export default function HomeHero() {
       {/* <ViewLookbook /> */}
 
       <InfoGridSection />
+
+      <MoreThanFashionSection />
 
       <WearTheChange />
 

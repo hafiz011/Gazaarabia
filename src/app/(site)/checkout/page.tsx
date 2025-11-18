@@ -28,6 +28,7 @@ import { useCart } from "@/app/context/CartContext";
 import UnavailableStockAlert from "@/components/UnavailableStockAlert";
 import ErrorAlert from "@/components/ErrorAlert";
 import { frontCouponService } from "@/lib/services/front-end/couponService";
+import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -108,13 +109,20 @@ export default function CheckoutPage() {
     if (!token) {
       const saved = localStorage.getItem("gaza_arabia_guest_address");
       if (saved) setGuestAddress(JSON.parse(saved));
+
+      // const saved = loadWithExpiry("gaza_arabia_guest_address");
+      // if (saved) setGuestAddress(saved);
+
+
     }
   }, [token]);
+
 
   //  Handle guest save from modal
   const handleGuestAddressSave = (data: any) => {
     setGuestAddress(data);
     localStorage.setItem("gaza_arabia_guest_address", JSON.stringify(data));
+    // saveWithExpiry("gaza_arabia_guest_address", data);
   };
 
 

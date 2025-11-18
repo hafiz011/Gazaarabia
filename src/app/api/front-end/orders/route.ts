@@ -147,6 +147,8 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
+        discountTotal: coupon?.discountAmount ?? 0,
+
         // Coupon data (if applied)
         couponId: couponData?.id || null,
         couponCode: couponData?.code || null,

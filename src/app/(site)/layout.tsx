@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { CartProvider } from "../context/CartContext";
 
 export const metadata: Metadata = {
-  title: "Gaza Arabia",
+  title: "Gazaarabia",
   // description: "Inspired by Gazaarabia — Modern modest fashion",
 };
 
@@ -20,9 +20,9 @@ export default function RootLayout({
         <Header />
         <main className="pt-20">
           {/* <CartProvider> */}
-            {children}
+          {children}
           {/* </CartProvider> */}
-          </main>
+        </main>
         <Footer />
       </body>
     </html>

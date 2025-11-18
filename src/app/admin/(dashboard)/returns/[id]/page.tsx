@@ -174,6 +174,8 @@ export default function ReturnRequestDetailPage() {
                     <p className="font-medium">{reqData.user.name}</p>
                     <p className="text-sm text-[var(--text-muted)]">{reqData.user.email}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-1">Order #{reqData.orderId}</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Item Subtotal: £{reqData.orderItem?.subtotal}</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Expected Return Amount: £{reqData.expectedReturnAmount}</p>
                 </div>
             </div>
 

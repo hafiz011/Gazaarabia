@@ -415,7 +415,7 @@ export default function SolidarityReceiptPage() {
 
                             <label className="block mb-2 text-sm">Receipt Image *</label>
 
-                            <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                            <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handleImageUpload} className="hidden" />
 
                             <div onClick={() => fileRef.current?.click()} className="relative w-28 h-28 border rounded-md bg-gray-50 cursor-pointer overflow-hidden mb-4">
                                 {!formData.receiptImage ? (

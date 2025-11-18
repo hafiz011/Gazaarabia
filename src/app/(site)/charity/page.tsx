@@ -164,7 +164,7 @@ export default function CharityPage() {
                         transition={{ duration: 0.6 }}
                         className="text-4xl md:text-5xl font-bold mb-4"
                     >
-                        Gaza Arabia Charity Program
+                        Gazaarabia Charity Program
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -192,7 +192,7 @@ export default function CharityPage() {
                             Our Mission
                         </h2>
                         <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-                            Gaza Arabia is committed to supporting families, children, and communities
+                            Gazaarabia is committed to supporting families, children, and communities
                             affected by conflict. Every donation is used responsibly and directly for
                             humanitarian aid.
                         </p>

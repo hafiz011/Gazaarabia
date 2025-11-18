@@ -225,7 +225,7 @@ export default function BrandFormPage() {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={handleFileChange}
               className="hidden"
             />

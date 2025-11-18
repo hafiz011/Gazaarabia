@@ -185,9 +185,9 @@ export default function DeliveryOptionsListPage() {
                     <td className="py-3 px-5">{option.minTime}</td>
                     <td className="py-3 px-5">{option.maxTime}</td>
                     <td className="py-3 px-5">{option.cutOffTime}</td>
-                    <td className="py-3 px-5">₹ {option.cost}</td>
+                    <td className="py-3 px-5">£{option.cost}</td>
                     <td className="py-3 px-5">
-                      {option.freeOver > 0 ? `₹ ${option.freeOver}` : "-"}
+                      {option.freeOver > 0 ? `£${option.freeOver}` : "-"}
                     </td>
                     <td className="py-3 px-5">{option.status}</td>
                     <td className="py-3 px-3 text-right relative">

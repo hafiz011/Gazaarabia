@@ -33,6 +33,7 @@ import {
   HelpingHand,
   HeartHandshake,
   UserPlus,
+  Package,
 } from "lucide-react";
 import PopupAlert from "../PopupAlert";
 import { useEffect, useState } from "react";
@@ -111,7 +112,8 @@ const links = [
     label: "Logistics",
     icon: Truck,
     children: [
-      { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
+      // { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
+      { href: "/admin/delivery-settings", label: "Delivery Settings", icon: Package },
     ],
   },
 
@@ -192,14 +194,14 @@ export default function AdminSidebar({
         >
           {/* {!collapsed && (
             <h2 className="text-lg font-semibold tracking-wide text-white">
-              Gaza Arabia{" "}
+              Gazaarabia{" "}
               <span className="text-[var(--brand-primary)]">Admin</span>
             </h2>
           )} */}
 
           {!collapsed && (
             <h2 className="text-lg font-semibold tracking-wide text-white">
-              Gaza Arabia{" "}
+              Gazaarabia{" "}
               <span className="text-[var(--brand-primary)]">
                 {session?.user?.role === "admin" ? "Admin" : ""
                   // ? "Admin"
@@ -409,7 +411,7 @@ export default function AdminSidebar({
                 <LogOut size={18} />
               ) : (
                 <>
-                  <span>© {new Date().getFullYear()} Gaza Arabia</span>
+                  <span>© {new Date().getFullYear()} Gazaarabia</span>
                   <div className="flex items-center gap-2">
                     <LogOut size={16} />
                     <span>Logout</span>

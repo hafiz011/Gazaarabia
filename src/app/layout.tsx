@@ -6,16 +6,12 @@ import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
 import { CartProvider } from "./context/CartContext";
 
 export const metadata: Metadata = {
-  title: "Gaza Arabia",
+  title: "Gazaarabia",
   // description: "Inspired by Gazaarabia — Modern modest fashion",
   icons: {
-    icon: [
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon.ico", type: "image/x-icon" },
-    ],
-    apple: "/apple-touch-icon.png",
+    icon: "/favicon.png",
   },
+
   manifest: "/site.webmanifest",
 };
 

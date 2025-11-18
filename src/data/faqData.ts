@@ -66,7 +66,7 @@ export const faqData: any = {
         {
             question: "Is Cash on Delivery available?",
             answer:
-                "Yes, COD is available for most locations up to ₹10,000.",
+                "Yes, COD is available for most locations up to £10,000.",
         },
     ],
 

@@ -360,7 +360,7 @@ export default function CategoryListPage() {
 
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                   ref={fileRef}
                   onChange={handleImageUpload}
                   className="hidden"

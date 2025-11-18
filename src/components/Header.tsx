@@ -103,11 +103,14 @@ export default function Header() {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
-        ? (isScrolled || hovered)
-          ? "bg-white/90 backdrop-blur-md shadow-md"
-          : "bg-transparent"
-        : "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] border-b border-gray-100"
-        }`}
+        ? isScrolled
+          ? "bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.05)] border-b border-white/30"   // scrolled
+          : hovered
+            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] transition-all"  // hover
+            : "bg-transparent"  // fresh hero section
+        : "bg-white/70 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border-b border-gray-200"  // other pages
+        }
+`}
     >
       {/*Top Bar */}
       {toolbarText &&
@@ -168,6 +171,7 @@ export default function Header() {
               : "text-[var(--text-primary)]"
               }`}
           >
+            {/* Dynamic Menus from API */}
             {menus.map((item) => (
               <div
                 key={item.id}
@@ -240,6 +244,28 @@ export default function Header() {
                 )}
               </div>
             ))}
+
+
+            {/* -------------------------------------- */}
+            {/* FIXED MENU ITEMS (Always Visible)      */}
+            {/* -------------------------------------- */}
+
+            {/* PARTNER */}
+            <Link
+              href="/partner"
+              className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
+            >
+              Partner
+            </Link>
+
+            {/* CONTACT US */}
+            <Link
+              href="/contact"
+              className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
+            >
+              Contact Us
+            </Link>
+
           </nav>
 
           {/*  Right Icons (Desktop + Mobile) */}

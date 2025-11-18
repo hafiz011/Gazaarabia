@@ -157,7 +157,7 @@ export default function ReturnRequestModal({
 
                         <input
                             type="file"
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                             multiple
                             className="hidden"
                             ref={fileRef}

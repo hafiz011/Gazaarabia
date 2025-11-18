@@ -41,7 +41,7 @@ export default function LoyaltyPage() {
     ];
 
     const earnOptions = [
-        { icon: <FaShoppingBag size={32} />, title: "Make a Purchase", desc: "1 point per ₹1" },
+        { icon: <FaShoppingBag size={32} />, title: "Make a Purchase", desc: "1 point per £1" },
         { icon: <FaEnvelope size={32} />, title: "Sign Up", desc: "Bonus welcome points" },
         { icon: <FaGift size={32} />, title: "Birthday Bonus", desc: "Receive 300 points" },
         { icon: <FaMobileAlt size={32} />, title: "Follow Us", desc: "Earn social points" },
@@ -270,7 +270,7 @@ export default function LoyaltyPage() {
                     </div>
 
                     <p className="text-xs text-[var(--text-muted)] mt-3">
-                        300 points = ₹100.00
+                        300 points = £100.00
                     </p>
                 </div>
             </section>

@@ -162,7 +162,7 @@ export default function MenusFormPage() {
           <input
             type="file"
             multiple
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
             ref={fileRef}
             onChange={handleFileChange}
             className="hidden"
@@ -219,8 +219,8 @@ export default function MenusFormPage() {
             {submitting
               ? "Saving..."
               : menuId
-              ? "Update Menu"
-              : "Save Menu"}
+                ? "Update Menu"
+                : "Save Menu"}
           </button>
         </div>
       </form>

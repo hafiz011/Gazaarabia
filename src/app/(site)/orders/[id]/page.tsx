@@ -133,24 +133,28 @@ export default function OrderDetailsPage() {
 
     const token = session?.user?.token;
     if (id && token) {
-      (async () => {
-        try {
-          const res = await orderService.getById(token, Number(id));
-          setOrder(res.data);
-        } catch (err) {
-          console.error("Failed to fetch order", err);
-          setPopup({
-            isOpen: true,
-            message: "Failed to fetch order details. Please try again.",
-            type: "error",
-          });
-        } finally {
-          setLoading(false);
-        }
-      })();
+      getOrderDetails()
     }
   }, [id, session, status]);
 
+  const getOrderDetails = () => {
+    const token: any = session?.user?.token;
+    (async () => {
+      try {
+        const res = await orderService.getById(token, Number(id));
+        setOrder(res.data);
+      } catch (err) {
+        console.error("Failed to fetch order", err);
+        setPopup({
+          isOpen: true,
+          message: "Failed to fetch order details. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }
 
   const handleSuccessReviewed = () => {
     // 1. Close the modal
@@ -176,6 +180,21 @@ export default function OrderDetailsPage() {
       setPopup({
         isOpen: true,
         message: "Thank you for your review!",
+        type: "success",
+      });
+    }, 300);
+  }
+  const handleSuccessReturn = () => {
+    // 1. Close the modal
+    setReturnModal(false);
+    //  2. Optimistically update the reviewed status in the UI
+    getOrderDetails();
+
+    // 3. Show success popup
+    setTimeout(() => {
+      setPopup({
+        isOpen: true,
+        message: "Return request submitted successfully!",
         type: "success",
       });
     }, 300);
@@ -529,14 +548,20 @@ export default function OrderDetailsPage() {
           orderItemId={selectedOrderItemId}
           token={session?.user?.token as string}
           onClose={() => setReturnModal(false)}
+          // onSuccess={() => {
+          //   setReturnModal(false);
+          //   setPopup({
+          //     isOpen: true,
+          //     message: "Return request submitted successfully!",
+          //     type: "success",
+          //   });
+          // }}
+
           onSuccess={() => {
-            setReturnModal(false);
-            setPopup({
-              isOpen: true,
-              message: "Return request submitted successfully!",
-              type: "success",
-            });
+            handleSuccessReturn()
           }}
+
+
         />
       )}
 

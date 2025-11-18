@@ -3,7 +3,7 @@ import "../../globals.css";
 import AffiliateLayout from "@/components/affiliate/AffiliateLayout";
 
 export const metadata: Metadata = {
-  title: "Affiliate Dashboard - Gaza Arabia",
+  title: "Affiliate Dashboard - Gazaarabia",
   description: "Affiliate panel for managing earnings, payouts, and performance.",
 };
 

@@ -3,7 +3,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import "../../globals.css";
 
 export const metadata: Metadata = {
-  title: "Admin Panel - Gaza Arabia",
+  title: "Admin Panel - Gazaarabia",
   description: "Admin dashboard",
 };
 

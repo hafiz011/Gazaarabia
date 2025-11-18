@@ -26,7 +26,10 @@ export default function Footer() {
   return (
     <footer className="bg-[var(--foreground)] text-white">
       {/*  Top Footer */}
-      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 md:gap-3 lg:gap-2">
+      {/* <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 md:gap-3 lg:gap-2"> */}
+
+      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-4 md:gap-3 lg:gap-2">
+
         {/* Column 1 – Delivery & Returns */}
         <div>
           <h3 className="font-semibold tracking-wide text-sm mb-4 uppercase">
@@ -120,7 +123,8 @@ export default function Footer() {
         </div>
 
         {/* Column 5 – Join Our Community */}
-        <div>
+        {/* <div> */}
+        <div className="col-span-2 md:col-span-1">
           <h3 className="font-semibold tracking-wide text-sm mb-4 uppercase">
             Join our community
           </h3>
@@ -161,7 +165,7 @@ export default function Footer() {
       {/* Bottom Copyright Row */}
       <div className="border-t border-white/20">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex items-center justify-center text-center text-xs text-white/80">
-          © {new Date().getFullYear()} Gaza Arabia. All Rights Reserved.
+          © {new Date().getFullYear()} Gazaarabia. All Rights Reserved.
         </div>
       </div>
     </footer>

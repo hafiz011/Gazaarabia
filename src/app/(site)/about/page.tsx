@@ -7,11 +7,11 @@ import { FaGem, FaLeaf } from "react-icons/fa";
 export default function AboutPage() {
     return (
         <main className="bg-[var(--background)] text-[var(--text-primary)]">
-            {/* 🟥 HERO SECTION */}
+            {/*  HERO SECTION */}
             <section className="relative w-full h-[70vh] flex items-center justify-center overflow-hidden">
                 <Image
                     src="/images/about/hero.jpg"
-                    alt="About Gaza Arabia"
+                    alt="About Gazaarabia"
                     fill
                     className="object-cover"
                     priority
@@ -19,7 +19,7 @@ export default function AboutPage() {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70"></div>
                 <div className="relative z-10 text-center text-white px-6">
                     <h1 className="text-5xl md:text-6xl font-bold tracking-wide uppercase mb-6">
-                        About Gaza Arabia
+                        About Gazaarabia
                     </h1>
                     <p className="text-lg md:text-xl max-w-2xl mx-auto text-gray-200 leading-relaxed">
                         A legacy of elegance, culture, and modern modest fashion.
@@ -27,13 +27,13 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* 🧭 STORY SECTION */}
+            {/*  STORY SECTION */}
             <section className="max-w-5xl mx-auto px-6 py-24 text-center">
                 <h2 className="text-4xl font-bold mb-8 uppercase tracking-wide">
                     Our Story
                 </h2>
                 <p className="text-lg text-[var(--text-secondary)] leading-relaxed max-w-3xl mx-auto">
-                    Founded with a vision to redefine modest fashion, <strong>Gaza Arabia</strong>
+                    Founded with a vision to redefine modest fashion, <strong>Gazaarabia</strong>
                     merges traditional elegance with modern craftsmanship. Our designs celebrate
                     identity, culture, and sophistication — offering timeless collections for
                     those who lead with grace and confidence.
@@ -43,7 +43,7 @@ export default function AboutPage() {
                 </p>
             </section>
 
-            {/* 🌿 MISSION & VALUES */}
+            {/*  MISSION & VALUES */}
             <section className="bg-[var(--soft-gray)] py-24">
                 <div className="max-w-6xl mx-auto px-6 text-center">
                     <h2 className="text-4xl font-bold mb-12 uppercase tracking-wide">
@@ -78,7 +78,7 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* 🧮 STATS SECTION */}
+            {/* STATS SECTION */}
             <section className="max-w-6xl mx-auto px-6 py-24 text-center">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
                     <div>
@@ -108,10 +108,10 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* 👤 FOUNDER SECTION - Refined & Balanced */}
+            {/*  FOUNDER SECTION - Refined & Balanced */}
             <section className="bg-[var(--soft-gray)] py-14">
                 <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
-                    {/* 📝 Left Section */}
+                    {/*  Left Section */}
                     <div className="flex flex-col justify-center h-full">
                         <h2 className="text-3xl md:text-4xl font-bold text-[var(--black)] mb-3">
                             Meet Our Founder
@@ -119,12 +119,12 @@ export default function AboutPage() {
                         <div className="w-20 h-[3px] bg-[var(--green)] mb-6 rounded-full"></div>
 
                         <p className="text-[var(--text-secondary)] text-base md:text-lg mb-8 leading-relaxed">
-                            Aisha envisioned <span className="font-semibold text-[var(--brand-primary)]">Gaza Arabia</span>
+                            Aisha envisioned <span className="font-semibold text-[var(--brand-primary)]">Gazaarabia</span>
                             not just as a brand, but as a movement. Her passion for culture, craftsmanship, and conscious creation
                             brings elegance to life — empowering women around the world through timeless design and meaningful stories.
                         </p>
 
-                        {/* 🌿 Icons Row */}
+                        {/*  Icons Row */}
                         <div className="grid grid-cols-2 gap-8 max-w-md">
                             <div className="flex flex-col items-center md:items-start text-center md:text-left">
                                 <div className="w-14 h-14 rounded-full border-2 border-[var(--green)] text-[var(--green)] flex items-center justify-center mb-3 shadow-sm bg-white/60 backdrop-blur-sm">
@@ -152,7 +152,7 @@ export default function AboutPage() {
                         </div>
                     </div>
 
-                    {/* 🖼 Founder Image Section */}
+                    {/*  Founder Image Section */}
                     <div className="flex items-center justify-center h-full">
                         <div className="relative w-full max-w-[400px] aspect-[4/5] rounded-lg overflow-hidden shadow-xl ring-2 ring-[var(--green)] flex">
                             <Image
@@ -169,7 +169,7 @@ export default function AboutPage() {
 
 
 
-            {/* ✨ CTA SECTION */}
+            {/*  CTA SECTION */}
             <section className="relative py-24 text-center text-white bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]">
                 <div className="max-w-3xl mx-auto px-6">
                     <h2 className="text-4xl font-bold mb-4 uppercase tracking-wide">

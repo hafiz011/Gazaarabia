@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
                         Privacy Policy
                     </h1>
                     <p className="text-base md:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
-                        This Privacy Policy outlines how Gaza Arabia collects, uses, and protects your information with transparency and care.
+                        This Privacy Policy outlines how Gazaarabia collects, uses, and protects your information with transparency and care.
                     </p>
                 </div>
             </section>
@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
 
                     {/* Footer */}
                     <div className="mt-20 pt-6 border-t border-[var(--mid-gray)] text-center text-sm text-[var(--text-muted)]">
-                        <p>© {new Date().getFullYear()} Gaza Arabia. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} Gazaarabia. All rights reserved.</p>
                         <p className="mt-1">Last Updated: October 16, 2025</p>
                     </div>
                 </div>

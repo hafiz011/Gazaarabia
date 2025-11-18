@@ -6,7 +6,7 @@ export default function TermsAndConditionsPage() {
     const sections = [
         {
             title: "1. Introduction",
-            content: `Welcome to Gaza Arabia. By accessing and using our website, products, or services, you agree to be bound by the following Terms and Conditions. Please read these carefully before making any purchase or using our platform.`,
+            content: `Welcome to Gazaarabia. By accessing and using our website, products, or services, you agree to be bound by the following Terms and Conditions. Please read these carefully before making any purchase or using our platform.`,
         },
         {
             title: "2. Eligibility",
@@ -14,7 +14,7 @@ export default function TermsAndConditionsPage() {
         },
         {
             title: "3. Account Responsibilities",
-            content: `You are responsible for maintaining the confidentiality of your account credentials and restricting access to your account. Gaza Arabia will not be liable for any unauthorized activity that occurs under your account.`,
+            content: `You are responsible for maintaining the confidentiality of your account credentials and restricting access to your account. Gazaarabia will not be liable for any unauthorized activity that occurs under your account.`,
         },
         {
             title: "4. Orders & Payments",
@@ -30,11 +30,11 @@ export default function TermsAndConditionsPage() {
         },
         {
             title: "7. Intellectual Property",
-            content: `All content on this website — including text, graphics, logos, and images — is the property of Gaza Arabia and is protected by applicable copyright and intellectual property laws.`,
+            content: `All content on this website — including text, graphics, logos, and images — is the property of Gazaarabia and is protected by applicable copyright and intellectual property laws.`,
         },
         {
             title: "8. Limitation of Liability",
-            content: `Gaza Arabia shall not be liable for any indirect, incidental, or consequential damages resulting from the use or inability to use the services.`,
+            content: `Gazaarabia shall not be liable for any indirect, incidental, or consequential damages resulting from the use or inability to use the services.`,
         },
         {
             title: "9. Governing Law",
@@ -48,7 +48,7 @@ export default function TermsAndConditionsPage() {
 
     return (
         <div className="w-full bg-white text-[var(--text-primary)]">
-            {/* 🪄 HERO */}
+            {/* HERO */}
             <section className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white py-20 text-center overflow-hidden">
                 <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
                 <div className="relative z-10 max-w-4xl mx-auto px-6">
@@ -57,12 +57,12 @@ export default function TermsAndConditionsPage() {
                     </h1>
                     <p className="text-base md:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
                         Please review the terms carefully before using our website or services.
-                        By accessing Gaza Arabia, you agree to these terms in full.
+                        By accessing Gazaarabia, you agree to these terms in full.
                     </p>
                 </div>
             </section>
 
-            {/* 📄 CONTENT */}
+            {/*  CONTENT */}
             <section className="relative py-16 bg-[var(--soft-gray)] overflow-hidden">
                 {/* Decorative background */}
                 <div className="absolute top-0 left-0 w-[35rem] h-[35rem] bg-[var(--brand-secondary)] opacity-10 blur-3xl -translate-x-40 -translate-y-20"></div>
@@ -76,7 +76,7 @@ export default function TermsAndConditionsPage() {
                         </h2>
                         <p className="text-[var(--text-secondary)] text-base md:text-lg leading-relaxed max-w-3xl mx-auto">
                             These Terms & Conditions define your legal rights and obligations when
-                            using Gaza Arabia. By continuing to browse or shop, you accept these terms.
+                            using Gazaarabia. By continuing to browse or shop, you accept these terms.
                         </p>
                     </div>
 
@@ -117,7 +117,7 @@ export default function TermsAndConditionsPage() {
 
                     {/* Footer */}
                     <div className="mt-16 pt-6 border-t border-[var(--mid-gray)] text-center text-sm text-[var(--text-muted)]">
-                        <p>© {new Date().getFullYear()} Gaza Arabia. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} Gazaarabia. All rights reserved.</p>
                         <p className="mt-1">Last Updated: October 16, 2025</p>
                     </div>
                 </div>

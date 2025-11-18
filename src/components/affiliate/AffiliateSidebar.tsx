@@ -121,7 +121,7 @@ export default function AffiliateSidebar({
                 >
                     {!collapsed && (
                         <h2 className="text-lg font-semibold tracking-wide text-white">
-                            Gaza Arabia{" "}
+                            Gazaarabia{" "}
                             {/* <span className="text-[var(--brand-primary)]">Affiliate</span> */}
                         </h2>
                     )}
@@ -199,7 +199,7 @@ export default function AffiliateSidebar({
                                 <LogOut size={18} />
                             ) : (
                                 <>
-                                    <span>© {new Date().getFullYear()} Gaza Arabia</span>
+                                    <span>© {new Date().getFullYear()} Gazaarabia</span>
                                     <div className="flex items-center gap-2">
                                         <LogOut size={16} />
                                         <span>Logout</span>

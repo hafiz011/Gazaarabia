@@ -43,7 +43,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     else if (status === "authenticated" && session?.user?.role !== "customer") router.replace(ROUTES.HOME);
   }, [status, session, router]);
 
-  // 🚪 Handle logout after confirmation
+  //  Handle logout after confirmation
   const handleLogout = async () => {
     setConfirmLogout(false);
     await signOut({ callbackUrl: ROUTES.USER.LOGIN });
@@ -53,25 +53,22 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     <>
       {(status === "loading") && <Loader />}
 
-      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] pt-20 pb-16 px-4 md:px-16 lg:px-24">
-        {alert.isOpen && alert.type && (
-          <AlertMessage
-            type={alert.type}
-            message={alert.message}
-            onClose={() => setAlert((p) => ({ ...p, isOpen: false }))}
-          />
-        )}
+      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] pt-24 pb-10 px-4 md:px-16 lg:px-24">
 
-        <div className="max-w-6xl mx-auto mb-12">
-          <h1 className="text-3xl font-bold tracking-wide mb-2">My Account</h1>
-          <p className="text-[var(--text-muted)] text-base">
-            Manage your personal information, orders, and addresses
-          </p>
-        </div>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-10">
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-          {/* 🧭 Sidebar Navigation */}
-          <aside className="md:col-span-1 border-r border-[var(--soft-gray)] pr-4 sticky top-24 self-start h-fit">
+          {/* SIDEBAR */}
+          <aside
+            className="
+        w-full md:w-64 
+        border-r md:border-[var(--soft-gray)] 
+        bg-white 
+        md:sticky md:top-24 
+        md:h-[calc(100vh-96px)] 
+        md:overflow-y-auto 
+        p-4 rounded-lg md:rounded-none
+      "
+          >
             <nav className="space-y-1">
               {menuItems.map((item) => (
                 <button
@@ -81,8 +78,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     else router.push(item.path);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium transition text-left ${pathname === item.path
-                      ? "bg-[var(--brand-primary)] text-white shadow-sm"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--soft-gray)]"
+                    ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--soft-gray)]"
                     }`}
                 >
                   {item.icon}
@@ -92,14 +89,30 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             </nav>
           </aside>
 
-          {/* 🧭 Dynamic Page Content */}
-          <main className="md:col-span-3 space-y-8">
+          {/* MAIN CONTENT */}
+          <main
+            className="
+        flex-1 
+        md:h-[calc(100vh-96px)] 
+        md:overflow-y-auto 
+        space-y-8 pr-1
+      "
+          >
+            {/* Page heading */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-wide">My Account</h1>
+              <p className="text-[var(--text-muted)] text-base">
+                Manage your personal information, orders, and addresses
+              </p>
+            </div>
+
             {children}
           </main>
         </div>
       </div>
 
-      {/* 🚪 Logout confirmation */}
+
+      {/*  Logout confirmation */}
       {confirmLogout && (
         <PopupAlert
           type="warning"

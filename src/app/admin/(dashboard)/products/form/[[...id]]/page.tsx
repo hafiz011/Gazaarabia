@@ -590,7 +590,7 @@ function ProductFormContent() {
             >
               <Upload size={24} />
             </div>
-            <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
           </div>
         </Box>
 
@@ -728,7 +728,7 @@ function ProductFormContent() {
                     id={`variantFile${idx}`}
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                     className="hidden"
                     onChange={async (e) => {
                       const files = Array.from(e.target.files || []);

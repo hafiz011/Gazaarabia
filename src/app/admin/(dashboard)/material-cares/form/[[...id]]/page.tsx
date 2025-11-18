@@ -228,7 +228,7 @@ export default function MaterialCareFormPage() {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={handleFileChange}
               className="hidden"
             />
@@ -268,8 +268,8 @@ export default function MaterialCareFormPage() {
                     ? "Updating..."
                     : "Saving..."
                   : isEditMode
-                  ? "Update"
-                  : "Add"}
+                    ? "Update"
+                    : "Add"}
               </button>
             </div>
           </form>
