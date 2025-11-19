@@ -103,17 +103,43 @@ export default function CheckoutPage() {
     }
   };
 
+
+  // ================== save in cookie ================
+  const setGuestAddressCookie = (data: any) => {
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString(); // 24 hours
+
+    document.cookie = `gaza_guest_address=${encodeURIComponent(
+      JSON.stringify(data)
+    )}; expires=${expires}; path=/`;
+  };
+
+
+  // ========================== get from cookie ===============
+  const getGuestAddressCookie = () => {
+    const cookieArr = document.cookie.split(";");
+
+    for (let c of cookieArr) {
+      const [key, value] = c.trim().split("=");
+
+      if (key === "gaza_guest_address") {
+        try {
+          return JSON.parse(decodeURIComponent(value));
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    return null;
+  };
+
+
   useEffect(() => {
     fetchAddresses();
 
     if (!token) {
-      const saved = localStorage.getItem("gaza_arabia_guest_address");
-      if (saved) setGuestAddress(JSON.parse(saved));
-
-      // const saved = loadWithExpiry("gaza_arabia_guest_address");
-      // if (saved) setGuestAddress(saved);
-
-
+      const saved = getGuestAddressCookie();
+      if (saved) setGuestAddress(saved);
     }
   }, [token]);
 
@@ -121,8 +147,7 @@ export default function CheckoutPage() {
   //  Handle guest save from modal
   const handleGuestAddressSave = (data: any) => {
     setGuestAddress(data);
-    localStorage.setItem("gaza_arabia_guest_address", JSON.stringify(data));
-    // saveWithExpiry("gaza_arabia_guest_address", data);
+    setGuestAddressCookie(data);
   };
 
 

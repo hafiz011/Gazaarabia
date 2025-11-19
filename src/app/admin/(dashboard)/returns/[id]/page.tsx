@@ -176,6 +176,9 @@ export default function ReturnRequestDetailPage() {
                     <p className="text-sm text-[var(--text-muted)] mt-1">Order #{reqData.orderId}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-1">Item Subtotal: £{reqData.orderItem?.subtotal}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-1">Expected Return Amount: £{reqData.expectedReturnAmount}</p>
+                    {reqData.status === "refunded" &&
+                        <p className="text-sm text-[var(--text-muted)] mt-1">Returned Amount: £{reqData.refundAmount}</p>
+                    }
                 </div>
             </div>
 

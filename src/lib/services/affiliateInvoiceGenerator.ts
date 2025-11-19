@@ -61,14 +61,48 @@ export async function generateMonthlyAffiliateInvoices() {
             },
         });
 
+
+        // Fetch pending refunded items (order-level affiliate)
+        const pendingRefunds = await prisma.orderItem.findMany({
+            where: {
+                order: { affiliateId: affiliate.id },
+                returnStatus: "refunded",
+                affiliateCommissionAdjusted: false,
+            },
+            select: {
+                id: true,
+                refundedAmount: true,
+                price: true,
+                quantity: true,
+                order: {
+                    select: {
+                        itemsTotal: true,
+                        affiliateEarning: true,
+                    }
+                }
+            }
+        });
+
+
         //  No unpaid orders this month → no invoice needed
         if (orders.length === 0) continue;
 
         //  Calculate total payout
-        const totalAmount = orders.reduce(
+        const earningsThisMonth = orders.reduce(
             (sum: any, o: any) => sum + (o.affiliateEarning ?? 0),
             0
         );
+
+        const deductionAmount = pendingRefunds.reduce((sum: any, item: any) => {
+            const refunded = item.refundedAmount || 0;
+            const orderTotal = item.order.itemsTotal || 1;
+            const originalEarn = item.order.affiliateEarning || 0;
+
+            return sum + (refunded / orderTotal) * originalEarn;
+        }, 0);
+
+        let totalAmount = earningsThisMonth - deductionAmount;
+        if (totalAmount < 0) totalAmount = 0;
 
         // Create invoice number (example: AFF-17-202502)
         const invoiceNumber = `AFF-${affiliate.id}-${year}${String(month + 1).padStart(2, "0")}`;
@@ -78,12 +112,22 @@ export async function generateMonthlyAffiliateInvoices() {
             affiliateName: affiliate.user.name,
             affiliateEmail: affiliate.user.email,
             payoutAmount: totalAmount,
+            deductionAmount,
             paymentMethod: "Pending",
             paymentRef: "Pending",
             payoutDate: monthLabel,
             invoiceNumber,
             orders, // Pass breakdown to PDF
         });
+
+
+        if (pendingRefunds.length > 0) {
+            await prisma.orderItem.updateMany({
+                where: { id: { in: pendingRefunds.map((i: any) => i.id) } },
+                data: { affiliateCommissionAdjusted: true },
+            });
+        }
+
 
         // save invoice record
         await prisma.affiliateInvoice.create({
@@ -93,6 +137,7 @@ export async function generateMonthlyAffiliateInvoices() {
                 invoiceUrl,
                 monthLabel,
                 totalAmount,
+                deductionAmount
             },
         });
     }

@@ -86,6 +86,13 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        //  Update OrderItem return status
+        await prisma.orderItem.update({
+            where: { id: orderItemId },
+            data: { returnStatus: "pending" },
+        });
+
+
         return NextResponse.json(
             { success: true, message: "Return request submitted successfully." },
             { status: 201 }

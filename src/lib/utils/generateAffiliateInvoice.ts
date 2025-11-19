@@ -6,6 +6,7 @@ interface InvoiceData {
   affiliateName: string;
   affiliateEmail: string;
   payoutAmount: number;
+  deductionAmount?: number;
   paymentMethod: string;
   paymentRef: string;
   payoutDate: string;
@@ -29,6 +30,7 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
         affiliateName,
         affiliateEmail,
         payoutAmount,
+        deductionAmount,
         payoutDate,
         invoiceNumber,
         orders,
@@ -157,17 +159,55 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
         y += 18;
       });
 
-      /* =============== TOTAL SECTION =============== */
+
+      /* =============== TOTAL + DEDUCTION SECTION =============== */
       doc.moveDown(1.5);
       doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
       doc.moveDown(0.8);
 
-      doc.font("Bold").fontSize(11).text(
-        `Total Affiliate Earnings: £${payoutAmount.toFixed(2)}`,
+      const earningsBeforeDeduction = payoutAmount + (deductionAmount || 0);
+
+      // Earnings Before Deduction
+      doc.font("Regular").fontSize(10).text(
+        `Earnings This Period: £${earningsBeforeDeduction.toFixed(2)}`,
         400,
         doc.y,
         { width: 160, align: "right" }
       );
+      doc.moveDown(0.6);
+
+      // Only show deduction row if deductionAmount > 0
+      if (deductionAmount && deductionAmount > 0) {
+        doc.font("Regular").fontSize(10).fillColor("red").text(
+          `Refund Deductions: -£${deductionAmount.toFixed(2)}`,
+          400,
+          doc.y,
+          { width: 160, align: "right" }
+        );
+        doc.fillColor("black");
+        doc.moveDown(0.8);
+      }
+
+      // Final payout
+      doc.font("Bold").fontSize(11).text(
+        `Final Payout: £${payoutAmount.toFixed(2)}`,
+        400,
+        doc.y,
+        { width: 160, align: "right" }
+      );
+
+
+      /* =============== TOTAL SECTION =============== */
+      // doc.moveDown(1.5);
+      // doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
+      // doc.moveDown(0.8);
+
+      // doc.font("Bold").fontSize(11).text(
+      //   `Total Affiliate Earnings: £${payoutAmount.toFixed(2)}`,
+      //   400,
+      //   doc.y,
+      //   { width: 160, align: "right" }
+      // );
 
       doc.moveDown(1.5);
 

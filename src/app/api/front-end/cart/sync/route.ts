@@ -65,7 +65,7 @@ async function safeFindMany<T>(
 
 export async function POST(req: Request): Promise<NextResponse<SyncResponse | { success: false; message: string }>> {
   try {
-    const token :any = getTokenFromHeader(req);
+    const token: any = getTokenFromHeader(req);
     const userId = getUserIdFromToken(token);
     const isGuest = !userId;
 
@@ -177,7 +177,7 @@ export async function POST(req: Request): Promise<NextResponse<SyncResponse | { 
     // --- Validate each cart item ---
     for (const item of finalCartItems) {
       const product = productMap.get(item.productId);
-      const variant :any = item.variantId ? variantMap.get(item.variantId) : null;
+      const variant: any = item.variantId ? variantMap.get(item.variantId) : null;
       const itemIssues: string[] = [];
       let availableStock = 0;
       let priceChanged = false;
@@ -207,7 +207,9 @@ export async function POST(req: Request): Promise<NextResponse<SyncResponse | { 
 
       // 3️ Price validation
       const livePrice = Number(variant?.price ?? product?.sellingPrice ?? 0);
-      const oldPrice = Number(item.frontendPrice ?? item.price ?? 0);
+      const oldPrice = (!isGuest && userId) ? Number(item.frontendPrice ?? item.price ?? 0) :
+        Number(item.selectedVariantData?.price ?? item.product?.sellingPrice ?? 0)
+        ;
 
       if (Number.isFinite(livePrice) && Number.isFinite(oldPrice)) {
         const priceDiff = Math.abs(livePrice - oldPrice);

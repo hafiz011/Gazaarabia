@@ -6,6 +6,7 @@ export interface AmbassadorInvoiceData {
     ambassadorName: string;
     ambassadorEmail: string;
     payoutAmount: number;
+    deductionAmount?: number;
     payoutDate: string;   // e.g. "November 2025"
     invoiceNumber: string;
     orders: {
@@ -26,6 +27,7 @@ export async function generateAmbassadorInvoicePDF(data: AmbassadorInvoiceData):
                 ambassadorName,
                 ambassadorEmail,
                 payoutAmount,
+                deductionAmount = 0,
                 payoutDate,
                 invoiceNumber,
                 orders,
@@ -161,18 +163,55 @@ export async function generateAmbassadorInvoicePDF(data: AmbassadorInvoiceData):
             });
 
 
-            /* ============= TOTALS ============= */
-            // move doc.y to current y if it's below
-            doc.y = Math.max(doc.y, y) + 8;
+            /* =============== TOTAL + DEDUCTIONS SECTION =============== */
+            doc.moveDown(2);
             doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
-            doc.moveDown(0.8);
+            doc.moveDown(1);
 
-            doc.font("Bold").fontSize(11).text(
-                `Total Ambassador Earnings: £${payoutAmount.toFixed(2)}`,
+            const earningsBeforeDeduction = payoutAmount + deductionAmount;
+
+            // Earnings before deduction
+            doc.font("Regular").fontSize(10).text(
+                `Earnings This Period: £${earningsBeforeDeduction.toFixed(2)}`,
                 400,
                 doc.y,
                 { width: 160, align: "right" }
             );
+            doc.moveDown(0.6);
+
+            // Deduction amount
+            if (deductionAmount > 0) {
+                doc.font("Regular").fontSize(10).fillColor("red").text(
+                    `Refund Deductions: -£${deductionAmount.toFixed(2)}`,
+                    400,
+                    doc.y,
+                    { width: 160, align: "right" }
+                );
+                doc.fillColor("black");
+                doc.moveDown(0.8);
+            }
+
+            // Final payout
+            doc.font("Bold").fontSize(11).text(
+                `Final Payout: £${payoutAmount.toFixed(2)}`,
+                400,
+                doc.y,
+                { width: 160, align: "right" }
+            );
+
+
+            /* ============= TOTALS ============= */
+            // move doc.y to current y if it's below
+            // doc.y = Math.max(doc.y, y) + 8;
+            // doc.moveTo(40, doc.y).lineTo(560, doc.y).stroke();
+            // doc.moveDown(0.8);
+
+            // doc.font("Bold").fontSize(11).text(
+            //     `Total Ambassador Earnings: £${payoutAmount.toFixed(2)}`,
+            //     400,
+            //     doc.y,
+            //     { width: 160, align: "right" }
+            // );
 
             doc.moveDown(1.5);
 

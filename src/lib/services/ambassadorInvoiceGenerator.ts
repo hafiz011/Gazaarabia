@@ -46,13 +46,43 @@ export async function generateMonthlyAmbassadorInvoices() {
             },
         });
 
+
+        // Fetch pending item-level refunds
+        const pendingRefunds = await prisma.orderItem.findMany({
+            where: {
+                ambassadorId: ambassador.id,
+                returnStatus: "refunded",
+                ambassadorCommissionAdjusted: false,
+            },
+            select: {
+                id: true,
+                refundedAmount: true,
+                price: true,
+                quantity: true,
+                ambassadorEarning: true,
+            }
+        });
+
+
         if (items.length === 0) continue;
 
         // total commission
-        const totalAmount = items.reduce(
+        const earningsThisMonth = items.reduce(
             (sum: any, i: any) => sum + (i.ambassadorEarning ?? 0),
             0
         );
+
+        const deductionAmount = pendingRefunds.reduce((sum: any, item: any) => {
+            const refunded = item.refundedAmount || 0;
+            const itemTotal = item.price * item.quantity || 1;
+            const originalEarn = item.ambassadorEarning || 0;
+
+            return sum + (refunded / itemTotal) * originalEarn;
+        }, 0);
+
+        let totalAmount = earningsThisMonth - deductionAmount;
+        if (totalAmount < 0) totalAmount = 0;
+
 
         const invoiceNumber = `AMB-${ambassador.id}-${year}${String(month + 1).padStart(2, "0")}`;
 
@@ -61,6 +91,7 @@ export async function generateMonthlyAmbassadorInvoices() {
             ambassadorName: ambassador.user.name,
             ambassadorEmail: ambassador.user.email,
             payoutAmount: totalAmount,
+            deductionAmount,
             payoutDate: monthLabel,
             invoiceNumber,
             orders: items.map((i: any) => ({
@@ -77,6 +108,15 @@ export async function generateMonthlyAmbassadorInvoices() {
         // generate pdf
         const invoiceUrl = await generateAmbassadorInvoicePDF(invoiceData);
 
+
+        if (pendingRefunds.length > 0) {
+            await prisma.orderItem.updateMany({
+                where: { id: { in: pendingRefunds.map((i: any) => i.id) } },
+                data: { ambassadorCommissionAdjusted: true },
+            });
+        }
+
+
         // save invoice
         await prisma.ambassadorInvoice.create({
             data: {
@@ -85,6 +125,7 @@ export async function generateMonthlyAmbassadorInvoices() {
                 invoiceUrl,
                 monthLabel,
                 totalAmount,
+                deductionAmount
             },
         });
     }

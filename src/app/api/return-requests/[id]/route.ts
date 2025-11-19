@@ -6,7 +6,10 @@ import { sendReturnStatusEmail } from "@/lib/helpers/emailHelper";
 const prisma: any = new PrismaClient();
 
 // GET — Single Return Request
-export async function GET(req: NextRequest, { params }: any) {
+export async function GET(req: NextRequest, context: any) {
+
+    const { params } = await context;
+
     const userId = await checkAuth(req);
     if (!userId) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
@@ -42,7 +45,10 @@ export async function GET(req: NextRequest, { params }: any) {
 
 
 // PATCH — Update Status
-export async function PATCH(req: NextRequest, { params }: any) {
+export async function PATCH(req: NextRequest, context: any) {
+
+    const { params } = await context;
+
     const userId = await checkAuth(req);
     if (!userId) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
@@ -65,6 +71,13 @@ export async function PATCH(req: NextRequest, { params }: any) {
             where: { id: Number(params.id) },
             data: { status, adminNote: adminNote || null, refundAmount: refundAmount || null },
             include: { user: true, orderItem: true },
+        });
+
+
+        //  Update OrderItem return status
+        await prisma.orderItem.update({
+            where: { id: updated.orderItemId },
+            data: { returnStatus: status, refundedAmount: refundAmount },
         });
 
 

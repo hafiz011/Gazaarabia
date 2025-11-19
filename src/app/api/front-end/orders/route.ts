@@ -92,6 +92,41 @@ export async function POST(req: NextRequest) {
         );
       }
 
+
+
+
+      // ================= new calculate the affiliating earning on per order item start ==============
+
+      const totalItemValue = orderItems.reduce((sum: any, item: any) => sum + item.subtotal, 0);
+
+      let affiliateItemEarning = null;
+
+      if (affiliateId && affiliateCommission) {
+
+        const itemValue = item.subtotal;
+
+        // proportion of affiliate earning for this item
+        const proportion = itemValue / totalItemValue;
+
+        const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
+
+        const discountAmount = coupon?.discountAmount ?? 0;
+
+        const earningAfterDiscount = earningBeforeDiscount - discountAmount;
+
+        const finalAffiliateEarning = earningAfterDiscount * proportion;
+
+        affiliateItemEarning = Number(Math.max(finalAffiliateEarning, 0).toFixed(2));
+      }
+
+
+
+      // ================= new calculate the affiliating earning on per order item end ==============
+
+
+
+
+
       orderItemsWithAmbassador.push({
         productId: item.productId,
         variantId: item.variantId,
@@ -100,6 +135,8 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         price: item.price,
         subtotal: item.subtotal,
+
+        affiliateEarning: affiliateItemEarning,
 
         // from common function
         ambassadorId: ambassadorInfo.ambassadorId,

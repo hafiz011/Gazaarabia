@@ -118,7 +118,7 @@ export default function MobileMenuDrawer({
 
             {/* Partner */}
             <div className="py-3 border-b border-gray-100">
-              <Link href="/partner" onClick={onClose}>
+              <Link href="/become-partner" onClick={onClose}>
                 Partner
               </Link>
             </div>

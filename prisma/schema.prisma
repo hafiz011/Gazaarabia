@@ -185,7 +185,7 @@ model productimage {
 model products {
   id               Int              @id @default(autoincrement())
   slug             String           @unique
-  description      String?           @db.LongText
+  description      String?          @db.LongText
   active           Boolean          @default(true)
   barcode          String?
   baseQty          Int
@@ -195,7 +195,7 @@ model products {
   discountPrice    Float?
   fitType          String?
   sellingPrice     Float
-  shortDescription String?
+  shortDescription String?           @db.LongText
   subcategoryId    Int?
   title            String
   createdAt        DateTime         @default(now())
@@ -430,6 +430,18 @@ model OrderItem {
   ambassadorCommission Float?
   ambassadorEarning    Float?
   ambassadorPaid       Boolean @default(false)   //  NEW: paid/unpaid status
+
+  returnStatus         String?
+  refundedAmount       Float?
+ 
+
+  // Affiliate commission per item
+  affiliateEarning       Float?
+  affiliateCommissionAdjusted Boolean @default(false)
+
+  // Ambassador commission per item
+  ambassadorCommissionAdjusted Boolean @default(false)
+
 
   ambassador Affiliate? @relation("OrderItemAmbassadorRelation", fields: [ambassadorId], references: [id])
 
@@ -680,6 +692,8 @@ model AffiliateInvoice {
   paymentMethod String?
   paymentRef    String?
   paidAt        DateTime?
+  deductionAmount Float? @default(0)
+
 
   createdAt DateTime @default(now())
 
@@ -823,6 +837,8 @@ model AmbassadorInvoice {
   paymentMethod String?
   paymentRef    String?
   paidAt        DateTime?
+  deductionAmount Float? @default(0)
+
 
   createdAt DateTime @default(now())
 
