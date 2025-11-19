@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getAffiliateEarnings } from "@/lib/helpers/affiliateEarnings";
 import bcrypt from "bcryptjs";
+import { generateReferralCode } from "@/lib/helpers/generateReferralCodeHelper";
 
 const prisma: any = new PrismaClient();
 
@@ -98,6 +99,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
+
+    // ==============================
+    // GENERATE UNIQUE REFERRAL CODE
+    // ==============================
+    let referralCode = generateReferralCode();
+
+    // Ensure uniqueness
+    let exists = await prisma.affiliate.findUnique({
+      where: { referralCode },
+    });
+
+    while (exists) {
+      referralCode = generateReferralCode();
+      exists = await prisma.affiliate.findUnique({
+        where: { referralCode },
+      });
+    }
+
+
     // Create affiliate record
     const affiliate = await prisma.affiliate.create({
       data: {
@@ -106,6 +126,7 @@ export async function POST(req: NextRequest) {
         baseCommission: Number(baseCommission),
         shareCommission: Number(shareCommission),
         isActive,
+        referralCode
       },
     });
 

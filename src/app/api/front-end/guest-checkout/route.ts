@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { address, orderItems, payment, coupon, charity } = await req.json();
+    const { address, orderItems, payment, coupon, charity, referral } = await req.json();
 
     // Validate required fields
     if (
@@ -45,14 +45,88 @@ export async function POST(req: NextRequest) {
       }
     }
 
+
+    //------------------------------------------------------
+    // REFERRAL DISCOUNT LOGIC
+    //------------------------------------------------------
+    let referralAffiliate = null;
+    let referralAffiliateDiscount = 0;
+
+    // frontend MUST send: referral: { affiliateId, discount }
+    if (referral?.affiliateId) {
+      referralAffiliate = await prisma.affiliate.findUnique({
+        where: { id: referral.affiliateId },
+        select: { id: true, shareCommission: true }
+      });
+
+      if (referralAffiliate) {
+        referralAffiliateDiscount = referral?.discount || 0;
+      }
+    }
+
+    //------------------------------------------------------
+    // WHICH DISCOUNT IS APPLIED — COUPON OR REFERRAL?
+    // Rule: Apply ONLY THE HIGHER DISCOUNT
+    //------------------------------------------------------
+    let finalDiscountTotal = 0;
+    let discountSource = null; // "coupon" or "referral"
+    let finalAffiliateId = null; // which affiliate to credit?
+
+    const couponDiscount = coupon?.discountAmount ?? 0;
+
+    if (couponData && referralAffiliate) {
+      if (couponDiscount >= referralAffiliateDiscount) {
+        // COUPON WINS
+        finalDiscountTotal = couponDiscount;
+        discountSource = "coupon";
+        finalAffiliateId = couponData.affiliateId;
+      } else {
+        // REFERRAL WINS
+        finalDiscountTotal = referralAffiliateDiscount;
+        discountSource = "referral";
+        finalAffiliateId = referralAffiliate.id;
+      }
+    }
+    else if (couponData) {
+      finalDiscountTotal = couponDiscount;
+      discountSource = "coupon";
+      finalAffiliateId = couponData.affiliateId;
+    }
+    else if (referralAffiliate) {
+      finalDiscountTotal = referralAffiliateDiscount;
+      discountSource = "referral";
+      finalAffiliateId = referralAffiliate.id;
+    }
+
+
     // 2️. Determine affiliate info
-    let affiliateId = null;
+    // let affiliateId = null;
+    // let affiliateCommission = null;
+    // let affiliateEarning = null;
+
+    // if (couponData?.affiliateId) {
+    //   affiliateId = couponData.affiliateId;
+
+    //   const affiliateInfo = await prisma.affiliate.findUnique({
+    //     where: { id: affiliateId },
+    //     select: { baseCommission: true },
+    //   });
+
+    //   affiliateCommission = affiliateInfo?.baseCommission ?? 0;
+
+    //   const itemsTotal = payment.itemsTotal ?? 0;
+    //   const discountAmount = coupon?.discountAmount ?? 0;
+
+    //   const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
+    //   const finalEarning = earningBeforeDiscount - discountAmount;
+    //   affiliateEarning = Math.max(finalEarning, 0);
+    // }
+
+    let affiliateId = finalAffiliateId;
     let affiliateCommission = null;
     let affiliateEarning = null;
 
-    if (couponData?.affiliateId) {
-      affiliateId = couponData.affiliateId;
-
+    if (affiliateId) {
       const affiliateInfo = await prisma.affiliate.findUnique({
         where: { id: affiliateId },
         select: { baseCommission: true },
@@ -61,12 +135,15 @@ export async function POST(req: NextRequest) {
       affiliateCommission = affiliateInfo?.baseCommission ?? 0;
 
       const itemsTotal = payment.itemsTotal ?? 0;
-      const discountAmount = coupon?.discountAmount ?? 0;
 
       const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
-      const finalEarning = earningBeforeDiscount - discountAmount;
-      affiliateEarning = Math.max(finalEarning, 0);
+
+      // apply ONLY the selected (winning) discount
+      const earningAfterDiscount = earningBeforeDiscount - finalDiscountTotal;
+
+      affiliateEarning = Number(Math.max(earningAfterDiscount, 0).toFixed(2));
     }
+
 
     // 3️. Find or create user
     let user = await prisma.users.findUnique({
@@ -145,9 +222,13 @@ export async function POST(req: NextRequest) {
 
         const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
 
-        const discountAmount = coupon?.discountAmount ?? 0;
+        // const discountAmount = coupon?.discountAmount ?? 0;
 
-        const earningAfterDiscount = earningBeforeDiscount - discountAmount;
+        // const earningAfterDiscount = earningBeforeDiscount - discountAmount;
+
+        // use ONLY the final winning discount
+        const earningAfterDiscount = earningBeforeDiscount - finalDiscountTotal;
+
 
         const finalAffiliateEarning = earningAfterDiscount * proportion;
 
@@ -214,13 +295,31 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
-        discountTotal: coupon?.discountAmount ?? 0,
+        // discountTotal: coupon?.discountAmount ?? 0,
 
         // Coupon data (if applied)
         couponId: couponData?.id || null,
         couponCode: couponData?.code || null,
-        couponDiscount: coupon?.discountAmount ?? 0,
-        affiliateId: affiliateId,
+        // couponDiscount: coupon?.discountAmount ?? 0,
+        // affiliateId: affiliateId,
+
+
+        discountTotal: finalDiscountTotal,
+
+        couponDiscount:
+          discountSource === "coupon"
+            ? finalDiscountTotal
+            : 0,
+
+        referralDiscount:
+          discountSource === "referral"
+            ? finalDiscountTotal
+            : 0,
+
+        affiliateId: finalAffiliateId,
+
+
+
         affiliateCommission: affiliateCommission,
         affiliateEarning: affiliateEarning,
 

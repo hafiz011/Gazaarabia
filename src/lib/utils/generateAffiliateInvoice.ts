@@ -18,6 +18,7 @@ interface InvoiceData {
     couponCode?: string | null;
     coupon?: { discountType: string; discountValue: number } | null;
     couponDiscount: number | null;
+    referralDiscount: number | null;
     affiliateCommission: number | null;
     affiliateEarning: number | null;
   }[];
@@ -148,10 +149,17 @@ export async function generateAffiliateInvoicePDF(data: InvoiceData): Promise<st
             : `£${o.coupon.discountValue}`
           : "-";
 
+        const discountValue =
+          o.couponDiscount && o.couponDiscount > 0
+            ? o.couponDiscount
+            : o.referralDiscount || 0;
+
+        console.log('o:>', o)
+
         doc.text(String(o.id), cols[0], y);
         doc.text(o.createdAt.toISOString().split("T")[0], cols[1], y);
         doc.text(`£${o.itemsTotal.toFixed(2)}`, cols[2], y);
-        doc.text(`£${(o.couponDiscount ?? 0).toFixed(2)}`, cols[3], y);
+        doc.text(`£${discountValue.toFixed(2)}`, cols[3], y);
         doc.text(o.couponCode ?? "-", cols[4], y);
         doc.text(`${o.affiliateCommission}%`, cols[5], y);
         doc.text(`£${(o.affiliateEarning ?? 0).toFixed(2)}`, cols[6], y, { align: "right" });

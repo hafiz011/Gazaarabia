@@ -388,6 +388,18 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
                   </p>
                 )}
 
+                {/* Referral Discount (from referral link) */}
+                {order.referralDiscount > 0 && (
+                  <p>
+                    <span className="font-medium text-gray-800">Referral Discount:</span>{" "}
+                    {formatGBP(order.referralDiscount)}
+                    <span className="ml-2 text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                      Referral Link
+                    </span>
+                  </p>
+                )}
+
+
               </div>
             </section>
           )}

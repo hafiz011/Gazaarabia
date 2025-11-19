@@ -40,8 +40,10 @@ export async function GET(req: NextRequest) {
         name: affiliate.user.name,
         email: affiliate.user.email,
         baseCommission: affiliate.baseCommission,
+        shareCommission: affiliate.shareCommission,
+        referralCode: affiliate.referralCode,
         totalEarned,
-        paid,     
+        paid,
         pending,
         joinedAt: affiliate.createdAt,
       },
@@ -50,4 +52,90 @@ export async function GET(req: NextRequest) {
     console.error("Affiliate Profile Error:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
+}
+
+
+export async function PUT(req: NextRequest) {
+  try {
+    const token: any = getTokenFromHeader(req);
+    const userId = getUserIdFromToken(token);
+
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate affiliate exists for this user
+    const affiliate = await prisma.affiliate.findUnique({
+      where: { userId },
+    });
+
+    if (!affiliate) {
+      return NextResponse.json(
+        { message: "Only affiliates can update settings" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const shareCommissionRaw = body.shareCommission;
+
+    if (shareCommissionRaw === undefined || shareCommissionRaw === null) {
+      return NextResponse.json(
+        { message: "shareCommission is required" },
+        { status: 400 }
+      );
+    }
+
+    const shareCommission = Number(shareCommissionRaw);
+    if (Number.isNaN(shareCommission)) {
+      return NextResponse.json(
+        { message: "shareCommission must be a valid number" },
+        { status: 400 }
+      );
+    }
+
+    // // Optional global limit
+    // if (shareCommission < 0 || shareCommission > 50) {
+    //   return NextResponse.json(
+    //     { message: "shareCommission must be between 0-50%" },
+    //     { status: 400 }
+    //   );
+    // }
+
+    // NEW: cannot exceed baseCommission
+    const baseCommission = Number(affiliate.baseCommission ?? 0);
+    if (shareCommission > baseCommission) {
+      return NextResponse.json(
+        { message: `shareCommission cannot be greater than your baseCommission (${baseCommission}%)` },
+        { status: 400 }
+      );
+    }
+
+    // Update
+    const updated = await prisma.affiliate.update({
+      where: { id: affiliate.id },
+      data: { shareCommission: Number(shareCommission) },
+      select: {
+        id: true,
+        shareCommission: true,
+        baseCommission: true,
+        userId: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Share commission updated successfully",
+      data: updated,
+    });
+
+  } catch (err: any) {
+    console.error("Affiliate Update Error:", err);
+    return NextResponse.json(
+      { message: "Server error", error: err?.message || err },
+      { status: 500 }
+    );
+  }
+
+
 }

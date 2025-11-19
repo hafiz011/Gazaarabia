@@ -47,7 +47,7 @@ export async function generateMonthlyAffiliateInvoices() {
                 createdAt: true,
                 itemsTotal: true,
                 couponDiscount: true,
-
+                referralDiscount: true,
                 couponCode: true,
                 coupon: {
                     select: {

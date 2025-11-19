@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
+import { generateReferralCode } from "@/lib/helpers/generateReferralCodeHelper";
 
 const prisma: any = new PrismaClient();
 
@@ -50,6 +51,25 @@ export async function POST(req: Request) {
     const baseCommission = settings?.affiliateCommission || 10;
     const shareCommission = 7;
 
+
+    // ==============================
+    // GENERATE UNIQUE REFERRAL CODE
+    // ==============================
+    let referralCode = generateReferralCode();
+
+    // Ensure uniqueness
+    let exists = await prisma.affiliate.findUnique({
+      where: { referralCode },
+    });
+
+    while (exists) {
+      referralCode = generateReferralCode();
+      exists = await prisma.affiliate.findUnique({
+        where: { referralCode },
+      });
+    }
+
+
     // Create affiliate entry using dynamic commissions
     await prisma.affiliate.create({
       data: {
@@ -57,6 +77,7 @@ export async function POST(req: Request) {
         baseCommission: baseCommission,
         shareCommission: shareCommission,
         isActive: true,
+        referralCode
       },
     });
 

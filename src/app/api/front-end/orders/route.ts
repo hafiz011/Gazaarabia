@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { payment, address, orderItems, coupon, charity } = await req.json();
+    const { payment, address, orderItems, coupon, charity, referral } = await req.json();
 
     if (!payment?.totalAmount || !orderItems || orderItems.length === 0) {
       return NextResponse.json(
@@ -40,40 +40,115 @@ export async function POST(req: NextRequest) {
       }
     }
 
+
+    //------------------------------------------------------
+    // REFERRAL DISCOUNT LOGIC
+    //------------------------------------------------------
+    let referralAffiliate = null;
+    let referralAffiliateDiscount = 0;
+
+    // frontend MUST send: referral: { affiliateId, discount }
+    if (referral?.affiliateId) {
+      referralAffiliate = await prisma.affiliate.findUnique({
+        where: { id: referral.affiliateId },
+        select: { id: true, shareCommission: true }
+      });
+
+      if (referralAffiliate) {
+        referralAffiliateDiscount = referral?.discount || 0;
+      }
+    }
+
+    //------------------------------------------------------
+    // WHICH DISCOUNT IS APPLIED — COUPON OR REFERRAL?
+    // Rule: Apply ONLY THE HIGHER DISCOUNT
+    //------------------------------------------------------
+    let finalDiscountTotal = 0;
+    let discountSource = null; // "coupon" or "referral"
+    let finalAffiliateId = null; // which affiliate to credit?
+
+    const couponDiscount = coupon?.discountAmount ?? 0;
+
+    if (couponData && referralAffiliate) {
+      if (couponDiscount >= referralAffiliateDiscount) {
+        // COUPON WINS
+        finalDiscountTotal = couponDiscount;
+        discountSource = "coupon";
+        finalAffiliateId = couponData.affiliateId; // coupon owner
+      } else {
+        // REFERRAL WINS
+        finalDiscountTotal = referralAffiliateDiscount;
+        discountSource = "referral";
+        finalAffiliateId = referralAffiliate.id; // referral owner
+      }
+    }
+    else if (couponData) {
+      finalDiscountTotal = couponDiscount;
+      discountSource = "coupon";
+      finalAffiliateId = couponData.affiliateId;
+    }
+    else if (referralAffiliate) {
+      finalDiscountTotal = referralAffiliateDiscount;
+      discountSource = "referral";
+      finalAffiliateId = referralAffiliate.id;
+    }
+
+
     // ================================
     //  AFFILIATE LOGIC
     // ================================
     // Determine affiliate (if coupon belongs to one)
-    let affiliateId = null;
+    // let affiliateId = null;
+    let affiliateId = finalAffiliateId;
     let affiliateCommission = null;
     let affiliateEarning = null;
 
-    if (couponData?.affiliateId) {
-      affiliateId = couponData.affiliateId;
+    // if (couponData?.affiliateId) {
+    //   affiliateId = couponData.affiliateId;
 
 
-      // Get affiliate account to read the current commission %
+    //   // Get affiliate account to read the current commission %
+    //   const affiliateInfo = await prisma.affiliate.findUnique({
+    //     where: { id: affiliateId },
+    //     select: { baseCommission: true }, // ex: 7% or 10%
+    //   });
+
+
+    //   // affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
+    //   // affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
+
+    //   affiliateCommission = affiliateInfo?.baseCommission ?? 0;
+
+    //   const itemsTotal = payment.itemsTotal ?? 0;
+    //   const discountAmount = coupon?.discountAmount ?? 0;
+
+    //   // Apply percentage first, then subtract discount
+    //   const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
+    //   const finalEarning = earningBeforeDiscount - discountAmount;
+
+    //   // Avoid negative commission
+    //   // affiliateEarning = Math.max(finalEarning, 0);
+    //   affiliateEarning = Number(Math.max(finalEarning, 0).toFixed(2));
+    // }
+
+
+    if (affiliateId) {
       const affiliateInfo = await prisma.affiliate.findUnique({
         where: { id: affiliateId },
-        select: { baseCommission: true }, // ex: 7% or 10%
+        select: { baseCommission: true },
       });
-
-
-      // affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
-      // affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
 
       affiliateCommission = affiliateInfo?.baseCommission ?? 0;
 
+      // calculate the commission on order items
       const itemsTotal = payment.itemsTotal ?? 0;
-      const discountAmount = coupon?.discountAmount ?? 0;
 
-      // Apply percentage first, then subtract discount
       const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
-      const finalEarning = earningBeforeDiscount - discountAmount;
 
-      // Avoid negative commission
-      // affiliateEarning = Math.max(finalEarning, 0);
-      affiliateEarning = Number(Math.max(finalEarning, 0).toFixed(2));
+      // apply ONLY the selected (winning) discount
+      const earningAfterDiscount = earningBeforeDiscount - finalDiscountTotal;
+
+      affiliateEarning = Number(Math.max(earningAfterDiscount, 0).toFixed(2));
     }
 
     // ==========================================================
@@ -110,11 +185,18 @@ export async function POST(req: NextRequest) {
 
         const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
 
-        const discountAmount = coupon?.discountAmount ?? 0;
+        // const discountAmount = coupon?.discountAmount ?? 0;
 
-        const earningAfterDiscount = earningBeforeDiscount - discountAmount;
+        // const earningAfterDiscount = earningBeforeDiscount - discountAmount;
 
+        // const finalAffiliateEarning = earningAfterDiscount * proportion;
+
+        // use ONLY the final winning discount
+        const earningAfterDiscount = earningBeforeDiscount - finalDiscountTotal;
+
+        // split proportionally by item
         const finalAffiliateEarning = earningAfterDiscount * proportion;
+
 
         affiliateItemEarning = Number(Math.max(finalAffiliateEarning, 0).toFixed(2));
       }
@@ -184,33 +266,38 @@ export async function POST(req: NextRequest) {
         postalCode: address.postalCode,
         phone: address.phone,
 
-        discountTotal: coupon?.discountAmount ?? 0,
+        // discountTotal: coupon?.discountAmount ?? 0,
 
         // Coupon data (if applied)
         couponId: couponData?.id || null,
         couponCode: couponData?.code || null,
-        couponDiscount: coupon?.discountAmount ?? 0,
-        affiliateId: affiliateId,
+        // couponDiscount: coupon?.discountAmount ?? 0,
+        // affiliateId: affiliateId,
         affiliateCommission: affiliateCommission,
         affiliateEarning: affiliateEarning,
+
+
+        // FINAL DECISION
+        affiliateId: finalAffiliateId,   // << important
+        discountTotal: finalDiscountTotal,
+
+        couponDiscount:
+          discountSource === "coupon"
+            ? finalDiscountTotal
+            : 0,
+
+        referralDiscount:
+          discountSource === "referral"
+            ? finalDiscountTotal
+            : 0,
+
+
+
+
 
         //  NEW — Order-level ambassador tracking
         ambassadorId: ambassadorIdForOrder,
         ambassadorPaid: false,
-
-
-        //  Order Items
-        // orderItems: {
-        //   create: orderItems.map((item: any) => ({
-        //     productId: item.productId,
-        //     variantId: item.variantId,
-        //     colorId: item.colorId,
-        //     sizeId: item.sizeId,
-        //     quantity: item.quantity,
-        //     price: item.price,
-        //     subtotal: item.subtotal,
-        //   })),
-        // },
 
         charityAmount: charity?.amount || 0,
 

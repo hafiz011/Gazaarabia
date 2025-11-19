@@ -392,6 +392,8 @@ model Orders {
   ambassadorId   Int?
   ambassadorPaid Boolean @default(false)
 
+  referralDiscount Float? @default(0)
+
   // Ambassador relation (product-based)
   ambassador          Affiliate? @relation("OrderAmbassadorRelation", fields: [ambassadorId], references: [id])
 
@@ -599,7 +601,7 @@ model Affiliate {
   user            Users    @relation(fields: [userId], references: [id])
   baseCommission  Float    @default(10) // Admin's commission percentage
   shareCommission Float    @default(7) // Affiliate's shared portion (% discount)
-
+  referralCode   String  @unique  
   type        String   @default("affiliate") // "affiliate" or "ambassador"
 
 

@@ -207,9 +207,10 @@ export async function generateCustomerInvoice(orderId: number) {
 
 
     // Discount amount (show only if discount > 0)
-    if (order.couponDiscount && order.couponDiscount > 0) {
+    // if (order.couponDiscount && order.couponDiscount > 0) {
+    if (order.discountTotal && order.discountTotal > 0) {
         doc.moveDown(1);
-        const discountText = `Discount Amount: - £${order.couponDiscount.toFixed(2)}`;
+        const discountText = `Discount Amount: - £${order.discountTotal.toFixed(2)}`;
 
         doc.font("Regular").fontSize(10).text(discountText, 400, doc.y, {
             width: 160,

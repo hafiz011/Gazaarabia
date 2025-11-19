@@ -29,6 +29,17 @@ import UnavailableStockAlert from "@/components/UnavailableStockAlert";
 import ErrorAlert from "@/components/ErrorAlert";
 import { frontCouponService } from "@/lib/services/front-end/couponService";
 import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
+import { referralService } from "@/lib/services/referralService";
+
+
+interface AffiliateInfo {
+  id: number;
+  referralCode: string;
+  baseCommission: number;
+  shareCommission: number;
+  isActive: boolean;
+}
+
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -61,9 +72,83 @@ export default function CheckoutPage() {
 
   const [charityAmount, setCharityAmount] = useState<string>("");
 
+  const [affiliateInfo, setAffiliateInfo] = useState<AffiliateInfo | null>(null);
+
+  const [affiliateDiscountAmount, setAffiliateDiscountAmount] = useState(0);
+
+
+
+
+
   // FINAL CALCULATED TOTAL
   const donation = parseFloat(charityAmount || "0");
-  const grandTotal = subtotal - discountAmount + donation;
+  // const grandTotal = subtotal - discountAmount + donation;
+
+
+  let finalAffiliateDiscount =
+    !appliedCoupon || affiliateDiscountAmount > discountAmount
+      ? affiliateDiscountAmount
+      : 0;
+
+  let finalCouponDiscount =
+    appliedCoupon && discountAmount >= affiliateDiscountAmount
+      ? discountAmount
+      : 0;
+
+  const grandTotal =
+    subtotal -
+    finalAffiliateDiscount -
+    finalCouponDiscount +
+    donation;
+
+
+  useEffect(() => {
+    const cookie = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("gaza_arabia_affiliate_ref="));
+
+    if (!cookie) return;
+
+    const ref = cookie.split("=")[1];
+
+    (async () => {
+      try {
+        const data = await referralService.resolveReferral(ref);
+
+        if (data.success) {
+          const affiliate = data.affiliate;
+          setAffiliateInfo(affiliate);
+
+          const discount = (subtotal * affiliate.shareCommission) / 100;
+          setAffiliateDiscountAmount(discount);
+        }
+      } catch (err: any) {
+        console.error("Referral error:", err.message);
+      }
+    })();
+  }, [subtotal]);
+
+
+
+  // useEffect(() => {
+  //   const cookie = document.cookie
+  //     .split("; ")
+  //     .find((c) => c.startsWith("gaza_arabia_affiliate_ref="));
+
+  //   if (!cookie) return;
+
+  //   const ref = cookie.split("=")[1];
+
+  //   fetch(`/api/affiliates/resolve?ref=${ref}`)
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if (data.success) {
+  //         setAffiliateInfo(data.affiliate);
+  //         const discount = (subtotal * data.affiliate.shareCommission) / 100;
+  //         setAffiliateDiscountAmount(discount);
+  //       }
+  //     });
+  // }, [subtotal]);
 
 
   const handleApplyCoupon = async () => {
@@ -330,6 +415,15 @@ export default function CheckoutPage() {
             discountAmount: appliedCoupon.discountAmount,
           }
           : null,
+
+        referral: affiliateInfo
+          ? {
+            affiliateId: affiliateInfo?.id || null,
+            Code: affiliateInfo.referralCode,
+            discount: finalAffiliateDiscount,
+          }
+          : null,
+
         charity: {
           amount: parseFloat(charityAmount || "0"),
           email: token ? session?.user.email : guestAddress.email,
@@ -736,6 +830,14 @@ export default function CheckoutPage() {
                     </span>
                   </div>
 
+                )}
+
+                {/*  ADD THIS FOR AFFILIATE DISCOUNT */}
+                {affiliateInfo && finalAffiliateDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 py-2">
+                    <span>Affiliate Discount ({affiliateInfo?.shareCommission}%)</span>
+                    <span>-£{finalAffiliateDiscount.toFixed(2)}</span>
+                  </div>
                 )}
 
               </div>

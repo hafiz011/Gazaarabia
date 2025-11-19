@@ -65,32 +65,32 @@ export const affiliateService = {
   },
 
   //  NEW SERVICE (used for earnings page)
-async getEarnings(
-  token: string,
-  filters: { month?: string; status?: string; search?: string } = {}
-) {
-  const query = new URLSearchParams();
+  async getEarnings(
+    token: string,
+    filters: { month?: string; status?: string; search?: string } = {}
+  ) {
+    const query = new URLSearchParams();
 
-  if (filters.month && filters.month !== "all") query.append("month", filters.month);
-  if (filters.status && filters.status !== "all") query.append("status", filters.status);
-  if (filters.search && filters.search.trim() !== "") query.append("search", filters.search);
+    if (filters.month && filters.month !== "all") query.append("month", filters.month);
+    if (filters.status && filters.status !== "all") query.append("status", filters.status);
+    if (filters.search && filters.search.trim() !== "") query.append("search", filters.search);
 
-  const res = await fetch(`/api/affiliates/earnings?${query.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+    const res = await fetch(`/api/affiliates/earnings?${query.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Failed to fetch earnings");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch earnings");
 
-  return {
-    invoices: data.data.invoices,
-    summary: data.data.summary,
-  };
-},
+    return {
+      invoices: data.data.invoices,
+      summary: data.data.summary,
+    };
+  },
 
 
- async getDashboard(token: string) {
+  async getDashboard(token: string) {
     const res = await fetch(`/api/affiliates/dashboard`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
@@ -103,15 +103,36 @@ async getEarnings(
 
 
   async getProfile(token: string) {
-  const res = await fetch(`/api/affiliates/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+    const res = await fetch(`/api/affiliates/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Failed to load profile");
-  return data.data;
-}
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load profile");
+    return data.data;
+  },
+
+
+  //  NEW FUNCTION — UPDATE SHARE COMMISSION
+  async updateShareCommission(token: string, commission: number) {
+    const res = await fetch(`/api/affiliates/profile`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ shareCommission: commission }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to update commission");
+    }
+
+    return data;
+  }
 
 
 };
