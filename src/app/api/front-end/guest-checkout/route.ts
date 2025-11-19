@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
-
-const prisma: any = new PrismaClient();
+import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
+import { prisma } from "@/lib/prisma";
+// const prisma: any = new PrismaClient();
 
 /**
  * @route POST /api/front-end/guest-checkout
@@ -111,12 +112,88 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 5️. Create order with coupons + affiliate fields
+
+
+    // ==========================================================
+    //  AMBASSADOR LOGIC — PER PRODUCT
+    // ==========================================================
+    const orderItemsWithAmbassador = [];
+
+    for (const item of orderItems) {
+      const ambassadorInfo: any = await getAmbassadorForProduct(item.productId);
+
+      let ambassadorEarning = null;
+
+      if (ambassadorInfo.isAmbassadorProduct) {
+        ambassadorEarning = Number(
+          ((item.subtotal * ambassadorInfo.commissionPercent) / 100).toFixed(2)
+        );
+      }
+
+      // ================= new calculate the affiliating earning on per order item start ==============
+
+      const totalItemValue = orderItems.reduce((sum: any, item: any) => sum + item.subtotal, 0);
+
+      let affiliateItemEarning = null;
+
+      if (affiliateId && affiliateCommission) {
+
+        const itemValue = item.subtotal;
+
+        // proportion of affiliate earning for this item
+        const proportion = itemValue / totalItemValue;
+
+        const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
+
+        const discountAmount = coupon?.discountAmount ?? 0;
+
+        const earningAfterDiscount = earningBeforeDiscount - discountAmount;
+
+        const finalAffiliateEarning = earningAfterDiscount * proportion;
+
+        affiliateItemEarning = Number(Math.max(finalAffiliateEarning, 0).toFixed(2));
+      }
+
+      // ================= new calculate the affiliating earning on per order item end ==============
+
+      orderItemsWithAmbassador.push({
+        productId: item.productId,
+        variantId: item.variantId,
+        colorId: item.colorId,
+        sizeId: item.sizeId,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+
+        affiliateEarning: affiliateItemEarning,
+
+        // from common function
+        ambassadorId: ambassadorInfo.ambassadorId,
+        ambassadorCommission: ambassadorInfo.commissionPercent,
+        ambassadorEarning,
+        ambassadorPaid: false,
+      });
+    }
+
+
+    // ==========================================================
+    //  OPTIONAL: SAVE ORDER-LEVEL AMBASSADOR (first found)
+    // ==========================================================
+    const firstItemWithAmbassador = orderItemsWithAmbassador.find(
+      (i) => i.ambassadorId
+    );
+
+    const ambassadorIdForOrder = firstItemWithAmbassador?.ambassadorId || null;
+
+
+    // ===============================
+    //  CREATE ORDER
+    // ===============================
     const newOrder = await prisma.orders.create({
       data: {
-        userId: user.id,
-        addressId: deliveryAddress.id,
+        userId: Number(user.id),
 
+        //  Payment Info
         totalAmount: payment.totalAmount,
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
@@ -125,6 +202,8 @@ export async function POST(req: NextRequest) {
         status: (payment.paymentStatus || "completed").toLowerCase(),
         paypalResponse: payment.paypalResponse,
 
+        //  Address Snapshot
+        addressId: deliveryAddress.id,
         firstName: address.firstName,
         lastName: address.lastName,
         company: address.company,
@@ -137,33 +216,84 @@ export async function POST(req: NextRequest) {
 
         discountTotal: coupon?.discountAmount ?? 0,
 
-        //  Coupon Fields
+        // Coupon data (if applied)
         couponId: couponData?.id || null,
         couponCode: couponData?.code || null,
         couponDiscount: coupon?.discountAmount ?? 0,
+        affiliateId: affiliateId,
+        affiliateCommission: affiliateCommission,
+        affiliateEarning: affiliateEarning,
 
-        // Affiliate Fields
-        affiliateId,
-        affiliateCommission,
-        affiliateEarning,
-
-        orderItems: {
-          create: orderItems.map((item: any) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            colorId: item.colorId,
-            sizeId: item.sizeId,
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: item.subtotal,
-          })),
-        },
+        //  NEW — Order-level ambassador tracking
+        ambassadorId: ambassadorIdForOrder,
+        ambassadorPaid: false,
 
         charityAmount: charity?.amount || 0,
+
+        //  INSERT order items WITH ambassador fields
+        orderItems: {
+          create: orderItemsWithAmbassador,
+        },
 
       },
       include: { orderItems: true },
     });
+
+
+
+    // 5️. Create order with coupons + affiliate fields
+    // const newOrder = await prisma.orders.create({
+    //   data: {
+    //     userId: user.id,
+    //     addressId: deliveryAddress.id,
+
+    //     totalAmount: payment.totalAmount,
+    //     itemsTotal: payment.itemsTotal,
+    //     subtotal: payment.subtotal,
+    //     paymentMethod: payment.paymentMethod,
+    //     transactionId: payment.paypalOrderId,
+    //     status: (payment.paymentStatus || "completed").toLowerCase(),
+    //     paypalResponse: payment.paypalResponse,
+
+    //     firstName: address.firstName,
+    //     lastName: address.lastName,
+    //     company: address.company,
+    //     address1: address.address1,
+    //     address2: address.address2,
+    //     city: address.city,
+    //     country: address.country,
+    //     postalCode: address.postalCode,
+    //     phone: address.phone,
+
+    //     discountTotal: coupon?.discountAmount ?? 0,
+
+    //     //  Coupon Fields
+    //     couponId: couponData?.id || null,
+    //     couponCode: couponData?.code || null,
+    //     couponDiscount: coupon?.discountAmount ?? 0,
+
+    //     // Affiliate Fields
+    //     affiliateId,
+    //     affiliateCommission,
+    //     affiliateEarning,
+
+    //     orderItems: {
+    //       create: orderItems.map((item: any) => ({
+    //         productId: item.productId,
+    //         variantId: item.variantId,
+    //         colorId: item.colorId,
+    //         sizeId: item.sizeId,
+    //         quantity: item.quantity,
+    //         price: item.price,
+    //         subtotal: item.subtotal,
+    //       })),
+    //     },
+
+    //     charityAmount: charity?.amount || 0,
+
+    //   },
+    //   include: { orderItems: true },
+    // });
 
     let donationRecord = null;
 

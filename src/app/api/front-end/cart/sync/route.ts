@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { PrismaClient, products, productvariant } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getAvailableQuantity } from "@/lib/helpers/stockHelper";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 // ----------  Type Definitions ----------
 
