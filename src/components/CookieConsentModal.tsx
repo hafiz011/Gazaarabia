@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import CookiePreferenceToggle from "./CookiePreferenceToggle";
-
 import { getCookieConsent, setCookieConsent } from "@/lib/cookies";
 import CookiePreferencesModal from "./CookiePreferencesModal";
 import { usePathname } from "next/navigation";
@@ -20,12 +18,6 @@ export default function CookieConsentModal() {
         "/returns-exchanges",
         "/terms-and-conditions",
     ];
-
-    if (excludedPages.includes(pathname)) {
-        return null;
-    }
-
-
 
     useEffect(() => {
         const consent = getCookieConsent();
@@ -49,6 +41,11 @@ export default function CookieConsentModal() {
         setPreferencesOpen(false);   // NEW
         document.body.style.overflow = "";
     };
+
+
+    if (excludedPages.includes(pathname)) {
+        return null;
+    }
 
 
     if (!open) return null;
