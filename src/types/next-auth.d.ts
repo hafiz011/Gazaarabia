@@ -10,6 +10,7 @@ declare module "next-auth" {
       token: string;
       affiliateId?: number | null;
       affiliateType?: string | null;
+      stripeCustomerId?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -19,5 +20,6 @@ declare module "next-auth/jwt" {
     role?: string;
     affiliateId?: number | null;
     affiliateType?: string | null;
+    stripeCustomerId?: string | null;
   }
 }

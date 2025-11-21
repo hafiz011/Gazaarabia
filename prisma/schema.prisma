@@ -23,6 +23,9 @@ model Users {
   password       String
   roleId         Int
   isGuest        Boolean  @default(false)
+
+stripeCustomerId  String?   @unique
+
   createdAt      DateTime @default(now())
   role           Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
   createdCoupons Coupon[] @relation("CouponCreator")

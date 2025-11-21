@@ -30,6 +30,8 @@ import ErrorAlert from "@/components/ErrorAlert";
 import { frontCouponService } from "@/lib/services/front-end/couponService";
 import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 import { referralService } from "@/lib/services/referralService";
+import StripePaymentModal from "@/components/StripePaymentModal";
+import { PaymentIntent } from "@stripe/stripe-js";
 
 
 interface AffiliateInfo {
@@ -76,6 +78,7 @@ export default function CheckoutPage() {
 
   const [affiliateDiscountAmount, setAffiliateDiscountAmount] = useState(0);
 
+  const [stripeOpen, setStripeOpen] = useState(false);
 
 
 
@@ -236,46 +239,32 @@ export default function CheckoutPage() {
   };
 
 
-  // const handlePaymentBtn = async () => {
-  //   console.log('cart data:>', cart)
-  //   if (token && !selectedAddress) {
-  //     setPopUpAlertData({
-  //       isOpen: true,
-  //       type: "warning",
-  //       message: "Please select a delivery address.",
-  //     });
-  //     return;
-  //   }
-  //   if (!token && !guestAddress) {
-  //     setPopUpAlertData({
-  //       isOpen: true,
-  //       type: "warning",
-  //       message: "Please provide your delivery details first.",
-  //     });
-  //     return;
-  //   }
 
-  //   // 2️.================== Validate stock from backend ===================
-  //   try {
-  //     const data = await cartService.validateStock(session?.user?.token);
-  //     console.log('data:>', data)
-  //     if (!data.success && data.unavailableItems?.length > 0) {
-  //       setUnavailableItems(data.unavailableItems);
-  //       setShowUnavailableAlert(true);
-  //       return;
-  //     }
+  const handleStripeSuccess = async (pi: PaymentIntent) => {
+    try {
 
-  //     setPaypalOpen(true);
-  //   } catch (err: any) {
-  //     console.error('err:>', err);
-  //     setErrorMsg(err?.message)
-  //   }
+      console.log('pi:>', pi)
 
-  // }
+      // // call your create order API
+      // const result = await orderService.createStripeOrder({
+      //   paymentIntentId: pi.id,
+      //   amount: grandTotal,
+      //   items: cart,
+      //   address: selectedAddress || guestAddress,
+      //   coupon: appliedCoupon,
+      //   donations: charityAmount,
+      //   affiliate: affiliateInfo,
+      // });
+
+      // router.push(`/order-success/${result.data.id}`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
 
   //  Handle PayPal success
-
-
   const handlePaymentBtn = async () => {
     // 1️. Address validation
     if (token && !selectedAddress) {
@@ -900,14 +889,40 @@ export default function CheckoutPage() {
               </div> */}
             </div>
 
-            <Button
+            {/* <Button
               fullWidth
               variant="outlined"
               sx={checkoutButtonStyle}
               onClick={() => { handlePaymentBtn() }}
             >
               Proceed to Payment
-            </Button>
+            </Button> */}
+
+            {/* Pay with Stripe */}
+            <button
+              onClick={() => setStripeOpen(true)}
+              className="
+    w-full mt-4 py-3 rounded-full font-semibold 
+    bg-[var(--brand-primary)] text-white text-sm
+    hover:bg-[var(--brand-secondary)]
+    transition-all duration-200 shadow-sm
+  "
+            >
+              Pay with Card
+            </button>
+
+            {/* Pay with PayPal */}
+            <button
+              onClick={handlePaymentBtn}
+              className="
+    w-full mt-3 py-3 rounded-full font-semibold 
+    border-2 border-[var(--brand-secondary)] text-[var(--brand-secondary)] text-sm
+    bg-white hover:bg-[var(--brand-secondary)] hover:text-white
+    transition-all duration-200 shadow-sm
+  "
+            >
+              Pay with PayPal
+            </button>
 
             <PaypalModal
               open={paypalOpen}
@@ -940,6 +955,16 @@ export default function CheckoutPage() {
       )}
 
       {checkoutLoading && <Loader message="Processing your order..." />}
+
+      <StripePaymentModal
+        open={stripeOpen}
+        onClose={() => setStripeOpen(false)}
+        amount={grandTotal}
+        customerId={session?.user?.stripeCustomerId ?? null}
+
+        onSuccess={(result) => handleStripeSuccess(result)}
+      />
+
     </>
   );
 }

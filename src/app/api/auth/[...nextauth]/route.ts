@@ -36,6 +36,7 @@ const authOptions: any = {
 
               affiliateId: res.user.affiliateId,
               affiliateType: res.user.affiliateType,
+              stripeCustomerId: res.user.stripeCustomerId || null,
             };
           }
 
@@ -71,6 +72,7 @@ const authOptions: any = {
 
         token.affiliateId = user.affiliateId;
         token.affiliateType = user.affiliateType;
+        token.stripeCustomerId = user.stripeCustomerId;
       }
       return token;
     },
@@ -86,6 +88,7 @@ const authOptions: any = {
         user_id: token.user_id,
         affiliateId: token.affiliateId,
         affiliateType: token.affiliateType,
+        stripeCustomerId: token.stripeCustomerId,
 
       };
       return session;
