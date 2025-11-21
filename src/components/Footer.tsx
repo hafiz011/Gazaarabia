@@ -45,7 +45,10 @@ export default function Footer() {
             <li className="hover:underline cursor-pointer">
               <Link href="/shipping-and-delivery">Delivery</Link>
             </li>
-            <li className="hover:underline cursor-pointer">Returns & Exchanges</li>
+            <li className="hover:underline cursor-pointer">
+              <Link href="/returns-exchanges"> Returns & Exchanges </Link>
+            </li>
+
           </ul>
         </div>
 
@@ -96,6 +99,11 @@ export default function Footer() {
             <li className="hover:underline cursor-pointer">
               <Link href="/terms-and-conditions">Terms & Conditions</Link>
             </li>
+
+            <li className="hover:underline cursor-pointer">
+              <Link href="/cookies-policy"> Cookies Policy </Link>
+            </li>
+
           </ul>
         </div>
 

@@ -4,6 +4,8 @@ import SessionProviderWrapper from "./SessionProviderWrapper";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
 import { CartProvider } from "./context/CartContext";
+import CookieConsentModal from "@/components/CookieConsentModal";
+
 
 export const metadata: Metadata = {
   title: "Gazaarabia",
@@ -26,6 +28,7 @@ export default function RootLayout({
         <SessionProviderWrapper>
           <PayPalProviderWrapper>
             <CartProvider>
+              <CookieConsentModal />
               {children}
             </CartProvider>
           </PayPalProviderWrapper>
