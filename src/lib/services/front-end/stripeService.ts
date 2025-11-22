@@ -1,38 +1,53 @@
 // src/lib/services/stripeService.ts
 
 export const stripeService = {
-    async createCustomer(userId: number) {
+    async createCustomer(token: string) {
         const res = await fetch("/api/stripe/create-customer", {
             method: "POST",
-            body: JSON.stringify({ userId }),
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,  // send token in header
+            },
         });
 
         return res.json();
     },
 
-    async getSavedMethods(customerId: string) {
+    async getSavedMethods(token: any) {
         const res = await fetch("/api/stripe/saved-methods", {
-            method: "POST",
-            body: JSON.stringify({ customerId }),
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,  // send token in header
+            }
+
         });
 
         return res.json();
     },
 
-    async createPaymentIntent(customerId: string, amount: number) {
+    async createPaymentIntent(token: any, amount: number) {
         const res = await fetch("/api/stripe/create-payment-intent", {
             method: "POST",
-            body: JSON.stringify({ customerId, amount }),
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,  // send token in header
+            },
+
+            body: JSON.stringify({ amount }),
         });
 
         return res.json();
     },
 
-    async payWithSavedCard(customerId: string, paymentMethodId: string, amount: number) {
-        const res = await fetch("/api/stripe/pay-with-saved", {
+    async payWithSavedCard(token: string, paymentMethodId: string, amount: number) {
+        const res = await fetch("/api/stripe/pay-with-saved-card", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,  // send token in header
+            },
             body: JSON.stringify({
-                customerId,
                 paymentMethodId,
                 amount,
             }),

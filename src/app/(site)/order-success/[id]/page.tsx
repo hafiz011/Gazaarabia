@@ -215,7 +215,8 @@ export default function OrderSuccessPage() {
           </p>
         )}
 
-        {order.referralDiscount && Number(order.referralDiscount) > 0 && (
+
+        {(order.referralDiscount ?? 0) > 0 && (
           <p className="mt-3 text-sm text-green-600 flex items-center justify-center gap-2">
             <CheckCircle size={16} className="text-green-500" />
             You saved <b>£{Number(order.referralDiscount).toFixed(2)}</b> with a referral discount!
@@ -328,7 +329,7 @@ export default function OrderSuccessPage() {
               </div>
             )}
 
-            {order.referralDiscount && Number(order.referralDiscount) > 0 && (
+            {Number(order.referralDiscount) > 0 && (
               <div className="flex justify-between text-green-700 text-sm">
                 <span className="flex items-center gap-1">
                   <Tag size={14} /> Referral Discount

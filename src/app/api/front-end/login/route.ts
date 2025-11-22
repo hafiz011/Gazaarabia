@@ -80,6 +80,7 @@ export async function POST(req: Request) {
         roleName: user.role.name,
         affiliateId: user.role.name === "affiliate" ? user.affiliate?.id : null,
         affiliateType: user.role.name === "affiliate" ? user.affiliate?.type : null,
+        stripeCustomerId: user.stripeCustomerId
       },
       token,
     });

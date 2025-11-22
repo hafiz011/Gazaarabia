@@ -60,7 +60,7 @@ const authOptions: any = {
   },
 
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger, session }: any) {
       // Attach user info to token after login
       if (user) {
         token.id = user.id;
@@ -74,6 +74,12 @@ const authOptions: any = {
         token.affiliateType = user.affiliateType;
         token.stripeCustomerId = user.stripeCustomerId;
       }
+
+      // When session.update() is called
+      if (trigger === "update" && session?.user) {
+        token.stripeCustomerId = session.user.stripeCustomerId; // APPLY UPDATE
+      }
+
       return token;
     },
 

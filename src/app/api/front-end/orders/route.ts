@@ -4,6 +4,8 @@ import { checkAuth } from "@/lib/authToken";
 import { sendOrderConfirmationEmail } from "@/lib/helpers/emailHelper";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
+import { stripe } from "@/lib/stripe";
+
 
 
 const prisma: any = new PrismaClient();
@@ -250,9 +252,15 @@ export async function POST(req: NextRequest) {
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
         paymentMethod: payment.paymentMethod,
-        transactionId: payment.paypalOrderId,
+        // transactionId: payment.paypalOrderId,
+        // status: (payment.paymentStatus || "completed").toLowerCase(),
+        // paypalResponse: payment.paypalResponse,
+
+        transactionId: payment.transactionId,
+
         status: (payment.paymentStatus || "completed").toLowerCase(),
-        paypalResponse: payment.paypalResponse,
+
+        paymentResponse: payment.paymentResponse,
 
         //  Address Snapshot
         addressId: address.id,
@@ -310,6 +318,20 @@ export async function POST(req: NextRequest) {
       include: { orderItems: true },
     });
 
+    // -------------------------------------------------------
+    // UPDATE STRIPE METADATA
+    // -------------------------------------------------------
+    if (payment.paymentMethod === "stripe" && payment.transactionId) {
+      await stripe.paymentIntents.update(payment.transactionId, {
+        metadata: {
+          orderId: newOrder.id.toString(),
+          userId: newOrder.userId.toString(),
+        },
+      });
+    }
+
+
+
     // -------------------------------
     // Charity donation
     // -------------------------------
@@ -321,8 +343,8 @@ export async function POST(req: NextRequest) {
           email: charity?.email,
           amount: charity.amount,
           anonymous: charity?.anonymous || false,
-          transactionId: payment.paypalOrderId,
-          paymentMethod: "paypal",
+          transactionId: payment.transactionId,
+          paymentMethod: payment.paymentMethod,
           paymentStatus: payment.paymentStatus || "completed",
 
           //  IMPORTANT — link donation to order

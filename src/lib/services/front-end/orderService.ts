@@ -50,8 +50,8 @@ export const orderService = {
         subtotal: number;
         paymentMethod: string;
         paymentStatus?: string;
-        paypalOrderId?: string;
-        paypalResponse?: any;
+        transactionId?: string;
+        paymentResponse?: any;
       };
       address: {
         id?: number;

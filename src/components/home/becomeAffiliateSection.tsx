@@ -57,7 +57,8 @@ export default function BecomeAffiliateSection({ data }: affiliateProps) {
                         Become Our Affiliate
                         <br />
                         <span className="text-[var(--brand-primary)]">
-                            Earn Up to {data?.commission}% Commission
+                            {/* Earn Up to {data?.commission}% Commission */}
+                            Earn Up to 10-15% Commission
                         </span>
                     </h2>
 
@@ -106,7 +107,8 @@ export default function BecomeAffiliateSection({ data }: affiliateProps) {
                                 transition={{ duration: 0.8 }}
                                 className="text-white text-4xl md:text-5xl font-bold drop-shadow-lg"
                             >
-                                {data?.commission}%
+                                {/* {data?.commission}% */}
+                                10-15%
                             </motion.span>
                         </div>
                     </div>

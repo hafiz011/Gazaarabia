@@ -348,7 +348,7 @@ model Orders {
   paymentMethod  String
   transactionId  String?
   status         String  @default("pending")
-  paypalResponse Json?
+  paymentResponse Json?
 
   //  Shipping Address Snapshot
   addressId  Int?

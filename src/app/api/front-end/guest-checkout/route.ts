@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
 import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 import { prisma } from "@/lib/prisma";
-// const prisma: any = new PrismaClient();
+import { stripe } from "@/lib/stripe";
 
 /**
  * @route POST /api/front-end/guest-checkout
@@ -99,29 +98,6 @@ export async function POST(req: NextRequest) {
     }
 
 
-    // 2️. Determine affiliate info
-    // let affiliateId = null;
-    // let affiliateCommission = null;
-    // let affiliateEarning = null;
-
-    // if (couponData?.affiliateId) {
-    //   affiliateId = couponData.affiliateId;
-
-    //   const affiliateInfo = await prisma.affiliate.findUnique({
-    //     where: { id: affiliateId },
-    //     select: { baseCommission: true },
-    //   });
-
-    //   affiliateCommission = affiliateInfo?.baseCommission ?? 0;
-
-    //   const itemsTotal = payment.itemsTotal ?? 0;
-    //   const discountAmount = coupon?.discountAmount ?? 0;
-
-    //   const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
-    //   const finalEarning = earningBeforeDiscount - discountAmount;
-    //   affiliateEarning = Math.max(finalEarning, 0);
-    // }
-
     let affiliateId = finalAffiliateId;
     let affiliateCommission = null;
     let affiliateEarning = null;
@@ -171,6 +147,27 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+
+    // -------------------------------------------
+    // 3.1 Ensure user has a Stripe Customer ID
+    // -------------------------------------------
+    if (!user.stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name
+      });
+
+      await prisma.users.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customer.id }
+      });
+
+      // Also add it to local user object for next steps
+      user.stripeCustomerId = customer.id;
+    }
+
+
 
     // 4️. Save delivery address
     const deliveryAddress = await prisma.address.create({
@@ -279,9 +276,9 @@ export async function POST(req: NextRequest) {
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
         paymentMethod: payment.paymentMethod,
-        transactionId: payment.paypalOrderId,
+        transactionId: payment.transactionId,
         status: (payment.paymentStatus || "completed").toLowerCase(),
-        paypalResponse: payment.paypalResponse,
+        paymentResponse: payment.paymentResponse,
 
         //  Address Snapshot
         addressId: deliveryAddress.id,
@@ -339,7 +336,6 @@ export async function POST(req: NextRequest) {
     });
 
 
-
     // 5️. Create order with coupons + affiliate fields
     // const newOrder = await prisma.orders.create({
     //   data: {
@@ -394,6 +390,22 @@ export async function POST(req: NextRequest) {
     //   include: { orderItems: true },
     // });
 
+
+    // -------------------------------------------------------
+    // UPDATE STRIPE METADATA
+    // -------------------------------------------------------
+    if (payment.paymentMethod === "stripe" && payment.transactionId) {
+      await stripe.paymentIntents.update(payment.transactionId, {
+        metadata: {
+          orderId: newOrder.id.toString(),
+          userId: newOrder.userId.toString(),
+        },
+      });
+    }
+
+
+
+
     let donationRecord = null;
 
     if (charity?.amount && charity.amount > 0) {
@@ -403,8 +415,8 @@ export async function POST(req: NextRequest) {
           email: address.email,
           amount: charity.amount,
           anonymous: charity?.anonymous || false,
-          transactionId: payment.paypalOrderId,
-          paymentMethod: "paypal",
+          transactionId: payment.transactionId,
+          paymentMethod: payment?.paymentMethod,
           paymentStatus: payment.paymentStatus || "completed",
 
           //  IMPORTANT — link donation to order

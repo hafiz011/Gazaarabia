@@ -46,6 +46,8 @@ function StripeWrapper({
 }: StripePaymentModalProps) {
     const { data: session } = useSession();
     const userId = session?.user?.id ?? null;
+    const token = session?.user?.token ?? null;
+    const { update } = useSession();
 
     const [finalCustomerId, setFinalCustomerId] = useState(customerId);
     const [clientSecret, setClientSecret] = useState("");
@@ -55,6 +57,10 @@ function StripeWrapper({
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState("");
+
+
+    const isGuest = !session?.user;
+
 
     // Prevent background scroll
     useEffect(() => {
@@ -76,10 +82,10 @@ function StripeWrapper({
     useEffect(() => {
         const createCustomerIfMissing = async () => {
             try {
-                if (!userId) return;
+                if (!token) return;
                 if (finalCustomerId) return;
 
-                const res = await stripeService.createCustomer(Number(userId));
+                const res = await stripeService.createCustomer(token);
 
                 if (res.error) {
                     setError(res.error || "Failed to create customer");
@@ -88,6 +94,13 @@ function StripeWrapper({
 
                 if (res.customerId) {
                     setFinalCustomerId(res.customerId);
+                    //  Update the user's session with new Stripe customer ID
+                    await update({
+                        user: {
+                            ...session?.user,
+                            stripeCustomerId: res.customerId
+                        }
+                    });
                 }
             } catch (err) {
                 console.error(err);
@@ -102,7 +115,9 @@ function StripeWrapper({
     // 2) Load saved cards + PaymentIntent
     // ------------------------------------
     useEffect(() => {
-        if (!open || !finalCustomerId) return;
+        // if (!open || !finalCustomerId) return;
+        if (!open) return;
+
 
         const init = async () => {
             try {
@@ -110,16 +125,16 @@ function StripeWrapper({
                 setError("");
 
                 // Saved payment methods
-                const pmRes = await stripeService.getSavedMethods(finalCustomerId);
+                const pmRes = await stripeService.getSavedMethods(token);
 
-                if (pmRes.error) {
+                if (pmRes.error && pmRes.error != "Missing customerId") {
                     setError(pmRes.error);
                 } else {
                     setSavedCards(pmRes.paymentMethods || []);
                 }
 
                 // PaymentIntent
-                const piRes = await stripeService.createPaymentIntent(finalCustomerId, amount);
+                const piRes = await stripeService.createPaymentIntent(token, amount);
 
                 if (piRes.error) {
                     setError(piRes.error);
@@ -146,7 +161,7 @@ function StripeWrapper({
             setError("");
 
             const res = await stripeService.payWithSavedCard(
-                finalCustomerId!,
+                token!,
                 selectedCard,
                 amount
             );
@@ -167,11 +182,11 @@ function StripeWrapper({
         }
     };
 
+    { if (loading) return <Loader message="Preparing payment..." /> }
+
+
+
     return (
-        // <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center px-4">
-        //     <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl relative">
-
-
         <div
             className="
         fixed inset-0 bg-black/60 z-[9999] 
@@ -194,7 +209,6 @@ function StripeWrapper({
         "
             >
 
-
                 {/* Close button */}
                 <button
                     onClick={onClose}
@@ -212,13 +226,16 @@ function StripeWrapper({
                     <p className="text-red-600 text-center text-sm mb-3">{error}</p>
                 )}
 
-                {loading && <Loader message="Preparing payment..." />}
+
 
                 {!loading && (
                     <div className="space-y-4 mt-4">
 
                         {/* Saved cards list */}
-                        {savedCards.length > 0 && (
+                        {/* {savedCards.length > 0 && ( */}
+
+                        {!isGuest && savedCards.length > 0 && (
+
                             <>
                                 <p className="text-sm font-semibold">Saved Cards</p>
 

@@ -239,33 +239,104 @@ export default function CheckoutPage() {
   };
 
 
-
   const handleStripeSuccess = async (pi: PaymentIntent) => {
     try {
+      setCheckoutLoading(true);
 
-      console.log('pi:>', pi)
+      const addressData = token ? selectedAddress : guestAddress;
+      if (!addressData) {
+        setErrorMsg("Please provide your delivery address before payment.");
+        return;
+      }
 
-      // // call your create order API
-      // const result = await orderService.createStripeOrder({
-      //   paymentIntentId: pi.id,
-      //   amount: grandTotal,
-      //   items: cart,
-      //   address: selectedAddress || guestAddress,
-      //   coupon: appliedCoupon,
-      //   donations: charityAmount,
-      //   affiliate: affiliateInfo,
-      // });
+      const orderPayload: any = {
+        payment: {
+          totalAmount: grandTotal,
+          itemsTotal: subtotal,
+          subtotal: subtotal,
+          paymentMethod: "stripe",
+          paymentStatus: pi.status,
+          transactionId: pi.id,
+          paymentResponse: pi,
+        },
 
-      // router.push(`/order-success/${result.data.id}`);
+        address: {
+          id: addressData?.id || null,
+          firstName: addressData.firstName,
+          lastName: addressData.lastName,
+          company: addressData.company,
+          address1: addressData.address1,
+          address2: addressData.address2,
+          city: addressData.city,
+          country: addressData.country,
+          postalCode: addressData.postalCode,
+          phone: addressData.phone,
+          email: addressData.email,
+        },
+        orderItems: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.selectedVariantData?.price ?? item.product.sellingPrice,
+          variantId: item.variantId,
+          colorId: item.selectedVariantData?.colorId,
+          sizeId: item.selectedVariantData?.sizeId,
+          subtotal:
+            (item.selectedVariantData?.price ?? item.product.sellingPrice) *
+            item.quantity,
+        })),
+        coupon: appliedCoupon
+          ? {
+            code: appliedCoupon.code,
+            discountAmount: appliedCoupon.discountAmount,
+          }
+          : null,
+
+        referral: affiliateInfo
+          ? {
+            affiliateId: affiliateInfo?.id || null,
+            Code: affiliateInfo.referralCode,
+            discount: finalAffiliateDiscount,
+          }
+          : null,
+
+        charity: {
+          amount: parseFloat(charityAmount || "0"),
+          email: token ? session?.user.email : guestAddress.email,
+          name: token
+            ? session?.user.name
+            : `${guestAddress.firstName} ${guestAddress.lastName}`,
+          anonymous: false,
+        },
+      };
+
+      let result;
+
+      if (token) {
+        result = await orderService.create(token, orderPayload);
+        await cartService.clear(token);
+      } else {
+        result = await orderService.guestCheckout(orderPayload);
+
+        localCartService.clear();
+        localStorage.setItem("gaza_arabia_guest_order_id", result.data.order.id);
+        localStorage.setItem("gaza_arabia_guest_user_id", result.data.user.id);
+      }
+
+      await refreshCart();
+      router.push(`/order-success/${result.data.id || result.data.order.id}`);
+
     } catch (err) {
-      console.error(err);
+      console.error("Stripe order creation failed:", err);
+      setErrorMsg("Something went wrong while processing your Stripe order.");
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
 
 
   //  Handle PayPal success
-  const handlePaymentBtn = async () => {
+  const handlePaymentBtn = async (paymentType: string) => {
     // 1️. Address validation
     if (token && !selectedAddress) {
       setErrorMsg("Please select a delivery address.");
@@ -340,8 +411,16 @@ export default function CheckoutPage() {
         return;
       }
 
-      //  All good — open PayPal modal
-      setPaypalOpen(true);
+      if (paymentType == 'paypal') {
+        //  All good — open PayPal modal
+        setPaypalOpen(true);
+      }
+
+      if (paymentType == 'card') {
+        setStripeOpen(true)
+      }
+
+
     } catch (err: any) {
       console.error("Payment preparation error:", err);
       setErrorMsg(err?.message || "Unable to process checkout right now.");
@@ -371,8 +450,8 @@ export default function CheckoutPage() {
           subtotal: subtotal,
           paymentMethod: "paypal",
           paymentStatus,
-          paypalOrderId,
-          paypalResponse: details,
+          transactionId: paypalOrderId,
+          paymentResponse: details,
         },
         address: {
           id: addressData?.id || null,
@@ -900,7 +979,8 @@ export default function CheckoutPage() {
 
             {/* Pay with Stripe */}
             <button
-              onClick={() => setStripeOpen(true)}
+              // onClick={() => setStripeOpen(true)}
+              onClick={() => { handlePaymentBtn('card') }}
               className="
     w-full mt-4 py-3 rounded-full font-semibold 
     bg-[var(--brand-primary)] text-white text-sm
@@ -913,7 +993,7 @@ export default function CheckoutPage() {
 
             {/* Pay with PayPal */}
             <button
-              onClick={handlePaymentBtn}
+              onClick={() => { handlePaymentBtn('paypal') }}
               className="
     w-full mt-3 py-3 rounded-full font-semibold 
     border-2 border-[var(--brand-secondary)] text-[var(--brand-secondary)] text-sm
