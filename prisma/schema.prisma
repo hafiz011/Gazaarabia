@@ -24,7 +24,10 @@ model Users {
   roleId         Int
   isGuest        Boolean  @default(false)
 
-stripeCustomerId  String?   @unique
+  stripeCustomerId  String?   @unique
+
+  resetToken        String?
+  resetTokenExpiry  DateTime?
 
   createdAt      DateTime @default(now())
   role           Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)

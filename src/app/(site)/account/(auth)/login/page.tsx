@@ -8,13 +8,14 @@ import AlertMessage from "@/components/AlertMessage";
 import { ROUTES } from "@/constants/routes";
 import { mergeLocalCartWithServer } from "@/lib/services/front-end/cartMergeService";
 import { useCart } from "@/app/context/CartContext";
+import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { refreshCart } = useCart();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
@@ -38,6 +39,14 @@ export default function LoginPage() {
       })();
     }
   }, [status, session]);
+
+  useEffect(() => {
+    const rememberedEmail = loadWithExpiry("gaza_arabia_remember_customer");
+    if (rememberedEmail) {
+      setForm((p) => ({ ...p, email: rememberedEmail, rememberMe: true }));
+    }
+  }, []);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -75,14 +84,25 @@ export default function LoginPage() {
         return;
       }
 
+      if (form.rememberMe) {
+        saveWithExpiry("gaza_arabia_remember_customer", form.email);
+      } else {
+        localStorage.removeItem("gaza_arabia_remember_customer");
+      }
+
+
+      setForm({
+        email: "",
+        password: "",
+        rememberMe: false
+      })
+
       setAlert({
         isOpen: true,
         type: "success",
         message: "Login successful! Redirecting...",
       });
 
-      //  Don’t try to getSession() here — NextAuth updates asynchronously.
-      // Let useEffect handle the cart logic once the session is updated.
 
     } catch (err: any) {
       setAlert({
@@ -147,14 +167,46 @@ export default function LoginPage() {
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+
+
+            {/* Forgot Password + Remember Me in one row */}
+            <div className="flex items-center justify-between mt-2">
+
+              {/* Remember Me (left) */}
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="cursor-pointer"
+                  checked={form.rememberMe}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, rememberMe: e.target.checked }))
+                  }
+                />
+                Remember Me
+              </label>
+
+              {/* Forgot Password (right) */}
+              <a
+                href="/forgot-password"
+                className="text-[var(--brand-primary)] text-sm font-medium hover:underline cursor-pointer"
+              >
+                Forgot Password?
+              </a>
+
+            </div>
+
+
+
           </div>
+
+
+
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium ${
-              loading && "opacity-60 cursor-not-allowed"
-            }`}
+            className={`w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium ${loading && "opacity-60 cursor-not-allowed"
+              }`}
           >
             {loading ? "Logging in..." : "Log In"}
           </button>

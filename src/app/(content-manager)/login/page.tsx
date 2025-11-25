@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AlertMessage from "@/components/AlertMessage";
 import { ROUTES } from "@/constants/routes";
+import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 
 export default function ContentManagerLoginPage() {
     const router = useRouter();
@@ -17,7 +18,7 @@ export default function ContentManagerLoginPage() {
     const [form, setForm] = useState({
         email: "",
         password: "",
-        remember: true,
+        rememberMe: false,
     });
 
     const [errors, setErrors] = useState<{ email?: string; password?: string; root?: string }>({});
@@ -31,9 +32,9 @@ export default function ContentManagerLoginPage() {
     // Load Remembered Email on Mount
     // ================================
     useEffect(() => {
-        const savedEmail = localStorage.getItem("content_manager_email");
-        if (savedEmail) {
-            setForm((p) => ({ ...p, email: savedEmail, remember: true }));
+        const rememberedEmail = loadWithExpiry("gaza_arabia_remember_content_manager");
+        if (rememberedEmail) {
+            setForm((p) => ({ ...p, email: rememberedEmail, rememberMe: true }));
         }
     }, []);
 
@@ -90,11 +91,18 @@ export default function ContentManagerLoginPage() {
             }
 
             // Remember Me logic
-            if (form.remember) {
-                localStorage.setItem("content_manager_email", form.email);
+            if (form.rememberMe) {
+                saveWithExpiry("gaza_arabia_remember_content_manager", form.email);
             } else {
-                localStorage.removeItem("content_manager_email");
+                localStorage.removeItem("gaza_arabia_remember_content_manager");
             }
+
+            setForm({
+                email: "",
+                password: "",
+                rememberMe: false
+            })
+
 
             setAlert({
                 isOpen: true,
@@ -167,7 +175,7 @@ export default function ContentManagerLoginPage() {
                             <div className="flex items-center justify-between">
                                 <label className="text-sm font-medium text-gray-700">Password</label>
                                 <a
-                                    href="/content-manager/forgot-password"
+                                    href="/forgot-password"
                                     className="text-xs text-[var(--brand-primary)] hover:underline"
                                 >
                                     Forgot password?
@@ -200,8 +208,8 @@ export default function ContentManagerLoginPage() {
                         <div className="flex items-center gap-2">
                             <input
                                 type="checkbox"
-                                checked={form.remember}
-                                onChange={(e) => setForm({ ...form, remember: e.target.checked })}
+                                checked={form.rememberMe}
+                                onChange={(e) => setForm({ ...form, rememberMe: e.target.checked })}
                                 className="h-4 w-4 rounded border-gray-300 text-[var(--brand-primary)]"
                             />
                             <span className="text-sm text-gray-700">Remember me</span>

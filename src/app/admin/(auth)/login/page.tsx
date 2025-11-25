@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import AlertMessage from "@/components/AlertMessage";
+import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 
 
 export default function AdminLoginPage() {
@@ -14,7 +15,7 @@ export default function AdminLoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", remember: true });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [errors, setErrors] = useState<{ email?: string; password?: string; root?: string }>({});
   const [alert, setAlert] = useState<{
     isOpen: boolean;
@@ -25,6 +26,19 @@ export default function AdminLoginPage() {
     type: "",
     message: "",
   });
+
+
+  // ================================
+  // Load Remembered Email on Mount
+  // ================================
+  useEffect(() => {
+    const rememberedEmail = loadWithExpiry("gaza_arabia_remember_admin");
+    if (rememberedEmail) {
+      setForm((p) => ({ ...p, email: rememberedEmail, rememberMe: true }));
+    }
+  }, []);
+
+
 
   const validate = () => {
     const e: typeof errors = {};
@@ -83,6 +97,22 @@ export default function AdminLoginPage() {
         });
         return;
       }
+
+
+      // Remember Me logic
+      if (form.rememberMe) {
+        saveWithExpiry("gaza_arabia_remember_admin", form.email);
+      } else {
+        localStorage.removeItem("gaza_arabia_remember_admin");
+      }
+
+      setForm({
+        email: "",
+        password: "",
+        rememberMe: false
+      })
+
+
 
       setAlert({
         isOpen: true,
@@ -169,7 +199,7 @@ export default function AdminLoginPage() {
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <a href="#" className="text-xs text-[var(--brand-primary)] hover:underline">
+                <a href="/forgot-password" className="text-xs text-[var(--brand-primary)] hover:underline">
                   Forgot password?
                 </a>
               </div>
@@ -201,8 +231,8 @@ export default function AdminLoginPage() {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={form.remember}
-                onChange={(e) => setForm((p) => ({ ...p, remember: e.target.checked }))}
+                checked={form.rememberMe}
+                onChange={(e) => setForm((p) => ({ ...p, rememberMe: e.target.checked }))}
                 className="h-4 w-4 rounded border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               />
               <span className="text-sm text-gray-700">Remember me</span>

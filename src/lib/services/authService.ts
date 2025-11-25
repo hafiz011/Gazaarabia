@@ -1,3 +1,5 @@
+import { apiFetch } from "../api";
+
 export const authService = {
   signup: async (data: {
     name: string; email: string; password: string, role?: string;
@@ -43,5 +45,21 @@ export const authService = {
     if (!res.ok) throw new Error((await res.json()).message);
     return res.json();
   },
+
+
+
+  // Forgot Password API
+  forgotPassword: (email: string): Promise<{ success: boolean; message: string }> =>
+    apiFetch("/api/front-end/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  // Reset Password API
+  resetPassword: (token: string, password: string): Promise<{ success: boolean; message: string }> =>
+    apiFetch("/api/front-end/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    }),
 
 };

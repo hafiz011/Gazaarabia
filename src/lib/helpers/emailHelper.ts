@@ -17,8 +17,218 @@ const logoUrl =
   "https://drive.google.com/uc?export=view&id=12-EA3sW2FQVQU77-roeITSncjskWChiT";
 
 
+// ========================= password changed email =========================
+
+export async function sendPasswordChangedEmail({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "Your Password Has Been Updated — Gazaarabia";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <!-- Header -->
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding:45px 50px;">
+
+          <h2 style="margin:0 0 20px;font-size:22px;font-weight:600;color:#111827;">
+            Your Password Has Been Changed
+          </h2>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#374151;">
+            Hi <strong>${displayName}</strong>,  
+            this is a confirmation that your account password was successfully updated.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#374151;">
+            If you made this change — you're all set.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:25px;color:#374151;">
+            If you did <strong>not</strong> update your password, please reset it immediately or contact support.
+          </p>
+
+          <div style="text-align:center;margin:35px 0;">
+            <a href="${process.env.DOMAIN}/forgot-password"
+              style="display:inline-block;padding:12px 28px;background:#E82C3F;color:#ffffff;
+              text-decoration:none;border-radius:8px;font-weight:500;font-size:15px;
+              box-shadow:0 2px 6px rgba(0,0,0,0.12);letter-spacing:0.4px;">
+              Reset Password Again
+            </a>
+          </div>
+
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  // Log notification
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Password changed email sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
 
 
+
+
+// ========================= send forgot password link =========================
+export async function sendForgotPasswordLinkEmail({
+  to,
+  name,
+  resetLink,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  resetLink: string;
+  userId?: number | null;
+}) {
+  const subject = "Reset Your Password — Gazaarabia";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <!-- Header -->
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <!-- Body -->
+      <tr>
+        <td style="padding:45px 50px;">
+
+          <h2 style="margin:0 0 20px;font-size:24px;font-weight:600;color:#111827;">
+            Reset Your Password
+          </h2>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#374151;">
+            Hi <strong>${displayName}</strong>,  
+            we received a request to reset your password.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:25px;color:#374151;">
+            Click the button below to securely reset your password:
+          </p>
+
+          <div style="text-align:center;margin:35px 0;">
+            <a href="${resetLink}"
+              style="display:inline-block;padding:12px 28px;background:#E82C3F;color:#ffffff;
+              text-decoration:none;border-radius:8px;font-weight:500;font-size:15px;
+              box-shadow:0 2px 6px rgba(0,0,0,0.12);letter-spacing:0.4px;">
+              Reset Password
+            </a>
+          </div>
+
+          <p style="font-size:14px;line-height:1.7;margin-top:20px;color:#374151;">
+            If the button does not work, copy and paste this link in your browser:
+          </p>
+
+          <p style="font-size:13px;color:#009639;word-break:break-all;margin:10px 0 25px;">
+            ${resetLink}
+          </p>
+
+          <p style="font-size:14px;color:#6b7280;margin-top:15px;">
+            If you did not request this, you can safely ignore this email.
+          </p>
+
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  // ---- SEND EMAIL ---- //
+  const emailResult = await sendEmail({
+    to,
+    subject,
+    html,
+  });
+
+  // ---- LOG IN DATABASE ---- //
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Forgot password link email sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
+
+
+
+
+// =============== subscribe confiramtion email =================
 
 export async function sendSubscribeConfirmationEmail({
   to,

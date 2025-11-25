@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import AlertMessage from "@/components/AlertMessage";
+import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function AffiliateLoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", remember: true });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [errors, setErrors] = useState<{ email?: string; password?: string; root?: string }>({});
   const [alert, setAlert] = useState<{
     isOpen: boolean;
@@ -52,6 +53,16 @@ export default function AffiliateLoginPage() {
     }
   }, [status, session, router]);
 
+
+
+  useEffect(() => {
+    const rememberedEmail = loadWithExpiry("gaza_arabia_remember_affiliate");
+    if (rememberedEmail) {
+      setForm((p) => ({ ...p, email: rememberedEmail, remember: true }));
+    }
+  }, []);
+
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -73,6 +84,20 @@ export default function AffiliateLoginPage() {
         });
         return;
       }
+
+
+      if (form.rememberMe) {
+        saveWithExpiry("gaza_arabia_remember_affiliate", form.email);
+      } else {
+        localStorage.removeItem("gaza_arabia_remember_affiliate");
+      }
+
+      setForm({
+        email: "",
+        password: "",
+        rememberMe: false
+      })
+
 
       setAlert({
         isOpen: true,
@@ -168,6 +193,25 @@ export default function AffiliateLoginPage() {
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.rememberMe}
+                  onChange={(e) => setForm((p) => ({ ...p, rememberMe: e.target.checked }))}
+                  className="cursor-pointer"
+                />
+                Remember Me
+              </label>
+
+              <a
+                href="/forgot-password"
+                className="text-[var(--brand-primary)] text-sm font-medium hover:underline cursor-pointer"
+              >
+                Forgot Password?
+              </a>
             </div>
 
             {/* Submit */}
