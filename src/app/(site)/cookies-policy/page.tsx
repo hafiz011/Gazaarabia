@@ -63,29 +63,29 @@ export default function CookiesPolicyPage() {
                         <p className="text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">
                             We use cookies for the following purposes:
 
-                            {"\n\n"}**Strictly necessary cookies**
-                            {"\n"}Needed for the website to function properly.
+                            {"\n\n"}<b>Strictly necessary cookies</b>
+                            {"\n"}– Needed for the website to function properly.
                             {"\n"}Examples:
                             {"\n"}• Remembering what’s in your shopping basket
                             {"\n"}• Enabling checkout and payment
                             {"\n"}• Keeping you logged in to your account
-                            {"\n"}You cannot switch these off via our cookie banner as the site won’t work properly without them.
+                            {"\n"}– You cannot switch these off via our cookie banner as the site won’t work properly without them.
 
-                            {"\n\n"}**Performance & analytics cookies**
-                            {"\n"}Help us understand how visitors use our site.
-                            {"\n"}Measure traffic, popular pages, and how people move around the site.
-                            {"\n"}Examples: Google Analytics or similar tools.
-                            {"\n"}We use this information to improve our website and user experience.
+                            {"\n\n"}<b>Performance & analytics cookies</b>
+                            {"\n"}– Help us understand how visitors use our site.
+                            {"\n"}– Measure traffic, popular pages, and how people move around the site.
+                            {"\n"}– Examples: Google Analytics or similar tools.
+                            {"\n"}– We use this information to improve our website and user experience.
 
-                            {"\n\n"}**Functional cookies**
-                            {"\n"}Remember your preferences (such as language, region, or saved details)
-                            {"\n"}Make your experience smoother and more personalised.
+                            {"\n\n"}<b>Functional cookies</b>
+                            {"\n"}– Remember your preferences (such as language, region, or saved details)
+                            {"\n"}– Make your experience smoother and more personalised.
 
-                            {"\n\n"}**Advertising & social media cookies**
-                            {"\n"}Set by us and/or our advertising partners (e.g. Meta, Google, TikTok)
-                            {"\n"}Help us show relevant ads to you on other platforms
-                            {"\n"}Track performance of campaigns (e.g. how many people clicked an ad and bought something)
-                            {"\n"}May be used to build a profile of your interests.
+                            {"\n\n"}<b>Advertising & social media cookies</b>
+                            {"\n"}– Set by us and/or our advertising partners (e.g. Meta, Google, TikTok)
+                            {"\n"}– Help us show relevant ads to you on other platforms
+                            {"\n"}– Track performance of campaigns (e.g. how many people clicked an ad and bought something)
+                            {"\n"}– May be used to build a profile of your interests.
 
                             {"\n\n"}Non-essential cookies (analytics, advertising, etc.) will only be used where you have given consent, depending on your location and applicable law.
                         </p>

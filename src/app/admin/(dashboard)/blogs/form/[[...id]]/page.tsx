@@ -65,7 +65,7 @@ export default function AddOrEditBlogPage() {
     if (status === "unauthenticated") {
       router.replace(ROUTES.ADMIN.LOGIN);
     } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
-      router.replace(ROUTES.HOME);
+      router.replace(ROUTES.UNAUTHORIZED);
     }
   }, [status, session, router]);
 

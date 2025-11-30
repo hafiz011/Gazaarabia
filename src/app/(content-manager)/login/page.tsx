@@ -59,7 +59,7 @@ export default function ContentManagerLoginPage() {
             if (session?.user?.role === "content_manager") {
                 router.replace(ROUTES.CONTENT_MANAGER.BLOGS);
             } else {
-                router.replace("/");
+                // router.replace("/");
             }
         }
     }, [status, session, router]);

@@ -40,16 +40,10 @@ export default function AffiliateLoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (status === "loading") return;
+    if (status !== "authenticated") return;
 
-    if (status === "authenticated") {
-      if (session?.user?.role === "affiliate") {
-        router.replace(ROUTES.AFFILIATE.DASHBOARD);
-      } else if (session?.user?.role === "admin") {
-        router.replace(ROUTES.ADMIN.DASHBOARD);
-      } else {
-        router.replace("/");
-      }
+    if (session?.user?.role === "affiliate") {
+      router.replace(ROUTES.AFFILIATE.DASHBOARD);
     }
   }, [status, session, router]);
 

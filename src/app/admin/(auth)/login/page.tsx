@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
       if (session?.user?.role === "admin") {
         router.replace(ROUTES.ADMIN.DASHBOARD); //  redirect to profile
       } else {
-        router.replace("/"); // or some other route for admins
+        // router.replace(ROUTES.UNAUTHORIZED); // or some other route for admins
       }
     }
   }, [status, session, router]);

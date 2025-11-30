@@ -1,6 +1,7 @@
 export const ROUTES = {
   HOME: "/",
   NOT_FOUND: "/404",
+  UNAUTHORIZED: "/unauthorized",
 
   //  Customer routes
   USER: {

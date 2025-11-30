@@ -36,18 +36,19 @@ export default function BlogCategoriesPage() {
     type: "",
     message: "",
   });
+  const alowedRoles = ["admin", "content_manager"];
 
-  // 🟡 Redirect unauthorized users
+  //  Redirect unauthorized users
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
       router.replace(ROUTES.ADMIN.LOGIN);
-    } else if (status === "authenticated" && session?.user?.role !== "admin") {
-      router.replace(ROUTES.HOME);
+    } else if (status === "authenticated" && !alowedRoles.includes(session?.user?.role)) {
+      router.replace(ROUTES.UNAUTHORIZED);
     }
   }, [status, session, router]);
 
-  // 📥 Fetch categories with token
+  //  Fetch categories with token
   useEffect(() => {
     if (session?.user?.token) fetchCategories();
   }, [session?.user?.token]);
@@ -66,7 +67,7 @@ export default function BlogCategoriesPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const data :any = await blogCategoryService.getAll(session?.user?.token as string);
+      const data: any = await blogCategoryService.getAll(session?.user?.token as string);
       setCategories(data?.data ?? null);
     } catch (error) {
       setPopUpAlertData({
@@ -226,9 +227,8 @@ export default function BlogCategoriesPage() {
                 paginatedCategories.map((cat, idx) => (
                   <tr
                     key={cat.id}
-                    className={`${
-                      idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-100 transition`}
+                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-100 transition`}
                   >
                     <td className="py-3 px-3 text-center text-gray-600">
                       {startIndex + idx + 1}

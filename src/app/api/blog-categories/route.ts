@@ -3,7 +3,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import slugify from "slugify";
 import { checkAuth } from "@/lib/authToken";
 
-const prisma = new PrismaClient();
+const prisma: any = new PrismaClient();
 
 // GET - Protected
 export async function GET(req: NextRequest) {
@@ -11,6 +11,19 @@ export async function GET(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin", "content_manager"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const categories = await prisma.blogCategories.findMany({
@@ -33,6 +46,19 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true }
+  });
+
+  const allowedRoles = ["admin", "content_manager"];
+
+  if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
 
   try {
     const { name, slug } = await req.json();
