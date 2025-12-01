@@ -10,6 +10,8 @@ import CartDrawer from "@/components/CartDrawer";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/app/context/CartContext";
 import MobileMenuDrawer from "./MobileMenuDrawer";
+import { FaFacebookF, FaInstagram, FaYoutube, FaPinterestP } from "react-icons/fa";
+
 
 interface SubcategoryLink {
   id?: number;
@@ -113,12 +115,42 @@ export default function Header() {
 `}
     >
       {/*Top Bar */}
-      {toolbarText &&
+      {/* {toolbarText &&
         <div className="bg-[var(--brand-primary)] text-white text-center text-xs py-2 tracking-wide relative z-10">
           {toolbarText}
-          {/* FREE SHIPPING ON ALL ORDERS OVER ₹1000 */}
         </div>
-      }
+      } */}
+
+      {/* {toolbarText && ( */}
+      <div className="bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10">
+        <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-between">
+
+          {/* LEFT TEXT */}
+          <span className="font-medium">
+            {toolbarText}
+          </span>
+
+          {/* RIGHT SOCIAL ICONS */}
+          <div className="hidden sm:flex gap-4 items-center">
+            <Link href="https://facebook.com" target="_blank">
+              <FaFacebookF className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            </Link>
+            <Link href="https://instagram.com" target="_blank">
+              <FaInstagram className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            </Link>
+            <Link href="https://youtube.com" target="_blank">
+              <FaYoutube className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            </Link>
+            <Link href="https://pinterest.com" target="_blank">
+              <FaPinterestP className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            </Link>
+          </div>
+
+        </div>
+      </div>
+      {/* )} */}
+
+
 
       {/* Main Header */}
       <div className="w-full relative z-50">
@@ -176,8 +208,16 @@ export default function Header() {
               <div
                 key={item.id}
                 className="relative group h-full flex items-center"
-                onMouseEnter={() => setActiveMenu(item.slug)}
-                onMouseLeave={() => setActiveMenu(null)}
+                // onMouseEnter={() => setActiveMenu(item.slug)}
+                // onMouseLeave={() => setActiveMenu(null)}
+                onMouseEnter={() => {
+                  if (item.dropdown) {
+                    setActiveMenu(item.slug);   // open dropdown
+                  } else {
+                    setActiveMenu(null);        // close dropdown
+                  }
+                }}
+
               >
                 <Link
                   href={getMenuLink(item)}
@@ -188,7 +228,13 @@ export default function Header() {
 
                 {/*  Mega Menu */}
                 {item.dropdown && activeMenu === item.slug && (
-                  <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
+                  // <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
+
+                  <div
+                    className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40"
+                    onMouseEnter={() => setActiveMenu(item.slug)}  // keep open
+                    onMouseLeave={() => setActiveMenu(null)}       // close when user leaves mega menu
+                  >
                     <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
                       <div className="col-span-2 max-h-[55vh] overflow-y-auto pr-4">
                         <div className="grid grid-cols-2 gap-8">
@@ -253,17 +299,10 @@ export default function Header() {
             {/* PARTNER */}
             <Link
               href="/become-partner"
+              onMouseEnter={() => setActiveMenu(null)}
               className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
             >
               Partner
-            </Link>
-
-            {/* CONTACT US */}
-            <Link
-              href="/contact"
-              className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
-            >
-              Contact Us
             </Link>
 
           </nav>

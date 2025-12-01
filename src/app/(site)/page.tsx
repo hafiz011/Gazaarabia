@@ -115,11 +115,6 @@ export default function HomeHero() {
 
       <SignatureCollection products={products} />
 
-
-      {/* Add Affiliate Section HERE */}
-      <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />
-
-
       {reviews.length > 0 && (
         <CustomerStories reviews={reviews} />
       )}
@@ -131,6 +126,9 @@ export default function HomeHero() {
       <MoreThanFashionSection />
 
       <WearTheChange />
+
+      {/* Add Affiliate Section HERE */}
+      <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />
 
     </>
   );

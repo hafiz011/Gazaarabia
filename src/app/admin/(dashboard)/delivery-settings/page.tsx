@@ -15,6 +15,7 @@ export default function DeliverySettingsPage() {
 
     const [hydrated, setHydrated] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
 
     const [form, setForm] = useState({
         freeDeliveryText: "",
@@ -30,6 +31,14 @@ export default function DeliverySettingsPage() {
         standardDeliveryCost: "",
 
         returnText: "",
+
+        // International fields
+        internationalTitle: "",
+        internationalDeliveryTime: "",
+        internationalCost: "",
+        internationalFreeDeliveryText: "",
+        internationalCustomsText: "",
+        internationalTrackingText: "",
     });
 
     const [alert, setAlert] = useState<{ isOpen: boolean; type: "success" | "error" | ""; message: string }>({
@@ -94,8 +103,17 @@ export default function DeliverySettingsPage() {
                 standardDeliveryCost: data.standardDeliveryCost || "",
 
                 returnText: data.returnText || "",
+
+                // international
+                internationalTitle: data.internationalTitle || "",
+                internationalDeliveryTime: data.internationalDeliveryTime || "",
+                internationalCost: data.internationalCost || "",
+                internationalFreeDeliveryText: data.internationalFreeDeliveryText || "",
+                internationalCustomsText: data.internationalCustomsText || "",
+                internationalTrackingText: data.internationalTrackingText || "",
             });
-        } catch {
+        } catch (err) {
+            console.error("fetchSettings error:", err);
             setAlert({
                 isOpen: true,
                 type: "error",
@@ -121,19 +139,26 @@ export default function DeliverySettingsPage() {
 
         try {
             const token = session?.user?.token as string;
-            await deliverySettingsService.update(token, form);
-
-            setAlert({
-                isOpen: true,
-                type: "success",
-                message: "Delivery settings updated successfully!",
-            });
+            setSaveLoading(true);
+            const res = await deliverySettingsService.update(token, form);
+            if (res?.success) {
+                setAlert({
+                    isOpen: true,
+                    type: "success",
+                    message: "Delivery settings updated successfully!",
+                });
+            } else {
+                throw new Error(res?.message || "Failed to update");
+            }
         } catch (err: any) {
+            console.error("update error:", err);
             setAlert({
                 isOpen: true,
                 type: "error",
                 message: err.message || "Failed to update delivery settings.",
             });
+        } finally {
+            setSaveLoading(false);
         }
     };
 
@@ -151,7 +176,6 @@ export default function DeliverySettingsPage() {
 
             <form onSubmit={handleSubmit}>
                 <Box className="bg-white p-6 rounded-xl shadow border border-[var(--soft-gray)]">
-
                     <div className="mb-6 border-b pb-4">
                         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Delivery Settings</h2>
                     </div>
@@ -160,89 +184,56 @@ export default function DeliverySettingsPage() {
                         <p className="text-gray-500 text-sm py-4">Loading...</p>
                     ) : (
                         <div className="space-y-6">
+                            {/* FREE DELIVERY */}
+                            <TextField label="Free Delivery Text" name="freeDeliveryText" value={form.freeDeliveryText} onChange={handleChange} fullWidth sx={fieldStyle} />
 
-                            {/* ================= FREE DELIVERY ================ */}
-                            <TextField
-                                label="Free Delivery Text"
-                                name="freeDeliveryText"
-                                value={form.freeDeliveryText}
-                                onChange={handleChange}
-                                fullWidth
-                                sx={fieldStyle}
-                            />
-
-                            {/* ================= NEXT DAY ===================== */}
+                            {/* NEXT DAY */}
                             <div className="border p-4 rounded-md bg-gray-50">
                                 <h3 className="font-semibold mb-3">Next Day Delivery</h3>
 
-                                <TextField
-                                    label="Title"
-                                    name="nextDayTitle"
-                                    value={form.nextDayTitle}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    sx={fieldStyle}
-                                />
+                                <TextField label="Title" name="nextDayTitle" value={form.nextDayTitle} onChange={handleChange} fullWidth sx={fieldStyle} />
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                    <TextField
-                                        label="Delivery Time"
-                                        name="nextDayDeliveryTime"
-                                        value={form.nextDayDeliveryTime}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={fieldStyle}
-                                    />
-
-                                    <TextField
-                                        label="Cost"
-                                        name="nextDayCost"
-                                        value={form.nextDayCost}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={fieldStyle}
-                                    />
-
-                                    <TextField
-                                        label="Order Cut Off"
-                                        name="nextDayOrderCutOff"
-                                        value={form.nextDayOrderCutOff}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={fieldStyle}
-                                    />
+                                    <TextField label="Delivery Time" name="nextDayDeliveryTime" value={form.nextDayDeliveryTime} onChange={handleChange} fullWidth sx={fieldStyle} />
+                                    <TextField label="Cost" name="nextDayCost" value={form.nextDayCost} onChange={handleChange} fullWidth sx={fieldStyle} />
+                                    <TextField label="Order Cut Off" name="nextDayOrderCutOff" value={form.nextDayOrderCutOff} onChange={handleChange} fullWidth sx={fieldStyle} />
                                 </div>
                             </div>
 
-                            {/* ================= STANDARD DELIVERY ============== */}
+                            {/* STANDARD DELIVERY */}
                             <div className="border p-4 rounded-md bg-gray-50">
                                 <h3 className="font-semibold mb-3">Standard Delivery</h3>
 
+                                <TextField label="Title" name="standardDeliveryTitle" value={form.standardDeliveryTitle} onChange={handleChange} fullWidth sx={fieldStyle} />
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                    <TextField label="Min Days" name="standardDeliveryMinDays" type="number" value={form.standardDeliveryMinDays ?? ""} onChange={handleChange} fullWidth sx={fieldStyle} />
+                                    <TextField label="Max Days" name="standardDeliveryMaxDays" type="number" value={form.standardDeliveryMaxDays ?? ""} onChange={handleChange} fullWidth sx={fieldStyle} />
+                                    <TextField label="Cost" name="standardDeliveryCost" value={form.standardDeliveryCost} onChange={handleChange} fullWidth sx={fieldStyle} />
+                                </div>
+                            </div>
+
+                            {/* RETURNS */}
+                            <TextField label="Return Text" name="returnText" value={form.returnText} onChange={handleChange} fullWidth multiline rows={2} sx={fieldStyle} />
+                            {/* ================= INTERNATIONAL DELIVERY =================== */}
+                            <div className="border p-4 rounded-md bg-gray-50">
+                                <h3 className="font-semibold mb-3">International / Rest of World</h3>
+
                                 <TextField
                                     label="Title"
-                                    name="standardDeliveryTitle"
-                                    value={form.standardDeliveryTitle}
+                                    name="internationalTitle"
+                                    value={form.internationalTitle}
                                     onChange={handleChange}
                                     fullWidth
                                     sx={fieldStyle}
                                 />
 
+                                {/* FIRST ROW — 3 FIELDS (MATCHES STANDARD & NEXT DAY GRID) */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                                     <TextField
-                                        label="Min Days"
-                                        name="standardDeliveryMinDays"
-                                        type="number"
-                                        value={form.standardDeliveryMinDays ?? ""}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={fieldStyle}
-                                    />
-
-                                    <TextField
-                                        label="Max Days"
-                                        name="standardDeliveryMaxDays"
-                                        type="number"
-                                        value={form.standardDeliveryMaxDays ?? ""}
+                                        label="Delivery Time"
+                                        name="internationalDeliveryTime"
+                                        value={form.internationalDeliveryTime}
                                         onChange={handleChange}
                                         fullWidth
                                         sx={fieldStyle}
@@ -250,51 +241,76 @@ export default function DeliverySettingsPage() {
 
                                     <TextField
                                         label="Cost"
-                                        name="standardDeliveryCost"
-                                        value={form.standardDeliveryCost}
+                                        name="internationalCost"
+                                        value={form.internationalCost}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        sx={fieldStyle}
+                                    />
+
+
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                                    <TextField
+                                        label="Free Delivery Text"
+                                        name="internationalFreeDeliveryText"
+                                        value={form.internationalFreeDeliveryText}
                                         onChange={handleChange}
                                         fullWidth
                                         sx={fieldStyle}
                                     />
                                 </div>
+
+                                {/* SECOND ROW — CUSTOMS & TRACKING (MATCH ALIGNMENT) */}
+                                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                                    <TextField
+                                        label="Customs / Duties Text"
+                                        name="internationalCustomsText"
+                                        value={form.internationalCustomsText}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        sx={fieldStyle}
+                                    />
+
+                                    {/* <TextField
+                                        label="Order Tracking Text"
+                                        name="internationalTrackingText"
+                                        value={form.internationalTrackingText}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        multiline
+                                        rows={2}
+                                        sx={fieldStyle}
+                                    /> */}
+                                </div>
                             </div>
 
-                            {/* ================= RETURNS =================== */}
-                            <TextField
-                                label="Return Text"
-                                name="returnText"
-                                value={form.returnText}
-                                onChange={handleChange}
-                                fullWidth
-                                multiline
-                                rows={2}
-                                sx={fieldStyle}
-                            />
 
                             {/* SUBMIT */}
                             <div className="flex justify-end gap-4 pt-6 border-t mt-6">
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => router.push("/admin")}
-                                    sx={{
-                                        color: "var(--text-primary)",
-                                        borderColor: "var(--mid-gray)",
-                                        "&:hover": { borderColor: "var(--text-primary)" },
-                                    }}
-                                >
+                                <Button variant="outlined" onClick={() => router.push("/admin")} sx={{ color: "var(--text-primary)", borderColor: "var(--mid-gray)", "&:hover": { borderColor: "var(--text-primary)" } }}>
                                     Cancel
                                 </Button>
 
                                 <Button
                                     variant="contained"
+                                    disabled={saveLoading}
                                     sx={{
                                         background: "var(--brand-primary)",
-                                        "&:hover": { background: "#c32230" },
+                                        opacity: saveLoading ? 0.6 : 1,
+                                        cursor: saveLoading ? "not-allowed" : "pointer",
+                                        "&:hover": {
+                                            background: saveLoading ? "var(--brand-primary)" : "#c32230"
+                                        }
                                     }}
                                     type="submit"
                                 >
-                                    Save Settings
+                                    {saveLoading ? "Saving..." : "Save Settings"}
                                 </Button>
+
                             </div>
                         </div>
                     )}
@@ -302,13 +318,7 @@ export default function DeliverySettingsPage() {
             </form>
 
             {popup.isOpen && (
-                <PopupAlert
-                    type={popup.type as any}
-                    message={popup.message}
-                    confirmText="OK"
-                    onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))}
-                    show={popup.isOpen}
-                />
+                <PopupAlert type={popup.type as any} message={popup.message} confirmText="OK" onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))} show={popup.isOpen} />
             )}
         </Box>
     );

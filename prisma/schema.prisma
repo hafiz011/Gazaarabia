@@ -872,6 +872,14 @@ model DeliverySettings {
 
   returnText               String?
 
+  //NEW INTERNATIONAL FIELDS
+  internationalTitle               String?
+  internationalDeliveryTime        String?
+  internationalCost                String?
+  internationalFreeDeliveryText    String?
+  internationalCustomsText         String?
+  internationalTrackingText        String?
+
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

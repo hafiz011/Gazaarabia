@@ -36,7 +36,7 @@ export default function Footer() {
             Delivery & Returns
           </h3>
           <ul className="space-y-2 text-sm">
-            <li className="hover:underline cursor-pointer">
+            <li >
               Free shipping for orders over £120
             </li>
             <li className="hover:underline cursor-pointer">

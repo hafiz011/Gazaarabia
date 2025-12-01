@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function InfoGridSection() {
+  const router = useRouter();
   const cards = [
     {
       src: "/images/home/final1.jpg",
@@ -14,6 +16,7 @@ export default function InfoGridSection() {
       src: "/images/home/final2.jpg",
       title: "About Us",
       desc: "Modesty at the core of every design — blending tradition with modern elegance.",
+      link: "/about"
     },
     {
       src: "/images/home/final3.jpg",
@@ -24,8 +27,16 @@ export default function InfoGridSection() {
       src: "/images/home/final4.jpg",
       title: "Journal",
       desc: "Explore our Journal for styling tips, fashion inspiration, and behind-the-scenes stories.",
+      link: "/blogs/journal"
     },
   ];
+
+  const goToNext = (link: any) => {
+    if (link) {
+      router.push(link)
+    }
+
+  }
 
   return (
     <section className="bg-[#ffffff] pt-6 pb-16 md:pt-8 md:pb-20">
@@ -53,6 +64,7 @@ export default function InfoGridSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: i * 0.15 }}
               className="group cursor-pointer flex flex-col items-center text-center"
+              onClick={() => { goToNext(item?.link) }}
             >
               {/* Image Container */}
               <div className="relative overflow-hidden rounded-2xl w-full h-[400px] md:h-[450px] bg-[#F9F9F9] shadow-sm">

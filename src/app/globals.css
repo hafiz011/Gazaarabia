@@ -406,3 +406,9 @@ select:not(.MuiInputBase-input):focus {
 
 
 /* =================== unauthorized page end ===================  */
+
+
+.animate-dropdown {
+  margin-top: -1px;
+  /* removes hover gap */
+}

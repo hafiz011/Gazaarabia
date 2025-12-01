@@ -16,12 +16,24 @@ export default function SubscribePopup() {
 
     const [loading, setLoading] = useState<boolean>(false); //  NEW
 
+    // useEffect(() => {
+    //     const seen = localStorage.getItem("subscribeShown");
+    //     if (!seen) {
+    //         setTimeout(() => setShow(true), 1200);
+    //     }
+    // }, []);
+
     useEffect(() => {
         const seen = localStorage.getItem("subscribeShown");
-        if (!seen) {
-            setTimeout(() => setShow(true), 1200);
+
+        if (seen) {
+            const expiry = parseInt(seen, 10);
+            if (Date.now() < expiry) return;  // Within 30 days → do not show
         }
+
+        setTimeout(() => setShow(true), 1200);
     }, []);
+
 
     // Step 1: Email Submit
     const handleEmailSubmit = async (e: FormEvent) => {
@@ -60,8 +72,10 @@ export default function SubscribePopup() {
 
         try {
             await subscriberService.complete(email, fullName, phone);
-            localStorage.setItem("subscribeShown", "yes");
+            const expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
+            localStorage.setItem("subscribeShown", expiryDate.toString());
             setShow(false);
+
         } catch {
             setFinalError("subscribe failed. Please try again.");
         }
@@ -76,7 +90,13 @@ export default function SubscribePopup() {
             <div style={styles.popup}>
 
                 {/* Close button */}
-                <button style={styles.closeBtn} onClick={() => setShow(false)}>
+                <button style={styles.closeBtn}
+                    onClick={() => {
+                        const expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
+                        localStorage.setItem("subscribeShown", expiryDate.toString());
+                        setShow(false);
+                    }}
+                >
                     <svg
                         width="20"
                         height="20"

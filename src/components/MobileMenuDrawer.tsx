@@ -124,11 +124,11 @@ export default function MobileMenuDrawer({
             </div>
 
             {/* Contact Us */}
-            <div className="py-3 border-b border-gray-100">
+            {/* <div className="py-3 border-b border-gray-100">
               <Link href="/contact" onClick={onClose}>
                 Contact Us
               </Link>
-            </div>
+            </div> */}
 
           </nav>
         )}

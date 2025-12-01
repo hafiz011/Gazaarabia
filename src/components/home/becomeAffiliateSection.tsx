@@ -3,114 +3,74 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-
 interface affiliateData {
-    commission: number
+    commission: number;
 }
 
 interface affiliateProps {
-    data: affiliateData
+    data: affiliateData;
 }
-
 
 export default function BecomeAffiliateSection({ data }: affiliateProps) {
     return (
-        <section className="relative w-full py-20 md:py-28 bg-[var(--lavender-light)] overflow-hidden">
+        <section className="w-full py-16 bg-[var(--background)] border-t border-[var(--soft-gray)]">
 
-            {/* Background Gradient Layer */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/10 via-[var(--lavender)]/40 to-[var(--soft-pink)]/20 pointer-events-none" />
+            <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
 
-            {/* Floating Bubbles */}
-            <motion.div
-                className="absolute top-10 left-10 w-32 h-32 bg-[var(--soft-pink)]/40 rounded-full blur-3xl"
-                initial={{ opacity: 0.2, y: 0 }}
-                animate={{ opacity: 0.4, y: -30 }}
-                transition={{ duration: 5, repeat: Infinity, repeatType: "mirror" }}
-            />
-
-            <motion.div
-                className="absolute bottom-20 right-20 w-40 h-40 bg-[var(--light-blue)]/40 rounded-full blur-[60px]"
-                initial={{ opacity: 0.2, x: 0 }}
-                animate={{ opacity: 0.35, x: 40 }}
-                transition={{ duration: 6, repeat: Infinity, repeatType: "mirror" }}
-            />
-
-            <motion.div
-                className="absolute top-1/2 left-1/3 w-24 h-24 bg-[var(--lavender)]/50 rounded-full blur-2xl"
-                initial={{ opacity: 0.1, y: -20 }}
-                animate={{ opacity: 0.25, y: 20 }}
-                transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
-            />
-
-            {/* Main Wrapper */}
-            <div className="relative max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-10">
-
-                {/* Left Content */}
+                {/* LEFT CONTENT */}
                 <motion.div
-                    initial={{ opacity: 0, x: -40 }}
+                    initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
-                    className="flex-1"
+                    transition={{ duration: 0.6 }}
                 >
-                    <h2 className="text-3xl md:text-4xl font-semibold text-[var(--text-primary)] leading-snug">
-                        Become Our Affiliate
-                        <br />
-                        <span className="text-[var(--brand-primary)]">
-                            {/* Earn Up to {data?.commission}% Commission */}
-                            Earn Up to 10-15% Commission
-                        </span>
+                    <h2 className="text-3xl md:text-4xl font-semibold text-[var(--text-primary)] leading-tight">
+                        Join Our Affiliate Program
                     </h2>
 
-                    <p className="mt-4 text-[var(--text-secondary)] text-base md:text-lg leading-relaxed max-w-lg">
-                        Join our affiliate community and earn generous commissions by promoting
-                        our premium modestwear collections.
-                        It’s free, quick, and open to everyone — start earning today.
+                    <p className="mt-3 text-lg text-[var(--text-secondary)] leading-relaxed max-w-md">
+                        Partner with us and earn competitive commissions by promoting our premium modestwear.
+                        No fees, no complexity — just a simple way to grow your income.
                     </p>
 
                     <motion.div
-                        initial={{ opacity: 0, y: 15 }}
+                        initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="mt-6"
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                        className="mt-7"
                     >
                         <Link
                             href="/affiliate/register"
-                            className="inline-block bg-[var(--brand-primary)] text-white px-6 py-3 rounded-lg 
-                                    text-sm font-semibold shadow-md hover:bg-[var(--brand-primary)]/90 
-                                    transition-all"
+                            className="inline-block bg-[var(--brand-primary)] text-white px-7 py-3.5 rounded-md 
+              text-sm font-medium shadow-sm hover:bg-[var(--brand-primary)]/90 transition"
                         >
-                            Join Affiliate Program
+                            Become an Affiliate
                         </Link>
                     </motion.div>
                 </motion.div>
 
-                {/* Right Visual */}
+                {/* RIGHT — PROFESSIONAL STAT CARD */}
                 <motion.div
-                    initial={{ opacity: 0, x: 40 }}
+                    initial={{ opacity: 0, x: 20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="flex-1 flex justify-center"
+                    transition={{ duration: 0.6 }}
+                    className="flex justify-center"
                 >
-                    <div className="relative">
-                        {/* Glow behind the circle */}
-                        <div className="absolute inset-0 w-full h-full bg-[var(--soft-pink)]/40 blur-3xl rounded-full"></div>
+                    <div className="w-full max-w-sm bg-white border border-[var(--soft-gray)] rounded-xl shadow-sm p-8 text-center">
 
-                        <div className="relative w-[260px] h-[260px] md:w-[320px] md:h-[320px] rounded-full 
-                                        bg-gradient-to-tr from-[var(--brand-primary)] to-[var(--lavender)] 
-                                        shadow-lg flex items-center justify-center border-[6px] border-white/40">
-                            <motion.span
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.8 }}
-                                className="text-white text-4xl md:text-5xl font-bold drop-shadow-lg"
-                            >
-                                {/* {data?.commission}% */}
-                                10-15%
-                            </motion.span>
+                        <div className="text-[var(--brand-primary)] text-5xl font-bold leading-none">
+                            10–15%
                         </div>
+
+                        <p className="mt-2 text-[var(--text-primary)] font-medium text-lg">
+                            Commission Rate
+                        </p>
+
+                        <p className="text-[var(--text-secondary)] text-sm mt-2">
+                            Earn consistently for every successful referral you generate.
+                        </p>
                     </div>
                 </motion.div>
 
