@@ -296,7 +296,7 @@ export default function PartnerPage() {
                             </p>
 
                             <a
-                                href="#"
+                                href={ROUTES.AFFILIATE.REGISTER}
                                 className="inline-block mt-5 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white shadow hover:opacity-90 transition"
                             >
                                 Apply Now
