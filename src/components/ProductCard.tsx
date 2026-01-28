@@ -13,13 +13,15 @@ import { formatSoldDuration } from "@/lib/utils";
 interface ProductCardProps {
   product: any;
   onWishlistToggle?: (id: number, isInWishlist: boolean) => void;
+  onCardClick?: () => void;
 }
 
-export default function ProductCard({ product, onWishlistToggle }: ProductCardProps) {
+export default function ProductCard({ product, onWishlistToggle , onCardClick}: ProductCardProps) {
   const router = useRouter();
   const [wishlist, setWishlist] = useState(product.isInWishlist);
 
   const handleCardClick = () => {
+    onCardClick?.(); 
     router.push(`/products/${product.slug}`);
   };
 

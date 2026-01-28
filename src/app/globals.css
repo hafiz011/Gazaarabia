@@ -23,7 +23,7 @@ body {
 }
  */
 
-/* =============  Premium Header Animations (Scoped)  ============= */
+/* =============   Header Animations  ============= */
 
 @keyframes dropdown-fade-down {
   from {
@@ -72,7 +72,7 @@ body {
   transform: scale(1.08);
 }
 
-/* 🖋 Overlay Text Fade Up */
+/*  Overlay Text Fade Up */
 @keyframes overlay-fade-up {
   from {
     opacity: 0;
@@ -140,6 +140,14 @@ a {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out forwards;
 }
+
+
+/* header searchbar section */
+.search-bar input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 
 
 /* header profile section end  */

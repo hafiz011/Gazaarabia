@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
-import { Upload, Plus, Trash2 } from "lucide-react";
+import { Upload, Plus, Trash2, Copy } from "lucide-react";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
@@ -429,6 +429,24 @@ function ProductFormContent() {
     setSearchQuery("");
   };
 
+  const handleVariantCopy = (idx: number) => {
+    setVariants((prev) => {
+      const variantToCopy = prev[idx];
+
+      const newVariant = {
+        ...variantToCopy,
+         id: undefined,
+        sku: "", // must be unique, so reset
+      };
+
+      const newVariants = [...prev];
+      newVariants.splice(idx + 1, 0, newVariant); // insert after current
+
+      return newVariants;
+    });
+  };
+
+
   return (
     <Box className="p-6 max-w-7xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6">
@@ -609,7 +627,7 @@ function ProductFormContent() {
               className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200"
             >
               {/*  Header with title + delete button */}
-              <div className="flex justify-between items-center mb-3">
+              {/* <div className="flex justify-between items-center mb-3">
                 <h3 className="font-semibold text-gray-800">
                   Variant #{idx + 1}
                 </h3>
@@ -620,7 +638,36 @@ function ProductFormContent() {
                 >
                   <Trash2 size={16} /> Remove
                 </button>
+              </div> */}
+
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-gray-800">
+                  Variant #{idx + 1}
+                </h3>
+
+                <div className="flex gap-2">
+                  {/* COPY BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => handleVariantCopy(idx)}
+                    title="Copy Variant"
+                    className="p-2 rounded-md border border-gray-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition"
+                  >
+                    <Copy size={16} />
+                  </button>
+
+                  {/* DELETE BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => handleVariantRemove(idx)}
+                    title="Remove Variant"
+                    className="p-2 rounded-md border border-gray-300 text-red-500 hover:bg-red-50 hover:border-red-400 transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
+
 
               {/*  Main Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

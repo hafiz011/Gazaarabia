@@ -45,11 +45,11 @@ export const productService = {
       body: JSON.stringify(data),
     });
 
-    const result = await res.json(); // 🆕 Parse the response body
+    const result = await res.json(); //  Parse the response body
     console.log('result')
 
     if (!res.ok) {
-      // 🧠 Use the API's error message if available
+      //  Use the API's error message if available
       const errorMessage =
         result?.message || result?.error || "Failed to create product";
       throw new Error(errorMessage);
