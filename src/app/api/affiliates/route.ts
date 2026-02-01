@@ -31,6 +31,15 @@ export async function GET(req: NextRequest) {
     const affiliates = await prisma.affiliate.findMany({
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
+        bankAccount: {
+          select: {
+            accountName: true,
+            accountNumber: true,
+            sortCode: true,
+            iban: true,
+            paypalEmail: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });

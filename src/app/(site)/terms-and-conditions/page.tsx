@@ -225,7 +225,7 @@ b. Subject to the preceding clause, our total liability to you in respect of all
 
                     {/* Footer */}
                     <div className="mt-16 pt-6 border-t border-[var(--mid-gray)] text-center text-sm text-[var(--text-muted)]">
-                        <p>© {new Date().getFullYear()} Gazaarabia. All rights reserved.</p>
+                        <p> &copy; {new Date().getFullYear()} Gazaarabia. All rights reserved.</p>
                         <p className="mt-1">Last Updated: December 2025</p>
                     </div>
                 </div>

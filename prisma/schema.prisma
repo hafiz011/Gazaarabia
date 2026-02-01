@@ -248,6 +248,10 @@ model productvariant {
   sizeId    Int?
   productId Int
 
+  videoUrl       String?
+  videoThumbnail String?
+
+
   products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
   color    Colors?  @relation(fields: [colorId], references: [id])
   size     Sizes?   @relation(fields: [sizeId], references: [id])
@@ -633,7 +637,7 @@ model Affiliate {
   // Product-level ambassador mapping
   products products[] @relation("AffiliateAmbassadorRelation")
 
-
+  bankAccount AffiliateBankAccount?
 
  @@map("affiliate")
 }
@@ -885,3 +889,23 @@ model DeliverySettings {
 
   @@map("delivery_settings")
 }
+
+
+model AffiliateBankAccount {
+  id            Int      @id @default(autoincrement())
+  affiliateId   Int      @unique
+
+  accountName   String
+  accountNumber String
+  sortCode      String?
+  iban          String?
+  paypalEmail   String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@map("affiliate_bank_accounts")
+}
+

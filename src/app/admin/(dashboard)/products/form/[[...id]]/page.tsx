@@ -261,7 +261,7 @@ function ProductFormContent() {
   const handleVariantAdd = () => {
     setVariants((prev) => [
       ...prev,
-      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true, images: [], },
+      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true, images: [], videoUrl: "", videoThumbnail: "" },
     ]);
   };
 
@@ -435,7 +435,7 @@ function ProductFormContent() {
 
       const newVariant = {
         ...variantToCopy,
-         id: undefined,
+        id: undefined,
         sku: "", // must be unique, so reset
       };
 
@@ -445,6 +445,36 @@ function ProductFormContent() {
       return newVariants;
     });
   };
+
+  // handle the video file change
+  const handleVideoFileChange = async (e:any,idx:number) => {
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      setAlertMessage({
+        isOpen: true,
+        type: "error",
+        message: "Video must be under 15MB",
+      });
+      return;
+    }
+
+    try {
+     const videoUrl = await uploadService.uploadVideo(file,"variant-videos");
+
+      handleVariantChange(idx, "videoUrl", videoUrl);
+      handleVariantChange(idx, "videoThumbnail", ""); // optional: auto-generate later
+    } catch {
+      setAlertMessage({
+        isOpen: true,
+        type: "error",
+        message: "Variant video upload failed.",
+      });
+    }
+
+  }
 
 
   return (
@@ -797,6 +827,51 @@ function ProductFormContent() {
                   />
                 </div>
               </div>
+
+              {/* Variant Video */}
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Variant Video (Optional – only one)
+                </label>
+
+                {v.videoUrl ? (
+                  <div className="relative mt-2 w-40">
+                    <video
+                      src={v.videoUrl}
+                      poster={v.videoThumbnail}
+                      controls
+                      className="w-full rounded border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleVariantChange(idx, "videoUrl", "");
+                        handleVariantChange(idx, "videoThumbnail", "");
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => document.getElementById(`variantVideo${idx}`)?.click()}
+                    className="mt-2 w-40 h-24 border-2 border-dashed rounded flex items-center justify-center cursor-pointer text-gray-400 hover:text-black"
+                  >
+                    <Upload size={18} />
+                    <span className="text-xs ml-2">Upload Video</span>
+                  </div>
+                )}
+
+                <input
+                  id={`variantVideo${idx}`}
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  className="hidden"
+                  onChange={(e) => handleVideoFileChange(e,idx)}
+                />
+              </div>
+
 
               {/* Footer - Active toggle */}
               {/* <div className="flex justify-end items-center mt-4">

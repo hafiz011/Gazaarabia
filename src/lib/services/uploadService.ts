@@ -40,4 +40,34 @@ export const uploadService = {
     return data.urls; // returns array of urls
   },
 
+  //  NEW — VIDEO UPLOAD
+  async uploadVideo(file: File, folder: string): Promise<string> {
+    const allowedTypes = ["video/mp4", "video/webm"];
+    const maxSize = 15 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error("Only MP4 or WEBM videos are allowed");
+    }
+
+    if (file.size > maxSize) {
+      throw new Error("Video size must be under 15MB");
+    }
+
+    const formData = new FormData();
+    formData.append("files", file);
+
+    const res = await fetch(
+      `/api/uploads/video?folder=${encodeURIComponent(folder)}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Video upload failed");
+
+    return data.urls[0];
+  },
+
 };

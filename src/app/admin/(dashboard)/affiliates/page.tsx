@@ -164,6 +164,8 @@ export default function AffiliatesPage() {
                   <th className="py-3 px-5">Type</th>
                   <th className="py-3 px-5">Total Earnings</th>
                   <th className="py-3 px-5">Pending Earnings</th>
+                  <th className="py-3 px-5">Payout</th>
+
                   <th className="py-3 px-5">Status</th>
                   <th className="py-3 px-5 text-right">Action</th>
                 </tr>
@@ -179,6 +181,16 @@ export default function AffiliatesPage() {
                       <td className="py-3 px-5">{aff.type || "-"}</td>
                       <td className="py-3 px-5 font-semibold">£{aff.totalEarnings?.toFixed(2) ?? 0}</td>
                       <td className="py-3 px-5 text-orange-600 font-semibold">£{aff.pendingEarnings?.toFixed(2) ?? 0}</td>
+
+                      <td className="py-3 px-5 text-xs">
+                        {aff.bankAccount?.paypalEmail
+                          ? "PayPal"
+                          : aff.bankAccount?.accountNumber || aff.bankAccount?.iban
+                            ? "Bank"
+                            : "—"}
+                      </td>
+
+
                       <td className="py-3 px-5">
                         <span className={`px-2 py-1 rounded text-xs ${aff.isActive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
                           {aff.isActive ? "Active" : "Inactive"}
@@ -235,39 +247,124 @@ export default function AffiliatesPage() {
       {showModal && selectedAffiliate && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-[9999]">
           <div className="bg-white max-w-lg w-full rounded-xl p-6 shadow relative">
-            <button className="absolute top-3 right-3" onClick={() => setShowModal(false)}>
+            <button
+              className="absolute top-3 right-3"
+              onClick={() => setShowModal(false)}
+            >
               <X size={20} />
             </button>
 
             <h2 className="text-lg font-semibold mb-4 flex items-center">
-              <BadgeCheck className="text-red-500 mr-2" /> Affiliate Details
+              <BadgeCheck className="text-red-500 mr-2" />
+              Affiliate Details
             </h2>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex gap-3 items-center"><User size={18} /> {selectedAffiliate.user?.name}</div>
-              <div className="flex gap-3 items-center"><Mail size={18} /> {selectedAffiliate.user?.email}</div>
-              <div className="flex gap-3 items-center"><Phone size={18} /> {selectedAffiliate.user?.phone || "-"}</div>
+            <div className="space-y-4 text-sm">
+              {/* User Info */}
+              <div className="flex gap-3 items-center">
+                <User size={18} /> {selectedAffiliate.user?.name}
+              </div>
+              <div className="flex gap-3 items-center">
+                <Mail size={18} /> {selectedAffiliate.user?.email}
+              </div>
+              <div className="flex gap-3 items-center">
+                <Phone size={18} /> {selectedAffiliate.user?.phone || "-"}
+              </div>
+
               <hr />
-              <div><b>Admin Commission:</b> {selectedAffiliate.baseCommission}%</div>
-              <div><b>Share Commission:</b> {selectedAffiliate.shareCommission}%</div>
+
+              {/* Commission */}
+              <div>
+                <b>Admin Commission:</b> {selectedAffiliate.baseCommission}%
+              </div>
+              <div>
+                <b>Share Commission:</b> {selectedAffiliate.shareCommission}%
+              </div>
+
               <hr />
+
+              {/* Earnings */}
               <div className="flex items-center gap-3">
                 <Wallet size={18} className="text-green-600" />
-                <span className="text-gray-800">
-                  <b>Total Earnings:</b> £{selectedAffiliate.totalEarnings?.toFixed(2) ?? 0}
-                </span>
+                <b>Total Earnings:</b> £
+                {selectedAffiliate.totalEarnings?.toFixed(2) ?? 0}
               </div>
 
               <div className="flex items-center gap-3">
                 <Clock size={18} className="text-orange-500" />
-                <span className="text-gray-800">
-                  <b>Pending Earnings:</b> £{selectedAffiliate.pendingEarnings?.toFixed(2) ?? 0}
-                </span>
+                <b>Pending Earnings:</b> £
+                {selectedAffiliate.pendingEarnings?.toFixed(2) ?? 0}
               </div>
+
+              <hr />
+
+           {/* 🏦 Payout Details */}
+<div>
+  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+    <Wallet size={18} className="text-gray-600" />
+    Payout Details
+  </h3>
+
+  {selectedAffiliate.bankAccount ? (
+    <div className="bg-gray-50 border rounded-lg p-4 space-y-3 text-sm">
+
+      <div className="grid grid-cols-3 gap-2">
+        <span className="text-gray-500">Account Name</span>
+        <span className="col-span-2 font-medium text-gray-900">
+          {selectedAffiliate.bankAccount.accountName}
+        </span>
+      </div>
+
+      {selectedAffiliate.bankAccount.accountNumber && (
+        <div className="grid grid-cols-3 gap-2">
+          <span className="text-gray-500">Account Number</span>
+          <span className="col-span-2 font-mono text-gray-900">
+            {selectedAffiliate.bankAccount.accountNumber}
+          </span>
+        </div>
+      )}
+
+      {selectedAffiliate.bankAccount.sortCode && (
+        <div className="grid grid-cols-3 gap-2">
+          <span className="text-gray-500">Sort Code</span>
+          <span className="col-span-2 font-mono text-gray-900">
+            {selectedAffiliate.bankAccount.sortCode}
+          </span>
+        </div>
+      )}
+
+      {selectedAffiliate.bankAccount.iban && (
+        <div className="grid grid-cols-3 gap-2">
+          <span className="text-gray-500">IBAN</span>
+          <span className="col-span-2 font-mono text-gray-900 break-all">
+            {selectedAffiliate.bankAccount.iban}
+          </span>
+        </div>
+      )}
+
+      {selectedAffiliate.bankAccount.paypalEmail && (
+        <div className="grid grid-cols-3 gap-2">
+          <span className="text-gray-500">PayPal</span>
+          <span className="col-span-2 text-gray-900">
+            {selectedAffiliate.bankAccount.paypalEmail}
+          </span>
+        </div>
+      )}
+    </div>
+  ) : (
+    <div className="bg-gray-50 border border-dashed rounded-lg p-4 text-center text-gray-400 text-sm">
+      No payout details provided.
+    </div>
+  )}
+</div>
+
+
+
             </div>
           </div>
         </div>
       )}
+
 
       {/* Popup Alert */}
       <PopupAlert

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-// import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getWishlistProductIds } from "@/lib/helpers/wishlist";
 import {
@@ -7,9 +7,6 @@ import {
   getVariantAvailableQuantity,
 } from "@/lib/helpers/stockHelper";
 import { getProductRatingStats } from "@/lib/helpers/reviewHelper";
-import { prisma } from "@/lib/prisma";
-
-// const prisma = new PrismaClient();
 
 export async function GET(
   req: Request,
@@ -17,20 +14,89 @@ export async function GET(
 ) {
   const { slug } = await context.params;
   const { searchParams } = new URL(req.url);
+
+  /* ---------------- Pagination ---------------- */
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 12;
   const skip = (page - 1) * limit;
 
+  /* ---------------- Filters ---------------- */
+  const priceMin = Number(searchParams.get("priceMin")) || 0;
+  const priceMax = Number(searchParams.get("priceMax")) || 100000;
+
+  const availability = searchParams.getAll("availability[]"); // ["In stock"]
+  const sizes = searchParams.getAll("sizes[]").map(Number);
+  const colors = searchParams.getAll("colors[]").map(Number);
+  const subcategoriesFilter = searchParams
+    .getAll("subcategories[]")
+    .map(Number);
+
+  const sort = searchParams.get("sort") || "new";
+
+  /* ---------------- Auth ---------------- */
   const token = getTokenFromHeader(req);
   const userId = token ? getUserIdFromToken(token) : null;
 
   try {
+    /* ---------------- Availability (baseQty) ---------------- */
+    const hasInStock = availability.includes("In stock");
+    const hasOutOfStock = availability.includes("Out of stock");
+
+    /* ---------------- Build WHERE ---------------- */
+    const productWhere: any = {
+      active: true,
+      sellingPrice: {
+        gte: priceMin,
+        lte: priceMax,
+      },
+    };
+
+    // baseQty stock filter
+    if (hasInStock && !hasOutOfStock) {
+      productWhere.baseQty = { gt: 0 };
+    }
+
+    if (hasOutOfStock && !hasInStock) {
+      productWhere.baseQty = { lte: 0 };
+    }
+
+    // Subcategory filter (from filter panel)
+    if (subcategoriesFilter.length > 0) {
+      productWhere.subcategoryId = { in: subcategoriesFilter };
+    }
+
+    // Size / Color (variant based)
+    if (sizes.length > 0 || colors.length > 0) {
+      productWhere.productvariant = {
+        some: {
+          isActive: true,
+          ...(sizes.length > 0 && { sizeId: { in: sizes } }),
+          ...(colors.length > 0 && { colorId: { in: colors } }),
+        },
+      };
+    }
+
+    /* ---------------- Sorting ---------------- */
+    let orderBy: any = { createdAt: "desc" }; // default = New arrivals
+
+    if (sort === "price_asc") {
+      orderBy = { sellingPrice: "asc" };
+    }
+
+    if (sort === "price_desc") {
+      orderBy = { sellingPrice: "desc" };
+    }
+
+    if (sort === "bestseller") {
+      orderBy = { soldCount: "desc" }; // uses products.soldCount
+    }
+
+    /* ---------------- Category / Subcategory ---------------- */
     let products: any[] = [];
     let total = 0;
     let subcategories: any[] = [];
     let parentCategory: any = null;
 
-    //  Check if slug is category or subcategory
     const category = await prisma.categories.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true },
@@ -39,7 +105,10 @@ export async function GET(
     if (category) {
       [products, total, subcategories] = await Promise.all([
         prisma.products.findMany({
-          where: { categoryId: category.id },
+          where: {
+            categoryId: category.id,
+            ...productWhere,
+          },
           include: {
             productimage: true,
             productvariant: {
@@ -51,9 +120,14 @@ export async function GET(
           },
           skip,
           take: limit,
-          orderBy: { createdAt: "desc" },
+          orderBy,
         }),
-        prisma.products.count({ where: { categoryId: category.id } }),
+        prisma.products.count({
+          where: {
+            categoryId: category.id,
+            ...productWhere,
+          },
+        }),
         prisma.subcategory.findMany({
           where: { categoryId: category.id },
           orderBy: { name: "asc" },
@@ -76,7 +150,10 @@ export async function GET(
 
       [products, total, subcategories] = await Promise.all([
         prisma.products.findMany({
-          where: { subcategoryId: subcategory.id },
+          where: {
+            subcategoryId: subcategory.id,
+            ...productWhere,
+          },
           include: {
             productimage: true,
             productvariant: {
@@ -88,9 +165,14 @@ export async function GET(
           },
           skip,
           take: limit,
-          orderBy: { createdAt: "desc" },
+          orderBy,
         }),
-        prisma.products.count({ where: { subcategoryId: subcategory.id } }),
+        prisma.products.count({
+          where: {
+            subcategoryId: subcategory.id,
+            ...productWhere,
+          },
+        }),
         prisma.subcategory.findMany({
           where: { categoryId: subcategory.categoryId },
           orderBy: { name: "asc" },
@@ -103,43 +185,44 @@ export async function GET(
       });
     }
 
-    // Fetch wishlist IDs once
+    /* ---------------- Wishlist ---------------- */
     let wishlistIdsSet = new Set<number>();
     if (userId) {
       const wishlistIds = await getWishlistProductIds(userId);
       wishlistIdsSet = new Set(wishlistIds);
     }
 
-    //  Enrich products with wishlist + stock in one loop
+    /* ---------------- Enrich products ---------------- */
     const enrichedProducts = await Promise.all(
       products.map(async (product) => {
         const isInWishlist = wishlistIdsSet.has(product.id);
 
-        // Product-level stock
-        const productAvailableStock = await getProductAvailableQuantity(product.id);
+        const productAvailableStock =
+          await getProductAvailableQuantity(product.id);
 
-        // Variant-level stock (parallel)
         const variantsWithStock = await Promise.all(
           product.productvariant.map(async (variant: any) => {
-            const variantStock = await getVariantAvailableQuantity(variant.id);
+            const variantStock =
+              await getVariantAvailableQuantity(variant.id);
             return { ...variant, availableStock: variantStock };
           })
         );
 
-        const { averageRating, totalReviews } = await getProductRatingStats(product.id);
+        const { averageRating, totalReviews } =
+          await getProductRatingStats(product.id);
 
         return {
           ...product,
           isInWishlist,
-          availableStock: productAvailableStock, //  product-level
-          productvariant: variantsWithStock, // variants with stock
+          availableStock: productAvailableStock,
+          productvariant: variantsWithStock,
           rating: averageRating,
           reviewsCount: totalReviews,
         };
       })
     );
 
-    //  Final Response
+    /* ---------------- Response ---------------- */
     return NextResponse.json({
       userId,
       products: enrichedProducts,
@@ -150,7 +233,7 @@ export async function GET(
       page,
     });
   } catch (error: any) {
-    console.error("Error fetching category products:", error);
+    console.error("Error fetching products:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch products" },
       { status: 500 }

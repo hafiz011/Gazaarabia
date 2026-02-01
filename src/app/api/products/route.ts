@@ -95,6 +95,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ---- VARIANT VIDEO VALIDATION (BEFORE DB CALL) ----
+    if (Array.isArray(body.variants)) {
+      for (const v of body.variants) {
+        if (v.videoUrl) {
+          const lower = v.videoUrl.toLowerCase();
+
+          if (!lower.endsWith(".mp4") && !lower.endsWith(".webm")) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: "Only MP4 or WEBM videos are allowed for variants",
+              },
+              { status: 400 }
+            );
+          }
+
+          if (v.videoSize && v.videoSize > 15 * 1024 * 1024) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: "Variant video must be under 15MB",
+              },
+              { status: 400 }
+            );
+          }
+        }
+      }
+    }
+
+
     //  Create product with nested variants and variant images
     const product = await prisma.products.create({
       data: {
@@ -155,15 +185,29 @@ export async function POST(req: NextRequest) {
               price: parseFloat(v.price),
               stock: parseInt(v.stock),
               isActive: v.isActive ?? true,
-              colorId: v.colorId ? parseInt(v.colorId) : null,
-              sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+              // colorId: v.colorId ? parseInt(v.colorId) : null,
+              // sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+
+              color: v.colorId
+                ? { connect: { id: parseInt(v.colorId) } }
+                : undefined,
+
+              size: v.sizeId
+                ? { connect: { id: parseInt(v.sizeId) } }
+                : undefined,
+
+
+              // VIDEO
+              videoUrl: v.videoUrl || null,
+              videoThumbnail: v.videoThumbnail || null,
+
               variantImages: {
                 create:
                   v.images?.map((img: any) => ({
                     url: img.url,
                     alt: img.alt || "",
                     // Include productId directly during creation
-                    productId: undefined, // temporarily undefined — we’ll fix right below
+                    productId: undefined,
                   })) || [],
               },
             })) || [],

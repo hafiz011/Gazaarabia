@@ -12,6 +12,7 @@ import {
   Tag,
   Minus,
   Plus,
+  X,
 } from "lucide-react";
 
 import HowWeDoIt from "@/components/HowWeDoIt";
@@ -54,6 +55,29 @@ export default function ProductDetails() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { refreshCart } = useCart();
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  // identify the mobile or desktop
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+
+  // stop modal background scrolling
+  useEffect(() => {
+    document.body.style.overflow = showImageModal ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showImageModal]);
+
 
 
   //  Fetch product
@@ -132,6 +156,44 @@ export default function ProductDetails() {
       : null;
 
   const availableStock = selectedVariant?.availableStock || 0;
+
+  // video related vars 
+  const hasVideo = Boolean(selectedVariant?.videoUrl);
+
+  const getActiveImage = () => {
+    if (!images.length) return null;
+
+    if (hasVideo) {
+      // activeThumb 0 = video, so images start from index 1
+      return images[activeThumb - 1] || images[0];
+    }
+
+    return images[activeThumb] || images[0];
+  };
+
+  const getZoomImageUrl = () => {
+  if (hasVideo && activeThumb === 0) {
+    //  Do NOT zoom video
+    return null;
+  }
+
+  if (hasVideo) {
+    return images[activeThumb - 1]?.url || null;
+  }
+
+  return images[activeThumb]?.url || null;
+};
+
+
+  useEffect(() => {
+    if (selectedVariant?.videoUrl) {
+      setActiveThumb(0);
+    } else {
+      setActiveThumb(0);
+    }
+  }, [selectedVariant]);
+
+
 
   //  Color change → update images + size
   const handleColorChange = (color: any) => {
@@ -264,7 +326,7 @@ export default function ProductDetails() {
             <div className="relative flex flex-col md:flex-row gap-4 items-start md:h-[700px]">
               {/* Thumbnails */}
               <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto">
-                {images.map((img: any, index: number) => (
+                {/* {images.map((img: any, index: number) => (
                   <button
                     key={index}
                     onClick={() => setActiveThumb(index)}
@@ -279,11 +341,55 @@ export default function ProductDetails() {
                       className="w-full h-full object-contain bg-white"
                     />
                   </button>
-                ))}
+                ))} */}
+
+                {/* VIDEO THUMB (FIRST) */}
+                {hasVideo && (
+                  <button
+                    onClick={() => setActiveThumb(0)}
+                    className={`relative w-20 h-20 rounded-lg border-2 ${activeThumb === 0
+                      ? "border-[var(--brand-primary)]"
+                      : "border-gray-200"
+                      }`}
+                  >
+                    <video
+                      src={selectedVariant.videoUrl}
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold bg-black/40">
+                      ▶
+                    </span>
+                  </button>
+                )}
+
+                {/* IMAGE THUMBS */}
+                {images.map((img: any, index: number) => {
+                  const thumbIndex = hasVideo ? index + 1 : index;
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setActiveThumb(thumbIndex)}
+                      className={`relative w-20 h-20 rounded-lg border-2 ${activeThumb === thumbIndex
+                        ? "border-[var(--brand-primary)]"
+                        : "border-gray-200"
+                        }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt}
+                        className="w-full h-full object-contain bg-white"
+                      />
+                    </button>
+                  );
+                })}
+
+
               </div>
 
               {/* Main Image */}
-              <div
+              {/* <div
                 ref={imgRef}
                 // className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
 
@@ -299,16 +405,68 @@ export default function ProductDetails() {
                   alt={images[activeThumb || 0]?.alt || product?.title}
                   className="max-h-full max-w-full object-contain"
                 />
+              </div> */}
+              {/* <div
+                ref={imgRef}
+               
+                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent"
+
+
+                onMouseEnter={() => setZoomVisible(true)}
+                onMouseLeave={() => setZoomVisible(false)}
+                onMouseMove={handleMouseMove}
+              > */}
+
+              <div
+                ref={imgRef}
+                className={`order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent  ${hasVideo && activeThumb === 0 ? "cursor-default" : "cursor-crosshair"}`}
+                onMouseEnter={() => !isMobile && setZoomVisible(true)}
+                onMouseLeave={() => !isMobile && setZoomVisible(false)}
+                onMouseMove={(e) => !isMobile && handleMouseMove(e)}
+                onClick={() => isMobile && setShowImageModal(true)}
+              >
+
+
+                {hasVideo && activeThumb === 0 ? (
+                  <video
+                    src={selectedVariant.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <img
+                    src={getActiveImage()?.url}
+                    alt={getActiveImage()?.alt || product?.title}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                )}
+
+
+
+
               </div>
 
+              {/* Main Media (Video / Image) */}
+
+
+
               {/* Zoom Preview (Desktop only) */}
-              {zoomVisible && images[activeThumb || 0]?.url && (
+              {/* {zoomVisible && images[activeThumb || 0]?.url && ( */}
+
+              {/* {zoomVisible && !isMobile && images[activeThumb || 0]?.url && ( */}
+
+              {zoomVisible && !isMobile && getZoomImageUrl() && (
+
+
                 <div
                   className="hidden lg:block absolute top-0 left-[calc(100%+20px)] 
       w-[700px] h-[750px] rounded-xl border shadow-lg bg-white 
       bg-no-repeat bg-center z-10"
                   style={{
-                    backgroundImage: `url("${images[activeThumb || 0]?.url}")`,
+                    backgroundImage: `url("${getZoomImageUrl()}")`,
                     backgroundPosition,
                     backgroundSize: "200%",
                   }}
@@ -720,6 +878,51 @@ export default function ProductDetails() {
           <HowWeDoIt />
 
           <SizeGuideModal open={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+
+          {showImageModal && (
+            <div
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+              onClick={() => setShowImageModal(false)}
+            >
+              {/* MODAL CONTENT */}
+              <div
+                className="relative max-w-[95vw] max-h-[95vh] bg-white rounded-2xl 
+                 overflow-hidden shadow-2xl animate-[fadeIn_0.15s_ease-out]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* CLOSE BUTTON */}
+                <button
+                  onClick={() => setShowImageModal(false)}
+                  aria-label="Close preview"
+                  className="absolute top-3 right-3 z-10 p-2 rounded-full 
+             bg-white/80 backdrop-blur hover:bg-white transition shadow"
+                >
+                  <X size={20} className="text-gray-800" />
+                </button>
+
+                {/* MEDIA */}
+                {hasVideo && activeThumb === 0 ? (
+                  <video
+                    src={selectedVariant.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls
+                    className="max-w-[95vw] max-h-[95vh] object-contain bg-white"
+                  />
+                ) : (
+                  <img
+                    src={getActiveImage()?.url}
+                    alt="Preview"
+                    className="max-w-[95vw] max-h-[95vh] object-contain bg-white"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+
 
 
           {/*  Popup alert */}

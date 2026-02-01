@@ -411,7 +411,7 @@ export default function AdminSidebar({
                 <LogOut size={18} />
               ) : (
                 <>
-                  <span>© {new Date().getFullYear()} Gazaarabia</span>
+                  <span> &copy; {new Date().getFullYear()} Gazaarabia</span>
                   <div className="flex items-center gap-2">
                     <LogOut size={16} />
                     <span>Logout</span>

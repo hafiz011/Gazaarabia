@@ -195,6 +195,34 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       });
 
       for (const v of body.variants) {
+
+        // ---- VARIANT VIDEO VALIDATION ----
+        if (v.videoUrl) {
+          const lower = v.videoUrl.toLowerCase();
+
+          if (!lower.endsWith(".mp4") && !lower.endsWith(".webm")) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: "Only MP4 or WEBM videos are allowed for variants",
+              },
+              { status: 400 }
+            );
+          }
+
+          if (v.videoSize && v.videoSize > 15 * 1024 * 1024) {
+            return NextResponse.json(
+              { success: false, message: "Variant video must be under 15MB" },
+              { status: 400 }
+            );
+          }
+
+
+        }
+
+
+
+
         if (v.id) {
           // UPDATE existing variant
           await prisma.productvariant.update({
@@ -204,8 +232,19 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               price: parseFloat(v.price),
               stock: parseInt(v.stock),
               isActive: v.isActive ?? true,
-              colorId: v.colorId ? parseInt(v.colorId) : null,
-              sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+              // colorId: v.colorId ? parseInt(v.colorId) : null,
+              // sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+
+              color: v.colorId
+                ? { connect: { id: parseInt(v.colorId) } }
+                : { disconnect: true },
+
+              size: v.sizeId
+                ? { connect: { id: parseInt(v.sizeId) } }
+                : { disconnect: true },
+
+              videoUrl: v.videoUrl || null,
+              videoThumbnail: v.videoThumbnail || null,
             },
           });
 
@@ -230,9 +269,25 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               price: parseFloat(v.price),
               stock: parseInt(v.stock),
               isActive: v.isActive ?? true,
-              colorId: v.colorId ? parseInt(v.colorId) : null,
-              sizeId: v.sizeId ? parseInt(v.sizeId) : null,
-              productId,
+              // colorId: v.colorId ? parseInt(v.colorId) : null,
+              // sizeId: v.sizeId ? parseInt(v.sizeId) : null,
+
+              color: v.colorId
+                ? { connect: { id: parseInt(v.colorId) } }
+                : undefined,
+
+              size: v.sizeId
+                ? { connect: { id: parseInt(v.sizeId) } }
+                : undefined,
+
+              products: {
+                connect: { id: productId },
+              },
+
+              videoUrl: v.videoUrl || null,
+              videoThumbnail: v.videoThumbnail || null,
+
+              // productId,
             },
           });
 

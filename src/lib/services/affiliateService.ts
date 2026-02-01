@@ -132,7 +132,28 @@ export const affiliateService = {
     }
 
     return data;
-  }
+  },
+
+  async getBankAccount(token: string) {
+    const res = await fetch("/api/affiliates/bank-account", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const r = await res.json();
+    return r.data;
+  },
+
+  async saveBankAccount(token: string, data: any) {
+    const res = await fetch("/api/affiliates/bank-account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  },
+
 
 
 };

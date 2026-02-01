@@ -420,3 +420,28 @@ select:not(.MuiInputBase-input):focus {
   margin-top: -1px;
   /* removes hover gap */
 }
+
+
+/* =============== filter section on the product details page start ====== */
+
+.no-input-decoration {
+
+  /* Remove number input arrows */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    /* Firefox */
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+
+}
+
+
+/* =============== filter section on the product details page end ====== */

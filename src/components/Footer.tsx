@@ -173,7 +173,7 @@ export default function Footer() {
       {/* Bottom Copyright Row */}
       <div className="border-t border-white/20">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex items-center justify-center text-center text-xs text-white/80">
-          © {new Date().getFullYear()} Gazaarabia. All Rights Reserved.
+           &copy; {new Date().getFullYear()} Gazaarabia. All Rights Reserved.
         </div>
       </div>
     </footer>

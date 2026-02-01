@@ -16,6 +16,7 @@ import {
     UserCircle,
     Package,
     BadgeDollarSign,
+    CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -28,6 +29,7 @@ const affiliateLinks = [
     { href: "/affiliate/coupons", label: "coupons", icon: TicketPercent },
     { href: "/affiliate/orders", label: "My Orders", icon: ShoppingCart },
     { href: "/affiliate/earnings", label: "Earnings", icon: Tag },
+    { href: "/affiliate/bank-details", label: "Bank details", icon: CreditCard },
     // { href: "/affiliate/payouts", label: "Payouts", icon: ClipboardList },
     // { href: "/affiliate/settings", label: "Settings", icon: Settings },
     // { href: "/affiliate/support", label: "Support", icon: MessageSquare },
@@ -199,7 +201,7 @@ export default function AffiliateSidebar({
                                 <LogOut size={18} />
                             ) : (
                                 <>
-                                    <span>© {new Date().getFullYear()} Gazaarabia</span>
+                                    <span> &copy; {new Date().getFullYear()} Gazaarabia</span>
                                     <div className="flex items-center gap-2">
                                         <LogOut size={16} />
                                         <span>Logout</span>
