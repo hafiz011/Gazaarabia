@@ -86,16 +86,16 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
 
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (overrideFilters = filters) => {
     try {
       setLoading(true);
       const data: any = await shopService.getShopData(
         token || "", //  use token only if available
         slug,
         currentPage,
-        8,
+        20,
         {
-          ...filters,
+          ...overrideFilters,
           sort,
         }
       );
@@ -203,17 +203,17 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
               <span>Sort</span>
               {showSort ? (
                 <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
-                <ChevronUp size={14} className="opacity-60" />
+                  <ChevronUp size={14} className="opacity-60" />
                 </span>
               ) : (
-                 <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
-                <ChevronDown size={14} className="opacity-60" />
+                <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
+                  <ChevronDown size={14} className="opacity-60" />
                 </span>
               )}
             </button>
 
-              {/*  Divider (desktop only) */}
-    <div className="hidden md:block w-px h-4 bg-black/20 mx-6" />
+            {/*  Divider (desktop only) */}
+            <div className="hidden md:block w-px h-4 bg-black/20 mx-6" />
 
             {/* FILTER BUTTON */}
             <button
@@ -228,12 +228,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 Filters{appliedFilterCount > 0 && ` (${appliedFilterCount})`}
               </span>
               {showFilters ? (
-                  <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
-                <ChevronUp size={14} className="opacity-60" />
+                <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
+                  <ChevronUp size={14} className="opacity-60" />
                 </span>
               ) : (
-                  <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
-                <ChevronDown size={14} className="opacity-60" />
+                <span className={`transition-transform ${showSort ? "rotate-180" : ""}`}>
+                  <ChevronDown size={14} className="opacity-60" />
                 </span>
               )}
             </button>
@@ -296,6 +296,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                     >
                       <input
                         type="checkbox"
+                        checked={filters.availability.includes(v)}
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
@@ -325,6 +326,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       {/* <span className="w-4 h-4 border border-black/40 flex items-center justify-center group-hover:border-black transition"> */}
                       <input
                         type="checkbox"
+                        checked={filters.subcategories.includes(cat.id)}
                         onChange={() =>
                           setFilters((prev) => ({
                             ...prev,
@@ -356,6 +358,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                       {/* <span className="w-4 h-4 border border-black/40 flex items-center justify-center group-hover:border-black transition"> */}
                       <input
                         type="checkbox"
+                        checked={filters.sizes.includes(size.id)}
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
@@ -387,6 +390,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
                       <input
                         type="checkbox"
+                        checked={filters.colors.includes(color.id)}
                         onChange={() =>
                           setFilters((prev) => ({
                             ...prev,
@@ -536,17 +540,19 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
               <button
                 onClick={() => {
-                  setFilters({
+                  const resetFilters = {
                     availability: [],
                     sizes: [],
                     colors: [],
                     subcategories: [],
                     priceMin: 0,
                     priceMax: 1000,
-                  });
+                  };
+
+                  setFilters(resetFilters);
                   setPrice([0, 1000]);
                   setCurrentPage(1);
-                  fetchProducts();
+                  fetchProducts(resetFilters);
                 }}
               >
                 Reset filters
