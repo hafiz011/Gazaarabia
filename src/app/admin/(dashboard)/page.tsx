@@ -19,12 +19,46 @@ import {
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 import { dashboardService } from "@/lib/services/dashboardService";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
+
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const ordersChartData = dashboardData?.charts?.ordersOverTime
+    ? Object.entries(dashboardData.charts.ordersOverTime).map(
+      ([date, count]: any) => ({
+        date,
+        orders: count,
+      })
+    )
+    : [];
+
+  const revenueChartData = dashboardData?.charts?.revenueOverTime
+    ? Object.entries(dashboardData.charts.revenueOverTime).map(
+      ([date, amount]: any) => ({
+        date,
+        revenue: amount,
+      })
+    )
+    : [];
+
+  const orderStatusData = dashboardData?.charts?.orderStatus || [];
+
 
   useEffect(() => {
     if (status === "loading") return;
@@ -73,7 +107,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      {/* 📌 Quick Access Cards */}
+      {/*  Quick Access Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
         {sections.map((item) => (
           <button
@@ -94,7 +128,41 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* 📝 Recent Blogs */}
+      {/*  Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Orders Over Time */}
+        <div className="bg-white rounded-xl p-6 border border-[var(--soft-gray)] shadow-sm">
+          <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">
+            Orders Over Time
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={ordersChartData}>
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="orders" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Revenue Over Time */}
+        <div className="bg-white rounded-xl p-6 border border-[var(--soft-gray)] shadow-sm">
+          <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">
+            Revenue Over Time
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={revenueChartData}>
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="revenue" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+
+      {/* Recent Blogs */}
       <div className="bg-[var(--white)] rounded-xl shadow p-6 border border-[var(--soft-gray)] mt-8">
         <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Recent Blogs</h3>
         <div className="divide-y divide-[var(--soft-gray)]">
@@ -108,7 +176,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push(`/admin/blogs/form/${blog.id}`)} 
+                  onClick={() => router.push(`/admin/blogs/form/${blog.id}`)}
                   className="px-3 py-1 text-sm rounded-md border border-[var(--mid-gray)] text-[var(--text-primary)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] transition"
                 >
                   View

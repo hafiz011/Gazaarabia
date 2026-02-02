@@ -60,6 +60,44 @@ export async function GET(req: Request) {
       select: { id: true, title: true, createdAt: true },
     });
 
+    /* ================= ORDERS OVER TIME ================= */
+    const ordersOverTimeRaw = await prisma.orders.findMany({
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const ordersOverTime = ordersOverTimeRaw.reduce((acc: any, item) => {
+      const date = item.createdAt.toISOString().split("T")[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+    /* ================= REVENUE OVER TIME ================= */
+    const revenueOverTimeRaw = await prisma.orders.findMany({
+      select: {
+        createdAt: true,
+        totalAmount: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const revenueOverTime = revenueOverTimeRaw.reduce((acc: any, item) => {
+      const date = item.createdAt.toISOString().split("T")[0];
+      acc[date] = (acc[date] || 0) + item.totalAmount;
+      return acc;
+    }, {});
+
+
+    /* ================= ORDER STATUS ================= */
+    const orderStatus = await prisma.orders.groupBy({
+      by: ["status"],
+      _count: { id: true },
+    });
+
+
+
+
+
     return NextResponse.json({
       blogs,
       blogCategories,
@@ -74,6 +112,11 @@ export async function GET(req: Request) {
       users,
       orders,
       recentBlogs,
+      charts: {
+        ordersOverTime,
+        revenueOverTime,
+        orderStatus,
+      },
     });
   } catch (error) {
     console.error("DASHBOARD API ERROR:", error);
