@@ -18,6 +18,7 @@ import { subcategoryService } from "@/lib/services/subcategoryService";
 import { blogCategoryService } from "@/lib/services/blogCategoryService";
 import { useSession } from "next-auth/react";
 import AlertMessage from "@/components/AlertMessage";
+import { generateSlug } from "@/lib/utils";
 
 export default function SubmenusFormPage() {
   const { data: session } = useSession();
@@ -45,6 +46,9 @@ export default function SubmenusFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<any>({ isOpen: false });
   const [loading, setLoading] = useState(true);
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
 
   // ======= LOAD DATA =======
   useEffect(() => {
@@ -79,6 +83,7 @@ export default function SubmenusFormPage() {
             leftCustomLinks: sm.leftCustomLinks || [],
             rightCustomLinks: sm.rightCustomLinks || [],
           });
+          setIsSlugEdited(true);
         }
       }
     } catch (err) {
@@ -125,6 +130,16 @@ export default function SubmenusFormPage() {
     const field = side === "left" ? "leftCustomLinks" : "rightCustomLinks";
     const updated = [...form[field]];
     updated[index][key] = value;
+
+    // ---- AUTO SLUG FOR CUSTOM LINKS ----
+    if (key === "name") {
+      updated[index].slug = generateSlug(value);
+    }
+
+    if (key === "slug") {
+      updated[index].slug = generateSlug(value);
+    }
+
     setForm({ ...form, [field]: updated });
   };
 
@@ -144,6 +159,35 @@ export default function SubmenusFormPage() {
       });
       return;
     }
+
+    // ---- SLUG VALIDATION ----
+    const slug = form.slug?.trim();
+
+    if (!slug) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug is required.",
+      });
+    }
+
+    if (slug.length < 3 || slug.length > 100) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug must be between 3 and 100 characters.",
+      });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message:
+          "Slug can only contain lowercase letters, numbers and hyphens.",
+      });
+    }
+
 
     try {
       setSubmitting(true);
@@ -171,6 +215,8 @@ export default function SubmenusFormPage() {
           leftCustomLinks: [],
           rightCustomLinks: [],
         });
+        setIsSlugEdited(false);
+
       }
       setTimeout(() => router.push("/admin/submenus"), 1200);
     } catch (err: any) {
@@ -211,7 +257,21 @@ export default function SubmenusFormPage() {
           fullWidth
           required
           value={form.name}
-          onChange={handleChange}
+
+          onChange={(e) => {
+            const value = e.target.value;
+
+            setForm((prev: any) => {
+              const updated = { ...prev, name: value };
+
+              if (!isSlugEdited) {
+                updated.slug = generateSlug(value.trim());
+              }
+
+              return updated;
+            });
+          }}
+
         />
 
         <TextField
@@ -220,7 +280,14 @@ export default function SubmenusFormPage() {
           fullWidth
           required
           value={form.slug}
-          onChange={handleChange}
+          onChange={(e) => {
+            setIsSlugEdited(true);
+            setForm((prev: any) => ({
+              ...prev,
+              slug: generateSlug(e.target.value),
+            }));
+          }}
+
         />
 
         <TextField
@@ -458,15 +525,14 @@ export default function SubmenusFormPage() {
           <button
             type="submit"
             disabled={submitting}
-            className={`${
-              submitting ? "opacity-70 cursor-not-allowed" : ""
-            } bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white font-medium px-6 py-2 rounded-md shadow transition`}
+            className={`${submitting ? "opacity-70 cursor-not-allowed" : ""
+              } bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white font-medium px-6 py-2 rounded-md shadow transition`}
           >
             {submitting
               ? "Saving..."
               : submenuId
-              ? "Update Submenu"
-              : "Save Submenu"}
+                ? "Update Submenu"
+                : "Save Submenu"}
           </button>
         </div>
       </form>

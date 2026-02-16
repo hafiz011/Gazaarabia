@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
+import { generateSlug } from "@/lib/utils";
 
 export default function SubcategoryListPage() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -20,6 +21,9 @@ export default function SubcategoryListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
 
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
@@ -71,6 +75,7 @@ export default function SubcategoryListPage() {
       setFormCategoryId(null);
       setEditId(null);
       setIsEditing(false);
+      setIsSlugEdited(false);
       setIsModalOpen(true);
       clearModal();
     }
@@ -127,6 +132,35 @@ export default function SubcategoryListPage() {
     e.preventDefault();
     if (!formName.trim() || !formSlug.trim() || !formCategoryId || !token) return;
 
+    if (!formSlug.trim()) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Slug is required.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
+
+    if (formSlug.length < 3 || formSlug.length > 100) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Slug must be between 3 and 100 characters.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(formSlug)) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message:
+          "Slug can only contain lowercase letters, numbers and hyphens.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
+
+
     try {
       if (isEditing && editId) {
         await subcategoryService.update(token, editId, {
@@ -171,6 +205,7 @@ export default function SubcategoryListPage() {
     setFormCategoryId(subcategory.categoryId);
     setEditId(subcategory.id);
     setIsEditing(true);
+    setIsSlugEdited(true); // stop auto
     setIsModalOpen(true);
   };
 
@@ -323,7 +358,15 @@ export default function SubcategoryListPage() {
               </label>
               <input
                 value={formName}
-                onChange={(e) => setFormName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormName(value);
+
+                  // ---- AUTO SLUG ----
+                  if (!isSlugEdited) {
+                    setFormSlug(generateSlug(value));
+                  }
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. Men's Wear"
               />
@@ -333,7 +376,10 @@ export default function SubcategoryListPage() {
               </label>
               <input
                 value={formSlug}
-                onChange={(e) => setFormSlug(e.target.value)}
+                onChange={(e) => {
+                  setIsSlugEdited(true);
+                  setFormSlug(generateSlug(e.target.value));
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. Men's Wear"
               />

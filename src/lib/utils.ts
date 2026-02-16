@@ -40,3 +40,14 @@ export function formatSoldDuration(hours: number | null | undefined) {
     const days = Math.floor(hours / 24);
     return `${days} day${days > 1 ? "s" : ""}`;
 }
+
+
+// ---- SLUG GENERATOR ----
+export const generateSlug = (text: string) => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+};

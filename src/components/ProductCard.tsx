@@ -16,12 +16,12 @@ interface ProductCardProps {
   onCardClick?: () => void;
 }
 
-export default function ProductCard({ product, onWishlistToggle , onCardClick}: ProductCardProps) {
+export default function ProductCard({ product, onWishlistToggle, onCardClick }: ProductCardProps) {
   const router = useRouter();
   const [wishlist, setWishlist] = useState(product.isInWishlist);
 
   const handleCardClick = () => {
-    onCardClick?.(); 
+    onCardClick?.();
     router.push(`/products/${product.slug}`);
   };
 
@@ -35,12 +35,26 @@ export default function ProductCard({ product, onWishlistToggle , onCardClick}: 
   const soldDurationLabel = formatSoldDuration(product.soldHighlightDuration);
 
   return (
+    // <div
+    //   onClick={handleCardClick}
+    //   // className="group flex flex-col w-full max-w-full sm:max-w-[280px] cursor-pointer"
+    //  className="group flex flex-col w-full cursor-pointer"
+
+
+    // >
+
     <div
       onClick={handleCardClick}
-      className="group flex flex-col w-full max-w-full sm:max-w-[280px] cursor-pointer"
+      className="group flex flex-col items-center w-full cursor-pointer min-w-0"
     >
+
+
+
       {/* --- Image Section --- */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300">
+      {/* <div className="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300"> */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-50
+
+ duration-300">
 
         {/* Wishlist Button */}
         <button
@@ -63,28 +77,46 @@ export default function ProductCard({ product, onWishlistToggle , onCardClick}: 
         )}
 
         {/* Images */}
-        <Swiper
+        {/* <Swiper
           modules={[Pagination]}
           pagination={{ clickable: true }}
           className="w-full h-full"
+        > */}
+        <Swiper
+          modules={[Pagination]}
+          pagination={{ clickable: true }}
+          className="w-full h-full overflow-hidden"
         >
+
           {product.productimage.map((img: any, index: number) => (
             <SwiperSlide key={index}>
-              <img
+              {/* <img
                 src={img.url}
                 alt={product.title}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              /> */}
+
+              <img
+                src={img.url}
+                alt={product.title}
+                className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105"
               />
+
+
             </SwiperSlide>
           ))}
         </Swiper>
       </div>
 
       {/* --- Content Section --- */}
-      <div className="pt-4 px-1 text-center">
+      {/* <div className="pt-4 px-1 text-center"> */}
+
+      <div className="pt-3 pb-3 text-center">
+
+
 
         {/* Product Title */}
-        <h3 className="text-[15px] md:text-[16px] font-semibold text-gray-900 line-clamp-1">
+        <h3 className="text-[15px] md:text-[16px] font-semibold text-gray-900 line-clamp-2">
           {product.title}
         </h3>
 

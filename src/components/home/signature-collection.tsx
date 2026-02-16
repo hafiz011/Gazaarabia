@@ -65,7 +65,7 @@ export default function SignatureCollection({ products }: SignatureProductsProps
             className="!overflow-visible w-full"
           >
             {products.map((p, i) => (
-              <SwiperSlide key={i} className="!w-auto" onClick={() => { handleCardClick(p) }}>
+              <SwiperSlide key={i} className="!w-[260px] sm:!w-[280px] md:!w-[300px]" onClick={() => { handleCardClick(p) }}>
                 <motion.div
                   className="overflow-hidden rounded-2xl bg-[#F8F8F8] group shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-all duration-700"
                   initial={{ opacity: 0, y: 40 }}
@@ -86,9 +86,10 @@ export default function SignatureCollection({ products }: SignatureProductsProps
 
                   {/* Info */}
                   <div className="p-5 text-center">
-                    <h3 className="font-medium text-[var(--text-primary)] text-base md:text-lg mb-1 group-hover:text-[var(--brand-secondary)] transition-colors duration-300">
+                    <h3 className="font-medium text-[var(--text-primary)] text-base md:text-lg mb-1 group-hover:text-[var(--brand-secondary)] transition-colors duration-300 line-clamp-2 min-h-[48px]">
                       {p.title}
                     </h3>
+
                     <p className="text-[var(--brand-primary)] font-semibold text-sm md:text-base">
                       £{p.sellingPrice}
                     </p>

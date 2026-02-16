@@ -39,23 +39,53 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const ordersChartData = dashboardData?.charts?.ordersOverTime
-    ? Object.entries(dashboardData.charts.ordersOverTime).map(
-      ([date, count]: any) => ({
-        date,
-        orders: count,
-      })
-    )
-    : [];
 
-  const revenueChartData = dashboardData?.charts?.revenueOverTime
-    ? Object.entries(dashboardData.charts.revenueOverTime).map(
-      ([date, amount]: any) => ({
-        date,
-        revenue: amount,
-      })
-    )
-    : [];
+
+  const DUMMY_ORDERS_CHART = [
+    { date: "2026-01-28", orders: 1 },
+    { date: "2026-01-29", orders: 3 },
+    { date: "2026-01-30", orders: 2 },
+    { date: "2026-01-31", orders: 5 },
+    { date: "2026-02-01", orders: 4 },
+    { date: "2026-02-02", orders: 2 },
+    { date: "2026-02-03", orders: 1 },
+  ];
+
+  const DUMMY_REVENUE_CHART = [
+    { date: "2026-01-28", revenue: 450 },
+    { date: "2026-01-29", revenue: 1200 },
+    { date: "2026-01-30", revenue: 800 },
+    { date: "2026-01-31", revenue: 2100 },
+    { date: "2026-02-01", revenue: 1600 },
+    { date: "2026-02-02", revenue: 2298 },
+    { date: "2026-02-03", revenue: 43 },
+  ];
+
+
+
+  const ordersChartData =
+    dashboardData?.charts?.ordersOverTime &&
+      Object.keys(dashboardData.charts.ordersOverTime).length > 0
+      ? Object.entries(dashboardData.charts.ordersOverTime).map(
+        ([date, count]: any) => ({
+          date,
+          orders: count,
+        })
+      )
+      : DUMMY_ORDERS_CHART;
+
+  const revenueChartData =
+    dashboardData?.charts?.revenueOverTime &&
+      Object.keys(dashboardData.charts.revenueOverTime).length > 0
+      ? Object.entries(dashboardData.charts.revenueOverTime).map(
+        ([date, amount]: any) => ({
+          date,
+          revenue: amount,
+        })
+      )
+      : DUMMY_REVENUE_CHART;
+
+
 
   const orderStatusData = dashboardData?.charts?.orderStatus || [];
 
@@ -96,6 +126,7 @@ export default function DashboardPage() {
     { key: "materialCares", label: "Material Cares", icon: <Droplets size={28} />, path: "/admin/material-cares" },
     { key: "products", label: "Products", icon: <ShoppingBag size={28} />, path: "/admin/products" },
   ];
+
 
   if (loading) {
     return <div className="p-6 text-center text-[var(--text-primary)]">Loading Dashboard...</div>;

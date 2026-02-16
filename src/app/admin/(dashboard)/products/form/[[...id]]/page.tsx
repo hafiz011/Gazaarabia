@@ -115,6 +115,19 @@ function ProductFormContent() {
     },
   };
 
+  // ---- SLUG GENERATOR ----
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "") // remove special chars
+      .replace(/\s+/g, "-") // spaces → dash
+      .replace(/-+/g, "-"); // remove duplicate dash
+  };
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
+
   //  Fetch dropdown data
   const fetchDropdownData = async () => {
     try {
@@ -208,11 +221,19 @@ function ProductFormContent() {
   //  Handle form input
   const handleInputChange = async (e: any) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setForm((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
 
+      // ---- AUTO SLUG FROM TITLE ----
+      if (name === "title" && !isSlugEdited) {
+        updated.slug = generateSlug(value);
+      }
+
+      return updated;
+    });
     // When category changes -> load its subcategories
     if (name === "categoryId") {
       setForm((prev) => ({ ...prev, subcategoryId: "" })); // reset subcategory
@@ -289,6 +310,36 @@ function ProductFormContent() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
+    // ---- SLUG VALIDATION ----
+    if (!form.slug.trim()) {
+      setPopup({
+        isOpen: true,
+        type: "warning",
+        message: "Slug is required.",
+      });
+      return;
+    }
+
+    if (form.slug.length < 5 || form.slug.length > 70) {
+      setPopup({
+        isOpen: true,
+        type: "warning",
+        message: "Slug must be between 5 and 70 characters.",
+      });
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(form.slug)) {
+      setPopup({
+        isOpen: true,
+        type: "warning",
+        message:
+          "Slug can only contain lowercase letters, numbers and hyphens.",
+      });
+      return;
+    }
+
+
     if (images.length === 0) {
       setPopup({
         isOpen: true,
@@ -344,7 +395,7 @@ function ProductFormContent() {
       setAlertMessage({
         isOpen: true,
         type: "error",
-        message: err.message || "Failed to save product.",
+        message: err.message || err?.error?.message || "Failed to save product.",
       });
     } finally {
       setSubmitting(false);
@@ -447,7 +498,7 @@ function ProductFormContent() {
   };
 
   // handle the video file change
-  const handleVideoFileChange = async (e:any,idx:number) => {
+  const handleVideoFileChange = async (e: any, idx: number) => {
 
     const file = e.target.files?.[0];
     if (!file) return;
@@ -462,7 +513,7 @@ function ProductFormContent() {
     }
 
     try {
-     const videoUrl = await uploadService.uploadVideo(file,"variant-videos");
+      const videoUrl = await uploadService.uploadVideo(file, "variant-videos");
 
       handleVariantChange(idx, "videoUrl", videoUrl);
       handleVariantChange(idx, "videoThumbnail", ""); // optional: auto-generate later
@@ -515,7 +566,10 @@ function ProductFormContent() {
             label={<RequiredLabel text="Slug" />}
             name="slug"
             value={form.slug}
-            onChange={handleInputChange}
+            onChange={(e) => {
+              setIsSlugEdited(true);
+              handleInputChange(e);
+            }}
             inputProps={{ required: true }}
             fullWidth
             sx={fieldStyle}
@@ -868,7 +922,7 @@ function ProductFormContent() {
                   type="file"
                   accept="video/mp4,video/webm"
                   className="hidden"
-                  onChange={(e) => handleVideoFileChange(e,idx)}
+                  onChange={(e) => handleVideoFileChange(e, idx)}
                 />
               </div>
 

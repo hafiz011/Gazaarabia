@@ -95,6 +95,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (body.title.length < 5 || body.title.length > 70) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Product title must be between 5 and 70 characters",
+        },
+        { status: 400 }
+      );
+    }
+
+
     // ---- VARIANT VIDEO VALIDATION (BEFORE DB CALL) ----
     if (Array.isArray(body.variants)) {
       for (const v of body.variants) {

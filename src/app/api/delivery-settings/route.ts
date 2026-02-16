@@ -29,15 +29,22 @@ export async function PUT(req: NextRequest) {
             include: { role: true },
         });
 
-        if (!user || user.role.name.toLowerCase() !== "admin")
+        if (!user || !user.role || user.role.name.toLowerCase() !== "admin") {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
 
         const body = await req.json();
 
-        const updated = await prisma.deliverySettings.update({
+        const updated = await prisma.deliverySettings.upsert({
             where: { id: 1 },
-            data: body,
+            update: body,
+            create: {
+                id: 1,
+                ...body,
+            },
         });
+
 
         return NextResponse.json({
             success: true,

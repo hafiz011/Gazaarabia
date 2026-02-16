@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
 import { uploadService } from "@/lib/services/uploadService";
+import { generateSlug } from "@/lib/utils";
 
 export default function CategoryListPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -27,6 +28,9 @@ export default function CategoryListPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [categoryImage, setCategoryImage] = useState<string | null>(null);
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
 
 
   const modalAction = useModalStore((state) => state.action);
@@ -83,6 +87,7 @@ export default function CategoryListPage() {
       setCategoryImage(null);
       setEditId(null);
       setIsEditing(false);
+      setIsSlugEdited(false);
       setIsModalOpen(true);
       clearModal();
     }
@@ -107,6 +112,36 @@ export default function CategoryListPage() {
     e.preventDefault();
     if (!formName.trim()) return;
     if (!formSlug.trim()) return;
+
+
+    if (!formSlug.trim()) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Category slug is required.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
+
+    // Length validation
+    if (formSlug.length < 3 || formSlug.length > 100) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Slug must be between 3 and 100 characters.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
+
+    // Format validation
+    if (!/^[a-z0-9-]+$/.test(formSlug)) {
+      return setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Slug can only contain lowercase letters, numbers and hyphens.",
+        onConfirm: () => setPopUpAlertData((p) => ({ ...p, isOpen: false })),
+      });
+    }
 
 
     // Image required check
@@ -168,6 +203,7 @@ export default function CategoryListPage() {
     setCategoryImage(category.image ?? null);
     setEditId(category.id);
     setIsEditing(true);
+    setIsSlugEdited(true);
     setIsModalOpen(true);
   };
 
@@ -332,7 +368,15 @@ export default function CategoryListPage() {
               </label>
               <input
                 value={formName}
-                onChange={(e) => setFormName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormName(value);
+
+                  // ---- AUTO SLUG ----
+                  if (!isSlugEdited) {
+                    setFormSlug(generateSlug(value));
+                  }
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. T-Shirts"
               />
@@ -343,7 +387,10 @@ export default function CategoryListPage() {
               </label>
               <input
                 value={formSlug}
-                onChange={(e) => setFormSlug(e.target.value)}
+                onChange={(e) => {
+                  setIsSlugEdited(true);
+                  setFormSlug(generateSlug(e.target.value)); // clean slug
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. T-Shirts"
               />

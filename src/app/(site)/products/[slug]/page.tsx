@@ -323,9 +323,12 @@ export default function ProductDetails() {
           {/* ========================== PRODUCT SECTION ========================== */}
           <section className="max-w-[1600px] mx-auto px-4 lg:px-6 pt-20 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-[var(--background)]">
             {/*  IMAGES */}
-            <div className="relative flex flex-col md:flex-row gap-4 items-start md:h-[700px]">
+            <div className="relative flex flex-col md:flex-row gap-4 items-center md:items-start md:h-[700px]">
               {/* Thumbnails */}
-              <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto">
+              {/* <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto"> */}
+                
+                <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto justify-center">
+
                 {/* {images.map((img: any, index: number) => (
                   <button
                     key={index}
@@ -419,7 +422,9 @@ export default function ProductDetails() {
 
               <div
                 ref={imgRef}
-                className={`order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent  ${hasVideo && activeThumb === 0 ? "cursor-default" : "cursor-crosshair"}`}
+                // className={`order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent  ${hasVideo && activeThumb === 0 ? "cursor-default" : "cursor-crosshair"}`}
+               
+               className="order-1 md:order-2 relative w-full md:flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center bg-transparent"
                 onMouseEnter={() => !isMobile && setZoomVisible(true)}
                 onMouseLeave={() => !isMobile && setZoomVisible(false)}
                 onMouseMove={(e) => !isMobile && handleMouseMove(e)}

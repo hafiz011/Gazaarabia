@@ -69,8 +69,10 @@ export const productService = {
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error("Failed to update product");
-    return await res.json();
+    const responseData = await res.json();
+
+    if (!res.ok)  throw new Error(responseData?.message || "Failed to update product");
+    return responseData;
   },
 
   async remove(token: string, id: number) {

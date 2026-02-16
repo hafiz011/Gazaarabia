@@ -121,6 +121,27 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const body = await req.json();
 
+    // ---- TITLE VALIDATION ----
+    if (!body.title || typeof body.title !== "string") {
+      return NextResponse.json(
+        { success: false, message: "Product title is required" },
+        { status: 400 }
+      );
+    }
+
+    const trimmedTitle = body.title.trim();
+
+    if (trimmedTitle.length < 5 || trimmedTitle.length > 70) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Product title must be between 5 and 70 characters",
+        },
+        { status: 400 }
+      );
+    }
+
+
 
     // 3️. Update main product
     const updated = await prisma.products.update({

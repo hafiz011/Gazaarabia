@@ -175,7 +175,9 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   return (
     <>
       {loading && <Loader />}
-      <section className="bg-[var(--background)] min-h-screen">
+      {/* <section className="bg-[var(--background)] min-h-screen"> */}
+      <section className="bg-[var(--background)] min-h-screen overflow-x-hidden">
+
         <CategoryHeader
           selectedSlug={slug}
           title={slug.replace(/-/g, " ")}
@@ -566,7 +568,11 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
         {/* <div className="max-w-[1600px] mx-auto px-2 md:px-4 lg:px-6 py-8"> */}
 
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-8 overflow-x-hidden">
+        {/* <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-8 overflow-x-hidden"> */}
+        {/* <div className="w-full max-w-[1600px] mx-auto px-2 md:px-4 py-6
+
+ overflow-x-hidden"> */}
+        <div className="w-full max-w-[1600px] mx-auto px-3 md:px-4 py-6 overflow-x-hidden">
 
           {products.length === 0 && !loading ? (
             <NoData message="No products found for this category." />
@@ -586,7 +592,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
               > */}
 
 
-              <div
+              {/* <div
                 className="
     grid 
     grid-cols-2
@@ -599,7 +605,32 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     justify-items-stretch
     w-full
   "
+              > */}
+
+              <div
+                className="
+    grid 
+    grid-cols-2
+    sm:grid-cols-2
+    md:grid-cols-3
+    lg:grid-cols-3
+    xl:grid-cols-4
+    2xl:grid-cols-5
+    gap-[6px]
+    w-full
+    min-w-0
+  "
               >
+
+
+
+                {/* {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onWishlistToggle={handleWishlistToggle}
+                  />
+                ))} */}
 
                 {products.map((product) => (
                   <ProductCard

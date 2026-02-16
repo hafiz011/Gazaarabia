@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { Image as ImageIcon, Delete as DeleteIcon, UploadFile } from "@mui/icons-material";
 import AlertMessage from "@/components/AlertMessage";
+import { generateSlug } from "@/lib/utils";
 
 export default function MenusFormPage() {
   const { data: session } = useSession();
@@ -34,6 +35,9 @@ export default function MenusFormPage() {
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
+
+
   useEffect(() => {
     if (token && menuId) fetchMenu();
     else setLoading(false);
@@ -42,7 +46,11 @@ export default function MenusFormPage() {
   const fetchMenu = async () => {
     try {
       const res: any = await menuService.getById(token!, menuId!);
-      if (res.success) setForm(res.data);
+      if (res.success) {
+        setForm(res.data);
+        setIsSlugEdited(true);
+      }
+
     } catch (err) {
       console.error("Error fetching menu:", err);
     } finally {
@@ -50,8 +58,21 @@ export default function MenusFormPage() {
     }
   };
 
-  const handleChange = (e: any) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      // ---- AUTO SLUG ----
+      if (name === "name" && !isSlugEdited) {
+        updated.slug = generateSlug(value);
+      }
+
+      return updated;
+    });
+  };
+
 
   const handleFileChange = async (e: any) => {
     const files: any = Array.from(e.target.files || []);
@@ -73,6 +94,34 @@ export default function MenusFormPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
+
+      // ---- SLUG VALIDATION ----
+      if (!form.slug.trim()) {
+        return setAlert({
+          isOpen: true,
+          type: "error",
+          message: "Slug is required.",
+        });
+      }
+
+      if (form.slug.length < 3 || form.slug.length > 100) {
+        return setAlert({
+          isOpen: true,
+          type: "error",
+          message: "Slug must be between 3 and 100 characters.",
+        });
+      }
+
+      if (!/^[a-z0-9-]+$/.test(form.slug)) {
+        return setAlert({
+          isOpen: true,
+          type: "error",
+          message:
+            "Slug can only contain lowercase letters, numbers and hyphens.",
+        });
+      }
+
+
       setSubmitting(true);
       if (menuId) {
         await menuService.update(token!, menuId, form);
@@ -81,6 +130,7 @@ export default function MenusFormPage() {
         await menuService.create(token!, form);
         setAlert({ isOpen: true, type: "success", message: "Menu created successfully!" });
         setForm({ name: "", slug: "", type: "", images: [] });
+        setIsSlugEdited(false);
       }
       setTimeout(() => router.push("/admin/menus"), 1200);
     } catch (err: any) {
@@ -126,7 +176,13 @@ export default function MenusFormPage() {
           fullWidth
           required
           value={form.slug}
-          onChange={handleChange}
+          onChange={(e) => {
+            setIsSlugEdited(true);
+            setForm((prev) => ({
+              ...prev,
+              slug: generateSlug(e.target.value),
+            }));
+          }}
         />
         <TextField
           name="type"
