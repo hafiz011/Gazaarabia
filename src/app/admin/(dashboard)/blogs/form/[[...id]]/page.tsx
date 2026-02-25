@@ -20,6 +20,7 @@ import { blogCategoryService } from "@/lib/services/blogCategoryService";
 import type { Category } from "@/lib/services/categoryService";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
+import { generateSlug } from "@/lib/utils";
 
 export default function AddOrEditBlogPage() {
   const router = useRouter();
@@ -41,6 +42,8 @@ export default function AddOrEditBlogPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
 
   const [alert, setAlert] = useState<{ isOpen: boolean; type: "success" | "error" | ""; message: string }>({
     isOpen: false,
@@ -101,6 +104,7 @@ export default function AddOrEditBlogPage() {
           categoryId: String(data.categoryId),
         });
         setPreviewImage(data.image);
+        setIsSlugEdited(true);
       } catch (err: any) {
         setAlert({
           isOpen: true,
@@ -114,7 +118,20 @@ export default function AddOrEditBlogPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    // setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      // ---- AUTO SLUG ----
+      if (name === "title" && !isSlugEdited) {
+        updated.slug = generateSlug(value);
+      }
+
+      return updated;
+    });
+
+
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -158,6 +175,35 @@ export default function AddOrEditBlogPage() {
       return;
     }
 
+
+    // ---- SLUG VALIDATION ----
+    if (!form.slug.trim()) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug is required.",
+      });
+    }
+
+    if (form.slug.length < 3 || form.slug.length > 100) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug must be between 3 and 100 characters.",
+      });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(form.slug)) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message:
+          "Slug can only contain lowercase letters, numbers and hyphens.",
+      });
+    }
+
+
+
     try {
       setLoading(true);
       const token = session?.user?.token as string;
@@ -182,6 +228,7 @@ export default function AddOrEditBlogPage() {
           categoryId: Number(form.categoryId),
         });
         setAlert({ isOpen: true, type: "success", message: "Blog added successfully!" });
+        setIsSlugEdited(true);
       }
 
       setTimeout(() => router.push("/admin/blogs"), 1200);
@@ -226,7 +273,13 @@ export default function AddOrEditBlogPage() {
               required
               name="slug"
               value={form.slug}
-              onChange={handleChange}
+              onChange={(e) => {
+                setIsSlugEdited(true);
+                setForm((prev) => ({
+                  ...prev,
+                  slug: generateSlug(e.target.value),
+                }));
+              }}
               fullWidth
               sx={fieldStyle}
             />

@@ -11,6 +11,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
+import { generateSlug } from "@/lib/utils";
+import AlertMessage from "@/components/AlertMessage";
 
 export default function FaqCategoryListPage() {
   const [faqCategories, setFaqCategories] = useState<FaqCategory[]>([]);
@@ -23,7 +25,12 @@ export default function FaqCategoryListPage() {
   const [formSlug, setFormSlug] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const [alert, setAlert] = useState<any>({ isOpen: false });
+
   const [editId, setEditId] = useState<number | null>(null);
+
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
 
   const modalAction = useModalStore((state) => state.action);
   const clearModal = useModalStore((state) => state.clearModal);
@@ -99,7 +106,41 @@ export default function FaqCategoryListPage() {
   //  Add / Update FAQ Category
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formSlug.trim()) return;
+
+    if (!formName.trim()) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Name is required.",
+      });
+    }
+
+    // ---- SLUG VALIDATION ----
+    if (!formSlug.trim()) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug is required.",
+      });
+    }
+
+    if (formSlug.length < 3 || formSlug.length > 100) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Slug must be between 3 and 100 characters.",
+      });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(formSlug)) {
+      return setAlert({
+        isOpen: true,
+        type: "error",
+        message:
+          "Slug can only contain lowercase letters, numbers and hyphens.",
+      });
+    }
+
 
     try {
       if (isEditing && editId) {
@@ -121,6 +162,7 @@ export default function FaqCategoryListPage() {
           message: "FAQ Category added successfully!",
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
+        setIsSlugEdited(false)
       }
       setIsModalOpen(false);
       fetchFaqCategories();
@@ -140,6 +182,7 @@ export default function FaqCategoryListPage() {
     setFormSlug(category.slug);
     setEditId(category.id);
     setIsEditing(true);
+    setIsSlugEdited(true);
     setIsModalOpen(true);
   };
 
@@ -282,13 +325,32 @@ export default function FaqCategoryListPage() {
             <h2 className="text-lg font-semibold mb-4">
               {isEditing ? "Edit FAQ Category" : "Add FAQ Category"}
             </h2>
+
+            {alert.isOpen && (
+              <div className="mt-6">
+                <AlertMessage
+                  type={alert.type}
+                  message={alert.message}
+                  onClose={() => setAlert({ isOpen: false })}
+                />
+              </div>
+            )}
+
             <form onSubmit={handleSubmit}>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Category Name <span className="text-red-500">*</span>
               </label>
               <input
                 value={formName}
-                onChange={(e) => setFormName(e.target.value)}
+                onChange={(e) => {
+                  setFormName(e.target.value);
+
+                  // ---- AUTO SLUG ----
+                  if (!isSlugEdited) {
+                    setFormSlug(generateSlug(e.target.value))
+                  }
+
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. Shipping"
               />
@@ -298,7 +360,10 @@ export default function FaqCategoryListPage() {
               </label>
               <input
                 value={formSlug}
-                onChange={(e) => setFormSlug(e.target.value)}
+                onChange={(e) => {
+                  setIsSlugEdited(true);
+                  setFormSlug(generateSlug(e.target.value))
+                }}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. shipping"
               />
