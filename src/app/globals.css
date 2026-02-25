@@ -170,7 +170,7 @@ a {
   transform: scale(1.2);
 }
 
-/* ============= home pagwe end ============= */
+/* ============= home page end ============= */
 
 
 
@@ -445,3 +445,13 @@ select:not(.MuiInputBase-input):focus {
 
 
 /* =============== filter section on the product details page end ====== */
+
+
+
+ .backdrop-blur-xl .tracking-wide {
+    letter-spacing: .025em;
+    display: none !important;
+}
+ .backdrop-blur-xl .animate-dropdown {
+    margin-top: -26px;
+}

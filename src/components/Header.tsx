@@ -162,14 +162,17 @@ export default function Header() {
 
 
   return (
+
+
     <header
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
         ? isScrolled
-          ? "bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.05)] border-b border-white/30"   // scrolled
+          ? "bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.05)] border-b border-white/30 "
+          // scrolled
           : hovered
-            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] transition-all"  // hover
+            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] transition-all "  // hover
             : "bg-transparent"  // fresh hero section
         : "bg-white/70 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border-b border-gray-200"  // other pages
         }
@@ -182,8 +185,13 @@ export default function Header() {
         </div>
       } */}
 
+
       {/* {toolbarText && ( */}
-      <div className="bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10">
+      <div
+  className={`bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10 
+  transition-all duration-300 overflow-hidden
+  ${isScrolled ? "h-0 py-0 opacity-0" : "h-auto opacity-100"}`}
+>
         <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-between">
 
           {/* LEFT TEXT */}
@@ -210,7 +218,6 @@ export default function Header() {
         </div>
       </div>
       {/* )} */}
-
 
 
       {/* Main Header */}
@@ -449,13 +456,17 @@ export default function Header() {
                   </Link>
 
                   {/*  Mega Menu */}
+                  {/* {item.dropdown && ( */}
                   {item.dropdown && activeMenu === item.slug && (
                     // <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
 
                     <div
-                      className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40"
-                      onMouseEnter={() => setActiveMenu(item.slug)}  // keep open
-                      onMouseLeave={() => setActiveMenu(null)}       // close when user leaves mega menu
+                      className={`fixed left-0 right-0 top-[122px]
+                        ${isScrolled ? "-mt-[40px]" : ""}
+                         transition-all duration-300
+                          bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40`}
+                      onMouseEnter={() => setActiveMenu(item.slug)}
+                      onMouseLeave={() => setActiveMenu(null)}
                     >
                       <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
                         <div className="col-span-2 max-h-[55vh] overflow-y-auto pr-4">

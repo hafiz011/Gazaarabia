@@ -189,8 +189,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
         {/* ================= SORT + FILTER BAR ================= */}
         {/* <div className="w-full border-y border-gray-200 bg-[var(--background)]"> */}
-
-        <div className="w-full border-b border-black/10 bg-[var(--background)]">
+      <div className="w-full border-b border-black/10 bg-[var(--background)]">
           <div className="max-w-[1600px] mx-auto px-4 py-4 flex justify-between items-center text-sm uppercase tracking-wider">
 
             {/* SORT BUTTON */}
