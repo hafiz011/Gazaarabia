@@ -320,11 +320,11 @@ function ProductFormContent() {
       return;
     }
 
-    if (form.slug.length < 5 || form.slug.length > 70) {
+    if (form.slug.length < 5 || form.slug.length > 40) {
       setPopup({
         isOpen: true,
         type: "warning",
-        message: "Slug must be between 5 and 70 characters.",
+        message: "Slug must be between 5 and 40 characters.",
       });
       return;
     }

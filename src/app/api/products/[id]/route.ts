@@ -131,11 +131,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const trimmedTitle = body.title.trim();
 
-    if (trimmedTitle.length < 5 || trimmedTitle.length > 70) {
+    if (trimmedTitle.length < 5 || trimmedTitle.length > 40) {
       return NextResponse.json(
         {
           success: false,
-          message: "Product title must be between 5 and 70 characters",
+          message: "Product title must be between 5 and 40 characters",
         },
         { status: 400 }
       );

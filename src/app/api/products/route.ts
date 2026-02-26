@@ -95,11 +95,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (body.title.length < 5 || body.title.length > 70) {
+    if (body.title.length < 5 || body.title.length > 40) {
       return NextResponse.json(
         {
           success: false,
-          message: "Product title must be between 5 and 70 characters",
+          message: "Product title must be between 5 and 40 characters",
         },
         { status: 400 }
       );
