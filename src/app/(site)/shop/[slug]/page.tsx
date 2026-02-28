@@ -615,7 +615,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     lg:grid-cols-3
     xl:grid-cols-4
     2xl:grid-cols-5
-    gap-[6px]
+    gap-[4px]
     w-full
     min-w-0
   "

@@ -455,3 +455,16 @@ select:not(.MuiInputBase-input):focus {
  .backdrop-blur-xl .animate-dropdown {
     margin-top: -26px;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% }
+  100% { background-position: 200% }
+}
+
+.animate-gradient {
+  animation: gradient 6s linear infinite;
+}

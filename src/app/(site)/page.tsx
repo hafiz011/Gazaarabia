@@ -54,6 +54,21 @@ export default function HomeHero() {
     })();
   }, []);
 
+
+  useEffect(() => {
+    if (!loading) {
+      const hash = window.location.hash;
+      if (hash) {
+        const element = document.querySelector(hash);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: "smooth" });
+          }, 200); // small delay ensures UI rendered
+        }
+      }
+    }
+  }, [loading]);
+
   if (loading || !homeData) return <Loader />;
 
 
@@ -112,8 +127,9 @@ export default function HomeHero() {
         </section>
       }
 
-
-      <SignatureCollection products={products} />
+      <section id="signature-collection">
+        <SignatureCollection products={products} />
+      </section>
 
       {reviews.length > 0 && (
         <CustomerStories reviews={reviews} />
@@ -125,7 +141,9 @@ export default function HomeHero() {
 
       <MoreThanFashionSection />
 
+
       <WearTheChange />
+
 
       {/* Add Affiliate Section HERE */}
       <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />

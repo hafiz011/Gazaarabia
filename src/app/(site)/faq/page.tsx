@@ -370,7 +370,7 @@ export default function FaqPage() {
                 </div>
             </section>
 
-            {/* 📨 Contact CTA */}
+            {/*  Contact CTA */}
             <section className="py-20 bg-white text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--soft-gray)] to-transparent opacity-50"></div>
                 <div className="relative z-10 max-w-xl mx-auto">

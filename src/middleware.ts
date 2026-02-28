@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     const isAdminRoute =
         pathname.startsWith("/admin") && pathname !== "/admin/login";
     const isAffiliateRoute =
-        pathname.startsWith("/affiliate") && pathname !== "/affiliate/login";
+        pathname.startsWith("/affiliate") && pathname !== "/affiliate/login" && pathname !== "/affiliate/register";
 
     // ================= ADMIN ROUTES ====================
     if (isAdminRoute) {

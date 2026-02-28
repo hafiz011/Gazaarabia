@@ -5,7 +5,7 @@ export const productService = {
       // let url = `/api/products?page=${page}&pageSize=${pageSize}`;
       let url = `/api/products`;
       if (search) {
-        url += `&search=${encodeURIComponent(search)}`;
+        url += `?search=${encodeURIComponent(search)}`;
       }
 
       const res = await fetch(url, {

@@ -51,21 +51,32 @@ export default function SignatureCollection({ products }: SignatureProductsProps
         {/* Swiper Slider */}
         <div className="overflow-hidden w-full">
           <Swiper
+            grabCursor={true}
             modules={[Autoplay]}
             autoplay={{ delay: 4000, disableOnInteraction: false }}
-            spaceBetween={20}
-            slidesPerView={1.3}
+            spaceBetween={5}
+            slidesPerView={2.1} //Minimum 2 visible on mobile
             loop={true}
+            // breakpoints={{
+            //   480: { slidesPerView: 2 },
+            //   768: { slidesPerView: 3 },
+            //   1024: { slidesPerView: 4 },
+            //   1400: { slidesPerView: 5 },
+            // }}
             breakpoints={{
-              480: { slidesPerView: 2 },
+              480: { slidesPerView: 2.1 },
+              640: { slidesPerView: 2.4 },
               768: { slidesPerView: 3 },
               1024: { slidesPerView: 4 },
               1400: { slidesPerView: 5 },
             }}
+            speed={800}
             className="!overflow-visible w-full"
           >
             {products.map((p, i) => (
-              <SwiperSlide key={i} className="!w-[260px] sm:!w-[280px] md:!w-[300px]" onClick={() => { handleCardClick(p) }}>
+              // <SwiperSlide key={i} className="!w-[260px] sm:!w-[280px] md:!w-[300px]" onClick={() => { handleCardClick(p) }}>
+
+              <SwiperSlide key={i} onClick={() => handleCardClick(p)}>
                 <motion.div
                   className="overflow-hidden rounded-2xl bg-[#F8F8F8] group shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] transition-all duration-700"
                   initial={{ opacity: 0, y: 40 }}
@@ -74,13 +85,21 @@ export default function SignatureCollection({ products }: SignatureProductsProps
                   transition={{ delay: i * 0.15 }}
                 >
                   {/* Image */}
-                  <div className="overflow-hidden">
+                  {/* <div className="overflow-hidden aspect-[3/4]">
                     <Image
                       src={p.productimage?.[0]?.url}
                       alt={p.title}
                       width={400}
                       height={500}
                       className="object-cover w-full h-[420px] md:h-[450px] transition-transform duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-105"
+                    />
+                  </div> */}
+                  <div className="relative w-full aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={p.productimage?.[0]?.url}
+                      alt={p.title}
+                      fill
+                      className="object-cover transition-transform duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:scale-105"
                     />
                   </div>
 

@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FaGem, FaLeaf } from "react-icons/fa";
 
 
 export default function AboutPage() {
+    const router = useRouter();
     return (
         <main className="bg-[var(--background)] text-[var(--text-primary)]">
             {/*  HERO SECTION */}
@@ -119,7 +121,7 @@ export default function AboutPage() {
                         <div className="w-20 h-[3px] bg-[var(--green)] mb-6 rounded-full"></div>
 
                         <p className="text-[var(--text-secondary)] text-base md:text-lg mb-8 leading-relaxed">
-                            Aisha envisioned <span className="font-semibold text-[var(--brand-primary)]">Gazaarabia</span>
+                            Aisha envisioned <span className="font-semibold text-[var(--brand-primary)]">Gazaarabia </span>
                             not just as a brand, but as a movement. Her passion for culture, craftsmanship, and conscious creation
                             brings elegance to life — empowering women around the world through timeless design and meaningful stories.
                         </p>
@@ -179,7 +181,9 @@ export default function AboutPage() {
                         Be part of a global movement redefining modest fashion with purpose,
                         elegance, and cultural pride.
                     </p>
-                    <button className="px-10 py-3 bg-white text-[var(--brand-primary)] font-semibold rounded-full hover:bg-[var(--soft-gray)] transition shadow-lg">
+                    <button 
+                    onClick={()=>{router.push("/#signature-collection");}}
+                    className="px-10 py-3 bg-white text-[var(--brand-primary)] font-semibold rounded-full hover:bg-[var(--soft-gray)] transition shadow-lg">
                         Explore Collections
                     </button>
                 </div>
