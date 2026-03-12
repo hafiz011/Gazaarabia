@@ -5,14 +5,29 @@ import AffiliateSidebar from "./AffiliateSidebar";
 import AffiliateHeader from "./AffiliateHeader";
 
 export default function AffiliateLayout({ children }: { children: React.ReactNode }) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [collapsed, setCollapsed] = useState(false);
+
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
     //  Prevent background scroll when sidebar is open on mobile
     useEffect(() => {
-        if (sidebarOpen) document.body.style.overflow = "hidden";
-        else document.body.style.overflow = "auto";
-    }, [sidebarOpen]);
+        if (isMobile && sidebarOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [sidebarOpen, isMobile]);
+
+    useEffect(() => {
+        if (isMobile) {
+            setCollapsed(true)
+        }
+    }, [isMobile])
 
     return (
         <div className="flex min-h-screen bg-[#f5f6fa] relative">
@@ -28,7 +43,9 @@ export default function AffiliateLayout({ children }: { children: React.ReactNod
                 className={`flex flex-col flex-1 min-h-screen relative z-10 transition-all duration-300 ease-in-out`}
                 style={{
                     //  Shifts content when sidebar expands/collapses
-                    marginLeft: collapsed ? "80px" : "256px",
+                    // marginLeft: collapsed ? "80px" : "256px",
+                    marginLeft: sidebarOpen && collapsed ? "80px" : (!sidebarOpen && !collapsed ? "256px" : (!isMobile && !sidebarOpen && collapsed ? "80px" : !isMobile ? "256px" : "")),
+
                 }}
             >
                 {/*  Header (reuse admin or create affiliate-specific one) */}

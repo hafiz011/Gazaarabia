@@ -95,7 +95,7 @@ export default function AffiliateHeader({ onMenuToggle }: { onMenuToggle: () => 
                 current.action.href ? (
                     <Link
                         href={current.action.href}
-                        className="flex items-center gap-2 bg-[var(--brand-primary)] text-white text-sm font-medium px-4 py-2 rounded-md shadow-md hover:bg-[var(--brand-secondary)] transition"
+                        className="flex items-center gap-2 bg-[var(--brand-primary)] text-white text-sm font-medium px-4 py-2 rounded-md self-start shadow-md hover:bg-[var(--brand-secondary)] transition"
                     >
                         <Plus size={18} />
                         {current.action.label}
@@ -103,7 +103,7 @@ export default function AffiliateHeader({ onMenuToggle }: { onMenuToggle: () => 
                 ) : (
                     <button
                         onClick={handleActionClick}
-                        className="flex items-center gap-2 bg-[var(--brand-primary)] text-white text-sm font-medium px-4 py-2 rounded-md shadow-md hover:bg-[var(--brand-secondary)] transition"
+                        className="flex items-center gap-2 bg-[var(--brand-primary)] text-white text-sm font-medium px-4 py-2 rounded-md  self-start shadow-md hover:bg-[var(--brand-secondary)] transition"
                     >
                         <Plus size={18} />
                         {current.action.label}

@@ -196,7 +196,7 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
           /* Standard Link Button */
           <Link
             href={current.action.href}
-            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition
+            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition self-start
         ${current.action.type === "download"
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
@@ -213,7 +213,7 @@ export default function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void
           /* Modal-triggering Button */
           <button
             onClick={handleActionClick}
-            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition
+            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md shadow-md transition self-start
         ${current.action.type === "download"
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-secondary)]"
