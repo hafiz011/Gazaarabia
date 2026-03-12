@@ -18,7 +18,7 @@ import { sizeService } from "@/lib/services/sizeService";
 import { uploadService } from "@/lib/services/uploadService";
 import { materialCareService } from "@/lib/services/materialCareService";
 
-import { TextField, MenuItem, Box, Button } from "@mui/material";
+import { TextField, MenuItem, Box, Button, Autocomplete } from "@mui/material";
 import { ROUTES } from "@/constants/routes";
 import { ambassadorService } from "@/lib/services/ambassadorService";
 
@@ -587,7 +587,7 @@ function ProductFormContent() {
             value={form.description} onChange={handleInputChange} inputProps={{ required: true }}
             fullWidth multiline rows={3} sx={fieldStyle} />
 
-          <TextField select label={<RequiredLabel text="Care Advice" />} name="materialCareId"
+          {/* <TextField select label={<RequiredLabel text="Care Advice" />} name="materialCareId"
             value={form.materialCareId} onChange={handleInputChange} inputProps={{ required: true }}
             fullWidth sx={fieldStyle}>
             {careAdvices.map((care) => (
@@ -595,9 +595,27 @@ function ProductFormContent() {
                 {care.title} ({care.material})
               </MenuItem>
             ))}
-          </TextField>
+          </TextField> */}
 
-
+          <Autocomplete
+            options={careAdvices}
+            getOptionLabel={(option) => `${option.title} (${option.material})`}
+            value={careAdvices.find(c => c.id === form.materialCareId) || null}
+            onChange={(e, newValue) =>
+              setForm(prev => ({
+                ...prev,
+                materialCareId: newValue?.id || ""
+              }))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Care Advice"
+                required
+                sx={fieldStyle}
+              />
+            )}
+          />
 
           <TextField
             select

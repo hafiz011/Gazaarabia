@@ -448,12 +448,14 @@ select:not(.MuiInputBase-input):focus {
 
 
 
- .backdrop-blur-xl .tracking-wide {
-    letter-spacing: .025em;
-    display: none !important;
+/* =============== header related section start  ====== */
+.backdrop-blur-xl .tracking-wide {
+  letter-spacing: .025em;
+  /* display: none !important; */
 }
- .backdrop-blur-xl .animate-dropdown {
-    margin-top: -26px;
+
+.backdrop-blur-xl .animate-dropdown {
+  margin-top: -26px;
 }
 
 html {
@@ -461,8 +463,13 @@ html {
 }
 
 @keyframes gradient {
-  0% { background-position: 0% }
-  100% { background-position: 200% }
+  0% {
+    background-position: 0%
+  }
+
+  100% {
+    background-position: 200%
+  }
 }
 
 .animate-gradient {
