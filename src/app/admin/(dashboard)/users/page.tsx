@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { MoreVertical, Pencil, Search, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Search, Trash2, X } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
@@ -30,6 +30,13 @@ export default function UserListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
+
+  const [filters, setFilters] = useState({
+    role: "",
+    fromDate: "",
+    toDate: "",
+    sortBy: "",
+  });
 
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
@@ -75,14 +82,48 @@ export default function UserListPage() {
   }, [fetchUsers]);
 
   // Search + pagination
+  // const filteredUsers = useMemo(() => {
+  //   return users.filter(
+  //     (user) =>
+  //       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       user.role?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
+  // }, [users, searchTerm]);
   const filteredUsers = useMemo(() => {
-    return users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role?.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [users, searchTerm]);
+    return users
+      .filter((user) => {
+        const matchesSearch =
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.role?.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesRole =
+          !filters.role || user.role?.name === filters.role;
+
+        const createdAt = new Date(user.createdAt);
+
+        const matchesFrom =
+          !filters.fromDate || createdAt >= new Date(filters.fromDate);
+
+        const matchesTo =
+          !filters.toDate || createdAt <= new Date(filters.toDate);
+
+        return matchesSearch && matchesRole && matchesFrom && matchesTo;
+      })
+      .sort((a, b) => {
+        if (filters.sortBy === "newest") {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        if (filters.sortBy === "oldest") {
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }
+        if (filters.sortBy === "name_asc") {
+          return a.name.localeCompare(b.name);
+        }
+        return 0;
+      });
+  }, [users, searchTerm, filters]);
 
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -145,7 +186,128 @@ export default function UserListPage() {
           </div>
         </div>
 
+        <div className="bg-gray-50 border border-gray-200  p-4 mb-4 space-y-3">
+
+          {/* TOP ROW */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+
+            {/* ROLE */}
+            <select
+              value={filters.role}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, role: e.target.value }))
+              }
+              className="h-10 border border-gray-300 rounded-lg px-3 text-sm w-full sm:w-48 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="content_manager">Content Manager</option>
+              <option value="customer">Customer</option>
+            </select>
+
+            {/* DATE RANGE */}
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <input
+                type="date"
+                value={filters.fromDate}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, fromDate: e.target.value }))
+                }
+                className="h-10 border border-gray-300 rounded-lg px-3 text-sm w-full focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+
+              <input
+                type="date"
+                value={filters.toDate}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, toDate: e.target.value }))
+                }
+                className="h-10 border border-gray-300 rounded-lg px-3 text-sm w-full focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            {/* SORT */}
+            <select
+              value={filters.sortBy}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, sortBy: e.target.value }))
+              }
+              className="h-10 border border-gray-300 rounded-lg px-3 text-sm w-full sm:w-48 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Sort</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="name_asc">Name A–Z</option>
+            </select>
+
+            {/* RESET */}
+            <button
+              onClick={() =>
+                setFilters({
+                  role: "",
+                  fromDate: "",
+                  toDate: "",
+                  sortBy: "",
+                })
+              }
+              className="h-10 px-4 border rounded-lg text-sm hover:bg-gray-100"
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* ACTIVE FILTER CHIPS */}
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(filters).map(([key, value]) => {
+              if (!value) return null;
+
+              const labels: any = {
+                role: "Role",
+                fromDate: "From",
+                toDate: "To",
+                sortBy: "Sort",
+              };
+
+              const formatValue = (key: string, value: string) => {
+                if (key === "role") return value.replace("_", " ");
+                if (key === "sortBy") {
+                  const map: any = {
+                    newest: "Newest",
+                    oldest: "Oldest",
+                    name_asc: "Name A–Z",
+                  };
+                  return map[value] || value;
+                }
+                return value;
+              };
+
+              return (
+                <div
+                  key={key}
+                  className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs flex items-center gap-2"
+                >
+                  <span className="text-gray-600">{labels[key]}:</span>
+                  <span className="font-medium">
+                    {formatValue(key, value as string)}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, [key]: "" }))
+                    }
+                    className="flex items-center justify-center w-4 h-4 rounded-full hover:bg-red-100 transition"
+                  >
+                    <X size={12} className="text-red-500" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
         <div className="border-t border-[var(--soft-gray)]"></div>
+
+
 
         {/*  Table */}
         <div className="overflow-x-auto">

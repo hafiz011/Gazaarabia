@@ -4,11 +4,24 @@ import { useState, useEffect } from "react";
 import AdminHeader from "../admin/AdminHeader";
 import AdminSidebar from "../admin/AdminSidebar";
 
+const SIDEBAR_FULL = 256;
+const SIDEBAR_COLLAPSED = 80;
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  // const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+  const checkScreen = () => setIsMobile(window.innerWidth < 768);
+
+  checkScreen();
+  window.addEventListener("resize", checkScreen);
+
+  return () => window.removeEventListener("resize", checkScreen);
+}, []);
 
   //  Prevent background scroll when sidebar is open on mobile
   useEffect(() => {
@@ -28,6 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setCollapsed(true)
     }
   }, [isMobile])
+  
 
   return (
     <div className="flex min-h-screen bg-[#f5f6fa] relative">
@@ -48,8 +62,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           //  Shifts content when sidebar expands/collapses
           marginLeft: sidebarOpen && collapsed ? "80px" : (!sidebarOpen && !collapsed ? "256px" : (!isMobile && !sidebarOpen && collapsed ? "80px" : !isMobile ? "256px" : "")),
         }}
-      >
 
+    
+      >
+{/* <div
+  className={`flex flex-col flex-1 min-h-screen relative z-10 transition-all duration-300
+    ${isMobile
+      ? "ml-0"
+      : sidebarOpen
+        ? collapsed
+          ? "ml-[80px]"
+          : "ml-64"
+        : "ml-0"
+    }
+  `}
+> */}
         {/* Header */}
         <AdminHeader onMenuToggle={() => {
           console.log('sidebarOpen:>', !sidebarOpen);

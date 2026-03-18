@@ -41,25 +41,25 @@ export default function DashboardPage() {
 
 
 
-  const DUMMY_ORDERS_CHART = [
-    { date: "2026-01-28", orders: 1 },
-    { date: "2026-01-29", orders: 3 },
-    { date: "2026-01-30", orders: 2 },
-    { date: "2026-01-31", orders: 5 },
-    { date: "2026-02-01", orders: 4 },
-    { date: "2026-02-02", orders: 2 },
-    { date: "2026-02-03", orders: 1 },
-  ];
+  // const DUMMY_ORDERS_CHART = [
+  //   { date: "2026-01-28", orders: 1 },
+  //   { date: "2026-01-29", orders: 3 },
+  //   { date: "2026-01-30", orders: 2 },
+  //   { date: "2026-01-31", orders: 5 },
+  //   { date: "2026-02-01", orders: 4 },
+  //   { date: "2026-02-02", orders: 2 },
+  //   { date: "2026-02-03", orders: 1 },
+  // ];
 
-  const DUMMY_REVENUE_CHART = [
-    { date: "2026-01-28", revenue: 450 },
-    { date: "2026-01-29", revenue: 1200 },
-    { date: "2026-01-30", revenue: 800 },
-    { date: "2026-01-31", revenue: 2100 },
-    { date: "2026-02-01", revenue: 1600 },
-    { date: "2026-02-02", revenue: 2298 },
-    { date: "2026-02-03", revenue: 43 },
-  ];
+  // const DUMMY_REVENUE_CHART = [
+  //   { date: "2026-01-28", revenue: 450 },
+  //   { date: "2026-01-29", revenue: 1200 },
+  //   { date: "2026-01-30", revenue: 800 },
+  //   { date: "2026-01-31", revenue: 2100 },
+  //   { date: "2026-02-01", revenue: 1600 },
+  //   { date: "2026-02-02", revenue: 2298 },
+  //   { date: "2026-02-03", revenue: 43 },
+  // ];
 
 
 
@@ -72,7 +72,7 @@ export default function DashboardPage() {
           orders: count,
         })
       )
-      : DUMMY_ORDERS_CHART;
+      : [] // DUMMY_ORDERS_CHART;
 
   const revenueChartData =
     dashboardData?.charts?.revenueOverTime &&
@@ -83,7 +83,7 @@ export default function DashboardPage() {
           revenue: amount,
         })
       )
-      : DUMMY_REVENUE_CHART;
+      : [] //DUMMY_REVENUE_CHART;
 
 
 

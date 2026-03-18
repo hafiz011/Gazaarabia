@@ -26,12 +26,76 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
+    const categoryId = searchParams.get("categoryId");
+    const subcategoryId = searchParams.get("subcategoryId");
+    const brandIds = searchParams.get("brandIds");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+    const status = searchParams.get("status");
+    const fromDate = searchParams.get("fromDate");
+    const toDate = searchParams.get("toDate");
+    const sortBy = searchParams.get("sortBy");
+
+
     // const page = parseInt(searchParams.get("page") || "1");
     // const pageSize = parseInt(searchParams.get("pageSize") || "20");
 
-    const where = search
-      ? { title: { contains: search } }
-      : {};
+    // const where = search
+    //   ? { title: { contains: search } }
+    //   : {};
+
+    // ---------------- WHERE ----------------
+    const where: any = {};
+
+    if (search) {
+      where.title = { contains: search };
+    }
+
+    if (categoryId) {
+      where.categoryId = Number(categoryId);
+    }
+
+    if (subcategoryId) {
+      where.subcategoryId = Number(subcategoryId);
+    }
+
+    if (brandIds) {
+      where.brandId = {
+        in: brandIds.split(",").map(Number),
+      };
+    }
+
+    if (status) {
+      where.active = status === "active";
+    }
+
+    if (minPrice || maxPrice) {
+      where.sellingPrice = {};
+      if (minPrice) where.sellingPrice.gte = Number(minPrice);
+      if (maxPrice) where.sellingPrice.lte = Number(maxPrice);
+    }
+
+    if (fromDate || toDate) {
+      where.createdAt = {};
+      if (fromDate) where.createdAt.gte = new Date(fromDate);
+      if (toDate) where.createdAt.lte = new Date(toDate);
+    }
+
+    // ---------------- SORT ----------------
+    let orderBy: any = { createdAt: "desc" };
+
+    if (sortBy === "price_low_high") {
+      orderBy = { sellingPrice: "asc" };
+    }
+    if (sortBy === "price_high_low") {
+      orderBy = { sellingPrice: "desc" };
+    }
+    if (sortBy === "newest") {
+      orderBy = { createdAt: "desc" };
+    }
+    if (sortBy === "oldest") {
+      orderBy = { createdAt: "asc" };
+    }
 
     const [total, products] = await Promise.all([
       prisma.products.count({ where }),
@@ -46,7 +110,8 @@ export async function GET(req: NextRequest) {
           productimage: true,
           productvariant: true,
         },
-        orderBy: { createdAt: "desc" },
+        // orderBy: { createdAt: "desc" },
+        orderBy
       }),
     ]);
 

@@ -8,6 +8,7 @@ import { PopUpInterface } from "@/lib/types";
 import { productService } from "@/lib/services/productService";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import ProductFilters from "@/components/admin/ProductFilters";
 
 interface Product {
   id: number;
@@ -28,6 +29,19 @@ export default function ProductListPage() {
   const token = session?.user?.token;
 
   const [products, setProducts] = useState<Product[]>([]);
+
+  const [filters, setFilters] = useState({
+    brandIds: [] as number[],
+    categoryId: "",
+    subcategoryId: "",
+    minPrice: "",
+    maxPrice: "",
+    status: "",
+    fromDate: "",
+    toDate: "",
+    sortBy: "",
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -38,10 +52,19 @@ export default function ProductListPage() {
     message: "",
   });
 
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await productService.getAll(token!, searchTerm);
+      const res = await productService.getAll(token!,
+        {
+          search: searchTerm,
+          ...filters,
+        }
+      );
       setProducts(res.data || res);
     } catch (error) {
       console.error(" Error fetching products:", error);
@@ -52,17 +75,42 @@ export default function ProductListPage() {
 
   useEffect(() => {
     if (token) fetchProducts();
-  }, [token, searchTerm]);
+  }, [token, searchTerm, filters]);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) =>
-      (p.title || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [products, searchTerm]);
+  useEffect(() => {
+    if (!token) return;
 
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
+    const loadFilters = async () => {
+      try {
+        const res = await productService.getProductsFilters(token);
+
+        setBrands(Array.isArray(res?.data?.brands) ? res?.data?.brands : []);
+        setCategories(Array.isArray(res?.data?.categories) ? res?.data?.categories : []);
+        setSubcategories(Array.isArray(res?.data?.subcategories) ? res?.data?.subcategories : []);
+      } catch (err) {
+        console.error("Error loading filters", err);
+      }
+    };
+
+    loadFilters();
+  }, [token]);
+
+  const filteredSubcategories = filters.categoryId
+    ? subcategories.filter(
+      (s: any) => s.categoryId === Number(filters.categoryId)
+    )
+    : subcategories;
+
+  // const filteredProducts = useMemo(() => {
+  //   return products.filter((p) =>
+  //     (p.title || "").toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
+  // }, [products, searchTerm]);
+
+  console.log('just pag products:>', products)
+  const totalPages = Math.ceil(products.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
+  const paginatedProducts = products.slice(startIndex, startIndex + pageSize);
 
   const handleDelete = (id: number) => {
     setPopUpAlertData({
@@ -85,7 +133,19 @@ export default function ProductListPage() {
 
   return (
     <div className="p-4 sm:p-6 mx-auto w-full">
-      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+
+      <ProductFilters
+        brands={brands}
+        categories={categories}
+        subcategories={filteredSubcategories}
+        onChange={(f: any) => {
+          setFilters(f);
+          setCurrentPage(1);
+        }}
+      />
+
+
+      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden mt-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 p-4">
           <h1 className="text-xl font-semibold text-gray-800">Manage Products</h1>
@@ -118,7 +178,7 @@ export default function ProductListPage() {
                 <th className="py-3 px-5 text-left">Brand</th>
                 <th className="py-3 px-5 text-left">Category</th>
                 <th className="py-3 px-5 text-left">Price</th>
-                <th className="py-3 px-5 text-left">Status</th>
+                {/* <th className="py-3 px-5 text-left">Status</th> */}
                 <th className="py-3 px-5 text-left">Created</th>
                 <th className="py-3 px-5 text-right">Action</th>
               </tr>
@@ -153,14 +213,14 @@ export default function ProductListPage() {
                     <td className="py-3 px-5">{p.brand?.name || "-"}</td>
                     <td className="py-3 px-5">{p.categories?.name || "-"}</td>
                     <td className="py-3 px-5">£{p.sellingPrice}</td>
-                    <td className="py-3 px-5">
+                    {/* <td className="py-3 px-5">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                           }`}
                       >
                         {p.active ? "Active" : "Inactive"}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="py-3 px-5 text-gray-600 whitespace-nowrap">
                       {new Intl.DateTimeFormat("en-GB").format(new Date(p.createdAt))}
                     </td>
@@ -193,12 +253,12 @@ export default function ProductListPage() {
           </table>
         </div>
 
-        {!loading && filteredProducts.length > 0 && (
+        {!loading && products.length > 0 && (
           <div className="p-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={filteredProducts.length}
+              totalItems={products.length}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
@@ -216,6 +276,8 @@ export default function ProductListPage() {
         onCancel={popUpAlertData.onCancel}
         show={popUpAlertData.isOpen}
       />
+
+
     </div>
   );
 }
