@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, Search, User, Heart, ShoppingBag, Loader } from "lucide-react";
+import { Menu, X, Search, User, Heart, ShoppingBag, Loader, ChevronRight } from "lucide-react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import CartDrawer from "@/components/CartDrawer";
 import { useSession } from "next-auth/react";
@@ -29,8 +29,14 @@ interface BannerItem {
 }
 
 interface DropdownMenu {
-  left: SubcategoryLink[];
-  right: SubcategoryLink[];
+  submenus: {
+    id: number;
+    name: string;
+    slug: string;
+    subcategories: SubcategoryLink[];
+    leftCustomLinks?: SubcategoryLink[];
+    rightCustomLinks?: SubcategoryLink[];
+  }[];
   banners: BannerItem[];
 }
 
@@ -66,6 +72,9 @@ export default function Header() {
   const [productsData, setProductsData] = useState<any>(null);
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
+  const [activeSubmenu, setActiveSubmenu] = useState<
+    DropdownMenu["submenus"][number] | null
+  >(null);
 
   const { cartCount } = useCart();
 
@@ -160,6 +169,12 @@ export default function Header() {
     setSearchQuery(search);
   };
 
+  useEffect(() => {
+    const menu = menus.find((m) => m.slug === activeMenu);
+    if (menu?.dropdown?.submenus?.length) {
+      setActiveSubmenu(menu.dropdown.submenus[0]);
+    }
+  }, [activeMenu, menus]);
 
   return (
 
@@ -188,10 +203,10 @@ export default function Header() {
 
       {/* {toolbarText && ( */}
       <div
-  className={`bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10 
+        className={`bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10 
   transition-all duration-300 overflow-hidden
   ${isScrolled ? "h-0 py-0 opacity-0" : "h-auto opacity-100"}`}
->
+      >
         <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-between">
 
           {/* LEFT TEXT */}
@@ -469,36 +484,99 @@ export default function Header() {
                       onMouseLeave={() => setActiveMenu(null)}
                     >
                       <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
-                        <div className="col-span-2 max-h-[55vh] overflow-y-auto pr-4">
-                          <div className="grid grid-cols-2 gap-8">
-                            {/* Left */}
-                            <div className="flex flex-col space-y-3 text-sm font-medium">
-                              {item.dropdown.left.map((link, index) => (
-                                <Link
-                                  key={link.slug}
-                                  href={getSubmenuLink(item, link)}
-                                  className="hover:text-[var(--brand-primary)] transition-colors duration-200 hover:pl-1"
-                                >
-                                  {link.name}
-                                </Link>
-                              ))}
+
+                        <div className="col-span-2 grid grid-cols-2 gap-12">
+
+                          {/* LEFT → SUBMENU LIST */}
+                          <div className="border-r border-gray-100 pr-6">
+
+                            <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
+                              Categories
                             </div>
-                            {/* Right */}
-                            <div className="flex flex-col space-y-3 text-sm font-medium">
-                              {item.dropdown.right.map((link) => (
-                                <Link
-                                  key={link.slug}
-                                  href={getSubmenuLink(item, link)}
-                                  className="hover:text-[var(--brand-primary)] transition-colors duration-200 hover:pl-1"
+
+                            <div className="flex flex-col space-y-1">
+
+                              {item.dropdown.submenus.map((submenu) => (
+                                <button
+                                  key={submenu.id}
+                                  onMouseEnter={() => setActiveSubmenu(submenu)}
+                                  className={`group relative flex items-start gap-2
+          text-sm tracking-wide uppercase
+          px-4 py-2 rounded-md
+          transition-all duration-200
+
+          ${activeSubmenu?.id === submenu.id
+                                      ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
+                                      : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                                    }`}
                                 >
-                                  {link.name}
-                                </Link>
+
+                                  {/* LEFT ACTIVE BAR */}
+                                  {activeSubmenu?.id === submenu.id && (
+                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
+                                  )}
+
+                                  <span className="text-left flex-1 leading-tight">
+                                    {submenu.name}
+                                  </span>
+
+                                  <ChevronRight
+                                    size={16}
+                                    className={`transition-transform duration-200
+            ${activeSubmenu?.id === submenu.id
+                                        ? "translate-x-1 text-[var(--brand-primary)]"
+                                        : "text-gray-400 group-hover:translate-x-1"
+                                      }`}
+                                  />
+
+                                </button>
                               ))}
+
                             </div>
+
                           </div>
+
+
+                          {/* RIGHT → SUBCATEGORIES */}
+                          <div>
+
+                            {/* SECTION HEADER */}
+                            <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
+                              {activeSubmenu?.name}
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-2">
+
+                              {activeSubmenu?.subcategories?.map((subcat) => (
+                                <Link
+                                  key={subcat.slug}
+                                  href={`/shop/${subcat.slug}`}
+                                  className="group flex items-center justify-between
+                                  text-sm text-gray-600
+                                  px-3 py-1.5 rounded-md
+                                  transition-all duration-200
+                                  hover:text-[var(--brand-primary)]
+                                  hover:bg-gray-50"
+                                >
+
+                                  <span>{subcat.name}</span>
+
+                                  <ChevronRight
+                                    size={14}
+                                    className="opacity-0 group-hover:opacity-100 transition"
+                                  />
+
+                                </Link>
+                              ))}
+
+                            </div>
+
+                          </div>
+
                         </div>
 
-                        {/* Banners */}
+
+                        {/* RIGHT → BANNERS */}
                         <div className="col-span-2 grid grid-cols-2 gap-6">
                           {item.dropdown.banners.map((banner, index) => (
                             <Link
@@ -518,7 +596,9 @@ export default function Header() {
                             </Link>
                           ))}
                         </div>
+
                       </div>
+
                     </div>
                   )}
                 </div>

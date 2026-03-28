@@ -81,9 +81,7 @@ export default function MobileMenuDrawer({
 
             {menus.map((item) => {
               const hasDropdown =
-                item?.dropdown &&
-                ((item.dropdown.left?.length ?? 0) > 0 ||
-                  (item.dropdown.right?.length ?? 0) > 0);
+                item?.dropdown?.submenus?.length > 0;
 
               return (
                 <div
@@ -133,46 +131,71 @@ export default function MobileMenuDrawer({
           </nav>
         )}
 
+      
         {/* SUBMENU VIEW */}
         {activeMenu && (
-          <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-3 normal-case text-[14px] text-gray-700 font-medium">
+          <nav className="flex-1 overflow-y-auto bg-white">
 
-            {/* PARENT LABEL */}
-            <div className="text-[16px] font-semibold mb-2 text-[var(--text-primary)]">
-              {activeMenu.name}
+            {/* HEADER */}
+            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+
+              <div className="text-[18px] font-semibold text-[var(--text-primary)]">
+                {activeMenu.name}
+              </div>
+
             </div>
 
-            {/* Left items */}
-            {activeMenu.dropdown?.left?.map((sub: any) => (
-              <div
-                key={sub.slug}
-                className="py-2 border-b border-gray-100"
-              >
-                <Link
-                  href={`/shop/${sub.slug}`}
-                  onClick={onClose}
-                  className="block"
-                >
-                  {sub.name}
-                </Link>
-              </div>
-            ))}
 
-            {/* Right items */}
-            {activeMenu.dropdown?.right?.map((sub: any) => (
-              <div
-                key={sub.slug}
-                className="py-2 border-b border-gray-100"
-              >
-                <Link
-                  href={`/shop/${sub.slug}`}
-                  onClick={onClose}
-                  className="block"
-                >
-                  {sub.name}
-                </Link>
-              </div>
-            ))}
+            {/* SUBMENU SECTIONS */}
+            <div className="divide-y divide-gray-100">
+
+              {activeMenu.dropdown?.submenus?.map((submenu: any) => (
+                <div key={submenu.id}>
+
+                  {/* SUBMENU TITLE */}
+                  <div className="px-4 pt-4 pb-2 text-[12px] uppercase tracking-widest text-gray-400">
+                    {submenu.name}
+                  </div>
+
+
+                  {/* SUBCATEGORY LINKS */}
+                  <div>
+
+                    {submenu.subcategories?.map((subcat: any) => (
+                      <Link
+                        key={subcat.slug}
+                        href={`/shop/${subcat.slug}`}
+                        onClick={onClose}
+                        className="
+                  flex items-center justify-between
+                  px-4 py-3
+                  text-[15px]
+                  text-gray-800
+                  hover:bg-gray-50
+                  active:bg-gray-100
+                  transition
+                "
+                      >
+
+                        <span className="leading-tight">
+                          {subcat.name}
+                        </span>
+
+                        <ChevronRight
+                          size={18}
+                          className="text-gray-400"
+                        />
+
+                      </Link>
+                    ))}
+
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+
           </nav>
         )}
 

@@ -334,10 +334,10 @@ export default function SubmenusFormPage() {
               ))}
             </TextField>
 
-            <Divider className="my-4" />
+            {/* <Divider className="my-4" /> */}
 
-            <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Mega Menu */}
+            {/* <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             
               {["left", "right"].map((side) => (
                 <div key={side}>
                   <TextField
@@ -422,12 +422,12 @@ export default function SubmenusFormPage() {
                   </button>
                 </div>
               ))}
-            </Box>
+            </Box> */}
           </>
         )}
 
         {/* ====== BLOG MENU LOGIC ====== */}
-        {selectedMenu?.type === "blog" && (
+        {/* {selectedMenu?.type === "blog" && (
           <>
             <Divider className="my-4" />
             <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -517,7 +517,7 @@ export default function SubmenusFormPage() {
               ))}
             </Box>
           </>
-        )}
+        )} */}
 
         <Divider className="my-4" />
 
