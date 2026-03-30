@@ -38,7 +38,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const data = await getAllProducts(searchQuery, false, currentPage, 4);
+            const data = await getAllProducts(searchQuery, false, currentPage, 20);
             setProductsData(data);
             setProducts(Array.isArray(data?.products) ? data?.products : []);
             setTotalPages(data?.totalPages);
