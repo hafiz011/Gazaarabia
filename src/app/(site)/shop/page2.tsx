@@ -20,7 +20,7 @@ function useMouseParallax(strength = 20) {
   const springY = useSpring(y, { stiffness: 60, damping: 20 });
 
   useEffect(() => {
-    const handle = (e) => {
+    const handle = (e:any) => {
       const nx = (e.clientX / window.innerWidth - 0.5) * strength;
       const ny = (e.clientY / window.innerHeight - 0.5) * strength;
       x.set(nx);
@@ -60,7 +60,7 @@ function RotatingWord() {
 }
 
 /* Animated SVG decorative ring */
-function DecorativeRing({ size, delay, opacity }) {
+function DecorativeRing({ size, delay, opacity }:any) {
   return (
     <motion.svg
       width={size}
@@ -94,7 +94,7 @@ function DecorativeRing({ size, delay, opacity }) {
 }
 
 /* Floating badge */
-function FloatingBadge({ delay }) {
+function FloatingBadge({ delay }:any) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
