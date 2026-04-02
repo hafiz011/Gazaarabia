@@ -170,28 +170,27 @@ export default function MobileMenuDrawer({
                   <div key={submenu.id}>
 
                     {/* SUBMENU BUTTON */}
-                   <button
-  onClick={() =>
-    hasSubcategories
-      ? setExpandedSubmenu(
-          expandedSubmenu === submenu.id ? null : submenu.id
-        )
-      : onClose()
-  }
-  className={`
-flex items-center justify-between
-w-full
-px-4 py-3
-text-[15px]
-border-l-[3px]
-transition
-${
-expandedSubmenu === submenu.id
-? "border-red-600 text-red-600 bg-red-50 font-semibold"
-: "border-transparent text-gray-700 hover:bg-gray-50"
-}
-`}
->
+                    <button
+                      onClick={() =>
+                        hasSubcategories
+                          ? setExpandedSubmenu(
+                            expandedSubmenu === submenu.id ? null : submenu.id
+                          )
+                          : onClose()
+                      }
+                      className={`
+                        flex items-center justify-between
+                        w-full
+                        px-4 py-3
+                        text-[15px]
+                        border-l-[3px]
+                        transition
+                        ${expandedSubmenu === submenu.id
+                          ? "border-red-600 text-red-600 bg-red-50 font-semibold"
+                          : "border-transparent text-gray-700 hover:bg-gray-50"
+                        }
+                      `}
+                    >
                       <span>{submenu.name}</span>
 
                       {hasSubcategories && (
@@ -205,9 +204,9 @@ expandedSubmenu === submenu.id
                       )}
                     </button>
 
-                    {/* ✅ THIS IS WHERE YOU ADD YOUR BLOCK */}
+                    {/* THIS IS WHERE YOU ADD YOUR BLOCK */}
                     {expandedSubmenu === submenu.id && (
-                     <div className="bg-gray-50 border-l-[3px] border-red-600 animate-[fadeIn_.2s_ease]">
+                      <div className="bg-gray-50 border-l-[3px] border-red-600 animate-[fadeIn_.2s_ease]">
 
                         {submenu.subcategories.map((subcat: any) => (
 
@@ -216,14 +215,14 @@ expandedSubmenu === submenu.id
                             href={`/shop/${subcat.slug}`}
                             onClick={onClose}
                             className="
-  block
-  px-10 py-2.5
-  text-[14px]
-  text-gray-600
-  hover:text-black
-  hover:bg-gray-50 active:bg-gray-100
-  transition
-"
+                              block
+                              px-10 py-2.5
+                              text-[14px]
+                              text-gray-600
+                              hover:text-black
+                              hover:bg-gray-50 active:bg-gray-100
+                              transition
+                            "
                           >
                             {subcat.name}
                           </Link>
