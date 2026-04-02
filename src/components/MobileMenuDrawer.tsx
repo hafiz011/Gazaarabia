@@ -19,6 +19,8 @@ export default function MobileMenuDrawer({
 }: MobileMenuDrawerProps) {
   const [activeMenu, setActiveMenu] = useState<any | null>(null);
 
+  const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -35,7 +37,10 @@ export default function MobileMenuDrawer({
 
   if (!isOpen) return null;
 
-  const goBack = () => setActiveMenu(null);
+  const goBack = () => {
+    setExpandedSubmenu(null);
+    setActiveMenu(null);
+  };
 
   const hasDropdown = (item: any) =>
     item?.dropdown &&
@@ -51,14 +56,18 @@ export default function MobileMenuDrawer({
       />
 
       {/* DRAWER */}
-      <div className="relative w-[80%] max-w-[320px] h-screen bg-white shadow-xl animate-slideIn flex flex-col">
+      {/* w-[80%] max-w-[320px]  */}
+      <div className="relative
+    
+       w-[85%] max-w-[360px]
+       h-screen bg-white shadow-xl animate-slideIn flex flex-col">
 
         {/* HEADER */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           {activeMenu ? (
             <button onClick={goBack} className="flex items-center gap-2 text-sm">
               <ArrowLeft size={18} />
-              Back
+              <span className="font-medium">Back</span>
             </button>
           ) : (
             <button onClick={onClose} className="p-2">
@@ -131,7 +140,7 @@ export default function MobileMenuDrawer({
           </nav>
         )}
 
-      
+
         {/* SUBMENU VIEW */}
         {activeMenu && (
           <nav className="flex-1 overflow-y-auto bg-white">
@@ -139,7 +148,7 @@ export default function MobileMenuDrawer({
             {/* HEADER */}
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
 
-              <div className="text-[18px] font-semibold text-[var(--text-primary)]">
+              <div className="text-[18px] font-semibold tracking-tight text-gray-900">
                 {activeMenu.name}
               </div>
 
@@ -147,57 +156,96 @@ export default function MobileMenuDrawer({
 
 
             {/* SUBMENU SECTIONS */}
+
+
             <div className="divide-y divide-gray-100">
 
-              {activeMenu.dropdown?.submenus?.map((submenu: any) => (
-                <div key={submenu.id}>
+              {activeMenu.dropdown?.submenus?.map((submenu: any) => {
 
-                  {/* SUBMENU TITLE */}
-                  <div className="px-4 pt-4 pb-2 text-[12px] uppercase tracking-widest text-gray-400">
-                    {submenu.name}
-                  </div>
+                const hasSubcategories =
+                  submenu.subcategories &&
+                  submenu.subcategories.length > 0;
 
+                return (
+                  <div key={submenu.id}>
 
-                  {/* SUBCATEGORY LINKS */}
-                  <div>
+                    {/* SUBMENU BUTTON */}
+                   <button
+  onClick={() =>
+    hasSubcategories
+      ? setExpandedSubmenu(
+          expandedSubmenu === submenu.id ? null : submenu.id
+        )
+      : onClose()
+  }
+  className={`
+flex items-center justify-between
+w-full
+px-4 py-3
+text-[15px]
+border-l-[3px]
+transition
+${
+expandedSubmenu === submenu.id
+? "border-red-600 text-red-600 bg-red-50 font-semibold"
+: "border-transparent text-gray-700 hover:bg-gray-50"
+}
+`}
+>
+                      <span>{submenu.name}</span>
 
-                    {submenu.subcategories?.map((subcat: any) => (
-                      <Link
-                        key={subcat.slug}
-                        href={`/shop/${subcat.slug}`}
-                        onClick={onClose}
-                        className="
-                  flex items-center justify-between
-                  px-4 py-3
-                  text-[15px]
-                  text-gray-800
-                  hover:bg-gray-50
-                  active:bg-gray-100
-                  transition
-                "
-                      >
-
-                        <span className="leading-tight">
-                          {subcat.name}
-                        </span>
-
+                      {hasSubcategories && (
                         <ChevronRight
                           size={18}
-                          className="text-gray-400"
+                          className={`transition duration-200 ${expandedSubmenu === submenu.id
+                            ? "text-red-600 rotate-90"
+                            : "text-gray-400"
+                            }`}
                         />
+                      )}
+                    </button>
 
-                      </Link>
-                    ))}
+                    {/* ✅ THIS IS WHERE YOU ADD YOUR BLOCK */}
+                    {expandedSubmenu === submenu.id && (
+                     <div className="bg-gray-50 border-l-[3px] border-red-600 animate-[fadeIn_.2s_ease]">
+
+                        {submenu.subcategories.map((subcat: any) => (
+
+                          <Link
+                            key={subcat.slug}
+                            href={`/shop/${subcat.slug}`}
+                            onClick={onClose}
+                            className="
+  block
+  px-10 py-2.5
+  text-[14px]
+  text-gray-600
+  hover:text-black
+  hover:bg-gray-50 active:bg-gray-100
+  transition
+"
+                          >
+                            {subcat.name}
+                          </Link>
+
+                        ))}
+
+                      </div>
+                    )}
 
                   </div>
+                );
 
-                </div>
-              ))}
+              })}
 
             </div>
 
+
+
           </nav>
         )}
+
+
 
         {/* FOOTER */}
         {!activeMenu && (

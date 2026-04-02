@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Pencil, Trash2, X, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
@@ -23,6 +23,7 @@ export default function SubcategoryListPage() {
   const [loading, setLoading] = useState(true);
 
   const [isSlugEdited, setIsSlugEdited] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
 
   const [formName, setFormName] = useState("");
@@ -61,12 +62,30 @@ export default function SubcategoryListPage() {
     }
   }, [token]);
 
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     if (token) fetchSubcategories(searchTerm);
+  //   }, 300);
+  //   return () => clearTimeout(timeout);
+  // }, [searchTerm, token]);
+
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (token) fetchSubcategories(searchTerm);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [searchTerm, token]);
+    if (!token) return;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchSubcategories(searchTerm);
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     if (modalAction === "subcategory") {
@@ -112,17 +131,19 @@ export default function SubcategoryListPage() {
   };
 
   // Filter & Paginate
-  const filteredSubcategories = useMemo(() => {
-    return subcategories.filter(
-      (sub) =>
-        sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [subcategories, searchTerm]);
+  // const filteredSubcategories = useMemo(() => {
+  //   return subcategories.filter(
+  //     (sub) =>
+  //       sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
+  // }, [subcategories, searchTerm]);
 
-  const totalPages = Math.ceil(filteredSubcategories.length / pageSize);
+  // const totalPages = Math.ceil(filteredSubcategories.length / pageSize);
+  const totalPages = Math.ceil(subcategories.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedSubcategories = filteredSubcategories.slice(
+  // const paginatedSubcategories = filteredSubcategories.slice(
+  const paginatedSubcategories = subcategories.slice(
     startIndex,
     startIndex + pageSize
   );
@@ -252,8 +273,8 @@ export default function SubcategoryListPage() {
               placeholder="Search category or subcategory..."
               value={searchTerm}
               onChange={(e) => {
-                setSearchTerm(e.target.value);
                 setCurrentPage(1);
+                setSearchTerm(e.target.value);
               }}
               className="w-full border border-gray-300 rounded-full pl-10 pr-4 py-2 text-sm 
                          focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
@@ -327,11 +348,11 @@ export default function SubcategoryListPage() {
         </div>
 
         {/* Pagination */}
-        {!loading && filteredSubcategories.length > 0 && (
+        {!loading && subcategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={filteredSubcategories.length}
+            totalItems={subcategories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}

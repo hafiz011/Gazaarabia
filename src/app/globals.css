@@ -475,3 +475,20 @@ html {
 .animate-gradient {
   animation: gradient 6s linear infinite;
 }
+
+
+/* ========== mobile view side bar menu drawer animation start ================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== mobile view side bar menu drawer animation end ==================  */

@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
       where: search
         ? {
           OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { category: { name: { contains: search, mode: "insensitive" } } },
+            { name: { contains: search } },
+            { category: { name: { contains: search } } },
           ],
         }
         : undefined,
