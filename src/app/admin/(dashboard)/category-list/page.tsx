@@ -23,6 +23,7 @@ export default function CategoryListPage() {
 
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
+  const [formCommission, setFormCommission] = useState<number | "">("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -84,6 +85,7 @@ export default function CategoryListPage() {
     if (modalAction === "category") {
       setFormName("");
       setFormSlug("")
+      setFormCommission("");
       setCategoryImage(null);
       setEditId(null);
       setIsEditing(false);
@@ -157,7 +159,7 @@ export default function CategoryListPage() {
 
     try {
       if (isEditing && editId) {
-        await categoryService.update(token!, editId, { name: formName, slug: formSlug, image: categoryImage, });
+        await categoryService.update(token!, editId, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -165,7 +167,7 @@ export default function CategoryListPage() {
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       } else {
-        await categoryService.create(token!, { name: formName, slug: formSlug, image: categoryImage });
+        await categoryService.create(token!, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -197,9 +199,10 @@ export default function CategoryListPage() {
 
 
   // Edit
-  const handleEdit = (category: Category) => {
+  const handleEdit = (category: any) => {
     setFormName(category.name);
     setFormSlug(category.slug);
+    setFormCommission(category.categoryCommission?.commission ?? "");
     setCategoryImage(category.image ?? null);
     setEditId(category.id);
     setIsEditing(true);
@@ -271,6 +274,7 @@ export default function CategoryListPage() {
                 <th className="py-3 px-3 text-center">Image</th>
                 <th className="py-3 px-3 text-center">Category Name</th>
                 <th className="py-3 px-3 text-center">Slug</th>
+                <th className="py-3 px-3 text-center">Commission (%)</th>
                 <th className="py-3 px-3 text-center">Action</th>
               </tr>
             </thead>
@@ -305,6 +309,9 @@ export default function CategoryListPage() {
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {cat.slug}
                     </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {(cat as any).categoryCommission?.commission != null ? `${(cat as any).categoryCommission.commission}%` : "-"}
+                    </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex justify-center gap-1">
                         <button
@@ -327,7 +334,7 @@ export default function CategoryListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="py-12 text-center text-gray-500 text-sm">
+                  <td colSpan={5} className="py-12 text-center text-gray-500 text-sm">
                     No categories found
                   </td>
                 </tr>
@@ -392,12 +399,21 @@ export default function CategoryListPage() {
                   setFormSlug(generateSlug(e.target.value)); // clean slug
                 }}
                 className="w-full border rounded px-3 py-2 mb-4"
-                placeholder="e.g. T-Shirts"
+                placeholder="e.g. t-shirts"
               />
 
-
-
-
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Commission (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formCommission}
+                onChange={(e) => setFormCommission(e.target.value === "" ? "" : Number(e.target.value))}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="e.g. 5"
+              />
 
               {/* Category Image Upload */}
               <div className="mb-4">

@@ -18,7 +18,7 @@ export async function GET(
             include: { role: true }
         });
 
-        if (!user || user.role.name.toLowerCase() !== "admin") {
+        if (!user || !["admin", "seller"].includes(user.role.name.toLowerCase())) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 

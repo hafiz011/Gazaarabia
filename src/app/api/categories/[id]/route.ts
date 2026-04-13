@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const categoryId = Number(id);
 
   try {
-    const { name, slug, image } = await req.json();
+    const { name, slug, image, commission } = await req.json();
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -73,10 +73,38 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const updated = await prisma.categories.update({
       where: { id: categoryId },
-      data: { name: name.trim(), slug: slug.trim(), image },
+      data: {
+        name: name.trim(),
+        slug: slug.trim(),
+        image
+      },
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    if (commission !== undefined && commission !== null) {
+      const parsedCommission = parseFloat(commission);
+
+      const existingCommission = await prisma.categoryCommission.findUnique({
+        where: { categoryId: categoryId }
+      });
+
+      if (existingCommission) {
+        await prisma.categoryCommission.update({
+          where: { categoryId: categoryId },
+          data: { commission: parsedCommission }
+        });
+      } else {
+        await prisma.categoryCommission.create({
+          data: { categoryId: categoryId, commission: parsedCommission }
+        });
+      }
+    }
+
+    const finalCategory = await prisma.categories.findUnique({
+      where: { id: categoryId },
+      include: { categoryCommission: true }
+    });
+
+    return NextResponse.json({ success: true, data: finalCategory });
   } catch (error) {
     console.error("PUT Category Error:", error);
     return NextResponse.json(
@@ -119,6 +147,9 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
         { status: 404 }
       );
     }
+    await prisma.categoryCommission.delete({
+      where: { categoryId: categoryId },
+    });
 
     await prisma.categories.delete({
       where: { id: categoryId },

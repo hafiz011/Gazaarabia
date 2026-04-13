@@ -6,6 +6,7 @@ export interface Category {
   slug: string;
   image?: string;
   description?: string;
+  commission?: number | null;
   createdAt: string;
 }
 

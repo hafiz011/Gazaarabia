@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     include: { role: true }
   });
 
-  const allowedRoles = ["admin"];
+  const allowedRoles = ["admin", "seller"];
 
   if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });

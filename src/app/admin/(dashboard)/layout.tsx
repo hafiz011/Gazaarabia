@@ -13,10 +13,6 @@ export default function AdminRootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        <AdminLayout>{children}</AdminLayout>
-      </body>
-    </html>
+    <AdminLayout>{children}</AdminLayout>
   );
 }

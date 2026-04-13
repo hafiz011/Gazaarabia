@@ -258,7 +258,7 @@ export default function SubscriberListPage() {
 
             {/* Popup Alert */}
             <PopupAlert
-                type={popUpAlertData.type as any}
+                type={popUpAlertData.type}
                 message={popUpAlertData.message}
                 confirmText={popUpAlertData.type === "confirm" ? "Yes" : "OK"}
                 cancelText={popUpAlertData.type === "confirm" ? "Cancel" : undefined}

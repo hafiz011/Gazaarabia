@@ -114,6 +114,7 @@ export default function DashboardPage() {
 
   const sections = [
     { key: "users", label: "Users", icon: <UsersIcon size={28} />, path: "/admin/users" },
+    { key: "sellers", label: "Sellers", icon: <UsersIcon size={28} />, path: "/admin/seller" },
     { key: "orders", label: "Orders", icon: <ClipboardCheck size={28} />, path: "/admin/orders" },
     { key: "blogCategories", label: "Blog Categories", icon: <Layers size={28} />, path: "/admin/blog-categories" },
     { key: "blogs", label: "Blogs", icon: <FileText size={28} />, path: "/admin/blogs" },

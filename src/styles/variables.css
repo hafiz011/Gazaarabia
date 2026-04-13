@@ -32,7 +32,8 @@
     --text-muted: #6b7280;
 
     /* Background / Foreground */
-    --background: #ffffff;
+    /* --background: #ffffff; */
+    --background: #f5f3ef;
     --foreground: #2c2c2c;
 
     /* Gradients / Accent (Optional) */

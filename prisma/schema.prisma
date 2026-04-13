@@ -42,10 +42,94 @@ model Users {
   reviews       Review[]
   notifications notifications[]
   returnRequests ReturnRequest[]
+  seller         seller? //  opposite relation
 
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
+}
+
+model seller {
+  id       Int     @id @default(autoincrement())
+  userId   Int     @unique
+  shopName String?
+  shopSlug String?  @unique
+  logo     String?
+  banner   String?
+  isActive Boolean @default(false)
+  status   String  @default("Pending")
+
+  // Commission Config
+  commissionValue Float  @default(5)
+
+  // Payout Config
+  payoutDays    Int   @default(30)
+  minimumPayout Float @default(50)
+
+  // Balances
+  availableBalance Float @default(0)
+  pendingBalance   Float @default(0)
+  totalEarned      Float @default(0)
+
+  products   products[]
+  payouts    SellerPayout[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user Users @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("sellers")
+}
+
+model SellerPayout {
+  id            Int     @id @default(autoincrement())
+  sellerId      Int
+  amount        Float
+  status        String  @default("pending") // pending | paid
+  paymentMethod String?
+  paymentRef    String?
+  invoiceUrl    String?
+  periodLabel   String?
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  seller seller @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@index([status])
+  @@map("seller_payouts")
+}
+
+model PlatformSettings {
+  id                     Int      @id @default(autoincrement())
+  defaultCommissionValue Float    @default(5)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model CategoryCommission {
+  id             Int     @id @default(autoincrement())
+  categoryId     Int
+  commission     Float
+  isActive       Boolean @default(true)
+
+  category      Categories   @relation(fields: [categoryId], references: [id])
+
+  @@unique([categoryId])
+  @@map("category_commissions")
+}
+model SubcategoryCommission {
+  id            Int   @id @default(autoincrement())
+  subcategoryId Int   @unique
+  commission    Float 
+  isActive       Boolean @default(true)
+
+  subcategory Subcategory @relation(fields: [subcategoryId], references: [id])
 }
 
 model Sizes {
@@ -87,6 +171,7 @@ model Categories {
 
   menus    Menus[]    @relation("CategoryMenus")
   Submenus Submenus[]
+  categoryCommission CategoryCommission?
 
   @@map("categories")
 }
@@ -99,6 +184,7 @@ model Subcategory {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   products   products[]
+  subcategoryCommission SubcategoryCommission[]
   category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   submenus Submenus[] @relation("SubcategorySubmenus")
@@ -176,6 +262,7 @@ model brand {
   products   products[]
 }
 
+
 model productimage {
   id        Int      @id @default(autoincrement())
   url       String
@@ -190,6 +277,7 @@ model productimage {
 
 model products {
   id               Int              @id @default(autoincrement())
+  sellerId         Int
   slug             String           @unique
   description      String?          @db.LongText
   active           Boolean          @default(true)
@@ -201,6 +289,7 @@ model products {
   discountPrice    Float?
   fitType          String?
   sellingPrice     Float
+  commissionValue  Float   @default(5)
   shortDescription String?           @db.LongText
   subcategoryId    Int?
   title            String
@@ -210,6 +299,7 @@ model products {
   brand            brand?           @relation(fields: [brandId], references: [id], map: "Products_brandId_fkey")
   categories       Categories?      @relation(fields: [categoryId], references: [id], map: "Products_categoryId_fkey")
   subcategories    Subcategory?     @relation(fields: [subcategoryId], references: [id], map: "Products_subcategoryId_fkey")
+  seller         seller           @relation(fields: [sellerId], references: [id])
   productvariant   productvariant[]
 
   materialCareId Int?
@@ -227,12 +317,11 @@ model products {
   ambassadorId          Int?     // assigned ambassador
   ambassador   Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
 
-
-
   // NEW — Back-relations for ProductRelation
   asParentRelations ProductRelation[] @relation("ProductAsParent")
   asChildRelations  ProductRelation[] @relation("ProductAsChild")
 
+  @@index([sellerId])
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
   @@index([subcategoryId], map: "Products_subcategoryId_fkey")
@@ -424,6 +513,7 @@ model Orders {
 
 model OrderItem {
   id        Int  @id @default(autoincrement())
+  sellerId  Int
   orderId   Int
   productId Int
   variantId Int // main source of truth (points to productvariant)
@@ -436,6 +526,17 @@ model OrderItem {
   sku      String?
   title    String?
   reviewed Boolean @default(false)
+
+ // Commission Snapshot
+  commissionType   String @default("percentage")
+  commissionValue  Float
+  commissionAmount Float
+  sellerEarning    Float
+
+  payoutDays       Int
+  payoutEligibleAt DateTime
+  isPayoutEligible Boolean  @default(false)
+  isPaidOut        Boolean  @default(false)
 
   //  Ambassador earning tracking per product
   ambassadorId         Int?
@@ -464,6 +565,7 @@ model OrderItem {
   order   Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product products       @relation(fields: [productId], references: [id])
   variant productvariant @relation(fields: [variantId], references: [id]) //  matches productvariant.orderItems
+  seller  seller         @relation(fields: [sellerId], references: [id])
 
   reviews Review[]
   returnRequests ReturnRequest[]

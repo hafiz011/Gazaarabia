@@ -105,33 +105,6 @@ export async function POST(req: NextRequest) {
     let affiliateCommission = null;
     let affiliateEarning = null;
 
-    // if (couponData?.affiliateId) {
-    //   affiliateId = couponData.affiliateId;
-
-
-    //   // Get affiliate account to read the current commission %
-    //   const affiliateInfo = await prisma.affiliate.findUnique({
-    //     where: { id: affiliateId },
-    //     select: { baseCommission: true }, // ex: 7% or 10%
-    //   });
-
-
-    //   // affiliateCommission = affiliateInfo?.baseCommission ?? 0; // % at order time
-    //   // affiliateEarning = (payment.totalAmount * affiliateCommission) / 100; // £ earned
-
-    //   affiliateCommission = affiliateInfo?.baseCommission ?? 0;
-
-    //   const itemsTotal = payment.itemsTotal ?? 0;
-    //   const discountAmount = coupon?.discountAmount ?? 0;
-
-    //   // Apply percentage first, then subtract discount
-    //   const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
-    //   const finalEarning = earningBeforeDiscount - discountAmount;
-
-    //   // Avoid negative commission
-    //   // affiliateEarning = Math.max(finalEarning, 0);
-    //   affiliateEarning = Number(Math.max(finalEarning, 0).toFixed(2));
-    // }
 
 
     if (affiliateId) {
@@ -153,13 +126,90 @@ export async function POST(req: NextRequest) {
       affiliateEarning = Number(Math.max(earningAfterDiscount, 0).toFixed(2));
     }
 
+    // ============================
+    // PLATFORM COMMISSION
+    // ============================
+    const platform = await prisma.platformSettings.findFirst();
+    const platformCommission = platform?.defaultCommissionValue || 0;
     // ==========================================================
-    //  AMBASSADOR LOGIC — PER PRODUCT
+    //  AMBASSADOR and SELLER LOGIC — PER PRODUCT
     // ==========================================================
-    const orderItemsWithAmbassador = [];
+    const orderItemsWithSeller = [];
 
     for (const item of orderItems) {
       const ambassadorInfo: any = await getAmbassadorForProduct(item.productId);
+
+      const product = await prisma.products.findUnique({
+        where: { id: item.productId },
+        include: {
+          seller: true,
+          categories: true,
+          subcategories: true
+        }
+      });
+
+      if (!product) continue;
+
+      const subtotal = item.subtotal;
+
+      // ============================
+      // 1. SELLER COMMISSION
+      // ============================
+      const sellerCommission = product?.seller?.commissionValue || 0;
+
+      // ============================
+      // 2. PRODUCT COMMISSION
+      // ============================
+      const productCommission = product?.commissionValue || 0;
+
+      // ============================
+      // 3. CATEGORY / SUBCATEGORY
+      // ============================
+      let categoryCommission = 0;
+
+      if (product.categoryId) {
+        const cat = await prisma.categoryCommission.findUnique({
+          where: { categoryId: product.categoryId },
+        });
+
+        if (cat && cat.isActive) {
+          categoryCommission = cat.commission;
+        } else if (product.subcategoryId) {
+          const sub = await prisma.subcategoryCommission.findUnique({
+            where: { subcategoryId: product.subcategoryId },
+          });
+
+          if (sub && sub.isActive) {
+            categoryCommission = sub.commission;
+          }
+        }
+      }
+
+
+      // ============================
+      //  TOTAL COMMISSION %
+      // ============================
+      const totalPercent =
+        sellerCommission +
+        productCommission +
+        categoryCommission +
+        platformCommission;
+
+      // ============================
+      //  TOTAL AMOUNT
+      // ============================
+      const commissionAmount = Number(
+        ((subtotal * totalPercent) / 100).toFixed(2)
+      );
+
+      const sellerEarning = Number(
+        (subtotal - commissionAmount).toFixed(2)
+      );
+
+      const payoutDays = product?.seller?.payoutDays || 30;
+
+      const payoutEligibleAt = new Date();
+      payoutEligibleAt.setDate(payoutEligibleAt.getDate() + payoutDays);
 
       let ambassadorEarning = null;
 
@@ -168,9 +218,6 @@ export async function POST(req: NextRequest) {
           ((item.subtotal * ambassadorInfo.commissionPercent) / 100).toFixed(2)
         );
       }
-
-
-
 
       // ================= new calculate the affiliating earning on per order item start ==============
 
@@ -211,7 +258,7 @@ export async function POST(req: NextRequest) {
 
 
 
-      orderItemsWithAmbassador.push({
+      orderItemsWithSeller.push({
         productId: item.productId,
         variantId: item.variantId,
         colorId: item.colorId,
@@ -219,6 +266,17 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         price: item.price,
         subtotal: item.subtotal,
+
+        // Seller/Commission
+        sellerId: product?.sellerId || 1, // Fallback if no seller found
+        // IMPORTANT SNAPSHOT
+        commissionType: "percentage",
+        commissionValue: totalPercent,
+        commissionAmount: commissionAmount,
+        sellerEarning: sellerEarning,
+
+        payoutDays,
+        payoutEligibleAt,
 
         affiliateEarning: affiliateItemEarning,
 
@@ -233,7 +291,7 @@ export async function POST(req: NextRequest) {
     // ==========================================================
     //  OPTIONAL: SAVE ORDER-LEVEL AMBASSADOR (first found)
     // ==========================================================
-    const firstItemWithAmbassador = orderItemsWithAmbassador.find(
+    const firstItemWithAmbassador = orderItemsWithSeller.find(
       (i) => i.ambassadorId
     );
 
@@ -300,18 +358,15 @@ export async function POST(req: NextRequest) {
             : 0,
 
 
-
-
-
         //  NEW — Order-level ambassador tracking
         ambassadorId: ambassadorIdForOrder,
         ambassadorPaid: false,
 
         charityAmount: charity?.amount || 0,
 
-        //  INSERT order items WITH ambassador fields
+        //  INSERT order items WITH seller fields
         orderItems: {
-          create: orderItemsWithAmbassador,
+          create: orderItemsWithSeller,
         },
 
       },

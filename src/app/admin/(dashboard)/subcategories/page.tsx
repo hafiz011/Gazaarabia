@@ -29,6 +29,7 @@ export default function SubcategoryListPage() {
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
   const [formCategoryId, setFormCategoryId] = useState<number | null>(null);
+  const [formCommission, setFormCommission] = useState<number | "">("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -92,6 +93,7 @@ export default function SubcategoryListPage() {
       setFormName("");
       setFormSlug("");
       setFormCategoryId(null);
+      setFormCommission("");
       setEditId(null);
       setIsEditing(false);
       setIsSlugEdited(false);
@@ -188,6 +190,7 @@ export default function SubcategoryListPage() {
           name: formName,
           slug: formSlug,
           categoryId: formCategoryId,
+          commission: formCommission === "" ? null : formCommission
         });
         setPopUpAlertData({
           isOpen: true,
@@ -200,6 +203,7 @@ export default function SubcategoryListPage() {
           name: formName,
           slug: formSlug,
           categoryId: formCategoryId,
+          commission: formCommission === "" ? null : formCommission
         });
         setPopUpAlertData({
           isOpen: true,
@@ -220,10 +224,11 @@ export default function SubcategoryListPage() {
     }
   };
 
-  const handleEdit = (subcategory: Subcategory) => {
+  const handleEdit = (subcategory: any) => {
     setFormName(subcategory.name);
     setFormSlug(subcategory.slug);
     setFormCategoryId(subcategory.categoryId);
+    setFormCommission(subcategory.subcategoryCommission?.[0]?.commission ?? "");
     setEditId(subcategory.id);
     setIsEditing(true);
     setIsSlugEdited(true); // stop auto
@@ -293,6 +298,7 @@ export default function SubcategoryListPage() {
                 <th className="py-3 px-3 text-center">Subcategory Name</th>
                 <th className="py-3 px-3 text-center">Slug</th>
                 <th className="py-3 px-3 text-center">Category</th>
+                <th className="py-3 px-3 text-center">Commission (%)</th>
                 <th className="py-3 px-3 text-center">Action</th>
               </tr>
             </thead>
@@ -316,6 +322,9 @@ export default function SubcategoryListPage() {
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {sub.category?.name || "-"}
                     </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {(sub as any).subcategoryCommission?.[0]?.commission != null ? `${(sub as any).subcategoryCommission[0].commission}%` : "-"}
+                    </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex justify-center gap-1">
                         <button
@@ -338,7 +347,7 @@ export default function SubcategoryListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-gray-500 text-sm">
+                  <td colSpan={6} className="py-12 text-center text-gray-500 text-sm">
                     No subcategories found
                   </td>
                 </tr>
@@ -420,6 +429,19 @@ export default function SubcategoryListPage() {
                   </option>
                 ))}
               </select>
+
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Commission (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formCommission}
+                onChange={(e) => setFormCommission(e.target.value === "" ? "" : Number(e.target.value))}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="e.g. 5"
+              />
 
               <div className="flex justify-end gap-3">
                 <button

@@ -38,7 +38,8 @@ export async function GET(req: Request) {
       materialCares,
       products,
       users,
-      orders
+      orders,
+      sellers,
     ] = await Promise.all([
       prisma.blogs.count(),
       prisma.blogCategories.count(),
@@ -52,6 +53,7 @@ export async function GET(req: Request) {
       prisma.products.count(),
       prisma.users.count(),
       prisma.orders.count(),
+      prisma.seller.count(),
     ]);
 
     const recentBlogs = await prisma.blogs.findMany({

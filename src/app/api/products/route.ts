@@ -214,6 +214,9 @@ export async function POST(req: NextRequest) {
           : null,
         costPrice: parseFloat(body.costPrice),
         sellingPrice: parseFloat(body.sellingPrice),
+        commissionValue: body.commissionValue !== undefined && body.commissionValue !== ""
+          ? parseFloat(body.commissionValue)
+          : 5,
         discountPrice: body.discountPrice
           ? parseFloat(body.discountPrice)
           : null,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Pencil, Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search, Plus } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
@@ -17,6 +17,7 @@ interface Product {
   brand?: { name: string };
   category?: { name: string };
   categories: any,
+  commissionValue: any,
   // images?: { url: string }[];
   productimage?: { url: string }[];
   active: boolean;
@@ -145,96 +146,113 @@ export default function ProductListPage() {
       />
 
 
-      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden mt-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-800">Manage Products</h1>
-          <div className="relative w-full md:w-72">
-            <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm ?? ""}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full border border-gray-300 rounded-full pl-10 pr-4 py-2 text-sm 
-                         focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
-            />
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 p-6 border-b border-gray-100 bg-gray-50/50">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Manage Products</h1>
+            <p className="text-sm text-gray-500 mt-1">View, edit, and manage your product catalogue</p>
+          </div>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <div className="relative w-full md:w-80 group">
+              <Search size={18} className="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-[var(--brand-primary)] transition-colors" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm ?? ""}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full border border-gray-200 bg-gray-50 rounded-full pl-10 pr-4 py-2.5 text-sm 
+                           focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
+              />
+            </div>
+            {/* <button
+              onClick={() => router.push("/admin/products/form")}
+              className="bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white px-6 py-2.5 rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium active:scale-95 duration-200"
+            >
+              <Plus size={18} strokeWidth={2.5} />
+              Add Product
+            </button> */}
           </div>
         </div>
 
-        <div className="border-t border-gray-200"></div>
-
         {/* Table */}
-        <div className="overflow-x-scroll overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300 scrollbar-track-transparent">
           <table className="min-w-[1200px] w-full text-sm border-collapse">
-            <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium sticky top-0">
+            <thead className="bg-gray-50/80 text-gray-500 text-xs uppercase font-semibold tracking-wider sticky top-0 backdrop-blur-sm z-10 border-b border-gray-100">
               <tr>
-                <th className="py-3 px-5 text-left w-[50px]">#</th>
-                <th className="py-3 px-5 text-left">Image</th>
-                <th className="py-3 px-5 text-left">Title</th>
-                <th className="py-3 px-5 text-left">Brand</th>
-                <th className="py-3 px-5 text-left">Category</th>
-                <th className="py-3 px-5 text-left">Price</th>
-                {/* <th className="py-3 px-5 text-left">Status</th> */}
-                <th className="py-3 px-5 text-left">Created</th>
-                <th className="py-3 px-5 text-right">Action</th>
+                <th className="py-4 px-6 text-left w-[60px]">#</th>
+                <th className="py-4 px-6 text-left">Image</th>
+                <th className="py-4 px-6 text-left">Title</th>
+                <th className="py-4 px-6 text-left">Brand</th>
+                <th className="py-4 px-6 text-left">Category</th>
+                <th className="py-4 px-6 text-left">Commission</th>
+                <th className="py-4 px-6 text-left">Price</th>
+                <th className="py-4 px-6 text-left">Created</th>
+                <th className="py-4 px-6 text-right">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-500 text-sm">
-                    Loading products...
+                  <td colSpan={9} className="py-16 text-center text-gray-400 text-sm font-medium">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-6 h-6 border-2 border-gray-200 border-t-[var(--brand-primary)] rounded-full animate-spin"></div>
+                      Loading products...
+                    </div>
                   </td>
                 </tr>
               ) : paginatedProducts.length > 0 ? (
                 paginatedProducts.map((p, idx) => (
                   <tr
                     key={p.id}
-                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-100 transition`}
+                    className="bg-white hover:bg-blue-50/30 transition-colors duration-150 group"
                   >
-                    <td className="py-3 px-5">{startIndex + idx + 1}</td>
-                    <td className="py-3 px-5">
-                      {p.productimage?.[0]?.url ? (
-                        <img
-                          src={p.productimage[0].url}
-                          alt={p.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded" />
-                      )}
+                    <td className="py-4 px-6 text-gray-500 font-medium">{startIndex + idx + 1}</td>
+                    <td className="py-4 px-6">
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 group-hover:shadow-sm transition-shadow">
+                        {p.productimage?.[0]?.url ? (
+                          <img
+                            src={p.productimage[0].url}
+                            alt={p.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <span className="text-xs font-medium">No img</span>
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-3 px-5 truncate max-w-[180px]">{p.title}</td>
-                    <td className="py-3 px-5">{p.brand?.name || "-"}</td>
-                    <td className="py-3 px-5">{p.categories?.name || "-"}</td>
-                    <td className="py-3 px-5">£{p.sellingPrice}</td>
-                    {/* <td className="py-3 px-5">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        {p.active ? "Active" : "Inactive"}
+                    <td className="py-4 px-6">
+                      <div className="truncate max-w-[200px] font-medium text-gray-900" title={p.title}>{p.title}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                        {p.brand?.name || "-"}
                       </span>
-                    </td> */}
-                    <td className="py-3 px-5 text-gray-600 whitespace-nowrap">
-                      {new Intl.DateTimeFormat("en-GB").format(new Date(p.createdAt))}
                     </td>
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="py-4 px-6 text-gray-600">{p.categories?.name || "-"}</td>
+                    <td className="py-4 px-6 text-gray-600 font-medium">{p.commissionValue != null ? `${p.commissionValue}%` : "-"}</td>
+                    <td className="py-4 px-6 font-semibold text-gray-900">£{parseFloat(p.sellingPrice as any).toFixed(2)}</td>
+                    <td className="py-4 px-6 text-gray-500 text-xs">
+                      {new Intl.DateTimeFormat("en-GB", { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(p.createdAt))}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button
                           onClick={() => handleEdit(p.id)}
-                          className="text-[var(--brand-secondary)] p-2 rounded-full hover:bg-gray-100"
+                          className="text-[var(--brand-secondary)] p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                          title="Edit product"
                         >
                           <Pencil size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(p.id)}
-                          className="text-[var(--brand-primary)] p-2 rounded-full hover:bg-gray-100"
+                          className="text-[var(--brand-primary)] p-2 rounded-lg hover:bg-red-50 transition-colors"
+                          title="Delete product"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -244,8 +262,12 @@ export default function ProductListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-500 text-sm">
-                    No products found
+                  <td colSpan={9} className="py-16 text-center text-gray-400 text-sm">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search size={32} className="text-gray-300 mb-2" />
+                      <span className="font-medium text-gray-500">No products found</span>
+                      <span className="text-xs">Try adjusting your filters or search terms</span>
+                    </div>
                   </td>
                 </tr>
               )}

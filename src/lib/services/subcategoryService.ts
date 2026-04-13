@@ -5,6 +5,7 @@ export interface Subcategory {
   name: string;
   slug: string;
   categoryId: number;
+  commission?: number | null;
   createdAt: string;
   category?: {
     id: number;

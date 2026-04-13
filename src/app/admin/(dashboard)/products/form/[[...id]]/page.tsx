@@ -57,6 +57,7 @@ function ProductFormContent() {
 
     costPrice: "",
     sellingPrice: "",
+    commissionValue: "",
     discountPrice: "",
     baseQty: "",
     barcode: "",
@@ -183,6 +184,7 @@ function ProductFormContent() {
         materialCareId: data.materialCareId || "",
         costPrice: data.costPrice || "",
         sellingPrice: data.sellingPrice || "",
+        commissionValue: data.commissionValue || "",
         discountPrice: data.discountPrice || "",
         baseQty: data.baseQty || "",
         barcode: data.barcode || "",
@@ -672,6 +674,8 @@ function ProductFormContent() {
             value={form.costPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
           <TextField label={<RequiredLabel text="Selling Price" />} name="sellingPrice" type="number"
             value={form.sellingPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
+          <TextField label="Commission (%)" name="commissionValue" type="number"
+            value={form.commissionValue} onChange={handleInputChange} fullWidth sx={fieldStyle} />
           {/* <TextField label={<RequiredLabel text="Discount Price" />} name="discountPrice" type="number"
             value={form.discountPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} /> */}
           <TextField label={<RequiredLabel text="Base Qty" />} name="baseQty" type="number"

@@ -14,6 +14,7 @@ export const ROUTES = {
   ADMIN: {
     LOGIN: "/admin/login",
     DASHBOARD: "/admin",
+    SELLER: "/admin/seller",
   },
   //  Affiliate routes
   AFFILIATE: {
@@ -24,10 +25,16 @@ export const ROUTES = {
 
   //  Content manager routes
   CONTENT_MANAGER: {
-    LOGIN: "/login",
+    LOGIN: "/admin/login",
     BLOGS: "/admin/blogs",
   },
 
+  // seller routes
+  SELLER: {
+    LOGIN: "/seller/login",
+    DASHBOARD: "/seller",
+    REGISTER: "/seller/register",
+  },
   // Other common pages
   //   BLOG: "/blog",
   //   CONTACT: "/contact",

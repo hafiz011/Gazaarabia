@@ -43,80 +43,89 @@ export async function POST(req: Request) {
       },
     });
 
+    if (role.toLowerCase() === "seller") {
+      await prisma.seller.create({
+        data: {
+          userId: user.id,
+          // isApproved: false, // default to false, admin can approve later
 
-
-    // Get commission values from HomePageSetting
-    const settings = await prisma.homePageSetting.findFirst();
-
-    const baseCommission = settings?.affiliateCommission || 10;
-    const shareCommission = 7;
-
-
-    // ==============================
-    // GENERATE UNIQUE REFERRAL CODE
-    // ==============================
-    let referralCode = generateReferralCode();
-
-    // Ensure uniqueness
-    let exists = await prisma.affiliate.findUnique({
-      where: { referralCode },
-    });
-
-    while (exists) {
-      referralCode = generateReferralCode();
-      exists = await prisma.affiliate.findUnique({
-        where: { referralCode },
+        },
       });
     }
+    else {
+
+      // Get commission values from HomePageSetting
+      const settings = await prisma.homePageSetting.findFirst();
+
+      const baseCommission = settings?.affiliateCommission || 10;
+      const shareCommission = 7;
 
 
-    // Create affiliate entry using dynamic commissions
-    await prisma.affiliate.create({
-      data: {
-        userId: user.id,
-        baseCommission: baseCommission,
-        shareCommission: shareCommission,
-        isActive: true,
-        referralCode
-      },
-    });
+      // ==============================
+      // GENERATE UNIQUE REFERRAL CODE
+      // ==============================
+      let referralCode = generateReferralCode();
+
+      // Ensure uniqueness
+      let exists = await prisma.affiliate.findUnique({
+        where: { referralCode },
+      });
+
+      while (exists) {
+        referralCode = generateReferralCode();
+        exists = await prisma.affiliate.findUnique({
+          where: { referralCode },
+        });
+      }
 
 
-    // //If the role is affiliate → insert record into Affiliate table
-    // if (role.toLowerCase() === "affiliate") {
-    //   await prisma.affiliate.create({
-    //     data: {
-    //       userId: user.id,
-    //       baseCommission: 10,     // default 10%
-    //       shareCommission: 7,     // default 7%
-    //       isActive: true,
-    //     },
-    //   });
-    // }
+      // Create affiliate entry using dynamic commissions
+      await prisma.affiliate.create({
+        data: {
+          userId: user.id,
+          baseCommission: baseCommission,
+          shareCommission: shareCommission,
+          isActive: true,
+          referralCode
+        },
+      });
 
 
-    //  AUTO-SUBSCRIBE LOGIC (IMPORTANT)
-    await prisma.subscriber.upsert({
-      where: { email },
-      update: {
+      // //If the role is affiliate → insert record into Affiliate table
+      // if (role.toLowerCase() === "affiliate") {
+      //   await prisma.affiliate.create({
+      //     data: {
+      //       userId: user.id,
+      //       baseCommission: 10,     // default 10%
+      //       shareCommission: 7,     // default 7%
+      //       isActive: true,
+      //     },
+      //   });
+      // }
+
+
+      //  AUTO-SUBSCRIBE LOGIC (IMPORTANT)
+      await prisma.subscriber.upsert({
+        where: { email },
+        update: {
+          name,
+          phone,
+          isActive: true,
+        },
+        create: {
+          email,
+          name,
+          phone,
+          isActive: true,
+        },
+      });
+
+      //  SEND subscriber CONFIRMATION EMAIL
+      await sendSubscribeConfirmationEmail({
+        to: email,
         name,
-        phone,
-        isActive: true,
-      },
-      create: {
-        email,
-        name,
-        phone,
-        isActive: true,
-      },
-    });
-
-    //  SEND subscriber CONFIRMATION EMAIL
-    await sendSubscribeConfirmationEmail({
-      to: email,
-      name,
-    });
-
+      });
+    }
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (err: any) {
     console.error(err);

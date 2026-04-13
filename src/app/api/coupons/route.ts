@@ -202,22 +202,22 @@ export async function GET(req: Request) {
     //     orderBy: { createdAt: "desc" },
     //   });
     // } else {
-      //  Affiliate can see only their own coupons
-      coupons = await prisma.coupon.findMany({
-        where: { creatorId: creatorId },
-        include: {
-          affiliate: {
-            select: {
-              id: true,
-              user: { select: { name: true, email: true } },
-            },
-          },
-          creator: {
-            select: { id: true, name: true, email: true, role: true },
+    //  Affiliate can see only their own coupons
+    coupons = await prisma.coupon.findMany({
+      where: { creatorId: creatorId },
+      include: {
+        affiliate: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
           },
         },
-        orderBy: { createdAt: "desc" },
-      });
+        creator: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
     // }
 
     return NextResponse.json({ data: coupons }, { status: 200 });

@@ -3,7 +3,7 @@
 import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
 
 interface PopupAlertProps {
-  type?: "success" | "error" | "warning";
+  type?: "success" | "error" | "warning" | "confirm" | "";
   title?: string;
   message: string;
   confirmText?: string;
@@ -33,7 +33,11 @@ export default function PopupAlert({
       : "text-[var(--navy-blue)]";
 
   const Icon =
-    type === "success" ? CheckCircle : type === "error" ? AlertCircle : XCircle;
+    type === "success" 
+      ? CheckCircle 
+      : type === "error" 
+      ? XCircle 
+      : AlertCircle;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
@@ -41,7 +45,7 @@ export default function PopupAlert({
         <div className="flex items-center gap-2 mb-4">
           <Icon size={28} className={colorClass} />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-            {title || (type === "success" ? "Success" : type === "error" ? "Error" : "Alert")}
+            {title || (type === "success" ? "Success" : type === "error" ? "Error" : type === "warning" ? "Warning" : "Confirm")}
           </h2>
         </div>
 

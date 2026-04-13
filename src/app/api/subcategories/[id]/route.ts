@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     include: { role: true }
   });
 
-  const allowedRoles = ["admin"];
+  const allowedRoles = ["admin", "seller"];
 
   if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -37,7 +37,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const subcategory = await prisma.subcategory.findUnique({
       where: { id: subcategoryId },
-      include: { category: true },
+      include: {
+        category: true,
+        subcategoryCommission: true
+      },
     });
 
     if (!subcategory) {
@@ -87,7 +90,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const { name, slug, categoryId } = await req.json();
+    const { name, slug, categoryId, commission } = await req.json();
     if (!name || !slug || !categoryId) {
       return NextResponse.json(
         { success: false, message: "Name, slug and Category are required." },
@@ -119,7 +122,20 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         name,
         slug,
         categoryId: Number(categoryId),
+        ...(commission !== undefined && commission !== null
+          ? {
+            subcategoryCommission: {
+              deleteMany: {},
+              create: {
+                commission: parseFloat(commission),
+              },
+            },
+          }
+          : {}),
       },
+      include: {
+        subcategoryCommission: true,
+      }
     });
 
     return NextResponse.json({
@@ -176,6 +192,10 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
         { status: 404 }
       );
     }
+
+    await prisma.subcategoryCommission.delete({
+      where: { subcategoryId },
+    });
 
     await prisma.subcategory.delete({
       where: { id: subcategoryId },

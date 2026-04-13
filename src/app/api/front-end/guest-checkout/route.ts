@@ -186,15 +186,92 @@ export async function POST(req: NextRequest) {
       },
     });
 
-
+    // ============================
+    // PLATFORM COMMISSION
+    // ============================
+    const platform = await prisma.platformSettings.findFirst();
+    const platformCommission = platform?.defaultCommissionValue || 0;
 
     // ==========================================================
-    //  AMBASSADOR LOGIC — PER PRODUCT
+    //  AMBASSADOR and SELLER LOGIC — PER PRODUCT
     // ==========================================================
-    const orderItemsWithAmbassador = [];
+    const orderItemsWithSeller = [];
 
     for (const item of orderItems) {
       const ambassadorInfo: any = await getAmbassadorForProduct(item.productId);
+
+      const product = await prisma.products.findUnique({
+        where: { id: item.productId },
+        include: {
+          seller: true,
+          categories: true,
+          subcategories: true
+        }
+      });
+
+      if (!product) continue;
+
+      const subtotal = item.subtotal;
+      // ============================
+      // 1. SELLER COMMISSION
+      // ============================
+      const sellerCommission = product?.seller?.commissionValue || 0;
+
+      // ============================
+      // 2. PRODUCT COMMISSION
+      // ============================
+      const productCommission = product?.commissionValue || 0;
+
+      // ============================
+      // 3. CATEGORY / SUBCATEGORY
+      // ============================
+      let categoryCommission = 0;
+
+      if (product.categoryId) {
+        const cat = await prisma.categoryCommission.findUnique({
+          where: { categoryId: product.categoryId },
+        });
+
+        if (cat && cat.isActive) {
+          categoryCommission = cat.commission;
+        } else if (product.subcategoryId) {
+          const sub = await prisma.subcategoryCommission.findUnique({
+            where: { subcategoryId: product.subcategoryId },
+          });
+
+          if (sub && sub.isActive) {
+            categoryCommission = sub.commission;
+          }
+        }
+      }
+
+
+      // ============================
+      //  TOTAL COMMISSION %
+      // ============================
+      const totalPercent =
+        sellerCommission +
+        productCommission +
+        categoryCommission +
+        platformCommission;
+
+      // ============================
+      //  TOTAL AMOUNT
+      // ============================
+      const commissionAmount = Number(
+        ((subtotal * totalPercent) / 100).toFixed(2)
+      );
+
+      const sellerEarning = Number(
+        (subtotal - commissionAmount).toFixed(2)
+      );
+
+      const payoutDays = product?.seller?.payoutDays || 30;
+
+      const payoutEligibleAt = new Date();
+      payoutEligibleAt.setDate(payoutEligibleAt.getDate() + payoutDays);
+
+      // Ambassador commission calculation 
 
       let ambassadorEarning = null;
 
@@ -234,7 +311,7 @@ export async function POST(req: NextRequest) {
 
       // ================= new calculate the affiliating earning on per order item end ==============
 
-      orderItemsWithAmbassador.push({
+      orderItemsWithSeller.push({
         productId: item.productId,
         variantId: item.variantId,
         colorId: item.colorId,
@@ -242,6 +319,17 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         price: item.price,
         subtotal: item.subtotal,
+
+        // Seller/Commission
+        sellerId: product?.sellerId || 1, // Fallback if no seller found
+        // IMPORTANT SNAPSHOT
+        commissionType: "percentage",
+        commissionValue: totalPercent,
+        commissionAmount: commissionAmount,
+        sellerEarning: sellerEarning,
+
+        payoutDays,
+        payoutEligibleAt,
 
         affiliateEarning: affiliateItemEarning,
 
@@ -257,7 +345,7 @@ export async function POST(req: NextRequest) {
     // ==========================================================
     //  OPTIONAL: SAVE ORDER-LEVEL AMBASSADOR (first found)
     // ==========================================================
-    const firstItemWithAmbassador = orderItemsWithAmbassador.find(
+    const firstItemWithAmbassador = orderItemsWithSeller.find(
       (i) => i.ambassadorId
     );
 
@@ -328,67 +416,12 @@ export async function POST(req: NextRequest) {
 
         //  INSERT order items WITH ambassador fields
         orderItems: {
-          create: orderItemsWithAmbassador,
+          create: orderItemsWithSeller,
         },
 
       },
       include: { orderItems: true },
     });
-
-
-    // 5️. Create order with coupons + affiliate fields
-    // const newOrder = await prisma.orders.create({
-    //   data: {
-    //     userId: user.id,
-    //     addressId: deliveryAddress.id,
-
-    //     totalAmount: payment.totalAmount,
-    //     itemsTotal: payment.itemsTotal,
-    //     subtotal: payment.subtotal,
-    //     paymentMethod: payment.paymentMethod,
-    //     transactionId: payment.paypalOrderId,
-    //     status: (payment.paymentStatus || "completed").toLowerCase(),
-    //     paypalResponse: payment.paypalResponse,
-
-    //     firstName: address.firstName,
-    //     lastName: address.lastName,
-    //     company: address.company,
-    //     address1: address.address1,
-    //     address2: address.address2,
-    //     city: address.city,
-    //     country: address.country,
-    //     postalCode: address.postalCode,
-    //     phone: address.phone,
-
-    //     discountTotal: coupon?.discountAmount ?? 0,
-
-    //     //  Coupon Fields
-    //     couponId: couponData?.id || null,
-    //     couponCode: couponData?.code || null,
-    //     couponDiscount: coupon?.discountAmount ?? 0,
-
-    //     // Affiliate Fields
-    //     affiliateId,
-    //     affiliateCommission,
-    //     affiliateEarning,
-
-    //     orderItems: {
-    //       create: orderItems.map((item: any) => ({
-    //         productId: item.productId,
-    //         variantId: item.variantId,
-    //         colorId: item.colorId,
-    //         sizeId: item.sizeId,
-    //         quantity: item.quantity,
-    //         price: item.price,
-    //         subtotal: item.subtotal,
-    //       })),
-    //     },
-
-    //     charityAmount: charity?.amount || 0,
-
-    //   },
-    //   include: { orderItems: true },
-    // });
 
 
     // -------------------------------------------------------

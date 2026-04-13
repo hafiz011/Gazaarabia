@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { name, slug, image } = await req.json();
+    const { name, slug, image, commission } = await req.json();
 
     if (!name || name.trim() === "") {
       return NextResponse.json(
@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
     const category = await prisma.categories.create({
       data: { name: name.trim(), slug: slug.trim(), image },
     });
+    const categoryCommission = await prisma.categoryCommission.create({
+      data: { categoryId: category.id, commission: commission },
+    });
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error) {
@@ -77,7 +80,8 @@ export async function GET(req: NextRequest) {
     include: { role: true }
   });
 
-  const allowedRoles = ["admin"];
+  // const allowedRoles = ["admin"];
+  const allowedRoles = ["admin", "seller"];
 
   if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -87,6 +91,7 @@ export async function GET(req: NextRequest) {
   try {
     const categories = await prisma.categories.findMany({
       orderBy: { id: "desc" },
+      include: { categoryCommission: true }
     });
 
     return NextResponse.json({ success: true, data: categories });

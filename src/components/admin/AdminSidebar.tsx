@@ -59,7 +59,6 @@ const links = [
     icon: ShoppingCart,
     children: [
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-      { href: "/admin/users", label: "Users", icon: Users },
       { href: "/admin/returns", label: "Return Requests", icon: ClipboardList },
       { href: "/admin/subscribers", label: "Subscribers", icon: UserPlus },
     ],
@@ -86,16 +85,31 @@ const links = [
     children: [
       { href: "/admin/coupons", label: "Coupons", icon: TicketPercent },
       { href: "/admin/affiliates", label: "Affiliates", icon: Users },
-      { href: "/admin/affiliates/payouts", label: "Affiliate Payouts", icon: BadgeDollarSign },
-      { href: "/admin/ambassador/payouts", label: "Ambassador Payouts", icon: BadgeDollarSign },
-      //       // { href: "/admin/affiliates/payouts-history", label: "Payout History", icon: BadgeDollarSign },
-      //       // { href: "/admin/affiliates/settings", label: "Commission Settings", icon: Settings },
       { href: "/admin/reviews", label: "Customer Reviews", icon: Star },
-      { href: "/admin/charity", label: "Charity", icon: HeartHandshake },
-      { href: "/admin/solidarity-receipts", label: "Solidarity Receipts", icon: HelpingHand }
     ],
   },
 
+  {
+    label: "Users & Sellers",
+    icon: Users,
+    children: [
+      { href: "/admin/users", label: "Users", icon: Users },
+      { href: "/admin/seller", label: "All Sellers", icon: Users },
+    ],
+  },
+  {
+    label: "Finance & Payouts",
+    icon: BadgeDollarSign,
+    children: [
+      { href: "/admin/revenue-breakdown", label: "Revenue Breakdown", icon: Settings },
+      { href: "/admin/seller-payouts", label: "Seller Payouts", icon: BadgeDollarSign },
+      { href: "/admin/payout-history", label: "Payout History", icon: BadgeDollarSign },
+      { href: "/admin/affiliates/payouts", label: "Affiliate Payouts", icon: BadgeDollarSign },
+      { href: "/admin/ambassador/payouts", label: "Ambassador Payouts", icon: BadgeDollarSign },
+      { href: "/admin/charity", label: "Charity Donations", icon: HeartHandshake },
+      { href: "/admin/solidarity-receipts", label: "Solidarity Receipts", icon: HelpingHand }
+    ],
+  },
   {
     label: "Contents",
     icon: ClipboardList,
@@ -108,16 +122,23 @@ const links = [
     ],
   },
 
+  // {
+  //   label: "Logistics",
+  //   icon: Truck,
+  //   children: [
+  //     // { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
+  //     { href: "/admin/delivery-settings", label: "Delivery Settings", icon: Package },
+  //   ],
+  // },
   {
-    label: "Logistics",
-    icon: Truck,
+    label: "Settings",
+    icon: Settings,
     children: [
-      // { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
+      { href: "/admin/home-setting", label: "Home Setting", icon: Home },
+      { href: "/admin/platform-commission", label: "Platform Commission", icon: Settings },
       { href: "/admin/delivery-settings", label: "Delivery Settings", icon: Package },
     ],
   },
-
-  { href: "/admin/home-setting", label: "Home Setting", icon: Home },
 
 ];
 

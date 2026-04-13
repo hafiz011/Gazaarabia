@@ -13,10 +13,8 @@ export default function AffiliateRootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="antialiased bg-[#f5f6fa] text-[var(--text-primary)]">
-        <AffiliateLayout>{children}</AffiliateLayout>
-      </body>
-    </html>
+    <div className="antialiased bg-[#f5f6fa] text-[var(--text-primary)]">
+      <AffiliateLayout>{children}</AffiliateLayout>
+    </div>
   );
 }

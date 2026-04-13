@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     include: { role: true }
   });
 
-  const allowedRoles = ["admin"];
+  const allowedRoles = ["admin", "seller"];
 
   if (!user || !allowedRoles.includes(user.role.name.toLowerCase())) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -36,8 +36,11 @@ export async function GET(req: NextRequest) {
           ],
         }
         : undefined,
-      orderBy: { createdAt: "desc" },
-      include: { category: true },
+      orderBy: { id: "desc" },
+      include: {
+        category: true,
+        subcategoryCommission: true
+      },
     });
 
     return NextResponse.json({
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { name, slug, categoryId } = await req.json();
+    const { name, slug, categoryId, commission } = await req.json();
 
     if (!name || !slug || !categoryId) {
       return NextResponse.json(
@@ -98,7 +101,23 @@ export async function POST(req: NextRequest) {
     }
 
     const newSubcategory = await prisma.subcategory.create({
-      data: { name, slug, categoryId },
+      data: {
+        name,
+        slug,
+        categoryId,
+        ...(commission !== undefined && commission !== null
+          ? {
+            subcategoryCommission: {
+              create: {
+                commission: parseFloat(commission),
+              },
+            },
+          }
+          : {}),
+      },
+      include: {
+        subcategoryCommission: true,
+      }
     });
 
     return NextResponse.json({
