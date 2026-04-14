@@ -10,7 +10,8 @@ import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 import { charityService } from "@/lib/services/charityService";
 import { GBP } from "@/lib/utils";
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { useModalStore } from "@/lib/stores/modalStore";
 import Loader from "@/components/Loader";
 
@@ -60,18 +61,78 @@ export default function CharityListPage() {
         if (modalAction === "download-charity") { exportToExcel(); clearModal(); }
     }, [modalAction, clearModal]);
 
-    const exportToExcel = () => {
-        if (!donations || donations.length === 0) { alert("No donations to export"); return; }
+    // const exportToExcel = () => {
+    //     if (!donations || donations.length === 0) { alert("No donations to export"); return; }
+    //     const excelData = donations.map((item, index) => ({
+    //         SN: index + 1, Transaction_ID: item.transactionId || "—",
+    //         Donor: item.anonymous ? "Anonymous" : item.name || "—", Email: item.email,
+    //         Amount: item.amount, Order_ID: item.orderId || "—",
+    //         Status: item.paymentStatus, Date: new Date(item.createdAt).toLocaleString(),
+    //     }));
+    //     const worksheet = XLSX.utils.json_to_sheet(excelData);
+    //     const workbook = XLSX.utils.book_new();
+    //     XLSX.utils.book_append_sheet(workbook, worksheet, "Donations");
+    //     XLSX.writeFile(workbook, "charity_donations.xlsx");
+    // };
+
+    const exportToExcel = async () => {
+        if (!donations || donations.length === 0) {
+            alert("No donations to export");
+            return;
+        }
+
         const excelData = donations.map((item, index) => ({
-            SN: index + 1, Transaction_ID: item.transactionId || "—",
-            Donor: item.anonymous ? "Anonymous" : item.name || "—", Email: item.email,
-            Amount: item.amount, Order_ID: item.orderId || "—",
-            Status: item.paymentStatus, Date: new Date(item.createdAt).toLocaleString(),
+            SN: index + 1,
+            Transaction_ID: item.transactionId || "—",
+            Donor: item.anonymous ? "Anonymous" : item.name || "—",
+            Email: item.email,
+            Amount: item.amount,
+            Order_ID: item.orderId || "—",
+            Status: item.paymentStatus,
+            Date: new Date(item.createdAt).toLocaleString(),
         }));
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Donations");
-        XLSX.writeFile(workbook, "charity_donations.xlsx");
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet("Donations");
+
+        // headers
+        sheet.addRow([
+            "SN",
+            "Transaction ID",
+            "Donor",
+            "Email",
+            "Amount",
+            "Order ID",
+            "Status",
+            "Date",
+        ]);
+
+        // data rows
+        excelData.forEach((item) => {
+            sheet.addRow([
+                item.SN,
+                item.Transaction_ID,
+                item.Donor,
+                item.Email,
+                item.Amount,
+                item.Order_ID,
+                item.Status,
+                item.Date,
+            ]);
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "charity_donations.xlsx";
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
 
     const totalPages = Math.ceil(donations.length / pageSize);
@@ -178,8 +239,8 @@ export default function CharityListPage() {
                                             <td className="px-6 py-5 text-gray-500">{item.orderId ? `#${item.orderId}` : "—"}</td>
                                             <td className="px-6 py-5">
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.paymentStatus === "completed" ? "bg-green-50 text-green-700"
-                                                        : item.paymentStatus === "pending" ? "bg-amber-50 text-amber-700"
-                                                            : "bg-red-50 text-red-700"}`}>
+                                                    : item.paymentStatus === "pending" ? "bg-amber-50 text-amber-700"
+                                                        : "bg-red-50 text-red-700"}`}>
                                                     {item.paymentStatus}
                                                 </span>
                                             </td>
