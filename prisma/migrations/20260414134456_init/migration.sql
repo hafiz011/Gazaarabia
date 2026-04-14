@@ -35,9 +35,8 @@ CREATE TABLE `sellers` (
     `shopSlug` VARCHAR(191) NULL,
     `logo` VARCHAR(191) NULL,
     `banner` VARCHAR(191) NULL,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
+    `isActive` BOOLEAN NOT NULL DEFAULT false,
     `status` VARCHAR(191) NOT NULL DEFAULT 'Pending',
-    `commissionType` VARCHAR(191) NOT NULL DEFAULT 'percentage',
     `commissionValue` DOUBLE NOT NULL DEFAULT 5,
     `payoutDays` INTEGER NOT NULL DEFAULT 30,
     `minimumPayout` DOUBLE NOT NULL DEFAULT 50,
@@ -75,7 +74,6 @@ CREATE TABLE `seller_payouts` (
 -- CreateTable
 CREATE TABLE `PlatformSettings` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `defaultCommissionType` VARCHAR(191) NOT NULL DEFAULT 'percentage',
     `defaultCommissionValue` DOUBLE NOT NULL DEFAULT 5,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -87,12 +85,21 @@ CREATE TABLE `PlatformSettings` (
 CREATE TABLE `category_commissions` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `categoryId` INTEGER NOT NULL,
-    `commissionType` VARCHAR(191) NOT NULL DEFAULT 'percentage',
-    `commission` DOUBLE NOT NULL DEFAULT 5,
+    `commission` DOUBLE NOT NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
-    `subcategoryId` INTEGER NULL,
 
     UNIQUE INDEX `category_commissions_categoryId_key`(`categoryId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SubcategoryCommission` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `subcategoryId` INTEGER NOT NULL,
+    `commission` DOUBLE NOT NULL,
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
+
+    UNIQUE INDEX `SubcategoryCommission_subcategoryId_key`(`subcategoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -252,7 +259,6 @@ CREATE TABLE `products` (
     `discountPrice` DOUBLE NULL,
     `fitType` VARCHAR(191) NULL,
     `sellingPrice` DOUBLE NOT NULL,
-    `commissionType` VARCHAR(191) NOT NULL DEFAULT 'percentage',
     `commissionValue` DOUBLE NOT NULL DEFAULT 5,
     `shortDescription` LONGTEXT NULL,
     `subcategoryId` INTEGER NULL,
@@ -793,7 +799,7 @@ ALTER TABLE `seller_payouts` ADD CONSTRAINT `seller_payouts_sellerId_fkey` FOREI
 ALTER TABLE `category_commissions` ADD CONSTRAINT `category_commissions_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `category_commissions` ADD CONSTRAINT `category_commissions_subcategoryId_fkey` FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `SubcategoryCommission` ADD CONSTRAINT `SubcategoryCommission_subcategoryId_fkey` FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `subcategories` ADD CONSTRAINT `subcategories_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `categories`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
