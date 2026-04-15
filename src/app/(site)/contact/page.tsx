@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { contactService } from "@/lib/services/front-end/contactService";
 import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt } from "react-icons/fa";
-import { FaInstagram, FaFacebookF, FaTwitter } from "react-icons/fa";
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube } from "react-icons/fa";
 import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
@@ -97,9 +97,9 @@ export default function ContactPage() {
       <section className="py-20 bg-[var(--soft-gray)]">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
-            { icon: <FaEnvelope className="text-3xl" />, title: "Email Us", detail: "support@gazaarabia.com" },
-            { icon: <FaPhoneAlt className="text-3xl" />, title: "Call Us", detail: "+91 98765 43210" },
-            { icon: <FaMapMarkerAlt className="text-3xl" />, title: "Visit Us", detail: "123 Arab Street, New Delhi" },
+            { icon: <FaEnvelope className="text-3xl" />, title: "Email Us", detail: "info@gazaarabia.com" },
+            { icon: <FaPhoneAlt className="text-3xl" />, title: "Call Us", detail: "+440 77671 77465" },
+            // { icon: <FaMapMarkerAlt className="text-3xl" />, title: "Visit Us", detail: "123 Arab Street, New Delhi" },
           ].map((item, i) => (
             <div
               key={i}
@@ -225,15 +225,22 @@ export default function ContactPage() {
 
           {/*  Social Links */}
           <div className="flex items-center justify-center gap-6 mt-14">
-            {[FaInstagram, FaFacebookF, FaTwitter].map((Icon, i) => (
+            {[
+              { icon: FaInstagram, href: "https://www.instagram.com/gazaarabia/" },
+              { icon: FaFacebookF, href: "https://www.facebook.com/gazaarabia/" },
+              { icon: FaTiktok, href: "https://www.tiktok.com/@gazaarabia/" },
+              { icon: FaYoutube, href: "https://www.youtube.com/@GazaArabia_Official" },
+            ].map((item, i) => (
               <a
                 key={i}
-                href="#"
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group relative w-12 h-12 rounded-full flex items-center justify-center text-[var(--brand-secondary)] border border-[var(--brand-secondary)] overflow-hidden transition-all duration-300 hover:shadow-md"
               >
                 <span className="absolute inset-0 bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
                 <span className="relative z-10 text-lg text-[var(--brand-secondary)] group-hover:text-[var(--white)] transition-colors duration-300">
-                  <Icon />
+                  <item.icon />
                 </span>
               </a>
             ))}

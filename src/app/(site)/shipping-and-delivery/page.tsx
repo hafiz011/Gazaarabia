@@ -228,14 +228,14 @@ export default function ShippingAndDeliveryPage() {
                 <div>
                     <p className="font-semibold">UK</p>
                     <ul className="list-disc ml-6 mb-4 space-y-1">
-                        <li>30-day return window</li>
+                        <li>14-days After Delivery</li>
                         <li>Items must be unused, unwashed, with tags</li>
                         <li>Customer pays return postage (unless faulty)</li>
                     </ul>
 
                     <p className="font-semibold">Europe & Rest of World</p>
                     <ul className="list-disc ml-6 space-y-1">
-                        <li>30-day return window</li>
+                        <li>14-days After Delivery</li>
                         <li>Customer covers return shipping cost</li>
                         <li>We recommend refund rather than exchange for international customers</li>
                     </ul>
@@ -251,7 +251,7 @@ export default function ShippingAndDeliveryPage() {
             q: "How do I request a return?",
             a: (
                 <ol className="list-decimal ml-6 space-y-2">
-                    <li>Email us at <strong>support@example.com</strong> with your order number and reason.</li>
+                    <li>Email us at <strong>info@gazaarabia.com</strong> with your order number and reason.</li>
                     <li>We confirm eligibility and send return instructions.</li>
                     <li>Ship back using a tracked service and keep proof of postage.</li>
                     <li>Refund processed within 5–10 business days after inspection.</li>
@@ -381,44 +381,6 @@ export default function ShippingAndDeliveryPage() {
                             </div>
                         </section>
 
-                        {/* ACCORDION SECTION */}
-                        {/* <section className="py-20 bg-white relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--brand-secondary)] opacity-10 blur-3xl -translate-x-40 -translate-y-20"></div>
-                            <div className="absolute bottom-0 right-0 w-[28rem] h-[28rem] bg-[var(--brand-primary)] opacity-10 blur-3xl translate-x-20 translate-y-20"></div>
-
-                            <div className="max-w-4xl mx-auto px-6 relative z-10">
-                                <h2 className="text-3xl md:text-4xl font-bold text-center text-[var(--brand-primary)] mb-10">
-                                    Delivery Information
-                                </h2>
-
-                                {accordionData[activeCategory].map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="border-b border-[var(--mid-gray)] py-5 cursor-pointer group"
-                                        onClick={() => toggleAccordion(index)}
-                                    >
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-lg font-semibold text-[var(--black)] group-hover:text-[var(--brand-primary)] transition-colors duration-300">
-                                                {item.question}
-                                            </h3>
-                                            <FaChevronDown
-                                                className={`transition-transform duration-300 text-[var(--brand-secondary)] 
-                                    ${activeIndex === index ? "rotate-180" : "rotate-0"}`}
-                                            />
-                                        </div>
-
-                                        <div
-                                            className={`overflow-hidden transition-[max-height] duration-500 ease-in-out 
-                                ${activeIndex === index ? "max-h-40 mt-3" : "max-h-0"}`}
-                                        >
-                                            <p className="text-[var(--text-secondary)] leading-relaxed">
-                                                {item.answer}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section> */}
 
                         {/* SHIPPING & RETURNS FAQ – ACCORDION */}
                         <section className="py-20 bg-white relative overflow-hidden">
@@ -462,7 +424,7 @@ export default function ShippingAndDeliveryPage() {
 
 
                         {/* MAP SECTION */}
-                        <section className="relative h-[600px] w-full overflow-hidden">
+                        {/* <section className="relative h-[600px] w-full overflow-hidden">
                             <iframe
                                 title="Store Location"
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3503.781019773899!2d77.20898537492437!3d28.57411788615766!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce2e68e2b72fb%3A0x1f9d6a2b24ef2a58!2sNew%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1674034860378!5m2!1sen!2sin"
@@ -498,13 +460,13 @@ export default function ShippingAndDeliveryPage() {
                                         </li>
 
 
-                                        {/* PHONE */}
+                                    
                                         <li className="flex items-center justify-center gap-2">
                                             <Phone size={18} className="text-[var(--brand-secondary)]" />
                                             +44 20 3287 1234
                                         </li>
 
-                                        {/* HOURS */}
+                                        
                                         <li className="flex items-center justify-center gap-2">
                                             <Clock size={18} className="text-[var(--brand-secondary)]" />
                                             Mon – Sat | 10 AM – 7 PM
@@ -523,7 +485,7 @@ export default function ShippingAndDeliveryPage() {
                                 </div>
                             </div>
 
-                        </section>
+                        </section>  */}
                     </div>
 
                 </>

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AlertMessage from "@/components/AlertMessage";
-import { authService } from "@/lib/services/authService"; // you'll add signupAffiliate() later
+import { authService } from "@/lib/services/authService"; // you'll add signupAmbassador() later
 
-export default function AffiliateSignupPage() {
+export default function AmbassadorSignupPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -61,13 +61,13 @@ export default function AffiliateSignupPage() {
                 email: form.email,
                 password: form.password,
                 phone: form.phone,
-                role: "affiliate", //  Important addition
+                role: "Ambassador", //  Important addition
             });
 
             setAlert({
                 isOpen: true,
                 type: "success",
-                message: "Affiliate account created successfully!",
+                message: "Ambassador account created successfully!",
             });
 
             setForm({
@@ -79,7 +79,7 @@ export default function AffiliateSignupPage() {
                 website: "",
             });
 
-            router.push("/affiliate/login");
+            router.push("/Ambassador/login");
         } catch (err: any) {
             setAlert({
                 isOpen: true,
@@ -96,7 +96,7 @@ export default function AffiliateSignupPage() {
                 {/* Heading */}
                 <div className="mb-10 text-center">
                     <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
-                        Join Our Affiliate Program
+                        Join Our Ambassador Program
                     </h1>
                     <p className="text-[var(--text-muted)] text-sm">
                         Sign up to earn commissions by promoting our products
@@ -229,8 +229,8 @@ export default function AffiliateSignupPage() {
                             className="text-sm text-[var(--text-secondary)] leading-tight cursor-pointer"
                         >
                             I agree to the{" "}
-                            <a href="#" className="text-[var(--brand-primary)] hover:underline font-medium">
-                                Affiliate Terms & Conditions
+                            <a href="/ambassador-terms" className="text-[var(--brand-primary)] hover:underline font-medium">
+                                Ambassador Terms & Conditions
                             </a>
                         </label>
                     </div>
@@ -241,7 +241,7 @@ export default function AffiliateSignupPage() {
                             type="submit"
                             className="w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium hover:opacity-90 active:scale-[0.98] transition"
                         >
-                            Sign Up as Affiliate
+                            Sign Up as Ambassador
                         </button>
                     </div>
                 </form>
@@ -250,7 +250,7 @@ export default function AffiliateSignupPage() {
                 <p className="text-center text-sm text-[var(--text-muted)] mt-8">
                     Already have an account?{" "}
                     <a
-                        href="/affiliate/login"
+                        href="/Ambassador/login"
                         className="text-[var(--brand-primary)] font-medium hover:underline"
                     >
                         Log in

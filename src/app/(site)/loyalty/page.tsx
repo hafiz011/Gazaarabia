@@ -275,7 +275,7 @@ export default function LoyaltyPage() {
                 </div>
             </section>
 
-            {/* ❓ FAQ SECTION */}
+            {/*  FAQ SECTION */}
             <section className="py-20 bg-white relative text-center" id="FAQs">
                 <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--brand-secondary)] opacity-10 blur-3xl -translate-x-40 -translate-y-20"></div>
                 <div className="absolute bottom-0 right-0 w-[28rem] h-[28rem] bg-[var(--brand-primary)] opacity-10 blur-3xl translate-x-20 translate-y-20"></div>
@@ -310,7 +310,7 @@ export default function LoyaltyPage() {
                 </div>
             </section>
 
-            {/* 📩 Contact CTA */}
+            {/*  Contact CTA */}
             <section className="py-20 bg-[var(--soft-gray)] text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent opacity-50"></div>
                 <div className="relative z-10 max-w-xl mx-auto text-center">

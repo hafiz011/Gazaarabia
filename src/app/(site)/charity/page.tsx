@@ -245,7 +245,7 @@ export default function CharityPage() {
             <SectionHeading title="How Your Order Becomes Support" Icon={HandCoins} />
             <div className="text-[var(--text-secondary)] leading-relaxed space-y-3">
                 <p>
-                    When you shop with GazaArabia:
+                    When you shop with GAZAARABIA:
                 </p>
 
                 <ol className="list-decimal ml-6 space-y-1">

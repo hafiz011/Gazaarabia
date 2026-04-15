@@ -11,11 +11,11 @@ GAZAARABIA (“we”, “us”, “our”) is a modest fashion brand based in Lo
 We are the data controller of the personal data we collect about you.
 
 * Business name: GAZAARABIA
-* Email: support@gazaarabia.com
+* Email: info@gazaarabia.com
 * Registered address: 38A Tachbrook street, SW1V 2JS
 
 If you have any questions about this Policy or how we use your data, you can contact us at:
-support@gazaarabia.com
+info@gazaarabia.com
             `,
         },
         {
@@ -190,11 +190,11 @@ Where appropriate, we will notify you by email or via our website.
                     <p className="text-base md:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
                         This Privacy Policy outlines how Gazaarabia collects, uses, and protects your information with transparency and care.
                     </p>
-                    <div className="mt-6 inline-block bg-white/10 backdrop-blur-md px-6 py-3 rounded-lg border border-white/20">
+                    {/* <div className="mt-6 inline-block bg-white/10 backdrop-blur-md px-6 py-3 rounded-lg border border-white/20">
                         <p className="text-sm text-white/90">
                             <span className="font-medium">Last updated:</span> November 21, 2025
                         </p>
-                    </div>
+                    </div> */}
 
 
                 </div>
@@ -239,7 +239,7 @@ Where appropriate, we will notify you by email or via our website.
                                 {section.title === "10. Changes to this policy" && (
                                     <div className="mt-6 flex justify-center">
                                         <a
-                                            href="mailto:support@gazaarabia.com"
+                                            href="/contact"
                                             className="inline-block bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white font-medium px-8 py-3 rounded-lg hover:opacity-90 transition text-base"
                                         >
                                             Contact Our Privacy Team

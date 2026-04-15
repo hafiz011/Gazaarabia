@@ -21,12 +21,12 @@ We want you to feel confident and comfortable in every piece you wear. If someth
             content: `
 UK Customers
 
-– Return window: 30 days from the date you receive your order.
+– Return window: 14 days from the date you receive your order.
 – Returns cost: The customer pays return postage, unless the item is faulty or we made a mistake.
 – Exchanges: If you want a different size/colour, you can request an exchange (subject to stock).
 
 How it works:
-    1. Email us at [support email] with your order number and reason for return.
+    1. Email us at info@gazaarabia.com with your order number and reason for return.
     2. We’ll send you the return address and instructions.
     3. Send the parcel back using a tracked service and keep your receipt.
     4. Once approved, we’ll process your refund or exchange within 5–10 working days of receiving your return.
@@ -37,7 +37,7 @@ How it works:
             content: `
 EU Customers (France, Germany, Spain, Belgium & other EU countries)
 
-– Return window: 30 days from the date you receive your order.
+– Return window: 14 days from the date you receive your order.
 – Returns cost: Customers are responsible for return shipping costs.
 – Exchanges: For most EU orders, we recommend a refund + new order (exchanges can become very slow/expensive across borders).
 
@@ -45,7 +45,7 @@ Important:
 – Any import duties or taxes paid to your local customs office are non-refundable by us. You may be able to claim them back from your local authority depending on your country’s rules.
 
 How it works:
-    1. Email [support email] with your order number and what you’d like to return.
+    1. Email info@gazaarabia.com with your order number and what you’d like to return.
     2. We’ll confirm the return address in the UK and any customs info to include on the parcel.
     3. Send your parcel back with a tracked service.
     4. Once we receive and approve the items, we’ll refund the product cost within 5–10 working days (shipping fees are usually non-refundable).
@@ -56,7 +56,7 @@ How it works:
             content: `
 Rest of World Customers (e.g. USA, Canada, GCC, others)
 
-– Return window: 30 days from the date you receive your order.
+– Return window: 14 days from the date you receive your order.
 – Returns cost: Customers are responsible for return shipping costs.
 – Because of high international shipping costs, we usually recommend a refund rather than an exchange.
 
@@ -64,7 +64,7 @@ Customs & Duties:
 – Any customs duties, taxes or handling fees charged by your country are non-refundable by us.
 
 How it works:
-    1. Email [support email] with your order number and details of the items you’d like to return.
+    1. Email info@gazaarabia.com with your order number and details of the items you’d like to return.
     2. We’ll confirm if the item is eligible and share the return address + customs declaration guidance.
     3. Return the parcel using a tracked service.
     4. After inspection, we’ll process your refund within 5–10 working days of receiving the parcel.
@@ -105,13 +105,13 @@ If you receive an item that is damaged, faulty or not what you ordered:
                     </p>
 
                     {/* LAST UPDATED */}
-                    <div className="mt-6 inline-block bg-white/10 backdrop-blur-md 
+                    {/* <div className="mt-6 inline-block bg-white/10 backdrop-blur-md 
                         px-6 py-3 rounded-lg border border-white/20"
                     >
                         <p className="text-sm text-white/90">
                             <span className="font-medium">Last updated:</span> November 21, 2025
                         </p>
-                    </div>
+                    </div> */}
                 </div>
             </section>
 
@@ -152,14 +152,23 @@ If you receive an item that is damaged, faulty or not what you ordered:
                     </div>
 
                     {/* BOTTOM BUTTON */}
-                    <div className="mt-10 flex justify-center">
+                    <div className="mt-12 flex flex-col items-center gap-4 text-center">
                         <a
-                            href="mailto:[support email]"
+                            href="/contact"
                             className="inline-block bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] 
                             text-white font-medium px-10 py-3 rounded-lg hover:opacity-90 transition text-base shadow-md"
                         >
                             Contact Returns Team
                         </a>
+                        <p className="text-sm text-[var(--text-secondary)]">
+                            Or email us directly at{" "}
+                            <a
+                                href="mailto:info@gazaarabia.com?subject=Returns%20%26%20Exchanges%20Request"
+                                className="text-[var(--brand-primary)] font-medium underline underline-offset-2 hover:opacity-80 transition"
+                            >
+                                info@gazaarabia.com
+                            </a>
+                        </p>
                     </div>
 
 

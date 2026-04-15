@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description:
         "Earn up to 10-15% per sale as an Affiliate or become an Ambassador to earn recurring revenue + creative rewards. Join the GazaArabia Partner Program today.",
     keywords: [
-        "become a partner",
+        "become a ambassador",
         "GazaArabia partner program",
         "affiliate program",
         "ambassador program",

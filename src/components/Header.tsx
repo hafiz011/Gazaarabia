@@ -10,7 +10,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/app/context/CartContext";
 import MobileMenuDrawer from "./MobileMenuDrawer";
-import { FaFacebookF, FaInstagram, FaYoutube, FaPinterestP } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaYoutube, FaTiktok } from "react-icons/fa";
 import { getAllProducts } from "@/lib/services/front-end/productService";
 import ProductCard from "./ProductCard";
 
@@ -118,7 +118,7 @@ export default function Header() {
   };
 
   const searchBtn = () => {
-    console.log('open the search bar!')
+    // console.log('open the search bar!')
     setSearchMode(true)
   }
 
@@ -216,17 +216,17 @@ export default function Header() {
 
           {/* RIGHT SOCIAL ICONS */}
           <div className="hidden sm:flex gap-4 items-center">
-            <Link href="https://facebook.com" target="_blank">
-              <FaFacebookF className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
-            </Link>
-            <Link href="https://instagram.com" target="_blank">
+            <Link href="https://www.instagram.com/gazaarabia/" target="_blank">
               <FaInstagram className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
             </Link>
-            <Link href="https://youtube.com" target="_blank">
-              <FaYoutube className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            <Link href="https://www.facebook.com/gazaarabia/" target="_blank">
+              <FaFacebookF className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
             </Link>
-            <Link href="https://pinterest.com" target="_blank">
-              <FaPinterestP className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            <Link href="https://www.tiktok.com/@gazaarabia/" target="_blank">
+              <FaTiktok className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
+            </Link>
+            <Link href="https://www.youtube.com/@GazaArabia_Official" target="_blank">
+              <FaYoutube className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
             </Link>
           </div>
 
@@ -609,13 +609,13 @@ export default function Header() {
               {/* FIXED MENU ITEMS (Always Visible)      */}
               {/* -------------------------------------- */}
 
-              {/* PARTNER */}
+              {/* AMBASSADOR */}
               <Link
                 href="/become-partner"
                 onMouseEnter={() => setActiveMenu(null)}
                 className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
               >
-                Partner
+                AMBASSADOR
               </Link>
 
             </nav>

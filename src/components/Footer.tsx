@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaFacebookF, FaInstagram, FaYoutube, FaPinterestP } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaYoutube, FaPinterestP, FaTiktok } from "react-icons/fa";
 
 export default function Footer() {
   //  All hooks must be defined first
@@ -36,9 +36,9 @@ export default function Footer() {
             Delivery & Returns
           </h3>
           <ul className="space-y-2 text-sm">
-            <li >
+            {/* <li >
               Free shipping for orders over £120
-            </li>
+            </li> */}
             <li className="hover:underline cursor-pointer">
               <Link href="/shipping-and-delivery">Shipping Information</Link>
             </li>
@@ -59,12 +59,15 @@ export default function Footer() {
           </h3>
           <ul className="space-y-2 text-sm">
             <li className="hover:underline cursor-pointer">
+              <Link href="/seller/register">Become a Seller</Link>
+            </li>
+            <li className="hover:underline cursor-pointer">
               <Link href="/about">Our Story</Link>
             </li>
             {/* <li className="hover:underline cursor-pointer">Visit us</li> */}
             {/* <li className="hover:underline cursor-pointer">Careers</li> */}
             <li className="hover:underline cursor-pointer">
-              <Link href="/blogs/journal">Journal</Link>
+              <Link href="/blogs">Blogs</Link>
             </li>
             <li className="hover:underline cursor-pointer">
               <Link href="/loyalty">Loyalty</Link>
@@ -81,17 +84,15 @@ export default function Footer() {
         {/* Column 3 – Customer Care */}
         <div className="md:ml-[-10px] lg:ml-[-20px]">
           <h3 className="font-semibold tracking-wide text-sm mb-4 uppercase">
-            Customer Care
+            Policies
           </h3>
           <ul className="space-y-2 text-sm">
             {/* <li className="hover:underline cursor-pointer">Gift Card</li> */}
             {/* <li className="hover:underline cursor-pointer">Size Guide</li> */}
             {/* <li className="hover:underline cursor-pointer">Care & Repair</li> */}
+
             <li className="hover:underline cursor-pointer">
-              <Link href="/faq">Frequently Asked Questions</Link>
-            </li>
-            <li className="hover:underline cursor-pointer">
-              <Link href="/contact">Contact Us</Link>
+              <Link href="/ambassador-terms">Ambassador Terms</Link>
             </li>
             <li className="hover:underline cursor-pointer">
               <Link href="/privacy-policy">Privacy Policy</Link>
@@ -113,19 +114,25 @@ export default function Footer() {
             Get in touch
           </h3>
           <ul className="space-y-3 text-sm">
-            <li>
+            {/* <li>
               <p>Call us Mon–Fri 10am–3pm</p>
               <p className="hover:underline cursor-pointer">+44 (0) 203 823 7768</p>
             </li>
             <li>
               <p>Talk to us on WhatsApp</p>
               <p className="hover:underline cursor-pointer">+44 (0) 203 823 7768</p>
+            </li> */}
+            <li className="hover:underline cursor-pointer">
+              <Link href="/contact">Contact Us</Link>
             </li>
             <li>
               <p>Email us</p>
               <p className="hover:underline cursor-pointer break-words">
-                admin@gazaarabia.com
+                info@gazaarabia.com
               </p>
+            </li>
+            <li className="hover:underline cursor-pointer">
+              <Link href="/faq">Frequently Asked Questions</Link>
             </li>
           </ul>
         </div>
@@ -162,10 +169,21 @@ export default function Footer() {
           </form>
 
           <div className="flex gap-5 text-lg justify-center">
-            <FaFacebookF className="cursor-pointer hover:opacity-70" />
-            <FaInstagram className="cursor-pointer hover:opacity-70" />
-            <FaYoutube className="cursor-pointer hover:opacity-70" />
-            <FaPinterestP className="cursor-pointer hover:opacity-70" />
+            <a href="https://www.facebook.com/gazaarabia/" target="_blank" rel="noopener noreferrer">
+              <FaFacebookF className="cursor-pointer hover:opacity-70" />
+            </a>
+            <a href="https://www.instagram.com/gazaarabia/" target="_blank" rel="noopener noreferrer">
+              <FaInstagram className="cursor-pointer hover:opacity-70" />
+            </a>
+            <a href="https://www.tiktok.com/@gazaarabia/" target="_blank" rel="noopener noreferrer">
+              <FaTiktok className="cursor-pointer hover:opacity-70" />
+            </a>
+            <a href="https://www.youtube.com/@GazaArabia_Official" target="_blank" rel="noopener noreferrer">
+              <FaYoutube className="cursor-pointer hover:opacity-70" />
+            </a>
+            <a href="https://uk.pinterest.com/gazaarabia/" target="_blank" rel="noopener noreferrer">
+              <FaPinterestP className="cursor-pointer hover:opacity-70" />
+            </a>
           </div>
         </div>
       </div>
@@ -173,9 +191,9 @@ export default function Footer() {
       {/* Bottom Copyright Row */}
       <div className="border-t border-white/20">
         <div className="max-w-[1400px] mx-auto px-6 py-5 flex items-center justify-center text-center text-xs text-white/80">
-           &copy; {new Date().getFullYear()} Gazaarabia. All Rights Reserved.
+          &copy; {new Date().getFullYear()} Gazaarabia. All Rights Reserved.
         </div>
       </div>
-    </footer>
+    </footer >
   );
 }

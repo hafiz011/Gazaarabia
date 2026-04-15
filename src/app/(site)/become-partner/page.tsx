@@ -82,97 +82,118 @@ export default function PartnerPage() {
                             transition={{ duration: 0.6 }}
                             className="text-3xl md:text-5xl font-extrabold leading-tight mb-4"
                         >
-                            Partner with Gazaarabia — Earn, Create, Grow
+                            GAZAARABIA AMBASSADOR PROGRAM
+                            <p className="mt-3 text-[var(--text-secondary)] text-base md:text-lg">
+                                Modest fashion with purpose.
+                            </p>
                         </motion.h1>
 
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.6, delay: 0.08 }}
-                            className="text-base md:text-lg text-white/90 max-w-3xl mx-auto mb-6"
+                            className="text-base md:text-lg text-white/90 max-w-3xl mx-auto mb-4"
                         >
-                            Join our Affiliate or Ambassador programs to monetize your audience,
-                            collaborate creatively, and receive the support you need to scale.
-                        </motion.p>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.16 }}
-                            className="flex items-center justify-center gap-4 flex-wrap"
-                        >
-                            <a
-                                href="#programs"
-                                className="inline-block px-6 py-3 rounded-lg font-semibold text-base"
-                                style={{
-                                    background:
-                                        "linear-gradient(90deg,var(--brand-primary), #c32230)",
-                                    color: "var(--white)",
-                                    boxShadow: "0 8px 28px rgba(0,0,0,0.18)",
-                                }}
-                            >
-                                Explore Programs
-                            </a>
+                            <p className="text-[var(--text-primary)] leading-relaxed text-left md:text-center">
+                                Join a hand-picked community of creators who love abayas, thobes and Palestine –
+                                and want to use fashion to support the people of Gaza.
+                            </p>
 
                             <a
                                 href={ROUTES.AFFILIATE.REGISTER}
-                                className="inline-block px-6 py-3 rounded-lg font-medium text-base"
-                                style={{
-                                    background: "rgba(255,255,255,0.14)",
-                                    color: "var(--white)",
-                                    border: "1px solid rgba(255,255,255,0.12)",
-                                }}
+                                className="inline-block mt-5 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white shadow hover:opacity-90 transition"
                             >
-                                Become a Partner
+                                Apply Now
                             </a>
-                        </motion.div>
+                        </motion.p>
+
                     </div>
                 </section>
 
-                {/* WHY PARTNER */}
-                <section className="py-16 md:py-20 bg-[var(--background)]">
-                    <div className="max-w-5xl mx-auto px-6">
-                        <motion.div
-                            initial={{ opacity: 0, y: 12 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5 }}
-                            className="text-center mb-12"
-                        >
-                            <h2 className="text-2xl md:text-3xl font-semibold text-[var(--navy-blue)] mb-3">
-                                Why partner with Gazaarabia?
-                            </h2>
-                            <p className="text-[var(--text-secondary)] max-w-3xl mx-auto">
-                                We focus on predictable payouts, exceptional partner support, and
-                                marketing resources so partners can focus on creating and converting.
-                            </p>
-                        </motion.div>
 
-                        <div className="grid md:grid-cols-3 gap-6">
-                            {benefits.map((b, i) => (
-                                <motion.div
-                                    key={b.title}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.45, delay: i * 0.08 }}
-                                    className="p-6 rounded-2xl bg-[var(--white)] border border-[var(--mid-gray)] shadow-sm"
-                                >
-                                    <div
-                                        className="w-14 h-14 rounded-lg flex items-center justify-center mb-4"
-                                        style={{ background: "var(--lavender-light)" }}
-                                    >
-                                        {b.icon}
-                                    </div>
-                                    <h4 className="font-semibold mb-2 text-[var(--navy-blue)]">
-                                        {b.title}
-                                    </h4>
-                                    <p className="text-[var(--text-muted)] text-sm">{b.text}</p>
-                                </motion.div>
-                            ))}
+                {/* FULL-WIDTH AMBASSADOR CONTENT */}
+                <section className="py-20 bg-white border-t border-[var(--mid-gray)]">
+                    <div className="max-w-4xl mx-auto px-6">
+
+
+
+
+                        {/* WHY JOIN */}
+                        <div className="mb-12">
+                            <h2 className="text-xl md:text-2xl font-semibold text-[var(--navy-blue)] mb-4">
+                                Why Join (Benefits)
+                            </h2>
+
+                            <p className="text-[var(--text-primary)] leading-relaxed">
+                                Network. Create. Get Paid. Help Gaza and the rest of the world.
+                            </p>
+
+                            <p className="mt-4 text-[var(--text-primary)]">As a GAZAARABIA Ambassador, you will:</p>
+
+                            <ul className="mt-4 space-y-3 list-disc ml-6 text-[var(--text-secondary)]">
+                                <li>Earn upto 20% commission on every sale through your unique link</li>
+                                <li>Be first in line for limited, Palestine-inspired drops</li>
+                                <li>Get access to our media team (photos, videos, editing support)</li>
+                                <li>
+                                    Receive opportunities for professional photoshoots and to become the
+                                    face of the brand, and a co-design opportunity.
+                                </li>
+                                <li>
+                                    Know that the majority of our profit goes to Gaza, so every post has a purpose
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* HOW IT WORKS */}
+                        <div className="mb-12">
+                            <h2 className="text-xl md:text-2xl font-semibold text-[var(--navy-blue)] mb-4">
+                                How It Works
+                            </h2>
+
+                            <div className="space-y-6">
+
+                                {/* STEP 1 */}
+                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">1. Apply</h3>
+
+                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
+                                        <li>  Fill out a short form about you, your socials, and why you want to
+                                            represent GAZAARABIA. We aim to respond within 48 hours.</li>
+
+                                    </ul>
+                                </div>
+
+                                {/* STEP 2 */}
+                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">2. Get Your Gear & Link</h3>
+                                    <p className="text-[var(--text-secondary)] leading-relaxed">If approved, you’ll receive:</p>
+
+                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
+                                        <li>A special ambassador discount on your first order</li>
+                                        <li>Your unique tracking link and access to your stats</li>
+                                    </ul>
+                                </div>
+
+                                {/* STEP 3 */}
+                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">3. Create & Earn</h3>
+
+
+                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
+                                        <li>Style GAZAARABIA pieces in your everyday life</li>
+                                        <li>Post on Instagram, TikTok, YouTube Shorts, Snapchat, etc.</li>
+                                        <li>  Share your unique link in bio, stories, and captions</li>
+                                        <li>Earn upto 20% commission on every sale made through your link</li>
+                                    </ul>
+
+
+                                </div>
+
+                            </div>
                         </div>
                     </div>
                 </section>
+
 
                 {/* PROGRAMS */}
                 <section
@@ -270,115 +291,8 @@ export default function PartnerPage() {
                     </div>
                 </section>
 
-                {/* ------------------------------- */}
-                {/* FULL-WIDTH AMBASSADOR CONTENT */}
-                {/* ------------------------------- */}
-                <section className="py-20 bg-white border-t border-[var(--mid-gray)]">
-                    <div className="max-w-4xl mx-auto px-6">
-
-                        {/* SECTION HEADER */}
-                        <div className="text-center mb-12">
-                            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                                <span className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] bg-clip-text text-transparent">
-                                    GAZAARABIA AMBASSADOR PROGRAM
-                                </span>
-                            </h1>
-                            <p className="mt-3 text-[var(--text-secondary)] text-base md:text-lg">
-                                Modest fashion with purpose.
-                            </p>
-                        </div>
-
-                        {/* INTRO CARD */}
-                        <div className="bg-[var(--soft-gray)] p-6 md:p-8 rounded-2xl border border-[var(--mid-gray)] shadow-sm mb-10 text-center">
-                            <p className="text-[var(--text-primary)] leading-relaxed text-left md:text-center">
-                                Join a hand-picked community of creators who love abayas, thobes and Palestine –
-                                and want to use fashion to support the people of Gaza.
-                            </p>
-
-                            <a
-                                href={ROUTES.AFFILIATE.REGISTER}
-                                className="inline-block mt-5 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white shadow hover:opacity-90 transition"
-                            >
-                                Apply Now
-                            </a>
-                        </div>
 
 
-                        {/* WHY JOIN */}
-                        <div className="mb-12">
-                            <h2 className="text-xl md:text-2xl font-semibold text-[var(--navy-blue)] mb-4">
-                                Why Join (Benefits)
-                            </h2>
-
-                            <p className="text-[var(--text-primary)] leading-relaxed">
-                                Network. Create. Get Paid. Help Gaza and the rest of the world.
-                            </p>
-
-                            <p className="mt-4 text-[var(--text-primary)]">As a GAZAARABIA Ambassador, you will:</p>
-
-                            <ul className="mt-4 space-y-3 list-disc ml-6 text-[var(--text-secondary)]">
-                                <li>Earn 20% commission on every sale through your unique link</li>
-                                <li>Be first in line for limited, Palestine-inspired drops</li>
-                                <li>Get access to our media team (photos, videos, editing support)</li>
-                                <li>
-                                    Receive opportunities for professional photoshoots and to become the
-                                    face of the brand, and a co-design opportunity.
-                                </li>
-                                <li>
-                                    Know that the majority of our profit goes to Gaza, so every post has a purpose
-                                </li>
-                            </ul>
-                        </div>
-
-                        {/* HOW IT WORKS */}
-                        <div className="mb-12">
-                            <h2 className="text-xl md:text-2xl font-semibold text-[var(--navy-blue)] mb-4">
-                                How It Works
-                            </h2>
-
-                            <div className="space-y-6">
-
-                                {/* STEP 1 */}
-                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">1. Apply</h3>
-
-                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
-                                        <li>  Fill out a short form about you, your socials, and why you want to
-                                            represent GAZAARABIA. We aim to respond within 48 hours.</li>
-
-                                    </ul>
-                                </div>
-
-                                {/* STEP 2 */}
-                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">2. Get Your Gear & Link</h3>
-                                    <p className="text-[var(--text-secondary)] leading-relaxed">If approved, you’ll receive:</p>
-
-                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
-                                        <li>A special ambassador discount on your first order</li>
-                                        <li>Your unique tracking link and access to your stats</li>
-                                    </ul>
-                                </div>
-
-                                {/* STEP 3 */}
-                                <div className="bg-white border border-[var(--mid-gray)] rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-[var(--brand-primary)] mb-2">3. Create & Earn</h3>
-
-
-                                    <ul className="list-disc ml-6 mt-3 space-y-2 text-[var(--text-secondary)]">
-                                        <li>Style GAZAARABIA pieces in your everyday life</li>
-                                        <li>Post on Instagram, TikTok, YouTube Shorts, Snapchat, etc.</li>
-                                        <li>  Share your unique link in bio, stories, and captions</li>
-                                        <li>Earn 20% commission on every sale made through your link</li>
-                                    </ul>
-
-
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
 
                 {/* CTA */}
