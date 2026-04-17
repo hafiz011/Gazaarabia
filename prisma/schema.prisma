@@ -686,7 +686,7 @@ model FaqCategory {
 model Faq {
   id         Int      @id @default(autoincrement())
   question   String
-  answer     String
+  answer     String   @db.LongText
   categoryId Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

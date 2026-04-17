@@ -193,14 +193,6 @@ export default function Header() {
         }
 `}
     >
-      {/*Top Bar */}
-      {/* {toolbarText &&
-        <div className="bg-[var(--brand-primary)] text-white text-center text-xs py-2 tracking-wide relative z-10">
-          {toolbarText}
-        </div>
-      } */}
-
-
       {/* {toolbarText && ( */}
       <div
         className={`bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10 
@@ -237,7 +229,7 @@ export default function Header() {
 
       {/* Main Header */}
       <div className="w-full relative z-50">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[96px] relative">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[60px] relative">
           {/* Mobile Menu Button + Search */}
           {/* <div className="flex items-center gap-3 lg:hidden z-50">
             <button onClick={toggleMenu}>
