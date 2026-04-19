@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useParams } from "next/navigation";
 import {
   Box,
@@ -18,6 +19,12 @@ import { faqService } from "@/lib/services/faqService";
 import { faqCategoryService, FaqCategory } from "@/lib/services/faqCategoryService";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,                    
+  loading: () => <p>Loading editor...</p>,
+});
+
+import "react-quill-new/dist/quill.snow.css";
 
 export default function AddOrEditFaqPage() {
   const router = useRouter();
@@ -108,6 +115,11 @@ export default function AddOrEditFaqPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  //  Handle answer change for ReactQuill
+  const handleAnswerChange = (value: string) => {
+    setForm((prev) => ({ ...prev, answer: value }));
+  };
+
   //  Submit form (Add / Edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,17 +191,15 @@ export default function AddOrEditFaqPage() {
               sx={fieldStyle}
             />
 
-            <TextField
-              label="Answer"
-              required
-              name="answer"
-              value={form.answer}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={4}
-              sx={fieldStyle}
-            />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Answer *</label>
+              <ReactQuill
+                value={form.answer}
+                onChange={handleAnswerChange}
+                theme="snow"
+                className="bg-white border border-gray-300 rounded"
+              />
+            </div>
 
             <FormControl fullWidth required sx={fieldStyle}>
               <InputLabel id="category-select-label">FAQ Category</InputLabel>

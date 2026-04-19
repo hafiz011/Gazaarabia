@@ -71,6 +71,17 @@ model seller {
   pendingBalance   Float @default(0)
   totalEarned      Float @default(0)
 
+  // Store Integration
+  storeType          String?   // "shopify" | "woocommerce" | null
+  shopifyDomain      String?
+  shopifyAccessToken String?
+  wooSiteUrl         String?
+  wooConsumerKey     String?
+  wooConsumerSecret  String?
+  shopifySyncEnabled Boolean   @default(false)
+  lastSyncedAt       DateTime?
+
+
   products   products[]
   payouts    SellerPayout[]
   orderItems OrderItem[]
@@ -84,6 +95,21 @@ model seller {
   @@index([status])
   @@map("sellers")
 }
+
+model StoreSync {
+  id         Int      @id @default(autoincrement())
+  sellerId   Int
+  seller     seller   @relation(fields: [sellerId], references: [id])
+  status     String   // "success" | "failed" | "running"
+  syncType   String   // "manual" | "auto"
+  imported   Int      @default(0)
+  skipped    Int      @default(0)
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@map("store_syncs")
+}
+
 
 model SellerPayout {
   id            Int     @id @default(autoincrement())
@@ -164,6 +190,7 @@ model Categories {
   name          String        @unique
   slug          String        @unique
   image         String?  
+  description    String?      @db.LongText
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   products      products[]
@@ -177,13 +204,14 @@ model Categories {
 }
 
 model Subcategory {
-  id         Int        @id @default(autoincrement())
-  name       String     @unique
-  slug       String     @unique
-  categoryId Int
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  products   products[]
+  id            Int        @id @default(autoincrement())
+  name          String     @unique
+  slug          String     @unique
+  categoryId    Int
+  description   String?          @db.LongText
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  products      products[]
   subcategoryCommission SubcategoryCommission[]
   category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -317,6 +345,14 @@ model products {
   ambassadorId          Int?     // assigned ambassador
   ambassador   Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
 
+  // External Store Tracking
+  externalProductId  String?
+  externalVariantId  String?
+  externalSource     String?   // "shopify" | "woocommerce"
+  isExternalProduct  Boolean   @default(false)
+
+
+
   // NEW — Back-relations for ProductRelation
   asParentRelations ProductRelation[] @relation("ProductAsParent")
   asChildRelations  ProductRelation[] @relation("ProductAsChild")
@@ -375,8 +411,8 @@ model Address {
   firstName  String
   lastName   String?
   company    String?
-  address1   String
-  address2   String?
+  address1   String  @db.LongText
+  address2   String?  @db.LongText
   city       String
   country    String
   postalCode String
@@ -547,6 +583,8 @@ model OrderItem {
   returnStatus         String?
   refundedAmount       Float?
  
+  // External Order Tracking
+  externalOrderId   String?
 
   // Affiliate commission per item
   affiliateEarning       Float?
@@ -577,7 +615,7 @@ model OrderItem {
 model Review {
   id        Int      @id @default(autoincrement())
   rating    Int
-  comment   String
+  comment   String   @db.LongText
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -662,8 +700,8 @@ model notifications {
   id        Int      @id @default(autoincrement())
   userId    Int?
   email     String?
-  subject   String
-  message   String
+  subject   String  @db.LongText
+  message   String  @db.LongText
   type      String // e.g. "email", "sms", etc.
   status    String // "sent", "failed"
   createdAt DateTime @default(now())
@@ -700,8 +738,8 @@ model ContactUs {
   id        Int      @id @default(autoincrement())
   name      String
   email     String
-  subject   String
-  message   String
+  subject   String   @db.LongText
+  message   String   @db.LongText
   createdAt DateTime @default(now())
 
   @@map("contact_us")
@@ -821,7 +859,7 @@ model HomePageSetting {
   shopByCategory  Json?
   midBanner       String?
   signatureProducts Json?
-  headerText         String? 
+  headerText         String?   @db.LongText
   affiliateCommission Int?  
   ambassadorCommission Int?
 
@@ -862,7 +900,7 @@ model ReturnRequest {
   reason       ReturnReason @relation(fields: [reasonId], references: [id], onDelete: Cascade)
 
   // Customer Inputs
-  note         String?      // optional explanation
+  note         String?      @db.LongText  // optional explanation
   images       Json?        // store image URLs
 
   // Process & Status Tracking
@@ -874,7 +912,7 @@ model ReturnRequest {
   // returned → customer completed the return
   // refunded → refund processed
 
-  adminNote    String?
+  adminNote    String?  @db.LongText
   refundAmount Float?
 
   expectedReturnAmount Float? @default(0) 
@@ -889,7 +927,7 @@ model ReturnRequest {
 model SolidarityReceipts {
   id           Int      @id @default(autoincrement())
   title        String
-  description  String?
+  description  String?  @db.LongText
   amount       Float
   receiptImage String?   // store uploaded image URL
   createdAt    DateTime @default(now())
@@ -964,27 +1002,27 @@ model AmbassadorInvoice {
 model DeliverySettings {
   id                       Int      @id @default(1)
 
-  freeDeliveryText         String?
+  freeDeliveryText         String?  @db.LongText
 
-  nextDayTitle             String?
+  nextDayTitle             String?  @db.LongText
   nextDayDeliveryTime      String?
   nextDayCost              String?
   nextDayOrderCutOff       String?
 
-  standardDeliveryTitle    String?
+  standardDeliveryTitle    String?  @db.LongText
   standardDeliveryMinDays  Int?
   standardDeliveryMaxDays  Int?
   standardDeliveryCost     String?
 
-  returnText               String?
+  returnText               String?  @db.LongText
 
   //NEW INTERNATIONAL FIELDS
-  internationalTitle               String?
+  internationalTitle               String? @db.LongText
   internationalDeliveryTime        String?
   internationalCost                String?
-  internationalFreeDeliveryText    String?
-  internationalCustomsText         String?
-  internationalTrackingText        String?
+  internationalFreeDeliveryText    String?  @db.LongText
+  internationalCustomsText         String?  @db.LongText
+  internationalTrackingText        String?  @db.LongText
 
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
