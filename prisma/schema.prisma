@@ -85,6 +85,7 @@ model seller {
   products   products[]
   payouts    SellerPayout[]
   orderItems OrderItem[]
+  storeSyncs StoreSync[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -107,9 +108,10 @@ model StoreSync {
   error      String?
   createdAt  DateTime @default(now())
 
+  @@index([sellerId])
+  @@index([status])
   @@map("store_syncs")
 }
-
 
 model SellerPayout {
   id            Int     @id @default(autoincrement())
