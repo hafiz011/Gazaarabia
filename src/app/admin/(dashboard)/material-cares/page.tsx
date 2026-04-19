@@ -154,8 +154,11 @@ export default function MaterialCareListPage() {
                     </td>
                     <td className="py-3 px-3 text-center text-gray-600">{item.careType || "-"}</td>
                     <td className="py-3 px-3 text-center text-gray-600">{item.material || "-"}</td>
-                    <td className="py-3 px-3 text-center text-gray-600 truncate max-w-[250px]">
-                      {item.description}
+                    <td className="py-3 px-3 text-center text-gray-600 max-w-[250px]">
+                      <div
+                        className="line-clamp-2 overflow-hidden text-left mx-auto max-w-[250px]"
+                        dangerouslySetInnerHTML={{ __html: item.description || "" }}
+                      />
                     </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex justify-center gap-1">

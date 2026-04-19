@@ -21,6 +21,7 @@ import { materialCareService } from "@/lib/services/materialCareService";
 import { TextField, MenuItem, Box, Button, Autocomplete } from "@mui/material";
 import { ROUTES } from "@/constants/routes";
 import { ambassadorService } from "@/lib/services/ambassadorService";
+import RichTextEditor from "@/components/RichTextEditor";
 
 function ProductFormContent() {
   const router = useRouter();
@@ -581,13 +582,23 @@ function ProductFormContent() {
           <TextField label={<RequiredLabel text="Title" />} name="title" value={form.title}
             onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
 
-          <TextField label={<RequiredLabel text="Short Description" />} name="shortDescription"
-            value={form.shortDescription} onChange={handleInputChange} inputProps={{ required: true }}
-            fullWidth multiline rows={2} sx={fieldStyle} />
+          <RichTextEditor
+            label="Short Description"
+            required
+            value={form.shortDescription}
+            onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
+            minHeight={120}
+            placeholder="Write a brief product summary..."
+          />
 
-          <TextField label={<RequiredLabel text="Description" />} name="description"
-            value={form.description} onChange={handleInputChange} inputProps={{ required: true }}
-            fullWidth multiline rows={3} sx={fieldStyle} />
+          <RichTextEditor
+            label="Description"
+            required
+            value={form.description}
+            onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+            minHeight={220}
+            placeholder="Write the full product description..."
+          />
 
           {/* <TextField select label={<RequiredLabel text="Care Advice" />} name="materialCareId"
             value={form.materialCareId} onChange={handleInputChange} inputProps={{ required: true }}

@@ -139,24 +139,6 @@ export default function FaqListPage() {
                         />
                     </div>
 
-                    {/* <div className="relative w-full sm:w-72" suppressHydrationWarning>
-            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
-            <TextField
-              id="faq-search"
-              required
-              fullWidth
-              size="small"
-              placeholder="Search FAQs..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              InputProps={{
-                sx: { pl: 4 },
-              }}
-            />
-          </div> */}
                 </div>
 
                 <div className="border-t border-gray-200"></div>
@@ -191,7 +173,7 @@ export default function FaqListPage() {
                                         <td className="py-3 px-3 text-center">{startIndex + idx + 1}</td>
                                         <td className="py-3 px-3 text-center">{faq.question}</td>
                                         <td className="py-3 px-3 text-center text-gray-600 line-clamp-2">
-                                            {faq.answer}
+                                            <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
                                         </td>
                                         <td className="py-3 px-3 text-center">{faq.category?.name ?? "-"}</td>
                                         <td className="py-3 px-3 text-center">

@@ -488,9 +488,10 @@ export default function ProductDetails() {
               <p className="text-lg font-medium text-[var(--brand-primary)] mb-4">
                 £{selectedVariant?.price || product?.sellingPrice}
               </p>
-              <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
-                {product?.shortDescription}
-              </p>
+              <div
+                className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: product?.shortDescription || "" }}
+              />
 
               {/* Color */}
               <div className="mb-6">
@@ -647,7 +648,10 @@ export default function ProductDetails() {
               {/* Accordion Sections */}
               <AccordionSection title="Description & Details">
                 {product?.description ? (
-                  <p>{product?.description}</p>
+                  <div
+                    className="prose prose-sm max-w-none text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: product?.description || "" }}
+                  />
                 ) : (
                   <p>No description available.</p>
                 )}
@@ -668,7 +672,10 @@ export default function ProductDetails() {
                         <h4 className="font-semibold text-[var(--text-primary)]">
                           {product?.materialCare.title}
                         </h4>
-                        <p>{product?.materialCare.description}</p>
+                        <div
+                          className="prose prose-sm max-w-none text-gray-700"
+                          dangerouslySetInnerHTML={{ __html: product?.materialCare.description || "" }}
+                        />
                       </div>
                     </div>
                   </div>

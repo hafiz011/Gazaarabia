@@ -21,6 +21,7 @@ import type { Category } from "@/lib/services/categoryService";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
 import { generateSlug } from "@/lib/utils";
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function AddOrEditBlogPage() {
   const router = useRouter();
@@ -118,7 +119,6 @@ export default function AddOrEditBlogPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    // setForm((prev) => ({ ...prev, [name]: value }));
 
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
@@ -130,8 +130,10 @@ export default function AddOrEditBlogPage() {
 
       return updated;
     });
+  };
 
-
+  const handleContentChange = (value: string) => {
+    setForm((prev) => ({ ...prev, content: value }));
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -284,16 +286,13 @@ export default function AddOrEditBlogPage() {
               sx={fieldStyle}
             />
 
-            <TextField
+            <RichTextEditor
               label="Content"
               required
-              name="content"
               value={form.content}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={4}
-              sx={fieldStyle}
+              onChange={handleContentChange}
+              minHeight={300}
+              placeholder="Write your blog content here..."
             />
 
             <FormControl fullWidth required sx={fieldStyle}>

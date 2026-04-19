@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter, useParams } from "next/navigation";
 import {
   Box,
   Button,
   TextField,
-  Typography,
   MenuItem,
   Select,
   FormControl,
@@ -15,16 +13,11 @@ import {
 } from "@mui/material";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
+import RichTextEditor from "@/components/RichTextEditor";
 import { faqService } from "@/lib/services/faqService";
 import { faqCategoryService, FaqCategory } from "@/lib/services/faqCategoryService";
 import { useSession } from "next-auth/react";
 import { ROUTES } from "@/constants/routes";
-const ReactQuill = dynamic(() => import('react-quill-new'), {
-  ssr: false,                    
-  loading: () => <p>Loading editor...</p>,
-});
-
-import "react-quill-new/dist/quill.snow.css";
 
 export default function AddOrEditFaqPage() {
   const router = useRouter();
@@ -191,15 +184,14 @@ export default function AddOrEditFaqPage() {
               sx={fieldStyle}
             />
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Answer *</label>
-              <ReactQuill
-                value={form.answer}
-                onChange={handleAnswerChange}
-                theme="snow"
-                className="bg-white border border-gray-300 rounded"
-              />
-            </div>
+            <RichTextEditor
+              value={form.answer}
+              onChange={handleAnswerChange}
+              label="Answer"
+              required
+              minHeight={300}
+              placeholder="Write your answer here..."
+            />
 
             <FormControl fullWidth required sx={fieldStyle}>
               <InputLabel id="category-select-label">FAQ Category</InputLabel>

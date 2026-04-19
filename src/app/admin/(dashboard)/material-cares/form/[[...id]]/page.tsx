@@ -8,6 +8,7 @@ import AlertMessage from "@/components/AlertMessage";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
 import { useSession } from "next-auth/react";
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function MaterialCareFormPage() {
   const router = useRouter();
@@ -237,14 +238,12 @@ export default function MaterialCareFormPage() {
             <label className="block mb-2 text-sm font-medium text-gray-700">
               Description <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="description"
+            <RichTextEditor
               value={formData.description}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mb-6"
-              rows={4}
+              onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+              minHeight={200}
               placeholder="e.g. Machine wash at 30°C. Do not bleach. Tumble dry low."
-            ></textarea>
+            />
 
             {/* Actions */}
             <div className="flex justify-end gap-3">
