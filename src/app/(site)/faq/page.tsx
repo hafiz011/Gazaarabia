@@ -174,6 +174,7 @@ import { faqsService, Faq, FaqCategory } from "@/lib/services/front-end/faqsServ
 import "swiper/css";
 import "swiper/css/navigation";
 
+
 export default function FaqPage() {
     const [categories, setCategories] = useState<FaqCategory[]>([]);
     const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -357,7 +358,7 @@ export default function FaqPage() {
                                         }`}
                                 >
                                     <p className="text-[var(--text-secondary)] leading-relaxed">
-                                        {faq.answer}
+                                        <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
                                     </p>
                                 </div>
                             </div>

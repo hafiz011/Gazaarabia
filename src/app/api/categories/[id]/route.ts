@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const categoryId = Number(id);
 
   try {
-    const { name, slug, image, commission } = await req.json();
+    const { name, slug, image, commission, description } = await req.json();
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -76,7 +76,8 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       data: {
         name: name.trim(),
         slug: slug.trim(),
-        image
+        image,
+        description: description || null
       },
     });
 

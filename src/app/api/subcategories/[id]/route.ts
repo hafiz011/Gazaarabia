@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const { name, slug, categoryId, commission } = await req.json();
+    const { name, slug, categoryId, commission, description } = await req.json();
     if (!name || !slug || !categoryId) {
       return NextResponse.json(
         { success: false, message: "Name, slug and Category are required." },
@@ -122,6 +122,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         name,
         slug,
         categoryId: Number(categoryId),
+        description: description || null,
         ...(commission !== undefined && commission !== null
           ? {
             subcategoryCommission: {

@@ -192,7 +192,7 @@ model Categories {
   name          String        @unique
   slug          String        @unique
   image         String?  
-  description    String?      @db.LongText
+  description   String?      @db.LongText
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   products      products[]

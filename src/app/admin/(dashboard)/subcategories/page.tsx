@@ -30,6 +30,7 @@ export default function SubcategoryListPage() {
   const [formSlug, setFormSlug] = useState("");
   const [formCategoryId, setFormCategoryId] = useState<number | null>(null);
   const [formCommission, setFormCommission] = useState<number | "">("");
+  const [formDescription, setFormDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -94,6 +95,7 @@ export default function SubcategoryListPage() {
       setFormSlug("");
       setFormCategoryId(null);
       setFormCommission("");
+      setFormDescription("");
       setEditId(null);
       setIsEditing(false);
       setIsSlugEdited(false);
@@ -190,7 +192,8 @@ export default function SubcategoryListPage() {
           name: formName,
           slug: formSlug,
           categoryId: formCategoryId,
-          commission: formCommission === "" ? null : formCommission
+          commission: formCommission === "" ? null : formCommission,
+          description: formDescription || null
         });
         setPopUpAlertData({
           isOpen: true,
@@ -203,7 +206,8 @@ export default function SubcategoryListPage() {
           name: formName,
           slug: formSlug,
           categoryId: formCategoryId,
-          commission: formCommission === "" ? null : formCommission
+          commission: formCommission === "" ? null : formCommission,
+          description: formDescription || null
         });
         setPopUpAlertData({
           isOpen: true,
@@ -229,6 +233,7 @@ export default function SubcategoryListPage() {
     setFormSlug(subcategory.slug);
     setFormCategoryId(subcategory.categoryId);
     setFormCommission(subcategory.subcategoryCommission?.[0]?.commission ?? "");
+    setFormDescription(subcategory.description ?? "");
     setEditId(subcategory.id);
     setIsEditing(true);
     setIsSlugEdited(true); // stop auto
@@ -298,6 +303,7 @@ export default function SubcategoryListPage() {
                 <th className="py-3 px-3 text-center">Subcategory Name</th>
                 <th className="py-3 px-3 text-center">Slug</th>
                 <th className="py-3 px-3 text-center">Category</th>
+                <th className="py-3 px-3 text-center">Description</th>
                 <th className="py-3 px-3 text-center">Commission (%)</th>
                 <th className="py-3 px-3 text-center">Action</th>
               </tr>
@@ -321,6 +327,9 @@ export default function SubcategoryListPage() {
                     </td>
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {sub.category?.name || "-"}
+                    </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {sub.description || "-"}
                     </td>
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {(sub as any).subcategoryCommission?.[0]?.commission != null ? `${(sub as any).subcategoryCommission[0].commission}%` : "-"}
@@ -441,6 +450,17 @@ export default function SubcategoryListPage() {
                 onChange={(e) => setFormCommission(e.target.value === "" ? "" : Number(e.target.value))}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. 5"
+              />
+
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="Enter subcategory description..."
+                rows={4}
               />
 
               <div className="flex justify-end gap-3">

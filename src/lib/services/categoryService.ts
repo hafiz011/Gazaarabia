@@ -5,7 +5,7 @@ export interface Category {
   name: string;
   slug: string;
   image?: string;
-  description?: string;
+  description?: string | null;
   commission?: number | null;
   createdAt: string;
 }

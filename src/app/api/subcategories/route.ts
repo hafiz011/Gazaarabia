@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { name, slug, categoryId, commission } = await req.json();
+    const { name, slug, categoryId, commission, description } = await req.json();
 
     if (!name || !slug || !categoryId) {
       return NextResponse.json(
@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
         name,
         slug,
         categoryId,
+        description: description || null,
         ...(commission !== undefined && commission !== null
           ? {
             subcategoryCommission: {

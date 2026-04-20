@@ -24,6 +24,7 @@ export default function CategoryListPage() {
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
   const [formCommission, setFormCommission] = useState<number | "">("");
+  const [formDescription, setFormDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -86,6 +87,7 @@ export default function CategoryListPage() {
       setFormName("");
       setFormSlug("")
       setFormCommission("");
+      setFormDescription("");
       setCategoryImage(null);
       setEditId(null);
       setIsEditing(false);
@@ -159,7 +161,7 @@ export default function CategoryListPage() {
 
     try {
       if (isEditing && editId) {
-        await categoryService.update(token!, editId, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission });
+        await categoryService.update(token!, editId, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission, description: formDescription || null });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -167,7 +169,7 @@ export default function CategoryListPage() {
           onConfirm: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
         });
       } else {
-        await categoryService.create(token!, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission });
+        await categoryService.create(token!, { name: formName, slug: formSlug, image: categoryImage, commission: formCommission === "" ? null : formCommission, description: formDescription || null });
         setPopUpAlertData({
           isOpen: true,
           type: "success",
@@ -203,6 +205,7 @@ export default function CategoryListPage() {
     setFormName(category.name);
     setFormSlug(category.slug);
     setFormCommission(category.categoryCommission?.commission ?? "");
+    setFormDescription(category.description ?? "");
     setCategoryImage(category.image ?? null);
     setEditId(category.id);
     setIsEditing(true);
@@ -274,6 +277,7 @@ export default function CategoryListPage() {
                 <th className="py-3 px-3 text-center">Image</th>
                 <th className="py-3 px-3 text-center">Category Name</th>
                 <th className="py-3 px-3 text-center">Slug</th>
+                <th className="py-3 px-3 text-center">Description</th>
                 <th className="py-3 px-3 text-center">Commission (%)</th>
                 <th className="py-3 px-3 text-center">Action</th>
               </tr>
@@ -308,6 +312,9 @@ export default function CategoryListPage() {
 
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {cat.slug}
+                    </td>
+                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
+                      {cat.description || "-"}
                     </td>
                     <td className="py-3 px-3 text-center text-gray-800 font-medium">
                       {(cat as any).categoryCommission?.commission != null ? `${(cat as any).categoryCommission.commission}%` : "-"}
@@ -413,6 +420,17 @@ export default function CategoryListPage() {
                 onChange={(e) => setFormCommission(e.target.value === "" ? "" : Number(e.target.value))}
                 className="w-full border rounded px-3 py-2 mb-4"
                 placeholder="e.g. 5"
+              />
+
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="Enter category description..."
+                rows={4}
               />
 
               {/* Category Image Upload */}
