@@ -2,8 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+// import "swiper/css";
+// import "swiper/css/pagination";
+// import "swiper/css/effect-fade";
+
+// @ts-ignore
 import "swiper/css";
+// @ts-ignore
 import "swiper/css/pagination";
+// @ts-ignore
 import "swiper/css/effect-fade";
 
 import { motion } from "framer-motion";

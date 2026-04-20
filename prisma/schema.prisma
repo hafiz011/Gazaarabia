@@ -315,7 +315,7 @@ model products {
   baseQty          Int
   brandId          Int?
   categoryId       Int?
-  costPrice        Float
+  costPrice        Float?
   discountPrice    Float?
   fitType          String?
   sellingPrice     Float
@@ -345,7 +345,7 @@ model products {
   soldCount             Int?     // number sold in this duration
 
   ambassadorId          Int?     // assigned ambassador
-  ambassador   Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
+  ambassador            Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
 
   // External Store Tracking
   externalProductId  String?

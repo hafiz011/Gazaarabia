@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { checkAuth } from "@/lib/authToken";
+import { Description } from "@mui/icons-material";
 
 const prisma: any = new PrismaClient();
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { name, slug, image, commission } = await req.json();
+    const { name, slug, image, commission, description } = await req.json();
 
     if (!name || name.trim() === "") {
       return NextResponse.json(
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const category = await prisma.categories.create({
-      data: { name: name.trim(), slug: slug.trim(), image },
+      data: { name: name.trim(), slug: slug.trim(), image, description: description },
     });
     const categoryCommission = await prisma.categoryCommission.create({
       data: { categoryId: category.id, commission: commission },
