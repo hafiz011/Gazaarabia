@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -19,7 +19,21 @@ interface SubcategoryLink {
   id?: number;
   name: string;
   slug: string;
-  isCustom?: boolean;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  image?: string;
+  subcategories: SubcategoryLink[];
+}
+
+interface Submenu {
+  id: number;
+  name: string;
+  slug: string;
+  category?: Category;
 }
 
 interface BannerItem {
@@ -29,14 +43,7 @@ interface BannerItem {
 }
 
 interface DropdownMenu {
-  submenus: {
-    id: number;
-    name: string;
-    slug: string;
-    subcategories: SubcategoryLink[];
-    leftCustomLinks?: SubcategoryLink[];
-    rightCustomLinks?: SubcategoryLink[];
-  }[];
+  submenus: Submenu[];
   banners: BannerItem[];
 }
 
@@ -48,6 +55,7 @@ interface MenuItem {
   dropdown?: DropdownMenu | null;
 }
 
+
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,70 +65,82 @@ export default function Header() {
   const token = session?.user?.token || null;
 
   const [menus, setMenus] = useState<MenuItem[]>([]);
-  const [toolbarText, setToolbarText] = useState<any>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState<Submenu | null>(null);
+
+  const hoverOpenRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverCloseRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [toolbarText, setToolbarText] = useState<string>("");
+  const [hovered, setHovered] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [productsData, setProductsData] = useState<any>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
-
-  const [activeSubmenu, setActiveSubmenu] = useState<
-    DropdownMenu["submenus"][number] | null
-  >(null);
 
   const { cartCount } = useCart();
 
-  const fetchMenus = async () => {
+  // Memoized fetch to prevent re-creation
+  const fetchMenus = useCallback(async () => {
     try {
       const res = await fetch("/api/header", { cache: "no-store" });
       const data = await res.json();
       if (data.success) setMenus(data.data);
       if (data?.headerText) {
-        setToolbarText(data?.headerText)
+        setToolbarText(data.headerText);
       }
     } catch (err) {
       console.error("Failed to load menus:", err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchMenus();
-  }, []);
+  }, [fetchMenus]);
 
   useEffect(() => {
     setMounted(true);
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    let animationFrameId: number;
+    
+    const handleScroll = () => {
+      animationFrameId = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 50);
+      });
+    };
+    
     handleScroll();
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
   }, []);
 
-  const toggleMenu = () => setIsOpen((prev) => !prev);
+  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
   const isScrolled = mounted ? scrolled : false;
 
-  const getMenuLink = (menu: MenuItem) => {
+  const getMenuLink = useCallback((menu: MenuItem) => {
     if (menu.type === "blog") return "/blogs/journal";
     if (menu.type === "product") return `/shop/${menu.slug}`;
     return "/";
-  };
+  }, []);
 
-  const getSubmenuLink = (menu: MenuItem, link: SubcategoryLink) => {
+  const getSubmenuLink = useCallback((menu: MenuItem, link: SubcategoryLink) => {
     if (menu.type === "blog") return `/blogs/journal/${link.slug}`;
     return `/shop/${link.slug}`;
-  };
+  }, []);
 
-  const searchBtn = () => {
-    // console.log('open the search bar!')
-    setSearchMode(true)
-  }
+  const searchBtn = useCallback(() => {
+    setSearchMode(true);
+  }, []);
 
   useEffect(() => {
     if (searchMode) {
@@ -175,6 +195,44 @@ export default function Header() {
       setActiveSubmenu(menu.dropdown.submenus[0]);
     }
   }, [activeMenu, menus]);
+
+  // Memoized filtered submenus for current active menu
+  const activeMenuSubmenus = useMemo(() => {
+    return menus
+      .filter((m) => m.slug === activeMenu)
+      .flatMap((m) => m.dropdown?.submenus || []);
+  }, [menus, activeMenu]);
+
+  // Memoized banners for current active menu
+  const activeMenuBanners = useMemo(() => {
+    return menus
+      .filter((m) => m.slug === activeMenu)
+      .flatMap((m) => m.dropdown?.banners || []);
+  }, [menus, activeMenu]);
+
+  // Memoized delayed open/close handlers to prevent flicker
+  const scheduleOpenMenu = useCallback((slug: string | null) => {
+    if (hoverCloseRef.current) {
+      clearTimeout(hoverCloseRef.current);
+      hoverCloseRef.current = null;
+    }
+    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
+    hoverOpenRef.current = setTimeout(() => {
+      setActiveMenu(slug);
+    }, 100);
+  }, []);
+
+  const scheduleCloseMenu = useCallback(() => {
+    if (hoverOpenRef.current) {
+      clearTimeout(hoverOpenRef.current);
+      hoverOpenRef.current = null;
+    }
+    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
+    hoverCloseRef.current = setTimeout(() => {
+      setActiveMenu(null);
+      setActiveSubmenu(null);
+    }, 150);
+  }, []);
 
   return (
 
@@ -270,7 +328,7 @@ export default function Header() {
                       ? "/images/logo.png"
                       : "/images/logo-dark.png"
                   }
-                  alt="Gaza Arabia"
+                  alt="Gazaarabia"
                   fill
                   priority
                   className="object-contain transition-opacity duration-300"
@@ -444,16 +502,18 @@ export default function Header() {
                 <div
                   key={item.id}
                   className="relative group h-full flex items-center"
-                  // onMouseEnter={() => setActiveMenu(item.slug)}
-                  // onMouseLeave={() => setActiveMenu(null)}
                   onMouseEnter={() => {
-                    if (item.dropdown) {
-                      setActiveMenu(item.slug);   // open dropdown
+                    // Stage 1: hover main menu -> show submenu strip after delay
+                    if (item.dropdown?.submenus?.length) {
+                      scheduleOpenMenu(item.slug);
                     } else {
-                      setActiveMenu(null);        // close dropdown
+                      scheduleCloseMenu();
                     }
                   }}
-
+                  onMouseLeave={() => {
+                    // start scheduled close when leaving main menu item
+                    scheduleCloseMenu();
+                  }}
                 >
                   <Link
                     href={getMenuLink(item)}
@@ -461,138 +521,7 @@ export default function Header() {
                   >
                     {item.name}
                   </Link>
-
-                  {/*  Mega Menu */}
-                  {/* {item.dropdown && ( */}
-                  {item.dropdown && activeMenu === item.slug && (
-                    // <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40">
-
-                    <div
-                      className={`fixed left-0 right-0 top-[122px]
-                        ${isScrolled ? "-mt-[40px]" : ""}
-                         transition-all duration-300
-                          bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40`}
-                      onMouseEnter={() => setActiveMenu(item.slug)}
-                      onMouseLeave={() => setActiveMenu(null)}
-                    >
-                      <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
-
-                        <div className="col-span-2 grid grid-cols-2 gap-12">
-
-                          {/* LEFT → SUBMENU LIST */}
-                          <div className="border-r border-gray-100 pr-6">
-
-                            <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
-                              Categories
-                            </div>
-
-                            <div className="flex flex-col space-y-1">
-
-                              {item.dropdown.submenus.map((submenu) => (
-                                <button
-                                  key={submenu.id}
-                                  onMouseEnter={() => setActiveSubmenu(submenu)}
-                                  className={`group relative flex items-start gap-2
-          text-sm tracking-wide uppercase
-          px-4 py-2 rounded-md
-          transition-all duration-200
-
-          ${activeSubmenu?.id === submenu.id
-                                      ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
-                                      : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                                    }`}
-                                >
-
-                                  {/* LEFT ACTIVE BAR */}
-                                  {activeSubmenu?.id === submenu.id && (
-                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
-                                  )}
-
-                                  <span className="text-left flex-1 leading-tight">
-                                    {submenu.name}
-                                  </span>
-
-                                  <ChevronRight
-                                    size={16}
-                                    className={`transition-transform duration-200
-            ${activeSubmenu?.id === submenu.id
-                                        ? "translate-x-1 text-[var(--brand-primary)]"
-                                        : "text-gray-400 group-hover:translate-x-1"
-                                      }`}
-                                  />
-
-                                </button>
-                              ))}
-
-                            </div>
-
-                          </div>
-
-
-                          {/* RIGHT → SUBCATEGORIES */}
-                          <div>
-
-                            {/* SECTION HEADER */}
-                            <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
-                              {activeSubmenu?.name}
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-2">
-
-                              {activeSubmenu?.subcategories?.map((subcat) => (
-                                <Link
-                                  key={subcat.slug}
-                                  href={`/shop/${subcat.slug}`}
-                                  className="group flex items-center justify-between
-                                  text-sm text-gray-600
-                                  px-3 py-1.5 rounded-md
-                                  transition-all duration-200
-                                  hover:text-[var(--brand-primary)]
-                                  hover:bg-gray-50"
-                                >
-
-                                  <span>{subcat.name}</span>
-
-                                  <ChevronRight
-                                    size={14}
-                                    className="opacity-0 group-hover:opacity-100 transition"
-                                  />
-
-                                </Link>
-                              ))}
-
-                            </div>
-
-                          </div>
-
-                        </div>
-
-
-                        {/* RIGHT → BANNERS */}
-                        <div className="col-span-2 grid grid-cols-2 gap-6">
-                          {item.dropdown.banners.map((banner, index) => (
-                            <Link
-                              href={banner.link}
-                              key={index}
-                              className="mega-menu-banner flex items-center justify-center h-[45vh] max-h-[400px] bg-gray-50 rounded-md shadow-sm hover:shadow-lg transition"
-                            >
-                              <div className="relative w-full h-full flex items-center justify-center">
-                                <Image
-                                  src={banner.image}
-                                  alt={banner.title}
-                                  fill
-                                  priority
-                                  className="object-contain"
-                                />
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-
-                      </div>
-
-                    </div>
-                  )}
+                  {/* NOTE: Mega menu rendering moved to global area below nav (see after nav) */}
                 </div>
               ))}
 
@@ -686,6 +615,115 @@ export default function Header() {
               </div>
             </div>
           </div>
+
+          {/* ===== Stage 2: Submenu Strip (full-width bar) ===== */}
+          {menus.length > 0 && (
+            <div
+              className={`fixed left-0 right-0 top-[90px] z-40 transition-all duration-200 ${activeMenu ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+              onMouseEnter={() => {
+                if (hoverCloseRef.current) {
+                  clearTimeout(hoverCloseRef.current);
+                  hoverCloseRef.current = null;
+                }
+              }}
+              onMouseLeave={() => scheduleCloseMenu()}
+            >
+              <div className="bg-white border-b border-gray-100">
+                <div className="max-w-[1400px] mx-auto px-4">
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar py-3">
+                    {activeMenuSubmenus.map((submenu) => (
+                      <button
+                        key={submenu.id}
+                        onMouseEnter={() => {
+                          if (hoverCloseRef.current) {
+                            clearTimeout(hoverCloseRef.current);
+                            hoverCloseRef.current = null;
+                          }
+                          setActiveSubmenu(submenu);
+                        }}
+                        className={`px-4 py-2 rounded-full text-sm font-medium uppercase transition ${activeSubmenu?.id === submenu.id ? "bg-gray-100 text-[var(--brand-primary)]" : "text-gray-600 hover:bg-gray-50"}`}>
+                        {submenu.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===== Stage 3: Mega Menu (below the strip) ===== */}
+          {activeMenu && activeSubmenu && (
+            <div
+              className={`fixed left-0 right-0 top-[150px] z-40 transition-all duration-300 ${isScrolled ? "-mt-[40px]" : ""}`}
+              onMouseEnter={() => {
+                if (hoverCloseRef.current) {
+                  clearTimeout(hoverCloseRef.current);
+                  hoverCloseRef.current = null;
+                }
+              }}
+              onMouseLeave={() => scheduleCloseMenu()}
+            >
+              <div className="bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown">
+                <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
+                  <div className="col-span-2 grid grid-cols-2 gap-12">
+                    <div className="border-r border-gray-100 pr-6">
+                      <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">Categories</div>
+                      <div className="flex flex-col space-y-1">
+                        {activeMenuSubmenus.map((submenu) => (
+                          <button
+                            key={submenu.id}
+                            onMouseEnter={() => setActiveSubmenu(submenu)}
+                            className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-4 py-2 rounded-md transition-all duration-200 ${
+                              activeSubmenu?.id === submenu.id
+                                ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                            }`}
+                          >
+                            {activeSubmenu?.id === submenu.id && (
+                              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
+                            )}
+                            <span className="text-left flex-1 leading-tight">
+                              {submenu.category?.name}
+                            </span>
+                            <ChevronRight
+                              size={16}
+                              className={`transition-transform duration-200 ${
+                                activeSubmenu?.id === submenu.id
+                                  ? "translate-x-1 text-[var(--brand-primary)]"
+                                  : "text-gray-400 group-hover:translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">{activeSubmenu?.category?.name}</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {activeSubmenu?.category?.subcategories?.map((subcat) => (
+                          <Link key={subcat.slug} href={`/shop/${subcat.slug}`} className="group flex items-center justify-between text-sm text-gray-600 px-3 py-1.5 rounded-md transition-all duration-200 hover:text-[var(--brand-primary)] hover:bg-gray-50">
+                            <span>{subcat.name}</span>
+                            <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition" />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 grid grid-cols-2 gap-6">
+                    {activeMenuBanners.map((banner: any, index: number) => (
+                      <Link href={banner.link} key={index} className="mega-menu-banner flex items-center justify-center h-[45vh] max-h-[400px] bg-gray-50 rounded-md shadow-sm hover:shadow-lg transition">
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <Image src={banner.image} alt={banner.title} fill priority className="object-contain" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -714,7 +752,6 @@ export default function Header() {
               className="flex-1 h-11 bg-transparent outline-none text-base placeholder-gray-400"
             />
           </div>
-
         </div>
       )}
 
