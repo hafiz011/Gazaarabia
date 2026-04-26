@@ -241,7 +241,7 @@ export default function MaterialCareFormPage() {
             <RichTextEditor
               value={formData.description}
               onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
-              minHeight={200}
+              minHeight={300}
               placeholder="e.g. Machine wash at 30°C. Do not bleach. Tumble dry low."
             />
 

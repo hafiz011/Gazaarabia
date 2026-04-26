@@ -21,17 +21,17 @@ export interface Category {
 }
 
 export const categoryService = {
-  getAll: (token: string, submenuId?: number): Promise<Category[]> =>
+  getAll: (token: string, submenuId?: number): Promise<{ success: boolean; data: Category[] }> =>
     apiFetch(
       `/api/categories${submenuId ? `?submenuId=${submenuId}` : ""}`,
       {},
       token
     ),
 
-  getById: (token: string, id: number): Promise<Category> =>
+  getById: (token: string, id: number): Promise<{ success: boolean; data: Category }> =>
     apiFetch(`/api/categories/${id}`, {}, token),
 
-  create: (token: string, data: Partial<Category>): Promise<Category> =>
+  create: (token: string, data: Partial<Category>): Promise<{ success: boolean; data: Category }> =>
     apiFetch(
       "/api/categories",
       {
@@ -41,7 +41,7 @@ export const categoryService = {
       token
     ),
 
-  update: (token: string, id: number, data: Partial<Category>): Promise<Category> =>
+  update: (token: string, id: number, data: Partial<Category>): Promise<{ success: boolean; data: Category }> =>
     apiFetch(
       `/api/categories/${id}`,
       {
@@ -54,7 +54,7 @@ export const categoryService = {
   reorder: (
     token: string,
     data: { submenuId: number; items: { id: number; position: number }[] }
-  ): Promise<Category[]> =>
+  ): Promise<{ success: boolean; data: Category[]; message?: string }> =>
     apiFetch(
       "/api/categories/reorder",
       {
@@ -64,7 +64,7 @@ export const categoryService = {
       token
     ),
 
-  remove: (token: string, id: number): Promise<{ message: string }> =>
+  remove: (token: string, id: number): Promise<{ success: boolean; message: string }> =>
     apiFetch(
       `/api/categories/${id}`,
       {

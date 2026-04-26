@@ -16,17 +16,17 @@ export interface Subcategory {
 }
 
 export const subcategoryService = {
-  getAll: (token: string, search?: string) => {
+  getAll: (token: string, search?: string): Promise<{ success: boolean; data: Subcategory[] }> => {
     const url = search
       ? `/api/subcategories?search=${encodeURIComponent(search)}`
       : `/api/subcategories`;
     return apiFetch(url, {}, token);
   },
 
-  getById: (token: string, id: number): Promise<Subcategory> =>
+  getById: (token: string, id: number): Promise<{ success: boolean; data: Subcategory }> =>
     apiFetch(`/api/subcategories/${id}`, {}, token),
 
-  create: (token: string, data: Partial<Subcategory>): Promise<Subcategory> =>
+  create: (token: string, data: Partial<Subcategory>): Promise<{ success: boolean; data: Subcategory }> =>
     apiFetch(
       "/api/subcategories",
       {
@@ -36,7 +36,7 @@ export const subcategoryService = {
       token
     ),
 
-  update: (token: string, id: number, data: Partial<Subcategory>): Promise<Subcategory> =>
+  update: (token: string, id: number, data: Partial<Subcategory>): Promise<{ success: boolean; data: Subcategory }> =>
     apiFetch(
       `/api/subcategories/${id}`,
       {
@@ -49,7 +49,7 @@ export const subcategoryService = {
   reorder: (
     token: string,
     data: { categoryId: number; items: { id: number; position: number }[] }
-  ): Promise<Subcategory[]> =>
+  ): Promise<{ success: boolean; data: Subcategory[]; message?: string }> =>
     apiFetch(
       "/api/subcategories/reorder",
       {
@@ -59,7 +59,7 @@ export const subcategoryService = {
       token
     ),
 
-  remove: (token: string, id: number): Promise<{ message: string }> =>
+  remove: (token: string, id: number): Promise<{ success: boolean; message: string }> =>
     apiFetch(
       `/api/subcategories/${id}`,
       {
@@ -68,8 +68,6 @@ export const subcategoryService = {
       token
     ),
 
-  getByCategory: (token: string, categoryId: number) =>
+  getByCategory: (token: string, categoryId: number): Promise<{ success: boolean; data: Subcategory[] }> =>
     apiFetch(`/api/subcategories/by-category/${categoryId}`, {}, token),
-
-
 };

@@ -38,7 +38,7 @@ export default function BlogsPage() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const cats:any = await blogsService.getAllCategory();
+                const cats: any = await blogsService.getAllCategory();
                 setCategories(cats?.data ?? []);
             } catch (err) {
                 console.error("Failed to fetch categories", err);
@@ -188,7 +188,10 @@ export default function BlogsPage() {
                                         </h3>
 
                                         <p className="text-[var(--text-secondary)] text-sm line-clamp-3">
-                                            {blog.content}
+                                            {/* {blog.content} */}
+                                            <p className="text-[var(--text-secondary)] leading-relaxed">
+                                                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+                                            </p>
                                         </p>
 
                                         <a

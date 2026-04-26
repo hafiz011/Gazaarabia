@@ -1,13 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { CSSProperties } from "react";
+import { CSSProperties, useMemo, useRef } from "react";
 import "react-quill-new/dist/quill.snow.css";
 
-const ReactQuill = dynamic(() => import("react-quill-new"), {
-  ssr: false,
-  loading: () => <p>Loading editor...</p>,
-});
+const ReactQuill = dynamic(
+  async () => {
+    const { default: RQ } = await import("react-quill-new");
+    const { default: BlotFormatter } = await import("quill-blot-formatter");
+    RQ.Quill.register("modules/blotFormatter", BlotFormatter);
+    return RQ;
+  },
+  {
+    ssr: false,
+    loading: () => <p>Loading editor...</p>,
+  }
+);
 
 interface RichTextEditorProps {
   value: string;
@@ -26,9 +34,117 @@ export default function RichTextEditor({
   required = false,
   minHeight = 300,
 }: RichTextEditorProps) {
+  const quillRef = useRef<any>(null);
+
   const editorStyle: CSSProperties = {
     minHeight: `${minHeight}px`,
   };
+
+  const imageHandler = () => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const res = await fetch("/api/upload?folder=editor", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.url) {
+            const quill = quillRef.current?.getEditor();
+            const range = quill?.getSelection();
+            if (quill && range) {
+              quill.insertEmbed(range.index, "image", data.url);
+              quill.setSelection(range.index + 1);
+            }
+          }
+        } catch (error) {
+          console.error("Image upload failed", error);
+        }
+      }
+    };
+  };
+
+  const videoHandler = () => {
+    const url = prompt("Enter Video URL (YouTube, Vimeo, etc.):");
+    if (url) {
+      const embedUrl = convertToEmbedUrl(url);
+      const quill = quillRef.current?.getEditor();
+      const range = quill?.getSelection();
+      if (quill && range) {
+        quill.insertEmbed(range.index, "video", embedUrl);
+        quill.setSelection(range.index + 1);
+      }
+    }
+  };
+
+  const convertToEmbedUrl = (url: string) => {
+    let videoUrl = url;
+    if (videoUrl.includes("youtube.com/watch?v=")) {
+      videoUrl = videoUrl.replace("watch?v=", "embed/");
+      // Remove any additional params like &t= or &ab_channel=
+      if (videoUrl.includes("&")) {
+        videoUrl = videoUrl.split("&")[0];
+      }
+    } else if (videoUrl.includes("youtu.be/")) {
+      videoUrl = videoUrl.replace("youtu.be/", "youtube.com/embed/");
+      if (videoUrl.includes("?")) {
+        videoUrl = videoUrl.split("?")[0];
+      }
+    } else if (videoUrl.includes("vimeo.com/")) {
+      videoUrl = videoUrl.replace("vimeo.com/", "player.vimeo.com/video/");
+    }
+    return videoUrl;
+  };
+
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          ["bold", "italic", "underline", "strike"],
+          ["blockquote", "code-block"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          [{ script: "sub" }, { script: "super" }],
+          [{ indent: "-1" }, { indent: "+1" }],
+          [{ header: [1, 2, 3, false] }],
+          [{ align: [] }],
+          ["link", "image", "video"],
+          ["clean"],
+        ],
+        handlers: {
+          image: imageHandler,
+          video: videoHandler,
+        },
+      },
+      blotFormatter: {},
+    }),
+    []
+  );
+
+  const formats = [
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "code-block",
+    "list",
+    "script",
+    "indent",
+    "header",
+    "align",
+    "link",
+    "image",
+    "video",
+  ];
 
   return (
     <>
@@ -127,6 +243,11 @@ export default function RichTextEditor({
           color: var(--brand-primary, #c73030);
         }
 
+        .rich-text-editor-wrapper :global(.ql-editor img),
+        .rich-text-editor-wrapper :global(.ql-editor .ql-video) {
+          max-width: 100%;
+        }
+
         .editor-label {
           display: block;
           font-size: 0.875rem;
@@ -149,38 +270,12 @@ export default function RichTextEditor({
         )}
         <div className="rich-text-editor-wrapper">
           <ReactQuill
+            ref={quillRef}
             value={value}
             onChange={onChange}
             theme="snow"
-            modules={{
-              toolbar: [
-                ["bold", "italic", "underline", "strike"],
-                ["blockquote", "code-block"],
-                [{ list: "ordered" }, { list: "bullet" }],
-                [{ script: "sub" }, { script: "super" }],
-                [{ indent: "-1" }, { indent: "+1" }],
-                [{ header: [1, 2, 3, false] }],
-                [{ align: [] }],
-                ["link", "image", "video"],
-                ["clean"],
-              ],
-            }}
-            formats={[
-              "bold",
-              "italic",
-              "underline",
-              "strike",
-              "blockquote",
-              "code-block",
-              "list",
-              "script",
-              "indent",
-              "header",
-              "align",
-              "link",
-              "image",
-              "video",
-            ]}
+            modules={modules}
+            formats={formats}
             placeholder={placeholder}
             style={editorStyle}
           />

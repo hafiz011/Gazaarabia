@@ -29,7 +29,7 @@ export default function BlogDetailPage() {
 
     const fetchBlog = async () => {
       try {
-        const data :any = await blogsService.getBlogBySlug(slug as string);
+        const data: any = await blogsService.getBlogBySlug(slug as string);
         console.log(" Blog fetched:", data);
         setBlog(data?.data ?? null);
       } catch (err) {
@@ -98,8 +98,9 @@ export default function BlogDetailPage() {
         <div className="max-w-4xl mx-auto px-6 relative z-10 bg-white rounded-2xl shadow-lg p-10 border border-[var(--mid-gray)]">
           <div className="w-24 h-1 mx-auto mb-8 bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] rounded-full"></div>
 
-          <div className="prose max-w-none text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">
-            {blog.content}
+          <div className="prose max-w-none text-[var(--text-secondary)] leading-relaxed">
+            {/* {blog.content} */}
+            <div dangerouslySetInnerHTML={{ __html: blog.content }} />
           </div>
         </div>
       </section>
