@@ -109,28 +109,6 @@ export default function HomeHero() {
             />
           </motion.div>
 
-          {/* Optional Overlay (for mood & text readability) */}
-          {/* <div className="absolute inset-0 bg-black/20 md:bg-black/25" /> */}
-
-          {/* Optional Text Overlay */}
-          {/* <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="text-white text-3xl md:text-5xl font-semibold tracking-wide mb-3"
-            >
-              Embrace Elegance
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-white/80 text-sm md:text-lg max-w-2xl leading-relaxed"
-            >
-              Discover our new season pieces that redefine modern modest fashion.
-            </motion.p>
-          </div> */}
         </section>
       }
 
@@ -144,7 +122,7 @@ export default function HomeHero() {
 
       {/* <ViewLookbook /> */}
 
-      <InfoGridSection />
+      {/* <InfoGridSection /> */}
 
       <MoreThanFashionSection />
 

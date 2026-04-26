@@ -100,13 +100,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify category exists
+    const category = await prisma.categories.findUnique({
+      where: { id: Number(categoryId) },
+    });
+
+    if (!category) {
+      return NextResponse.json(
+        { success: false, message: "Category not found." },
+        { status: 404 }
+      );
+    }
+
+    // Calculate next position for this category
+    const maxPosition = await prisma.subcategory.aggregate({
+      where: { categoryId: Number(categoryId) },
+      _max: { position: true },
+    });
+    const position = (maxPosition._max.position ?? -1) + 1;
+
     const newSubcategory = await prisma.subcategory.create({
       data: {
         name,
         slug,
         categoryId,
         description: description || null,
-        ...(commission !== undefined && commission !== null
+        position,
+        ...(commission !== undefined && commission !== null && commission !== "" && !isNaN(parseFloat(commission))
           ? {
             subcategoryCommission: {
               create: {

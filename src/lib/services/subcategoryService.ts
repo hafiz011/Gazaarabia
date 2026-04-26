@@ -7,6 +7,7 @@ export interface Subcategory {
   categoryId: number;
   description?: string | null;
   commission?: number | null;
+  position?: number;
   createdAt: string;
   category?: {
     id: number;
@@ -38,6 +39,19 @@ export const subcategoryService = {
   update: (token: string, id: number, data: Partial<Subcategory>): Promise<Subcategory> =>
     apiFetch(
       `/api/subcategories/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
+
+  reorder: (
+    token: string,
+    data: { categoryId: number; items: { id: number; position: number }[] }
+  ): Promise<Subcategory[]> =>
+    apiFetch(
+      "/api/subcategories/reorder",
       {
         method: "PUT",
         body: JSON.stringify(data),

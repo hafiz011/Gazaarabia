@@ -7,12 +7,26 @@ export interface Category {
   image?: string;
   description?: string | null;
   commission?: number | null;
+  submenuId?: number | null;
+  position?: number;
   createdAt: string;
+  submenu?: {
+    id: number;
+    name: string;
+    menuId: number;
+    menu?: {
+      name: string;
+    };
+  };
 }
 
 export const categoryService = {
-  getAll: (token: string): Promise<Category[]> =>
-    apiFetch("/api/categories", {}, token),
+  getAll: (token: string, submenuId?: number): Promise<Category[]> =>
+    apiFetch(
+      `/api/categories${submenuId ? `?submenuId=${submenuId}` : ""}`,
+      {},
+      token
+    ),
 
   getById: (token: string, id: number): Promise<Category> =>
     apiFetch(`/api/categories/${id}`, {}, token),
@@ -30,6 +44,19 @@ export const categoryService = {
   update: (token: string, id: number, data: Partial<Category>): Promise<Category> =>
     apiFetch(
       `/api/categories/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
+
+  reorder: (
+    token: string,
+    data: { submenuId: number; items: { id: number; position: number }[] }
+  ): Promise<Category[]> =>
+    apiFetch(
+      "/api/categories/reorder",
       {
         method: "PUT",
         body: JSON.stringify(data),

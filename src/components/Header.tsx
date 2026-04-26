@@ -15,6 +15,12 @@ import { getAllProducts } from "@/lib/services/front-end/productService";
 import ProductCard from "./ProductCard";
 
 
+interface Subcategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 interface SubcategoryLink {
   id?: number;
   name: string;
@@ -26,14 +32,14 @@ interface Category {
   name: string;
   slug: string;
   image?: string;
-  subcategories: SubcategoryLink[];
+  subcategories: Subcategory[];
 }
 
 interface Submenu {
   id: number;
   name: string;
   slug: string;
-  category?: Category;
+  categories: Category[];
 }
 
 interface BannerItem {
@@ -42,7 +48,7 @@ interface BannerItem {
   link: string;
 }
 
-interface DropdownMenu {
+interface MenuDropdown {
   submenus: Submenu[];
   banners: BannerItem[];
 }
@@ -52,7 +58,7 @@ interface MenuItem {
   name: string;
   slug: string;
   type: string;
-  dropdown?: DropdownMenu | null;
+  dropdown: MenuDropdown;
 }
 
 
@@ -67,6 +73,7 @@ export default function Header() {
   const [menus, setMenus] = useState<MenuItem[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<Submenu | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
 
   const hoverOpenRef = useRef<NodeJS.Timeout | null>(null);
   const hoverCloseRef = useRef<NodeJS.Timeout | null>(null);
@@ -189,26 +196,46 @@ export default function Header() {
     setSearchQuery(search);
   };
 
+  // Auto-set first submenu when activeMenu changes
   useEffect(() => {
-    const menu = menus.find((m) => m.slug === activeMenu);
-    if (menu?.dropdown?.submenus?.length) {
-      setActiveSubmenu(menu.dropdown.submenus[0]);
+    if (activeMenu && menus.length > 0) {
+      const menu = menus.find((m) => m.slug === activeMenu);
+      if (menu?.dropdown?.submenus?.length) {
+        setActiveSubmenu(menu.dropdown.submenus[0]);
+      } else {
+        setActiveSubmenu(null);
+        setActiveCategory(null);
+      }
     }
   }, [activeMenu, menus]);
 
+  // Auto-set first category when activeSubmenu changes
+  useEffect(() => {
+    if (activeSubmenu?.categories?.length) {
+      setActiveCategory(activeSubmenu.categories[0]);
+    } else {
+      setActiveCategory(null);
+    }
+  }, [activeSubmenu]);
+
   // Memoized filtered submenus for current active menu
   const activeMenuSubmenus = useMemo(() => {
-    return menus
-      .filter((m) => m.slug === activeMenu)
-      .flatMap((m) => m.dropdown?.submenus || []);
+    if (!activeMenu) return [];
+    const menu = menus.find((m) => m.slug === activeMenu);
+    return menu?.dropdown?.submenus || [];
   }, [menus, activeMenu]);
 
   // Memoized banners for current active menu
   const activeMenuBanners = useMemo(() => {
-    return menus
-      .filter((m) => m.slug === activeMenu)
-      .flatMap((m) => m.dropdown?.banners || []);
+    if (!activeMenu) return [];
+    const menu = menus.find((m) => m.slug === activeMenu);
+    return menu?.dropdown?.banners || [];
   }, [menus, activeMenu]);
+
+  // Memoized categories for current active submenu
+  const activeSubmenuCategories = useMemo(() => {
+    return activeSubmenu?.categories || [];
+  }, [activeSubmenu]);
 
   // Memoized delayed open/close handlers to prevent flicker
   const scheduleOpenMenu = useCallback((slug: string | null) => {
@@ -480,11 +507,6 @@ export default function Header() {
 
               }
 
-
-
-
-
-
             </div>
           )}
 
@@ -651,8 +673,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* ===== Stage 3: Mega Menu (below the strip) ===== */}
-          {activeMenu && activeSubmenu && (
+          {/* ===== Stage 3: Mega Menu (3-level: submenu → category → subcategory) ===== */}
+          {activeMenu && activeSubmenu && activeCategory && (
             <div
               className={`fixed left-0 right-0 top-[150px] z-40 transition-all duration-300 ${isScrolled ? "-mt-[40px]" : ""}`}
               onMouseEnter={() => {
@@ -664,58 +686,81 @@ export default function Header() {
               onMouseLeave={() => scheduleCloseMenu()}
             >
               <div className="bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown">
-                <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-4 gap-12">
-                  <div className="col-span-2 grid grid-cols-2 gap-12">
-                    <div className="border-r border-gray-100 pr-6">
-                      <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">Categories</div>
-                      <div className="flex flex-col space-y-1">
-                        {activeMenuSubmenus.map((submenu) => (
-                          <button
-                            key={submenu.id}
-                            onMouseEnter={() => setActiveSubmenu(submenu)}
-                            className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-4 py-2 rounded-md transition-all duration-200 ${
-                              activeSubmenu?.id === submenu.id
-                                ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                            }`}
-                          >
-                            {activeSubmenu?.id === submenu.id && (
-                              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
-                            )}
-                            <span className="text-left flex-1 leading-tight">
-                              {submenu.category?.name}
-                            </span>
-                            <ChevronRight
-                              size={16}
-                              className={`transition-transform duration-200 ${
-                                activeSubmenu?.id === submenu.id
-                                  ? "translate-x-1 text-[var(--brand-primary)]"
-                                  : "text-gray-400 group-hover:translate-x-1"
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-5 gap-8">
 
-                    <div>
-                      <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">{activeSubmenu?.category?.name}</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        {activeSubmenu?.category?.subcategories?.map((subcat) => (
-                          <Link key={subcat.slug} href={`/shop/${subcat.slug}`} className="group flex items-center justify-between text-sm text-gray-600 px-3 py-1.5 rounded-md transition-all duration-200 hover:text-[var(--brand-primary)] hover:bg-gray-50">
-                            <span>{subcat.name}</span>
-                            <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition" />
-                          </Link>
-                        ))}
-                      </div>
+                  {/* MIDDLE: Categories */}
+                  <div className="col-span-1 border-r border-gray-100 pr-6">
+                    <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">Categories</div>
+                    <div className="flex flex-col space-y-1">
+                      {activeSubmenuCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          onMouseEnter={() => setActiveCategory(category)}
+                          className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-3 py-2 rounded-md transition-all duration-200 ${
+                            activeCategory?.id === category.id
+                              ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                          }`}
+                        >
+                          {activeCategory?.id === category.id && (
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
+                          )}
+                          <span className="text-left flex-1 leading-tight">{category.name}</span>
+                          <ChevronRight
+                            size={14}
+                            className={`transition-transform duration-200 ${
+                              activeCategory?.id === category.id
+                                ? "translate-x-1 text-[var(--brand-primary)]"
+                                : "text-gray-400 group-hover:translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      ))}
                     </div>
                   </div>
 
+                  {/* RIGHT: Subcategories */}
+                  <div className="col-span-1">
+                    <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
+                      {activeCategory?.name || "Subcategories"}
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      {activeCategory?.subcategories?.length ? (
+                        activeCategory.subcategories.map((subcat: Subcategory) => (
+                          <Link
+                            key={subcat.slug}
+                            href={`/shop/${subcat.slug}`}
+                            className="group flex items-center justify-between text-sm text-gray-600 px-3 py-1.5 rounded-md transition-all duration-200 hover:text-[var(--brand-primary)] hover:bg-gray-50"
+                          >
+                            <span>{subcat.name}</span>
+                            <ChevronRight
+                              size={14}
+                              className="opacity-0 group-hover:opacity-100 transition"
+                            />
+                          </Link>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-400">No subcategories</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* BANNERS */}
                   <div className="col-span-2 grid grid-cols-2 gap-6">
-                    {activeMenuBanners.map((banner: any, index: number) => (
-                      <Link href={banner.link} key={index} className="mega-menu-banner flex items-center justify-center h-[45vh] max-h-[400px] bg-gray-50 rounded-md shadow-sm hover:shadow-lg transition">
+                    {activeMenuBanners.map((banner: BannerItem, index: number) => (
+                      <Link
+                        href={banner.link}
+                        key={index}
+                        className="mega-menu-banner flex items-center justify-center h-[45vh] max-h-[400px] bg-gray-50 rounded-md shadow-sm hover:shadow-lg transition"
+                      >
                         <div className="relative w-full h-full flex items-center justify-center">
-                          <Image src={banner.image} alt={banner.title} fill priority className="object-contain" />
+                          <Image
+                            src={banner.image}
+                            alt={banner.title}
+                            fill
+                            priority
+                            className="object-contain"
+                          />
                         </div>
                       </Link>
                     ))}

@@ -168,6 +168,11 @@ export default function AdminSidebar({
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) =>
@@ -224,12 +229,7 @@ export default function AdminSidebar({
             <h2 className="text-lg font-semibold tracking-wide text-white">
               Gazaarabia{" "}
               <span className="text-[var(--brand-primary)]">
-                {session?.user?.role === "admin" ? "Admin" : ""
-                  // ? "Admin"
-                  // : session?.user?.role === "content_manager"
-                  //   ? "Content Manager"
-                  //   : ""
-                }
+                {mounted && session?.user?.role === "admin" ? "Admin" : ""}
               </span>
             </h2>
           )}

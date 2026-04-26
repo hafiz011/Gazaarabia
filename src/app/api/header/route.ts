@@ -1,119 +1,98 @@
-interface HeaderMenu {
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+interface Subcategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  image?: string;
+  subcategories: Subcategory[];
+}
+
+interface Submenu {
+  id: number;
+  name: string;
+  slug: string;
+  categories: Category[];
+}
+
+interface MenuDropdown {
+  submenus: Submenu[];
+  banners: { image: string; title: string; link: string }[];
+}
+
+interface FormattedMenu {
   id: number;
   name: string;
   slug: string;
   type: string;
-  dropdown?: {
-    submenus: { id: number; name: string; slug: string }[];
-    categories: { id?: number; name: string; slug: string; isCustom?: boolean }[];
-    subcategories: { id?: number; name: string; slug: string; isCustom?: boolean }[];
-    banners: { image: string; title: string; link: string }[];
-  } | null;
+  dropdown: MenuDropdown;
 }
 
-
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma: any = new PrismaClient();
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    //  Fetch menus and their submenus
+    // Fetch menus with full nested hierarchy in one optimized query
     const menus = await prisma.menus.findMany({
-      include: { submenus: true },
-      orderBy: [{ position: "asc" }, { id: "asc" }],
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        images: true,
+        submenus: {
+          orderBy: { position: "asc" },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            categories: {
+              orderBy: { position: "asc" },
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                image: true,
+                subcategories: {
+                  orderBy: { position: "asc" },
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
-    //  Fetch all related data
-   const [allCategories, allBlogCategories] = await Promise.all([
-   prisma.categories.findMany({
-    include: { subcategories: { select: { id: true, name: true, slug: true, categoryId: true } } },
-  }),
-    // prisma.subcategory.findMany({
-  //   select: { id: true, name: true, slug: true, categoryId: true },
-  // }),
-  prisma.blogCategories.findMany({
-    select: { id: true, name: true, slug: true },
-  }),
+    // Fetch homepage settings
+    const homepage = await prisma.homePageSetting.findFirst({
+      select: { headerText: true },
+    });
 
-]);
-    // Utility: Safe JSON parsing
-    const parseJSON = (val: any) => {
-      if (!val) return [];
-      if (Array.isArray(val)) return val;
-      try {
-        const parsed = JSON.parse(val);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    };
-
-    // Custom Links Parser — allow empty slug
-    const getCustomLinks = (links: any) => {
-      const parsed = parseJSON(links);
-      return parsed
-        .filter((l: any) => l?.name) // allow empty slug
-        .map((l: any) => ({
-          name: l.name,
-          slug: l.slug || "", // default empty string
-          isCustom: true,
-        }));
-    };
-
-    
-
-    // console.log('menus:>',menus)
-
-    const formatted = menus.map((menu: any) => {
-      const isBlog = menu.type === "blog";
-      const isProduct = menu.type === "product";
-
-      if (!menu.submenus?.length) {
-        return {
-          id: menu.id,
-          name: menu.name,
-          slug: menu.slug,
-          type: menu.type,
-          dropdown: { submenus: [], banners: [] },
-        };
-      }
-
-      const submenuData = menu.submenus.map((submenu: any) => {
-        let categoryObj: any[] = [];
-        // let categorySubcategories: any[] = [];
-       
-
-        //  Get ALL categories of selected submenu
-        if (submenu.categoryId) {
-          categoryObj = allCategories.find((c: any) => c.id === submenu.categoryId )|| null;
-          // categorySubcategories = allCategories.flatMap((c: any) => c.subcategories || []);
-          
-        }
-
-        return {
-          id: submenu.id,
-          name: submenu.name,
-          slug: submenu.slug,
-          category: categoryObj,
-          // subcategories: categorySubcategories,
-          // leftCustomLinks: getCustomLinks(submenu.leftCustomLinks),
-          // rightCustomLinks: getCustomLinks(submenu.rightCustomLinks),
-        };
-      });
-
-      // banners logic
+    // Transform to frontend format
+    const formatted: FormattedMenu[] = menus.map((menu: any) => {
       const banners =
         Array.isArray(menu.images) && menu.images.length > 0
           ? menu.images.map((img: string) => ({
-            image: img,
-            title: menu.name,
-            link:
-              menu.type === "blog"
-                ? "/blogs/journal"
-                : `/shop/${menu.slug}`,
-          }))
+              image: img,
+              title: menu.name,
+              link:
+                menu.type === "blog"
+                  ? "/blogs/journal"
+                  : `/shop/${menu.slug}`,
+            }))
           : [];
 
       return {
@@ -122,19 +101,22 @@ export async function GET() {
         slug: menu.slug,
         type: menu.type,
         dropdown: {
-          submenus: submenuData,
+          submenus: menu.submenus.map((submenu: any) => ({
+            id: submenu.id,
+            name: submenu.name,
+            slug: submenu.slug,
+            categories: submenu.categories || [],
+          })),
           banners,
         },
       };
     });
 
-    // Fetch Homepage Settings (only one row expected)
-    const homepage = await prisma.homePageSetting.findFirst({
-      select: { headerText: true }
+    return NextResponse.json({
+      success: true,
+      headerText: homepage?.headerText || "",
+      data: formatted,
     });
-
-
-    return NextResponse.json({ success: true, headerText: homepage?.headerText || "", data: formatted });
   } catch (error) {
     console.error("Header API Error:", error);
     return NextResponse.json(
@@ -143,3 +125,4 @@ export async function GET() {
     );
   }
 }
+

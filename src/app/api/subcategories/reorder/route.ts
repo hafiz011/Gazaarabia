@@ -5,13 +5,13 @@ import { checkAuth } from "@/lib/authToken";
 const prisma: any = new PrismaClient();
 
 /**
- * PUT /api/submenus/reorder
+ * PUT /api/subcategories/reorder
  * 
- * Reorder submenus within the same menu using a transaction.
+ * Reorder subcategories within the same category using a transaction.
  * 
  * Body:
  * {
- *   "menuId": number,
+ *   "categoryId": number,
  *   "items": [
  *     { "id": number, "position": number }
  *   ]
@@ -30,48 +30,48 @@ export async function PUT(req: NextRequest) {
 
   if (!user || user.role.name.toLowerCase() !== "admin") {
     return NextResponse.json(
-      { success: false, message: "Only admins can reorder submenus" },
+      { success: false, message: "Only admins can reorder subcategories" },
       { status: 403 }
     );
   }
 
   try {
-    const { menuId, items } = await req.json();
+    const { categoryId, items } = await req.json();
 
     // Validation
-    if (!menuId || !Array.isArray(items) || items.length === 0) {
+    if (!categoryId || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { success: false, message: "menuId and items array are required" },
+        { success: false, message: "categoryId and items array are required" },
         { status: 400 }
       );
     }
 
-    // Verify menu exists
-    const menu = await prisma.menus.findUnique({
-      where: { id: Number(menuId) },
+    // Verify category exists
+    const category = await prisma.categories.findUnique({
+      where: { id: Number(categoryId) },
     });
 
-    if (!menu) {
+    if (!category) {
       return NextResponse.json(
-        { success: false, message: "Menu not found" },
+        { success: false, message: "Category not found" },
         { status: 404 }
       );
     }
 
-    // Verify all submenus belong to this menu
-    const submenuIds = items.map((item) => item.id);
-    const existingSubmenus = await prisma.submenus.findMany({
+    // Verify all subcategories belong to this category
+    const subcategoryIds = items.map((item) => item.id);
+    const existingSubcategories = await prisma.subcategory.findMany({
       where: {
-        id: { in: submenuIds },
-        menuId: Number(menuId),
+        id: { in: subcategoryIds },
+        categoryId: Number(categoryId),
       },
     });
 
-    if (existingSubmenus.length !== items.length) {
+    if (existingSubcategories.length !== items.length) {
       return NextResponse.json(
         {
           success: false,
-          message: "Some submenus do not belong to the specified menu",
+          message: "Some subcategories do not belong to the specified category",
         },
         { status: 400 }
       );
@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest) {
     const updated = await prisma.$transaction(async (tx: any) => {
       // Phase 1: Set temporary positions
       const tempUpdates = items.map((item, index) =>
-        tx.submenus.update({
+        tx.subcategory.update({
           where: { id: Number(item.id) },
           data: { position: 10000 + index },
         })
@@ -92,7 +92,7 @@ export async function PUT(req: NextRequest) {
 
       // Phase 2: Set final positions
       const finalUpdates = items.map((item) =>
-        tx.submenus.update({
+        tx.subcategory.update({
           where: { id: Number(item.id) },
           data: { position: Number(item.position) },
         })
@@ -100,24 +100,27 @@ export async function PUT(req: NextRequest) {
       return Promise.all(finalUpdates);
     });
 
-    // Re-fetch all submenus for the menu to return normalized data
-    const allSubmenus = await prisma.submenus.findMany({
-      where: { menuId: Number(menuId) },
+    // Re-fetch all subcategories for the category to return normalized data
+    const allSubcategories = await prisma.subcategory.findMany({
+      where: { categoryId: Number(categoryId) },
       orderBy: { position: "asc" },
-      include: { menu: { select: { id: true, name: true } } },
+      include: { 
+        category: { select: { id: true, name: true } },
+        subcategoryCommission: true
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Submenus reordered successfully",
-      data: allSubmenus,
+      message: "Subcategories reordered successfully",
+      data: allSubcategories,
     });
   } catch (err: any) {
-    console.error("Error reordering submenus:", err);
+    console.error("Error reordering subcategories:", err);
     return NextResponse.json(
       {
         success: false,
-        message: err.message || "Failed to reorder submenus",
+        message: err.message || "Failed to reorder subcategories",
       },
       { status: 500 }
     );

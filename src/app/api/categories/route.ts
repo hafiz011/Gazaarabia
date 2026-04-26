@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { name, slug, image, commission, description } = await req.json();
+    const { name, slug, image, commission, description, submenuId } = await req.json();
 
     if (!name || name.trim() === "") {
       return NextResponse.json(
@@ -52,14 +52,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const category = await prisma.categories.create({
-      data: { name: name.trim(), slug: slug.trim(), image, description: description },
-    });
-    const categoryCommission = await prisma.categoryCommission.create({
-      data: { categoryId: category.id, commission: commission },
+    // If submenuId provided, validate it exists
+    let position = 0;
+    if (submenuId) {
+      const submenu = await prisma.submenus.findUnique({
+        where: { id: Number(submenuId) },
+      });
+
+      if (!submenu) {
+        return NextResponse.json(
+          { success: false, message: "Submenu not found." },
+          { status: 404 }
+        );
+      }
+
+      // Calculate next position for this submenu
+      const maxPosition = await prisma.categories.aggregate({
+        where: { submenuId: Number(submenuId) },
+        _max: { position: true },
+      });
+      position = (maxPosition._max.position ?? -1) + 1;
+    }
+
+    const result = await prisma.$transaction(async (tx: any) => {
+      const newCategory = await tx.categories.create({
+        data: {
+          name: name.trim(),
+          slug: slug.trim(),
+          image,
+          description: description || null,
+          submenuId: submenuId ? Number(submenuId) : null,
+          position: position,
+        },
+      });
+
+      if (commission !== null && commission !== undefined && commission !== "") {
+        const parsedCommission = parseFloat(commission.toString());
+        if (!isNaN(parsedCommission)) {
+          await tx.categoryCommission.create({
+            data: {
+              categoryId: newCategory.id,
+              commission: parsedCommission,
+            },
+          });
+        }
+      }
+
+      return newCategory;
     });
 
-    return NextResponse.json({ success: true, data: category }, { status: 201 });
+    return NextResponse.json({ success: true, data: result }, { status: 201 });
   } catch (error) {
     console.error(" POST Category Error:", error);
     return NextResponse.json(
@@ -90,9 +132,31 @@ export async function GET(req: NextRequest) {
 
 
   try {
+    // Check if submenuId is provided in query
+    const url = new URL(req.url);
+    const submenuId = url.searchParams.get("submenuId");
+
+    const whereClause = submenuId ? { submenuId: Number(submenuId) } : {};
+    const orderBy = submenuId 
+      ? { position: "asc" as const }
+      : { id: "desc" as const };
+
     const categories = await prisma.categories.findMany({
-      orderBy: { id: "desc" },
-      include: { categoryCommission: true }
+      where: whereClause,
+      orderBy,
+      include: { 
+        categoryCommission: true,
+        submenu: {
+          select: { 
+            id: true, 
+            name: true, 
+            menuId: true,
+            menu: {
+              select: { name: true }
+            }
+          }
+        }
+      }
     });
 
     return NextResponse.json({ success: true, data: categories });

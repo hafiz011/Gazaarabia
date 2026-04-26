@@ -194,12 +194,22 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       );
     }
 
-    await prisma.subcategoryCommission.delete({
-      where: { subcategoryId },
-    });
+    await prisma.$transaction(async (tx: any) => {
+      // 1. Unlink products from this subcategory
+      await tx.products.updateMany({
+        where: { subcategoryId: subcategoryId },
+        data: { subcategoryId: null },
+      });
 
-    await prisma.subcategory.delete({
-      where: { id: subcategoryId },
+      // 2. Delete commissions
+      await tx.subcategoryCommission.deleteMany({
+        where: { subcategoryId: subcategoryId },
+      });
+
+      // 3. Delete subcategory
+      await tx.subcategory.delete({
+        where: { id: subcategoryId },
+      });
     });
 
     return NextResponse.json({

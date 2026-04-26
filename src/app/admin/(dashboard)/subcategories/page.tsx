@@ -1,7 +1,22 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Pencil, Trash2, X, Search } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Pencil, Trash2, X, Search, GripVertical, Loader2 } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { useModalStore } from "@/lib/stores/modalStore";
@@ -14,6 +29,93 @@ import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
 import { generateSlug } from "@/lib/utils";
 
+// Sortable Row Component
+function SortableRow({
+  sub,
+  idx,
+  startIndex,
+  handleEdit,
+  handleDelete,
+  isReordering,
+}: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: sub.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} 
+        hover:bg-gray-100 transition ${isDragging ? "shadow-lg" : ""}`}
+    >
+      <td
+        className="py-3 px-3 text-center w-[50px]"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical
+          className={`${isReordering ? "text-gray-400 cursor-not-allowed" : "text-gray-400 cursor-grab"
+            } hover:text-gray-600`}
+          size={18}
+        />
+      </td>
+      <td className="py-3 px-3 text-center text-gray-600">
+        {startIndex + idx + 1}
+      </td>
+      <td className="py-3 px-3 text-center text-gray-800 font-medium">
+        {sub.name}
+      </td>
+      <td className="py-3 px-3 text-center text-gray-800 font-medium">
+        {sub.slug}
+      </td>
+      <td className="py-3 px-3 text-center text-gray-800 font-medium">
+        {sub.category?.name || "-"}
+      </td>
+      <td className="py-3 px-3 text-center text-gray-800 font-medium">
+        {sub.description || "-"}
+      </td>
+      <td className="py-3 px-3 text-center text-gray-800 font-medium">
+        {(sub as any).subcategoryCommission?.[0]?.commission != null
+          ? `${(sub as any).subcategoryCommission[0].commission}%`
+          : "-"}
+      </td>
+      <td className="py-3 px-3 text-center">
+        <div className="flex justify-center gap-1">
+          <button
+            onClick={() => handleEdit(sub)}
+            className="p-1.5 text-[var(--brand-secondary)] hover:bg-gray-100 rounded-full"
+            title="Edit"
+          >
+            <Pencil size={18} />
+          </button>
+          <button
+            onClick={() => handleDelete(sub.id)}
+            className="p-1.5 text-[var(--brand-primary)] hover:bg-red-50 rounded-full"
+            title="Delete"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function SubcategoryListPage() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -21,6 +123,8 @@ export default function SubcategoryListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [isReordering, setIsReordering] = useState(false);
+  const [filterCategoryId, setFilterCategoryId] = useState<number | "">("");
 
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,6 +147,10 @@ export default function SubcategoryListPage() {
     type: "",
     message: "",
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   const { data: session, status } = useSession();
   const token = session?.user?.token;
@@ -108,9 +216,19 @@ export default function SubcategoryListPage() {
     try {
       setLoading(true);
       const response: any = await subcategoryService.getAll(token!, search);
-      if (Array.isArray(response)) setSubcategories(response);
-      else if (Array.isArray(response?.data)) setSubcategories(response.data);
-      else setSubcategories([]);
+      if (Array.isArray(response)) {
+        setSubcategories(response.sort((a: any, b: any) => {
+          if (a.categoryId !== b.categoryId) return (a.categoryId || 0) - (b.categoryId || 0);
+          return a.position - b.position;
+        }));
+      } else if (Array.isArray(response?.data)) {
+        setSubcategories(response.data.sort((a: any, b: any) => {
+          if (a.categoryId !== b.categoryId) return (a.categoryId || 0) - (b.categoryId || 0);
+          return a.position - b.position;
+        }));
+      } else {
+        setSubcategories([]);
+      }
     } catch (error) {
       setPopUpAlertData({
         isOpen: true,
@@ -135,22 +253,111 @@ export default function SubcategoryListPage() {
   };
 
   // Filter & Paginate
-  // const filteredSubcategories = useMemo(() => {
-  //   return subcategories.filter(
-  //     (sub) =>
-  //       sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  //   );
-  // }, [subcategories, searchTerm]);
+  const filteredSubcategories = useMemo(() => {
+    return subcategories.filter((sub) => {
+      const matchSearch =
+        sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCategory = filterCategoryId === "" || sub.categoryId === Number(filterCategoryId);
+      return matchSearch && matchCategory;
+    });
+  }, [subcategories, searchTerm, filterCategoryId]);
 
-  // const totalPages = Math.ceil(filteredSubcategories.length / pageSize);
-  const totalPages = Math.ceil(subcategories.length / pageSize);
+  const totalPages = Math.ceil(filteredSubcategories.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  // const paginatedSubcategories = filteredSubcategories.slice(
-  const paginatedSubcategories = subcategories.slice(
+  const paginatedSubcategories = filteredSubcategories.slice(
     startIndex,
     startIndex + pageSize
   );
+
+  // Group by Category for drag & drop
+  const groupedByCategory = useMemo(() => {
+    const grouped: { [key: number]: any[] } = {};
+    subcategories.forEach((sub) => {
+      const cId = sub.categoryId || 0;
+      if (!grouped[cId]) grouped[cId] = [];
+      grouped[cId].push(sub);
+    });
+    return grouped;
+  }, [subcategories]);
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = Number(active.id);
+    const overId = Number(over.id);
+    if (activeId === overId) return;
+
+    // Find group
+    let categoryId: number | null = null;
+    let activeIndex = -1;
+    let overIndex = -1;
+    let groupItems: any[] = [];
+
+    for (const [cId, items] of Object.entries(groupedByCategory)) {
+      const aIdx = items.findIndex((item) => Number(item.id) === activeId);
+      const oIdx = items.findIndex((item) => Number(item.id) === overId);
+
+      if (aIdx !== -1 || oIdx !== -1) {
+        categoryId = Number(cId);
+        groupItems = items;
+        activeIndex = aIdx !== -1 ? aIdx : activeIndex;
+        overIndex = oIdx !== -1 ? oIdx : overIndex;
+        break;
+      }
+    }
+
+    if (activeIndex === -1 || overIndex === -1) return;
+
+    // Calculate new order
+    const newOrder = arrayMove(groupItems, activeIndex, overIndex).map(
+      (item, idx) => ({ id: item.id, position: idx })
+    );
+
+    // Re-sort the array based on new positions to ensure UI updates correctly
+    const reorderedSubcategories = arrayMove(groupItems, activeIndex, overIndex).map((s, idx) => ({
+      ...s,
+      position: idx,
+    }));
+
+    // Update the main subcategories list with reordered items
+    setSubcategories((prev) => {
+      const others = prev.filter((s) => (s.categoryId || 0) !== (categoryId || 0));
+      const merged = [...others, ...reorderedSubcategories].sort((a: any, b: any) => {
+        if (a.categoryId !== b.categoryId) return (a.categoryId || 0) - (b.categoryId || 0);
+        return a.position - b.position;
+      });
+      return merged;
+    });
+
+    setIsReordering(true);
+
+    try {
+      const response: any = await subcategoryService.reorder(token!, {
+        categoryId: categoryId || 0,
+        items: newOrder,
+      });
+
+      if (response.success) {
+        const serverData = response.data || [];
+        setSubcategories((prev) => {
+          const others = prev.filter((s) => (s.categoryId || 0) !== (categoryId || 0));
+          const merged = [...others, ...serverData].sort((a: any, b: any) => {
+            if (a.categoryId !== b.categoryId) return (a.categoryId || 0) - (b.categoryId || 0);
+            return a.position - b.position;
+          });
+          return merged;
+        });
+      }
+    } catch (err: any) {
+      console.error("Reorder error:", err);
+      fetchSubcategories(searchTerm);
+    } finally {
+      setIsReordering(false);
+    }
+  };
 
   // Add / Update Subcategory
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,7 +482,14 @@ export default function SubcategoryListPage() {
       <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
         {/* Header with search */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-800">Manage Subcategories</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-gray-800">
+              Manage Subcategories
+            </h1>
+            {isReordering && (
+              <Loader2 size={18} className="animate-spin text-blue-500" />
+            )}
+          </div>
           <div className="relative w-full sm:w-72">
             <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
             <input
@@ -290,87 +504,87 @@ export default function SubcategoryListPage() {
                          focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
             />
           </div>
+
+          <div className="w-full sm:w-64">
+            <select
+              value={filterCategoryId}
+              onChange={(e) => {
+                setFilterCategoryId(e.target.value === "" ? "" : Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
+            >
+              <option value="">-- Filter by Category --</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="border-t border-gray-200"></div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
-              <tr>
-                <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
-                <th className="py-3 px-3 text-center">Subcategory Name</th>
-                <th className="py-3 px-3 text-center">Slug</th>
-                <th className="py-3 px-3 text-center">Category</th>
-                <th className="py-3 px-3 text-center">Description</th>
-                <th className="py-3 px-3 text-center">Commission (%)</th>
-                <th className="py-3 px-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedSubcategories.length > 0 ? (
-                paginatedSubcategories.map((sub, idx) => (
-                  <tr
-                    key={sub.id}
-                    className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-100 transition`}
-                  >
-                    <td className="py-3 px-3 text-center text-gray-600">
-                      {startIndex + idx + 1}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
-                      {sub.name}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
-                      {sub.slug}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
-                      {sub.category?.name || "-"}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
-                      {sub.description || "-"}
-                    </td>
-                    <td className="py-3 px-3 text-center text-gray-800 font-medium">
-                      {(sub as any).subcategoryCommission?.[0]?.commission != null ? `${(sub as any).subcategoryCommission[0].commission}%` : "-"}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <div className="flex justify-center gap-1">
-                        <button
-                          onClick={() => handleEdit(sub)}
-                          className="p-1.5 text-[var(--brand-secondary)] hover:bg-gray-100 rounded-full"
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(sub.id)}
-                          className="p-1.5 text-[var(--brand-primary)] hover:bg-gray-100 rounded-full"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-500 text-sm">
-                    No subcategories found
-                  </td>
+                  <th className="py-3 px-3 text-center w-[50px]">Drag</th>
+                  <th className="py-3 px-3 text-center w-[60px]">Sn.</th>
+                  <th className="py-3 px-3 text-center">Subcategory Name</th>
+                  <th className="py-3 px-3 text-center">Slug</th>
+                  <th className="py-3 px-3 text-center">Category</th>
+                  <th className="py-3 px-3 text-center">Description</th>
+                  <th className="py-3 px-3 text-center">Commission (%)</th>
+                  <th className="py-3 px-3 text-center">Action</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <SortableContext
+                  items={paginatedSubcategories.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {paginatedSubcategories.length > 0 ? (
+                    paginatedSubcategories.map((sub, idx) => (
+                      <SortableRow
+                        key={sub.id}
+                        sub={sub}
+                        idx={idx}
+                        startIndex={startIndex}
+                        handleEdit={handleEdit}
+                        handleDelete={handleDelete}
+                        isReordering={isReordering}
+                      />
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="py-12 text-center text-gray-500 text-sm"
+                      >
+                        No subcategories found
+                      </td>
+                    </tr>
+                  )}
+                </SortableContext>
+              </tbody>
+            </table>
+          </DndContext>
         </div>
 
         {/* Pagination */}
-        {!loading && subcategories.length > 0 && (
+        {!loading && filteredSubcategories.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={subcategories.length}
+            totalItems={filteredSubcategories.length}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}

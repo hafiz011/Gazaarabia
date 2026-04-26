@@ -7,50 +7,50 @@ import "swiper/css/pagination";
 import { Star, StarHalf, StarOff } from "lucide-react";
 import { motion } from "framer-motion";
 
-// const reviews = [
-//   {
-//     name: "Amina",
-//     text: "Absolutely love the quality and modest designs! Every piece feels premium and well-made.",
-//     rating: 4.5,
-//     date: "2025-09-15T10:00:00Z",
-//   },
-//   {
-//     name: "Fatima",
-//     text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
-//     rating: 5,
-//     date: "2025-10-10T12:30:00Z",
-//   },
-//   {
-//     name: "Layla",
-//     text: "Fast delivery and stunning presentation. Will definitely shop again.",
-//     rating: 4,
-//     date: "2025-10-14T09:00:00Z",
-//   },
-//   {
-//     name: "Zahra",
-//     text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
-//     rating: 5,
-//     date: "2025-09-25T16:45:00Z",
-//   },
-//   {
-//     name: "Fatima",
-//     text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
-//     rating: 5,
-//     date: "2025-10-10T12:30:00Z",
-//   },
-//   {
-//     name: "Layla",
-//     text: "Fast delivery and stunning presentation. Will definitely shop again.",
-//     rating: 4,
-//     date: "2025-10-14T09:00:00Z",
-//   },
-//   {
-//     name: "Zahra",
-//     text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
-//     rating: 5,
-//     date: "2025-09-25T16:45:00Z",
-//   },
-// ];
+const reviews = [
+  {
+    name: "Amina",
+    text: "Absolutely love the quality and modest designs! Every piece feels premium and well-made.",
+    rating: 4.5,
+    date: "2025-09-15T10:00:00Z",
+  },
+  {
+    name: "Fatima",
+    text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
+    rating: 5,
+    date: "2025-10-10T12:30:00Z",
+  },
+  {
+    name: "Layla",
+    text: "Fast delivery and stunning presentation. Will definitely shop again.",
+    rating: 4,
+    date: "2025-10-14T09:00:00Z",
+  },
+  {
+    name: "Zahra",
+    text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
+    rating: 5,
+    date: "2025-09-25T16:45:00Z",
+  },
+  {
+    name: "Fatima",
+    text: "Elegant and beautifully made. The packaging was just as thoughtful as the design.",
+    rating: 5,
+    date: "2025-10-10T12:30:00Z",
+  },
+  {
+    name: "Layla",
+    text: "Fast delivery and stunning presentation. Will definitely shop again.",
+    rating: 4,
+    date: "2025-10-14T09:00:00Z",
+  },
+  {
+    name: "Zahra",
+    text: "Comfort meets luxury — absolutely adore the fabrics and fit.",
+    rating: 5,
+    date: "2025-09-25T16:45:00Z",
+  },
+];
 
 
 interface Review {

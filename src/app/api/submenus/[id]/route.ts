@@ -17,7 +17,6 @@ export async function GET(
       include: {
         menu: {
           include: {
-            category: true,
             blogCategory: true,
           },
         },
@@ -70,11 +69,7 @@ export async function PUT(
       name,
       slug,
       menuId,
-      categoryId,
-      leftSubcategories,
-      rightSubcategories,
-      leftCustomLinks,
-      rightCustomLinks,
+      position,
     } = body;
 
     if (!name || !slug || !menuId)
@@ -94,38 +89,9 @@ export async function PUT(
       name,
       slug,
       menuId: Number(menuId),
-      leftCustomLinks: leftCustomLinks || [],
-      rightCustomLinks: rightCustomLinks || [],
+      position: Number(position) // Ensure position is a number
     };
 
-    //  For Product Menus
-    if (type === "product") {
-      data.categoryId = categoryId ? Number(categoryId) : null;
-      data.leftSubcategories = Array.isArray(leftSubcategories)
-        ? leftSubcategories
-        : [];
-      data.rightSubcategories = Array.isArray(rightSubcategories)
-        ? rightSubcategories
-        : [];
-    }
-
-    //  For Blog Menus
-    else if (type === "blog") {
-      data.categoryId = null;
-      data.leftSubcategories = Array.isArray(leftSubcategories)
-        ? leftSubcategories
-        : [];
-      data.rightSubcategories = Array.isArray(rightSubcategories)
-        ? rightSubcategories
-        : [];
-    }
-
-    //  For Gallery or Other types
-    else {
-      data.categoryId = null;
-      data.leftSubcategories = [];
-      data.rightSubcategories = [];
-    }
 
     const updated = await prisma.submenus.update({
       where: { id: Number(id) },
@@ -146,7 +112,7 @@ export async function PUT(
   }
 }
 
-/**  DELETE - Hard delete submenu */
+/**  DELETE - Hard delete submenu + recalculate positions */
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -157,7 +123,7 @@ export async function DELETE(
 
   const user = await prisma.users.findUnique({
     where: { id: userId },
-    include: { role: true }
+    include: { role: true },
   });
 
   const allowedRoles = ["admin"];
@@ -166,18 +132,57 @@ export async function DELETE(
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
-
   try {
     const { id } = await context.params;
-    await prisma.submenus.delete({ where: { id: Number(id) } });
+    const submenuId = Number(id);
+
+    // Find the submenu to get its menuId
+    const submenu = await prisma.submenus.findUnique({
+      where: { id: submenuId },
+      select: { menuId: true },
+    });
+
+    if (!submenu) {
+      return NextResponse.json(
+        { success: false, message: "Submenu not found" },
+        { status: 404 }
+      );
+    }
+
+    // Use transaction to delete and recalculate positions
+    const result = await prisma.$transaction(async (tx: any) => {
+      // Delete the submenu
+      await tx.submenus.delete({ where: { id: submenuId } });
+
+      // Get remaining submenus for this menu, ordered by position
+      const remaining = await tx.submenus.findMany({
+        where: { menuId: submenu.menuId },
+        orderBy: { position: "asc" },
+      });
+
+      // Recalculate positions (0, 1, 2, ...)
+      for (let i = 0; i < remaining.length; i++) {
+        await tx.submenus.update({
+          where: { id: remaining[i].id },
+          data: { position: i },
+        });
+      }
+
+      return remaining;
+    });
+
     return NextResponse.json({
       success: true,
-      message: "Submenu deleted successfully",
+      message: "Submenu deleted successfully. Positions recalculated.",
+      data: result,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting submenu:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to delete submenu" },
+      {
+        success: false,
+        message: error.message || "Failed to delete submenu",
+      },
       { status: 500 }
     );
   }

@@ -49,7 +49,28 @@ export const submenuService = {
     });
     if (!res.ok) throw new Error("Failed to delete menu");
     return res.json();
-  }
+  },
 
-
+  /**
+   * Reorder submenus within a menu
+   * @param token Auth token
+   * @param menuId Menu ID to reorder within
+   * @param items Array of { id, position }
+   */
+  reorder: async (
+    token: string,
+    menuId: number,
+    items: Array<{ id: number; position: number }>
+  ) => {
+    const res = await fetch("/api/submenus/reorder", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ menuId, items }),
+    });
+    if (!res.ok) throw new Error("Failed to reorder submenus");
+    return res.json();
+  },
 };

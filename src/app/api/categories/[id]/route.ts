@@ -71,38 +71,42 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       );
     }
 
-    const updated = await prisma.categories.update({
-      where: { id: categoryId },
-      data: {
-        name: name.trim(),
-        slug: slug.trim(),
-        image,
-        description: description || null
-      },
-    });
-
-    if (commission !== undefined && commission !== null) {
-      const parsedCommission = parseFloat(commission);
-
-      const existingCommission = await prisma.categoryCommission.findUnique({
-        where: { categoryId: categoryId }
+    const finalCategory = await prisma.$transaction(async (tx: any) => {
+      const updated = await tx.categories.update({
+        where: { id: categoryId },
+        data: {
+          name: name.trim(),
+          slug: slug.trim(),
+          image,
+          description: description || null
+        },
       });
 
-      if (existingCommission) {
-        await prisma.categoryCommission.update({
-          where: { categoryId: categoryId },
-          data: { commission: parsedCommission }
-        });
-      } else {
-        await prisma.categoryCommission.create({
-          data: { categoryId: categoryId, commission: parsedCommission }
-        });
-      }
-    }
+      if (commission !== undefined && commission !== null && commission !== "") {
+        const parsedCommission = parseFloat(commission.toString());
 
-    const finalCategory = await prisma.categories.findUnique({
-      where: { id: categoryId },
-      include: { categoryCommission: true }
+        if (!isNaN(parsedCommission)) {
+          const existingCommission = await tx.categoryCommission.findUnique({
+            where: { categoryId: categoryId }
+          });
+
+          if (existingCommission) {
+            await tx.categoryCommission.update({
+              where: { categoryId: categoryId },
+              data: { commission: parsedCommission }
+            });
+          } else {
+            await tx.categoryCommission.create({
+              data: { categoryId: categoryId, commission: parsedCommission }
+            });
+          }
+        }
+      }
+
+      return await tx.categories.findUnique({
+        where: { id: categoryId },
+        include: { categoryCommission: true }
+      });
     });
 
     return NextResponse.json({ success: true, data: finalCategory });
@@ -148,12 +152,22 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
         { status: 404 }
       );
     }
-    await prisma.categoryCommission.delete({
-      where: { categoryId: categoryId },
-    });
+    await prisma.$transaction(async (tx: any) => {
+      // 1. Unlink products from this category
+      await tx.products.updateMany({
+        where: { categoryId: categoryId },
+        data: { categoryId: null },
+      });
 
-    await prisma.categories.delete({
-      where: { id: categoryId },
+      // 2. Delete commissions
+      await tx.categoryCommission.deleteMany({
+        where: { categoryId: categoryId },
+      });
+
+      // 3. Delete category (Note: subcategories will be deleted by Cascade if defined in schema)
+      await tx.categories.delete({
+        where: { id: categoryId },
+      });
     });
 
     return NextResponse.json({

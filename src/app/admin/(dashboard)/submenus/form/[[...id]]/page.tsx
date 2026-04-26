@@ -77,11 +77,11 @@ export default function SubmenusFormPage() {
             name: sm.name || "",
             slug: sm.slug || "",
             menuId: sm.menuId || "",
-            categoryId: sm.categoryId || "",
-            leftSubcategories: sm.leftSubcategories || [],
-            rightSubcategories: sm.rightSubcategories || [],
-            leftCustomLinks: sm.leftCustomLinks || [],
-            rightCustomLinks: sm.rightCustomLinks || [],
+            // categoryId: sm.categoryId || "",
+            // leftSubcategories: sm.leftSubcategories || [],
+            // rightSubcategories: sm.rightSubcategories || [],
+            // leftCustomLinks: sm.leftCustomLinks || [],
+            // rightCustomLinks: sm.rightCustomLinks || [],
           });
           setIsSlugEdited(true);
         }
@@ -209,11 +209,11 @@ export default function SubmenusFormPage() {
           name: "",
           slug: "",
           menuId: "",
-          categoryId: "",
-          leftSubcategories: [],
-          rightSubcategories: [],
-          leftCustomLinks: [],
-          rightCustomLinks: [],
+          // categoryId: "",
+          // leftSubcategories: [],
+          // rightSubcategories: [],
+          // leftCustomLinks: [],
+          // rightCustomLinks: [],
         });
         setIsSlugEdited(false);
 
@@ -300,224 +300,18 @@ export default function SubmenusFormPage() {
           onChange={(e) =>
             setForm({ ...form, menuId: Number(e.target.value) })
           }
-        >
-          {menus.map((m) => (
-            <MenuItem key={m.id} value={m.id}>
-              {m.name} ({m.type})
-            </MenuItem>
-          ))}
-        </TextField>
+          >
+            {menus.map((m) => (
+              <MenuItem key={m.id} value={m.id}>
+                {m.name} ({m.type})
+              </MenuItem>
+            ))}
+          </TextField>
 
         {/* ====== PRODUCT MENU LOGIC ====== */}
-        {selectedMenu?.type === "product" && (
-          <>
-            <TextField
-              name="categoryId"
-              label="Category"
-              select
-              fullWidth
-              value={form.categoryId}
-              onChange={(e) => {
-                const selectedValue = Number(e.target.value);
-                setForm({
-                  ...form,
-                  categoryId: selectedValue,
-                  leftSubcategories: [],
-                  rightSubcategories: [],
-                });
-              }}
-            >
-              {categories.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </TextField>
+       
 
-            {/* <Divider className="my-4" /> */}
-
-            {/* <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             
-              {["left", "right"].map((side) => (
-                <div key={side}>
-                  <TextField
-                    name={`${side}Subcategories`}
-                    label={`${side === "left" ? "Left" : "Right"} Product Subcategories`}
-                    select
-                    fullWidth
-                    SelectProps={{
-                      multiple: true,
-                      value: form[`${side}Subcategories`],
-                      onChange: (e: any) =>
-                        setForm({
-                          ...form,
-                          [`${side}Subcategories`]: e.target.value.map(Number),
-                        }),
-                      renderValue: (selected: any) =>
-                        filteredSubcategories
-                          .filter((s) => selected.includes(s.id))
-                          .map((s) => s.name)
-                          .join(", "),
-                    }}
-                  >
-                    {filteredSubcategories
-                      .filter(
-                        (s) =>
-                          side === "left" ||
-                          !form.leftSubcategories.includes(s.id)
-                      )
-                      .map((s) => (
-                        <MenuItem key={s.id} value={s.id}>
-                          {s.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-
-                  <Typography className="mt-4 font-medium text-gray-700 text-sm">
-                    Custom {side === "left" ? "Left" : "Right"} Links
-                  </Typography>
-
-                  {form[`${side}CustomLinks`].map((link: any, idx: number) => (
-                    <Box key={idx} className="flex gap-2 mt-2 items-center">
-                      <TextField
-                        label="Name"
-                        size="small"
-                        value={link.name}
-                        onChange={(e) =>
-                          handleCustomLinkChange(
-                            side as any,
-                            idx,
-                            "name",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <TextField
-                        label="Slug"
-                        size="small"
-                        value={link.slug}
-                        onChange={(e) =>
-                          handleCustomLinkChange(
-                            side as any,
-                            idx,
-                            "slug",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <IconButton
-                        onClick={() => handleRemoveCustomLink(side as any, idx)}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
-                    </Box>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddCustomLink(side as any)}
-                    className="mt-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white text-sm px-3 py-1.5 rounded-md transition shadow-sm"
-                  >
-                    + Add Custom Link
-                  </button>
-                </div>
-              ))}
-            </Box> */}
-          </>
-        )}
-
-        {/* ====== BLOG MENU LOGIC ====== */}
-        {/* {selectedMenu?.type === "blog" && (
-          <>
-            <Divider className="my-4" />
-            <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {["left", "right"].map((side) => (
-                <div key={side}>
-                  <TextField
-                    name={`${side}Subcategories`}
-                    label={`${side === "left" ? "Left" : "Right"} Blog Categories`}
-                    select
-                    fullWidth
-                    SelectProps={{
-                      multiple: true,
-                      value: form[`${side}Subcategories`],
-                      onChange: (e: any) =>
-                        setForm({
-                          ...form,
-                          [`${side}Subcategories`]: e.target.value.map(Number),
-                        }),
-                      renderValue: (selected: any) =>
-                        blogCategories
-                          .filter((s) => selected.includes(s.id))
-                          .map((s) => s.name)
-                          .join(", "),
-                    }}
-                  >
-                    {blogCategories
-                      .filter(
-                        (s) =>
-                          side === "left" ||
-                          !form.leftSubcategories.includes(s.id)
-                      )
-                      .map((s) => (
-                        <MenuItem key={s.id} value={s.id}>
-                          {s.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-
-                  <Typography className="mt-4 font-medium text-gray-700 text-sm">
-                    Custom {side === "left" ? "Left" : "Right"} Links
-                  </Typography>
-
-                  {form[`${side}CustomLinks`].map((link: any, idx: number) => (
-                    <Box key={idx} className="flex gap-2 mt-2 items-center">
-                      <TextField
-                        label="Name"
-                        size="small"
-                        value={link.name}
-                        onChange={(e) =>
-                          handleCustomLinkChange(
-                            side as any,
-                            idx,
-                            "name",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <TextField
-                        label="Slug"
-                        size="small"
-                        value={link.slug}
-                        onChange={(e) =>
-                          handleCustomLinkChange(
-                            side as any,
-                            idx,
-                            "slug",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <IconButton
-                        onClick={() => handleRemoveCustomLink(side as any, idx)}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
-                    </Box>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddCustomLink(side as any)}
-                    className="mt-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-secondary)] text-white text-sm px-3 py-1.5 rounded-md transition shadow-sm"
-                  >
-                    + Add Custom Link
-                  </button>
-                </div>
-              ))}
-            </Box>
-          </>
-        )} */}
+           
 
         <Divider className="my-4" />
 

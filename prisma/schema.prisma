@@ -191,17 +191,17 @@ model Categories {
   id            Int           @id @default(autoincrement())
   name          String        @unique
   slug          String        @unique
+  submenuId     Int?
   image         String?  
-  description   String?      @db.LongText
+  description   String?       @db.LongText
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  position      Int      @default(0)
   products      products[]
   subcategories Subcategory[]
-
-  menus    Menus[]    @relation("CategoryMenus")
-  Submenus Submenus[]
   categoryCommission CategoryCommission?
-
+  submenu   Submenus? @relation(fields: [submenuId], references: [id], onDelete: Cascade)
+  @@unique([submenuId, position])
   @@map("categories")
 }
 
@@ -210,16 +210,16 @@ model Subcategory {
   name          String     @unique
   slug          String     @unique
   categoryId    Int
-  description   String?          @db.LongText
+  description   String?    @db.LongText
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  position      Int      @default(0)
   products      products[]
   subcategoryCommission SubcategoryCommission[]
   category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  submenus Submenus[] @relation("SubcategorySubmenus")
-
   @@index([categoryId], map: "subcategories_categoryId_fkey")
+  @@unique([categoryId, position])
   @@map("subcategories")
 }
 
@@ -651,34 +651,25 @@ model Menus {
   updatedAt DateTime @updatedAt
 
   submenus     Submenus[]
-  category     Categories?     @relation("CategoryMenus", fields: [categoryId], references: [id])
-  blogCategory BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
-
-  categoryId     Int?
   blogCategoryId Int?
+  blogCategory BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
 
   @@map("menus")
 }
+
 
 model Submenus {
   id                 Int      @id @default(autoincrement())
   name               String
   slug               String   @unique
   menuId             Int
-  categoryId         Int?
-  subcategoryId      Int?
-  leftSubcategories  Json? // store selected left subcategory IDs (only if product)
-  rightSubcategories Json? // store selected right subcategory IDs (only if product)
-  leftCustomLinks    Json?
-  rightCustomLinks   Json?
   position           Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-
-  menu        Menus        @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
-  category    Categories?  @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "submenus_categoryId_fkey")
-  subcategory Subcategory? @relation("SubcategorySubmenus", fields: [subcategoryId], references: [id], onDelete: Cascade, map: "submenus_subcategoryId_fkey")
-
+  menu               Menus        @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
+  categories         Categories[]
+  
+  @@unique([menuId, position])
   @@map("submenus")
 }
 

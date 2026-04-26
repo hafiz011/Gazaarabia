@@ -10,7 +10,6 @@ export async function GET() {
     const submenus = await prisma.submenus.findMany({
       include: {
         menu: { select: { id: true, name: true, slug: true, type: true } },
-        category: { select: { id: true, name: true, slug: true } },
       },
       orderBy: [{ position: "asc" }, { id: "asc" }],
     });
@@ -30,16 +29,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const {
-      name,
-      slug,
-      menuId,
-      categoryId,
-      leftSubcategories,
-      rightSubcategories,
-      leftCustomLinks,
-      rightCustomLinks,
-    } = body;
+    const { name, slug, menuId } = body;
 
     if (!name || !slug || !menuId)
       return NextResponse.json(
@@ -47,22 +37,29 @@ export async function POST(req: Request) {
         { status: 400 }
       );
 
-    const menu = await prisma.menus.findUnique({ where: { id: Number(menuId) } });
+    const menu = await prisma.menus.findUnique({
+      where: { id: Number(menuId) },
+    });
     if (!menu)
       return NextResponse.json(
         { success: false, message: "Parent menu not found" },
         { status: 404 }
       );
 
+    // Auto-calculate position as last + 1 for this menu
+    const maxPositionRecord = await prisma.submenus.findFirst({
+      where: { menuId: Number(menuId) },
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+
+    const nextPosition = (maxPositionRecord?.position ?? -1) + 1;
+
     const data: any = {
       name,
       slug,
       menuId: Number(menuId),
-      categoryId: categoryId || null,
-      leftSubcategories: leftSubcategories || [],
-      rightSubcategories: rightSubcategories || [],
-      leftCustomLinks: leftCustomLinks || [],
-      rightCustomLinks: rightCustomLinks || [],
+      position: nextPosition, // Auto-assigned, don't accept from client
     };
 
     const newSubmenu = await prisma.submenus.create({ data });
@@ -73,9 +70,12 @@ export async function POST(req: Request) {
       data: newSubmenu,
     });
   } catch (err: any) {
-    console.error(" POST Submenu Error:", err);
+    console.error("POST Submenu Error:", err);
     return NextResponse.json(
-      { success: false, message: err.message || "Failed to create submenu" },
+      {
+        success: false,
+        message: err.message || "Failed to create submenu",
+      },
       { status: 500 }
     );
   }
