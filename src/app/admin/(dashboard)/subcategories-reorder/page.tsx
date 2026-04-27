@@ -274,7 +274,7 @@ export default function SubcategoriesReorderPage() {
     }
   };
 
-  const showAlert = (type: string, message: string) => {
+  const showAlert = (type: PopUpInterface["type"], message: string) => {
     setPopUpAlertData({
       isOpen: true,
       type,
@@ -410,7 +410,10 @@ export default function SubcategoriesReorderPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
+                  totalItems={filteredSubcategories.length}
+                  pageSize={pageSize}
                   onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
                 />
               </div>
             )}
@@ -452,6 +455,7 @@ export default function SubcategoriesReorderPage() {
           message={popUpAlertData.message}
           onConfirm={popUpAlertData.onConfirm}
           onCancel={popUpAlertData.onCancel}
+          show={popUpAlertData.isOpen}
         />
       )}
     </div>

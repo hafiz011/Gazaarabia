@@ -257,7 +257,7 @@ export default function CategoriesReorderPage() {
     }
   };
 
-  const showAlert = (type: string, message: string) => {
+  const showAlert = (type: PopUpInterface["type"], message: string) => {
     setPopUpAlertData({
       isOpen: true,
       type,
@@ -372,7 +372,10 @@ export default function CategoriesReorderPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
+                  totalItems={filteredCategories.length}
+                  pageSize={pageSize}
                   onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
                 />
               </div>
             )}
@@ -414,6 +417,7 @@ export default function CategoriesReorderPage() {
           message={popUpAlertData.message}
           onConfirm={popUpAlertData.onConfirm}
           onCancel={popUpAlertData.onCancel}
+          show={popUpAlertData.isOpen}
         />
       )}
     </div>

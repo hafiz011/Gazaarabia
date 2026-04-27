@@ -9,7 +9,9 @@ const ReactQuill = dynamic(
     const { default: RQ } = await import("react-quill-new");
     const { default: BlotFormatter } = await import("quill-blot-formatter");
     RQ.Quill.register("modules/blotFormatter", BlotFormatter);
-    return RQ;
+    const DynamicRQ = ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
+    DynamicRQ.displayName = "DynamicRQ";
+    return DynamicRQ;
   },
   {
     ssr: false,
@@ -270,7 +272,7 @@ export default function RichTextEditor({
         )}
         <div className="rich-text-editor-wrapper">
           <ReactQuill
-            ref={quillRef}
+            forwardedRef={quillRef}
             value={value}
             onChange={onChange}
             theme="snow"
