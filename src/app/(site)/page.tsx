@@ -85,7 +85,7 @@ export default function HomeHero() {
 
       <LaunchAnnouncementBanner />
 
-      <HeroSlider heroSlides={heroSlides} />
+      {/* <HeroSlider heroSlides={heroSlides} /> */}
 
       {/* <ShopByCategory categories={categories} />
 
