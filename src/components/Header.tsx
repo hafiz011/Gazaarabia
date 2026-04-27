@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, Search, User, Heart, ShoppingBag, Loader, ChevronRight } from "lucide-react";
+import { Menu, X, Search, User, Heart, ShoppingBag, Loader, ChevronRight, ArrowLeft } from "lucide-react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import CartDrawer from "@/components/CartDrawer";
 import { useSession } from "next-auth/react";
@@ -82,7 +82,7 @@ export default function Header() {
   const [hovered, setHovered] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
-  
+
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -116,13 +116,13 @@ export default function Header() {
   useEffect(() => {
     setMounted(true);
     let animationFrameId: number;
-    
+
     const handleScroll = () => {
       animationFrameId = requestAnimationFrame(() => {
         setScrolled(window.scrollY > 50);
       });
     };
-    
+
     handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -267,12 +267,12 @@ export default function Header() {
     <header
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`site-header fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isHomePage
+      className={`site-header fixed top-0 left-0 w-full z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ${isHomePage
         ? isScrolled
           ? "bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.05)] border-b border-white/30 "
           // scrolled
           : hovered
-            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] transition-all "  // hover
+            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] "  // hover
             : "bg-transparent"  // fresh hero section
         : "bg-white/70 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border-b border-gray-200"  // other pages
         }
@@ -696,11 +696,10 @@ export default function Header() {
                         <button
                           key={category.id}
                           onMouseEnter={() => setActiveCategory(category)}
-                          className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-3 py-2 rounded-md transition-all duration-200 ${
-                            activeCategory?.id === category.id
-                              ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                          }`}
+                          className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-3 py-2 rounded-md transition-all duration-200 ${activeCategory?.id === category.id
+                            ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                            }`}
                         >
                           {activeCategory?.id === category.id && (
                             <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
@@ -708,11 +707,10 @@ export default function Header() {
                           <span className="text-left flex-1 leading-tight">{category.name}</span>
                           <ChevronRight
                             size={14}
-                            className={`transition-transform duration-200 ${
-                              activeCategory?.id === category.id
-                                ? "translate-x-1 text-[var(--brand-primary)]"
-                                : "text-gray-400 group-hover:translate-x-1"
-                            }`}
+                            className={`transition-transform duration-200 ${activeCategory?.id === category.id
+                              ? "translate-x-1 text-[var(--brand-primary)]"
+                              : "text-gray-400 group-hover:translate-x-1"
+                              }`}
                           />
                         </button>
                       ))}
@@ -773,110 +771,107 @@ export default function Header() {
       </div>
 
 
-      {/* ===== MOBILE SEARCH ROW ===== */}
+      {/* ===== MOBILE SEARCH FULLSCREEN OVERLAY ===== */}
       {searchMode && (
-        <div className="lg:hidden w-full bg-white border-t border-gray-200 px-4 py-3 z-40">
-
-          <div className="flex items-center gap-3 search-bar">
-            <button onClick={() => { setSearchMode(false); setSearchQuery("") }}>
-              <X size={22} />
+        <div className="lg:hidden fixed inset-0 bg-white flex flex-col animate-slideIn" style={{ zIndex: 100 }}>
+          {/* Header of Search Overlay */}
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 bg-white shadow-sm">
+            <button
+              onClick={() => { setSearchMode(false); setSearchQuery(""); setProductsData(null); }}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ArrowLeft size={24} className="text-gray-700" />
             </button>
-
-            <input
-              autoFocus
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                  setSearchMode(false);
-                }
-              }}
-              className="flex-1 h-11 bg-transparent outline-none text-base placeholder-gray-400"
-            />
+            <div className="flex-1 flex items-center bg-gray-100/80 rounded-full px-4 py-2 border border-transparent focus-within:bg-white focus-within:border-gray-300 focus-within:shadow-sm transition-all duration-300">
+              <Search size={18} className="text-gray-400 mr-2" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    setSearchMode(false);
+                  }
+                }}
+                className="flex-1 bg-transparent outline-none text-[15px] placeholder-gray-500 w-full"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setProductsData(null); }}
+                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  <X size={16} className="text-gray-500" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ===== MOBILE SEARCH RESULTS OVERLAY ===== */}
-      {searchMode && debouncedQuery.length >= 2 && (
-        <div className="
-                lg:hidden
-                  fixed 
-                  left-0 
-                  right-0 
-                   top-[180px]
-                  
-                  bg-white 
-                  text-[var(--text-primary)] 
-                  shadow-xl 
-                  pt-5
-                  pb-12 
-                  border-gray-200 
-                  animate-dropdown 
-                  z-40
-                  max-h-[80vh]
-                  overflow-y-auto
-                ">
-
-          <div className="mx-auto max-w-[1600px] px-10 min-h-[300px]">
+          {/* Search Results Area */}
+          <div className="flex-1 overflow-y-auto bg-gray-50">
             {searchLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader className="animate-spin" size={32} />
+              <div className="flex items-center justify-center h-40">
+                <Loader className="animate-spin text-[var(--brand-primary)]" size={32} />
               </div>
-            ) : productsData?.products?.length > 0 ? (
-
-              <>
-                <div className="p-4 grid grid-cols-2 gap-4">
-                  {productsData.products.map((product: any) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onCardClick={() => setSearchMode(false)}
-                    />
-                  ))}
-                </div>
-
-                {/* VIEW ALL BUTTON */}
-                {(productsData?.total > 5) &&
-                  <div className="mt-10 flex justify-center">
-                    <button
-                      onClick={() => {
-                        router.push(`/search?q=${searchQuery}`);
-                        setSearchMode(false);
-                      }}
-                      className="
-                              text-sm
-                              tracking-widest
-                              uppercase
-                              text-gray-800
-                              border-b
-                              border-gray-400
-                              hover:border-black
-                              hover:text-black
-                              transition
-                              pb-1
-                            "
-                    >
-                      View all {productsData?.total} products
-                    </button>
+            ) : debouncedQuery.length >= 2 ? (
+              productsData?.products?.length > 0 ? (
+                <div className="p-4 pb-20 max-w-[600px] mx-auto">
+                  <div className="mb-4 text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
+                    Products
                   </div>
-                }
+                  <div className="grid grid-cols-2 gap-4">
+                    {productsData.products.map((product: any) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onCardClick={() => setSearchMode(false)}
+                      />
+                    ))}
+                  </div>
 
-              </>
-
-            ) : (
-
-              <>
-                <div className="w-full pt-16 pb-10 text-center">
-                  <p className="mt-3 text-sm tracking-wide text-gray-600 max-w-xl mx-auto">
-                    No search results for <span className="italic">"{searchQuery}"</span>.<br />
-                    Please try searching again using different words.
+                  {/* VIEW ALL BUTTON */}
+                  {(productsData?.total > 5) && (
+                    <div className="mt-8 mb-6 flex justify-center">
+                      <button
+                        onClick={() => {
+                          router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                          setSearchMode(false);
+                        }}
+                        className="
+                          text-sm font-medium tracking-widest uppercase
+                          text-gray-800 border-b border-gray-400
+                          hover:border-black hover:text-black
+                          transition-colors pb-1
+                        "
+                      >
+                        View all {productsData?.total} products
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full pt-20 pb-10 text-center px-6">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                    <Search size={24} className="text-gray-300" />
+                  </div>
+                  <p className="text-[15px] text-gray-600">
+                    No results found for <span className="font-semibold text-black">"{searchQuery}"</span>
+                  </p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Try checking your spelling or using less specific keywords.
                   </p>
                 </div>
-              </>
+              )
+            ) : (
+              debouncedQuery.length > 0 && (
+                <div className="w-full pt-12 text-center px-6">
+                  <p className="text-[14px] text-gray-500">
+                    Type at least 2 characters to search...
+                  </p>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -893,6 +888,7 @@ export default function Header() {
         onClose={() => setIsOpen(false)}
         menus={menus}
         getMenuLink={getMenuLink}
+        getSubmenuLink={getSubmenuLink}
       />
     </header>
   );
