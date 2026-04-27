@@ -21,6 +21,7 @@ import WearTheChange from "@/components/home/wearTheChange";
 import ShopByCategory from "@/components/home/shopByCategory";
 import MoreThanFashionSection from "@/components/home/moreThanFashionSection";
 import HeroSlider from "@/components/home/heroSlider";
+import LaunchAnnouncementBanner from "@/components/home/LaunchAnnouncementBanner";
 import { homePageFrontend } from "@/lib/services/front-end/homePage";
 import Loader from "@/components/Loader";
 import SubscribePopup from "@/components/SubscribePopup";
@@ -78,21 +79,18 @@ export default function HomeHero() {
 
   if (loading || !homeData) return <Loader />;
 
-
-
   return (
     <>
       <SubscribePopup />
 
+      <LaunchAnnouncementBanner />
+
       <HeroSlider heroSlides={heroSlides} />
 
-
-
-      <ShopByCategory categories={categories} />
+      {/* <ShopByCategory categories={categories} />
 
       {homeData?.midBanner &&
         <section className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden">
-          {/* Full Image */}
           <motion.div
             initial={{ scale: 1.05, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
@@ -120,18 +118,15 @@ export default function HomeHero() {
         <CustomerStories reviews={reviews} />
       )}
 
-      {/* <ViewLookbook /> */}
-
-      {/* <InfoGridSection /> */}
 
       <MoreThanFashionSection />
 
 
-      <WearTheChange />
+      <WearTheChange /> */}
 
 
       {/* Add Affiliate Section HERE */}
-      <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />
+      {/* <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} /> */}
 
     </>
   );

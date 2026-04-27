@@ -30,6 +30,7 @@ model Users {
   resetTokenExpiry  DateTime?
 
   createdAt      DateTime @default(now())
+  googleId       String?  @unique
   role           Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
   createdCoupons Coupon[] @relation("CouponCreator")
 
