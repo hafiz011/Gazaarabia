@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
-import { Upload, Plus, Trash2, Copy } from "lucide-react";
+import { Plus, Check, ImageIcon, Info, Layers, DollarSign, Shirt, Eye, AlertCircle, ShoppingBag } from "lucide-react";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
@@ -20,30 +20,28 @@ import { materialCareService } from "@/lib/services/materialCareService";
 
 import { TextField, MenuItem, Box, Button } from "@mui/material";
 import { ROUTES } from "@/constants/routes";
-// import { ambassadorService } from "@/lib/services/ambassadorService";
 import RichTextEditor from "@/components/RichTextEditor";
+import { MediaUploader } from "@/components/seller/MediaUploader";
+import { VariantCard } from "@/components/seller/VariantCard";
+import { ProductPreviewCard } from "@/components/seller/ProductPreviewCard";
 
 function ProductFormContent() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
-  const token: any = session?.user?.token; // get token
+  const token: any = session?.user?.token;
   const id = params?.id?.[0];
   const isEditMode = Boolean(id);
 
-  const allowedRoles = ["seller"]; // only seller and seller can access
+  const allowedRoles = ["seller"];
+  const variantsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!session) return;
-
-    const userRole = session?.user?.role?.toLowerCase();
     if (status === "authenticated" && !allowedRoles.includes(session?.user?.role)) {
       router.replace(ROUTES.HOME);
     }
-
   }, [session, router]);
-
-
 
   const [form, setForm] = useState({
     slug: "",
@@ -52,10 +50,7 @@ function ProductFormContent() {
     description: "",
     fitType: "",
     materialCareId: "",
-    // ambassadorId: "",
-    // soldHighlightDuration: "",
     soldCount: "",
-
     costPrice: "",
     sellingPrice: "",
     discountPrice: "",
@@ -76,23 +71,12 @@ function ProductFormContent() {
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
   const [careAdvices, setCareAdvices] = useState<any[]>([]);
-  const [ambassadors, setAmbassadors] = useState<any[]>([]);
-
-  // Wear with related
 
   const [wearWith, setWearWith] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [selectedWearWith, setSelectedWearWith] = useState<number[]>([]);
 
-
-
-
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [alertMessage, setAlertMessage] = useState<AlertInterface>({
@@ -108,15 +92,22 @@ function ProductFormContent() {
   });
 
   const fieldStyle = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "0.5rem",
+      backgroundColor: "#f9fafb",
+      "&:hover fieldset": {
+        borderColor: "#cbd5e1",
+      },
+    },
     "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-      borderColor: "var(--brand-secondary)",
+      borderColor: "var(--brand-secondary, #2563eb)",
+      borderWidth: "2px",
     },
     "& .MuiInputLabel-root.Mui-focused": {
-      color: "var(--brand-secondary)",
+      color: "var(--brand-secondary, #2563eb)",
     },
   };
 
-  //  Fetch dropdown data
   const fetchDropdownData = async () => {
     try {
       const [
@@ -126,7 +117,6 @@ function ProductFormContent() {
         colorsData,
         sizesData,
         careData,
-        // ambassadorData,
       ]: any = await Promise.all([
         brandService.getAll(token),
         categoryService.getAll(token),
@@ -134,7 +124,6 @@ function ProductFormContent() {
         colorService.getAll(token),
         sizeService.getAll(token),
         materialCareService.getAll(token),
-        // ambassadorService.getAll(token), --- IGNORE ---
       ]);
 
       setBrands(brandsData.data ?? brandsData);
@@ -143,8 +132,6 @@ function ProductFormContent() {
       setColors(colorsData.data ?? colorsData);
       setSizes(sizesData.data ?? sizesData);
       setCareAdvices(careData.data ?? careData);
-      // setAmbassadors(ambassadorData.data ?? ambassadorData);
-
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -154,7 +141,6 @@ function ProductFormContent() {
     }
   };
 
-  // Fetch product if edit mode
   const fetchProduct = async () => {
     try {
       const res = await productService.getById(token!, Number(id));
@@ -165,8 +151,6 @@ function ProductFormContent() {
         shortDescription: data.shortDescription || "",
         description: data.description || "",
         fitType: data.fitType || "",
-        // ambassadorId: data.ambassadorId || "",
-        // soldHighlightDuration: data.soldHighlightDuration || "",
         soldCount: data.soldCount || "",
         materialCareId: data.materialCareId || "",
         costPrice: data.costPrice || "",
@@ -179,17 +163,14 @@ function ProductFormContent() {
         subcategoryId: data.subcategoryId?.toString() || "",
         active: data.active ?? true,
       });
-      // setImages(data.images || []);
       setImages(data.productimage || []);
-      // setVariants(data.productvariant || []);
       setVariants(
         (data.productvariant || []).map((v: any) => ({
           ...v,
           images: v.variantImages || [],
         }))
       );
-      setWearWith(data.wearWith || []); // load wear-with products if editing
-
+      setWearWith(data.wearWith || []);
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -206,7 +187,6 @@ function ProductFormContent() {
     }
   }, [token, id]);
 
-  //  Handle form input
   const handleInputChange = async (e: any) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -214,10 +194,8 @@ function ProductFormContent() {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // When category changes -> load its subcategories
     if (name === "categoryId") {
-      setForm((prev) => ({ ...prev, subcategoryId: "" })); // reset subcategory
-
+      setForm((prev) => ({ ...prev, subcategoryId: "" }));
       if (value) {
         try {
           const res: any = await subcategoryService.getByCategory(token, Number(value));
@@ -229,53 +207,51 @@ function ProductFormContent() {
         setSubcategories([]);
       }
     }
-
   };
 
-  //  Upload Image
-  const handleFileChange = async (e: any) => {
-    const files = Array.from(e.target.files || []) as File[];
-    if (!files.length) return;
-
-    try {
-      const urls = await uploadService.uploadMultiple(files, "products");
-      setImages((prev) => [
-        ...prev,
-        ...urls.map((url: any) => ({
-          url,
-          alt: "",
-          colorId: "",
-          primary: false,
-        })),
-      ]);
-    } catch {
-      setAlertMessage({
-        isOpen: true,
-        type: "error",
-        message: "Image upload failed.",
-      });
-    }
-  };
-
-
-  //  Add variant
   const handleVariantAdd = () => {
-    setVariants((prev) => [
-      ...prev,
-      { colorId: "", sizeId: "", sku: "", price: "", stock: "", isActive: true, images: [], videoUrl: "", videoThumbnail: "" },
-    ]);
+    const newVariant = {
+      colorId: "",
+      sizeId: "",
+      sku: "",
+      price: form.sellingPrice || "",
+      stock: "",
+      isActive: true,
+      images: [],
+      videoUrl: "",
+      videoThumbnail: "",
+    };
+    setVariants((prev) => [...prev, newVariant]);
+    setTimeout(() => {
+      variantsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
-  //  Change variant
   const handleVariantChange = (idx: number, field: string, value: any) => {
     setVariants((prev) =>
       prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v))
     );
   };
 
-  //  Remove variant
   const handleVariantRemove = (idx: number) => {
     setVariants((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleVariantCopy = (idx: number) => {
+    setVariants((prev) => {
+      const variantToCopy = prev[idx];
+      const newVariant = {
+        ...variantToCopy,
+        id: undefined,
+        sku: "",
+      };
+      const newVariants = [...prev];
+      newVariants.splice(idx + 1, 0, newVariant);
+      return newVariants;
+    });
+    setTimeout(() => {
+      variantsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   const validateVariants = () => {
@@ -286,7 +262,6 @@ function ProductFormContent() {
     return true;
   };
 
-  //  Submit
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -294,17 +269,25 @@ function ProductFormContent() {
       setPopup({
         isOpen: true,
         type: "warning",
-        message: "Please upload at least one image before saving the product.",
+        message: "Please upload at least one main product image.",
       });
       return;
     }
 
-    if (variants.length == 0) {
+    if (!form.title || !form.description || !form.slug || !form.brandId || !form.categoryId) {
+       setPopup({
+        isOpen: true,
+        type: "warning",
+        message: "Please fill in all basic product information.",
+      });
+      return;
+    }
+
+    if (variants.length === 0) {
       setPopup({
         isOpen: true,
         type: "warning",
-        message:
-          "Please add at least one variant.",
+        message: "Please add at least one product variant.",
       });
       return;
     }
@@ -313,16 +296,28 @@ function ProductFormContent() {
       setPopup({
         isOpen: true,
         type: "warning",
-        message:
-          "Please fill all required fields in variants (Color, Size, SKU, Price, Stock).",
+        message: "Please fill all required fields for each variant.",
+      });
+      return;
+    }
+
+    if (!form.costPrice || !form.sellingPrice || !form.baseQty || !form.barcode) {
+      setPopup({
+        isOpen: true,
+        type: "warning",
+        message: "Please fill in all required pricing and inventory details.",
       });
       return;
     }
 
     try {
       setSubmitting(true);
-      const payload = { ...form, images, variants, wearWith: wearWith.map((w) => w.id) };
-
+      const payload = {
+        ...form,
+        images,
+        variants,
+        wearWith: wearWith.map((w) => w.id),
+      };
 
       if (isEditMode) {
         await productService.update(token!, Number(id), payload);
@@ -336,7 +331,7 @@ function ProductFormContent() {
         setAlertMessage({
           isOpen: true,
           type: "success",
-          message: "Product added successfully!",
+          message: "Product published successfully!",
         });
       }
 
@@ -352,34 +347,13 @@ function ProductFormContent() {
     }
   };
 
-  const RequiredLabel = ({ text }: { text: string }) => (
-    <span>
-      {text} <span className="text-red-600">*</span>
-    </span>
-  );
-
-
-
-  //======================== Wear with section ==================
-
-  const handleSearchProducts = async (pageNum = 1) => {
+  const handleSearchProducts = async () => {
     if (!searchQuery.trim()) return;
     try {
       setIsSearching(true);
-      // const res = await productService.getAll(token, searchQuery, pageNum, 5);
       const res = await productService.getAll(token, searchQuery);
-
       const products = res.data ?? [];
-      setHasMore(products.length === 5); // detect if next page exists
-      if (pageNum === 1) {
-        setSearchResults(products.filter((p: any) => p.id !== Number(id)));
-      } else {
-        setSearchResults((prev) => [
-          ...prev,
-          ...products.filter((p: any) => p.id !== Number(id)),
-        ]);
-      }
-      setPage(pageNum);
+      setSearchResults(products.filter((p: any) => p.id !== Number(id)));
     } catch {
       setAlertMessage({
         isOpen: true,
@@ -391,8 +365,6 @@ function ProductFormContent() {
     }
   };
 
-
-  //  Add product to Wear With list
   const handleAddWearWith = (product: any) => {
     if (!wearWith.find((p) => p.id === product.id)) {
       setWearWith((prev) => [...prev, product]);
@@ -401,697 +373,561 @@ function ProductFormContent() {
     setSearchQuery("");
   };
 
-  //  Remove product from Wear With list
-  const handleRemoveWearWith = (id: number | string) => {
-    setWearWith((prev) => prev.filter((p) => p.id !== id));
+  const handleRemoveWearWith = (productId: number | string) => {
+    setWearWith((prev) => prev.filter((p) => p.id !== productId));
   };
 
-
-  //  Toggle selection
-  const toggleWearWithSelection = (id: number) => {
-    setSelectedWearWith((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-    );
-  };
-
-  //  Add selected to wearWith
-  const handleAddSelectedWearWith = () => {
-    const selectedProducts = searchResults.filter((p) =>
-      selectedWearWith.includes(p.id)
-    );
-    setWearWith((prev) => {
-      const newOnes = selectedProducts.filter(
-        (prod) => !prev.find((p) => p.id === prod.id)
-      );
-      return [...prev, ...newOnes];
-    });
-    setSelectedWearWith([]);
-    setSearchResults([]);
-    setSearchQuery("");
-  };
-
-  const handleVariantCopy = (idx: number) => {
-    setVariants((prev) => {
-      const variantToCopy = prev[idx];
-
-      const newVariant = {
-        ...variantToCopy,
-        id: undefined,
-        sku: "", // must be unique, so reset
-      };
-
-      const newVariants = [...prev];
-      newVariants.splice(idx + 1, 0, newVariant); // insert after current
-
-      return newVariants;
-    });
-  };
-
-  // handle the video file change
-  const handleVideoFileChange = async (e:any,idx:number) => {
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 15 * 1024 * 1024) {
-      setAlertMessage({
-        isOpen: true,
-        type: "error",
-        message: "Video must be under 15MB",
-      });
-      return;
-    }
-
-    try {
-     const videoUrl = await uploadService.uploadVideo(file,"variant-videos");
-
-      handleVariantChange(idx, "videoUrl", videoUrl);
-      handleVariantChange(idx, "videoThumbnail", ""); // optional: auto-generate later
-    } catch {
-      setAlertMessage({
-        isOpen: true,
-        type: "error",
-        message: "Variant video upload failed.",
-      });
-    }
-
-  }
-
+  const RequiredLabel = ({ text }: { text: string }) => (
+    <span className="font-medium text-gray-700">{text} <span className="text-red-500">*</span></span>
+  );
 
   return (
-    <Box className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">
-        {isEditMode ? "Update Product" : "Add Product"}
-      </h1>
-
-      {alertMessage.isOpen && alertMessage.type && (
-        <AlertMessage
-          type={alertMessage.type}
-          message={alertMessage.message}
-          onClose={() => setAlertMessage((p) => ({ ...p, isOpen: false }))}
-        />
-      )}
-
-      {/*  Full UI inside form */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/*  Basic Info */}
-        <Box className="bg-white p-6 rounded-xl shadow space-y-4">
-          <TextField label={<RequiredLabel text="Brand" />} select name="brandId"
-            value={form.brandId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-            {brands.map((b) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
-          </TextField>
-
-          <TextField label={<RequiredLabel text="Category" />} select name="categoryId"
-            value={form.categoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-            {categories.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-          </TextField>
-
-          <TextField label={<RequiredLabel text="Subcategory" />} select name="subcategoryId"
-            value={form.subcategoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-            {subcategories.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-          </TextField>
-
-          <TextField
-            label={<RequiredLabel text="Slug" />}
-            name="slug"
-            value={form.slug}
-            onChange={handleInputChange}
-            inputProps={{ required: true }}
-            fullWidth
-            sx={fieldStyle}
-          />
-
-
-          <TextField label={<RequiredLabel text="Title" />} name="title" value={form.title}
-            onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-
-          <RichTextEditor
-            label="Short Description"
-            required
-            value={form.shortDescription}
-            onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
-            minHeight={120}
-            placeholder="Write a brief product summary..."
-          />
-
-          <RichTextEditor
-            label="Description"
-            required
-            value={form.description}
-            onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
-            minHeight={220}
-            placeholder="Write the full product description..."
-          />
-
-          <TextField select label={<RequiredLabel text="Care Advice" />} name="materialCareId"
-            value={form.materialCareId} onChange={handleInputChange} inputProps={{ required: true }}
-            fullWidth sx={fieldStyle}>
-            {careAdvices.map((care) => (
-              <MenuItem key={care.id} value={care.id}>
-                {care.title} ({care.material})
-              </MenuItem>
-            ))}
-          </TextField>
-
-
-
-          {/* <TextField
-            select
-            label="Assign Ambassador"
-            name="ambassadorId"
-            value={form.ambassadorId}
-            onChange={handleInputChange}
-            fullWidth
-            sx={fieldStyle}
-          >
-            <MenuItem value="">None</MenuItem>
-            {ambassadors.map((a) => (
-              <MenuItem key={a.id} value={a.id}>
-                {a.user.name} ({a.user.email})
-              </MenuItem>
-            ))}
-          </TextField> */}
-
-
-          {/* <TextField
-            label="Highlight Duration (Hours)"
-            name="soldHighlightDuration"
-            type="number"
-            value={form.soldHighlightDuration || ""}
-            onChange={handleInputChange}
-            fullWidth
-            sx={fieldStyle}
-            placeholder="Example: 24 (means 24 hours)"
-          /> */}
-
-          <TextField
-            label="Sold Count in Duration"
-            name="soldCount"
-            type="number"
-            value={form.soldCount || ""}
-            onChange={handleInputChange}
-            fullWidth
-            sx={fieldStyle}
-            placeholder="Example: 12"
-          />
-
-
-          {/* <TextField label={<RequiredLabel text="Subcategory" />} select name="subcategoryId"
-            value={form.subcategoryId} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle}>
-            {subcategories.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-          </TextField> */}
-
-
-        </Box>
-
-        {/*  Pricing */}
-        <Box className="bg-white p-6 rounded-xl shadow space-y-4">
-          <TextField label={<RequiredLabel text="Cost Price" />} name="costPrice" type="number"
-            value={form.costPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField label={<RequiredLabel text="Selling Price" />} name="sellingPrice" type="number"
-            value={form.sellingPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          {/* <TextField label={<RequiredLabel text="Discount Price" />} name="discountPrice" type="number"
-            value={form.discountPrice} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} /> */}
-          <TextField label={<RequiredLabel text="Base Qty" />} name="baseQty" type="number"
-            value={form.baseQty} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-          <TextField label={<RequiredLabel text="Barcode" />} name="barcode"
-            value={form.barcode} onChange={handleInputChange} inputProps={{ required: true }} fullWidth sx={fieldStyle} />
-
-          {/* <div className="flex items-center gap-2 pt-2">
-            <input type="checkbox" name="active" checked={form.active} onChange={handleInputChange}
-              className="w-4 h-4 accent-[var(--brand-secondary)] cursor-pointer" />
-            <label htmlFor="active" className="text-gray-700 font-medium cursor-pointer">Active</label>
-          </div> */}
-        </Box>
-
-        {/*  Images */}
-        <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-2">
-            Images <span className="text-red-600">*</span>
-          </h2>
-          <div className="flex flex-wrap gap-4">
-            {images.map((img, idx) => (
-              <div key={idx} className="relative group">
-                <img src={img.url} alt="" className="w-24 h-24 object-cover rounded border" />
-                <button
-                  type="button"
-                  onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="w-24 h-24 border-2 border-dashed flex items-center justify-center cursor-pointer rounded text-gray-400 hover:text-black transition"
-            >
-              <Upload size={24} />
-            </div>
-            <input ref={fileInputRef} type="file" multiple accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
-          </div>
-        </Box>
-
-        {/*  Variants */}
-        <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-3">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Variants (Color × Size)</h2>
-            <Button variant="contained" sx={{ background: "var(--brand-secondary)" }} onClick={handleVariantAdd}>
-              <Plus size={16} style={{ marginRight: 4 }} /> Add Variant
-            </Button>
-          </div>
-
-          {variants.map((v, idx) => (
-            <div
-              key={idx}
-              className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              {/*  Header with title + delete button */}
-              {/* <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold text-gray-800">
-                  Variant #{idx + 1}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => handleVariantRemove(idx)}
-                  className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
-                >
-                  <Trash2 size={16} /> Remove
-                </button>
-              </div> */}
-
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold text-gray-800">
-                  Variant #{idx + 1}
-                </h3>
-
-                <div className="flex gap-2">
-                  {/* COPY BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => handleVariantCopy(idx)}
-                    title="Copy Variant"
-                    className="p-2 rounded-md border border-gray-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition"
-                  >
-                    <Copy size={16} />
-                  </button>
-
-                  {/* DELETE BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => handleVariantRemove(idx)}
-                    title="Remove Variant"
-                    className="p-2 rounded-md border border-gray-300 text-red-500 hover:bg-red-50 hover:border-red-400 transition"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-
-              {/*  Main Inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <TextField
-                  select
-                  label={<RequiredLabel text="Color" />}
-                  value={v.colorId}
-                  onChange={(e) => handleVariantChange(idx, "colorId", e.target.value)}
-                  inputProps={{ required: true }}
-                  fullWidth
-                  sx={fieldStyle}
-                >
-                  {colors.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-
-                <TextField
-                  select
-                  label={<RequiredLabel text="Size" />}
-                  value={v.sizeId}
-                  onChange={(e) => handleVariantChange(idx, "sizeId", e.target.value)}
-                  inputProps={{ required: true }}
-                  fullWidth
-                  sx={fieldStyle}
-                >
-                  {sizes.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-
-                <TextField
-                  label={<RequiredLabel text="SKU" />}
-                  value={v.sku}
-                  onChange={(e) => handleVariantChange(idx, "sku", e.target.value)}
-                  inputProps={{ required: true }}
-                  fullWidth
-                  sx={fieldStyle}
-                />
-
-                <TextField
-                  label={<RequiredLabel text="Price" />}
-                  type="number"
-                  value={v.price}
-                  onChange={(e) => handleVariantChange(idx, "price", e.target.value)}
-                  inputProps={{ required: true }}
-                  fullWidth
-                  sx={fieldStyle}
-                />
-
-                <TextField
-                  label={<RequiredLabel text="Stock" />}
-                  type="number"
-                  value={v.stock}
-                  onChange={(e) => handleVariantChange(idx, "stock", e.target.value)}
-                  inputProps={{ required: true }}
-                  fullWidth
-                  sx={fieldStyle}
-                />
-              </div>
-
-              {/*  Variant Images */}
-              <div className="mt-4">
-                <label className="text-sm font-medium text-gray-700">
-                  Variant Images
-                </label>
-
-                <div className="flex flex-wrap gap-3 mt-2">
-                  {v.images?.map((img: any, i: number) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={img.url}
-                        alt=""
-                        className="w-20 h-20 object-cover rounded border border-gray-300"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleVariantChange(
-                            idx,
-                            "images",
-                            v.images.filter((_: any, j: any) => j !== i)
-                          )
-                        }
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Upload Button */}
-                  <div
-                    onClick={() => document.getElementById(`variantFile${idx}`)?.click()}
-                    className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer text-gray-400 hover:text-black transition"
-                  >
-                    <Upload size={18} />
-                  </div>
-
-                  <input
-                    id={`variantFile${idx}`}
-                    type="file"
-                    multiple
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const files = Array.from(e.target.files || []);
-                      if (!files.length) return;
-                      try {
-                        const urls = await uploadService.uploadMultiple(files, "variants");
-                        handleVariantChange(idx, "images", [
-                          ...(v.images || []),
-                          ...urls.map((url: any) => ({ url, alt: "" })),
-                        ]);
-                      } catch {
-                        setAlertMessage({
-                          isOpen: true,
-                          type: "error",
-                          message: "Variant image upload failed.",
-                        });
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Variant Video */}
-              <div className="mt-4">
-                <label className="text-sm font-medium text-gray-700">
-                  Variant Video (Optional – only one)
-                </label>
-
-                {v.videoUrl ? (
-                  <div className="relative mt-2 w-40">
-                    <video
-                      src={v.videoUrl}
-                      poster={v.videoThumbnail}
-                      controls
-                      className="w-full rounded border"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleVariantChange(idx, "videoUrl", "");
-                        handleVariantChange(idx, "videoThumbnail", "");
-                      }}
-                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => document.getElementById(`variantVideo${idx}`)?.click()}
-                    className="mt-2 w-40 h-24 border-2 border-dashed rounded flex items-center justify-center cursor-pointer text-gray-400 hover:text-black"
-                  >
-                    <Upload size={18} />
-                    <span className="text-xs ml-2">Upload Video</span>
-                  </div>
-                )}
-
-                <input
-                  id={`variantVideo${idx}`}
-                  type="file"
-                  accept="video/mp4,video/webm"
-                  className="hidden"
-                  onChange={(e) => handleVideoFileChange(e,idx)}
-                />
-              </div>
-
-
-              {/* Footer - Active toggle */}
-              {/* <div className="flex justify-end items-center mt-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={v.isActive}
-                    onChange={(e) =>
-                      handleVariantChange(idx, "isActive", e.target.checked)
-                    }
-                    className="w-4 h-4 accent-[var(--brand-secondary)]"
-                  />
-                  Active
-                </label>
-              </div> */}
-            </div>
-          ))}
-
-        </Box>
-
-
-
-        {/*  Wear With Section */}
-        <Box className="lg:col-span-2 bg-white p-6 rounded-xl shadow space-y-4 mt-6">
-          <h2 className="text-lg font-semibold">Wear With</h2>
-          <p className="text-sm text-gray-500">
-            Link related products that go well with this item.
-          </p>
-
-          {/*  Search Input & Button */}
+    <Box className="min-h-screen bg-[#F5F5F5] pb-24">
+      {/* Top Banner */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <TextField
-              label="Search Products"
-              placeholder="Type to search..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1);
-              }}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: "42px", //  Match button height
-                },
-              }}
-            />
+            <ShoppingBag className="text-blue-600" size={24} />
+            <h1 className="text-xl font-bold text-gray-900">
+              {isEditMode ? "Update Product" : "Publish New Product"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outlined"
+              onClick={() => router.push("/seller/products")}
+              sx={{ textTransform: 'none', borderRadius: '8px', fontWeight: 600, borderColor: '#E2E8F0', color: '#64748B' }}
+            >
+              Cancel
+            </Button>
             <Button
               variant="contained"
-              sx={{
-                background: "var(--brand-secondary)",
-                height: "42px",
-                whiteSpace: "nowrap",
-                textTransform: "none",
-                px: 3,
-                "&:hover": {
-                  background: "var(--brand-primary)",
-                },
-              }}
-              disabled={isSearching}
-              onClick={() => handleSearchProducts(1)}
+              onClick={handleSubmit}
+              disabled={submitting}
+              sx={{ background: "var(--brand-secondary, #2563eb)", textTransform: 'none', borderRadius: '8px', fontWeight: 600, boxShadow: 'none' }}
             >
-              {isSearching ? "Searching..." : "Search"}
+              {submitting ? "Saving..." : isEditMode ? "Update Product" : "Publish Product"}
             </Button>
           </div>
+        </div>
+      </div>
 
-          {/*  Search Results */}
-          {searchResults.length > 0 && (
-            <div className="mt-3 bg-gray-50 border rounded-lg p-3 max-h-64 overflow-y-auto">
-              {searchResults.map((prod) => (
-                <label
-                  key={prod.id}
-                  className="flex justify-between items-center py-2 border-b last:border-none cursor-pointer hover:bg-gray-100 px-2 rounded-md transition"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={selectedWearWith.includes(prod.id)}
-                      onChange={() => toggleWearWithSelection(prod.id)}
-                      className="w-4 h-4 text-[var(--brand-secondary)] border-gray-300 rounded focus:ring-[var(--brand-secondary)]"
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        {alertMessage.isOpen && alertMessage.type && (
+          <AlertMessage
+            type={alertMessage.type}
+            message={alertMessage.message}
+            onClose={() => setAlertMessage((p) => ({ ...p, isOpen: false }))}
+          />
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left: Form */}
+          <div className="lg:col-span-8 space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* MEDIA */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="mb-6 flex items-center gap-2">
+                  <ImageIcon className="text-blue-600" size={24} />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Product Media</h2>
+                    <p className="text-gray-500 mt-1">Upload high-quality images and video to showcase your product.</p>
+                  </div>
+                </div>
+
+                <MediaUploader
+                  images={images}
+                  onImagesChange={setImages}
+                  onError={(msg) =>
+                    setAlertMessage({ isOpen: true, type: "error", message: msg })
+                  }
+                  maxImages={10}
+                />
+
+                <div className="mt-6 bg-blue-50/50 rounded-xl p-4 flex gap-3 items-start border border-blue-100">
+                  <Info className="text-blue-500 shrink-0 mt-0.5" size={20} />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-semibold mb-1">Media Guidelines</p>
+                    <ul className="list-disc pl-4 space-y-1 text-blue-800/80">
+                      <li>First image will be the product cover.</li>
+                      <li>Use clear, well-lit photos with a clean background.</li>
+                      <li>Recommended resolution: 1080x1080px (1:1 ratio).</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* BASIC INFO */}
+              <div className="space-y-6">
+                {/* Categorization Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <Layers className="text-blue-600" size={24} />
+                    Categorization
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <TextField
+                      label={<RequiredLabel text="Brand" />}
+                      select
+                      name="brandId"
+                      value={form.brandId}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                    >
+                      {brands.map((b) => (
+                        <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      select
+                      label={<RequiredLabel text="Care Advice" />}
+                      name="materialCareId"
+                      value={form.materialCareId}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                    >
+                      {careAdvices.map((care) => (
+                        <MenuItem key={care.id} value={care.id}>
+                          {care.title} ({care.material})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      label={<RequiredLabel text="Category" />}
+                      select
+                      name="categoryId"
+                      value={form.categoryId}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                    >
+                      {categories.map((c) => (
+                        <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      label={<RequiredLabel text="Subcategory" />}
+                      select
+                      name="subcategoryId"
+                      value={form.subcategoryId}
+                      onChange={handleInputChange}
+                      disabled={!form.categoryId}
+                      fullWidth
+                      sx={fieldStyle}
+                    >
+                      {subcategories.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                      ))}
+                    </TextField>
+                  </div>
+                </div>
+
+                {/* Product Details Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <Info className="text-blue-600" size={24} />
+                    Product Details
+                  </h2>
+
+                  <div className="space-y-6">
+                    <TextField
+                      label={<RequiredLabel text="Product Title" />}
+                      name="title"
+                      value={form.title}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                      placeholder="e.g., Premium Cotton T-Shirt"
                     />
-                    <img
-                      src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
-                      alt={prod.title}
-                      className="w-10 h-10 rounded object-cover border"
+
+                    <TextField
+                      label={<RequiredLabel text="URL Slug" />}
+                      name="slug"
+                      value={form.slug}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                      placeholder="e.g., premium-cotton-tshirt"
+                      helperText="Used in product link. Must be unique."
                     />
-                    <span className="text-sm font-medium text-gray-800">
-                      {prod.title}
-                    </span>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Short Description <span className="text-red-500">*</span></label>
+                      <RichTextEditor
+                        value={form.shortDescription}
+                        onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
+                        minHeight={120}
+                        placeholder="Brief summary for listings..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Full Description <span className="text-red-500">*</span></label>
+                      <RichTextEditor
+                        value={form.description}
+                        onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+                        minHeight={250}
+                        placeholder="Detailed features, materials..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* VARIANTS */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                      <Layers className="text-blue-600" size={24} />
+                      Product Variants
+                    </h2>
+                    <p className="text-gray-500 mt-1">Add different colors, sizes, and set stock levels.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="contained"
+                    onClick={handleVariantAdd}
+                    sx={{ 
+                      background: "var(--brand-secondary, #2563eb)", 
+                      whiteSpace: "nowrap",
+                      borderRadius: '8px',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      boxShadow: 'none',
+                      px: 3,
+                      py: 1.5
+                    }}
+                    startIcon={<Plus size={20} />}
+                  >
+                    Add New Variant
+                  </Button>
+                </div>
+
+                {variants.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                      <Layers className="text-gray-400" size={32} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No variants created</h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">Create variants to offer different options like colors and sizes for your product.</p>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={handleVariantAdd}
+                      sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Create First Variant
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {variants.map((variant, idx) => (
+                      <div key={idx} className="relative group transition-all duration-300">
+                        <VariantCard
+                          variant={variant}
+                          index={idx}
+                          colors={colors}
+                          sizes={sizes}
+                          onVariantChange={(field, value) => handleVariantChange(idx, field, value)}
+                          onVariantRemove={() => handleVariantRemove(idx)}
+                          onVariantCopy={() => handleVariantCopy(idx)}
+                          onError={(msg) => setAlertMessage({ isOpen: true, type: "error", message: msg })}
+                          autoFillPrice={form.sellingPrice}
+                        />
+                      </div>
+                    ))}
+                    <div ref={variantsEndRef} className="h-4" />
+                  </div>
+                )}
+              </div>
+
+              {/* PRICING */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <DollarSign className="text-blue-600" size={24} />
+                    Pricing & Inventory
+                  </h2>
+                  <p className="text-gray-500 mt-1">Set your base product pricing and tracking information.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <TextField
+                    label={<RequiredLabel text="Selling Price" />}
+                    name="sellingPrice"
+                    type="number"
+                    value={form.sellingPrice}
+                    onChange={handleInputChange}
+                    inputProps={{ step: "0.01", min: "0" }}
+                    fullWidth
+                    sx={fieldStyle}
+                    InputProps={{
+                      startAdornment: <span className="text-gray-500 mr-2">$</span>,
+                    }}
+                  />
+                  <TextField
+                    label={<RequiredLabel text="Cost Price" />}
+                    name="costPrice"
+                    type="number"
+                    value={form.costPrice}
+                    onChange={handleInputChange}
+                    inputProps={{ step: "0.01", min: "0" }}
+                    fullWidth
+                    sx={fieldStyle}
+                    InputProps={{
+                      startAdornment: <span className="text-gray-500 mr-2">$</span>,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 mb-8 bg-green-50 rounded-xl p-4 flex gap-3 items-center border border-green-100">
+                  <DollarSign className="text-green-600 shrink-0" size={24} />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">Estimated Profit Margin</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      ${Math.max(0, Number(form.sellingPrice || 0) - Number(form.costPrice || 0)).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+                  <TextField
+                    label={<RequiredLabel text="Base Quantity" />}
+                    name="baseQty"
+                    type="number"
+                    value={form.baseQty}
+                    onChange={handleInputChange}
+                    inputProps={{ min: "0" }}
+                    fullWidth
+                    sx={fieldStyle}
+                    helperText="Initial stock level for base product"
+                  />
+                  <TextField
+                    label={<RequiredLabel text="Barcode (EAN/UPC)" />}
+                    name="barcode"
+                    value={form.barcode}
+                    onChange={handleInputChange}
+                    fullWidth
+                    sx={fieldStyle}
+                  />
+                </div>
+              </div>
+
+              {/* WEAR WITH */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Shirt className="text-blue-600" size={24} />
+                    Complete the Look
+                  </h2>
+                  <p className="text-gray-500 mt-1">Cross-sell related items customers might want to buy together.</p>
+                </div>
+
+                {/* Search Section */}
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Search Products to Link</h3>
+                  <div className="flex gap-3">
+                    <TextField
+                      placeholder="Search by title..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearchProducts()}
+                      fullWidth
+                      sx={{ ...fieldStyle, backgroundColor: "white" }}
+                    />
+                    <Button
+                      variant="contained"
+                      sx={{ 
+                        background: "var(--brand-secondary, #2563eb)", 
+                        whiteSpace: "nowrap",
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        boxShadow: 'none',
+                        px: 4
+                      }}
+                      onClick={handleSearchProducts}
+                      disabled={isSearching}
+                    >
+                      {isSearching ? "Searching..." : "Search"}
+                    </Button>
                   </div>
 
-                  {/*  Optional Quick Add Button */}
-                  <Button
-                    size="small"
-                    variant="contained"
-                    sx={{
-                      background: "var(--brand-secondary)",
-                      textTransform: "none",
-                      fontSize: "13px",
-                      "&:hover": {
-                        background: "var(--brand-primary)",
-                      },
-                    }}
-                    onClick={() => handleAddWearWith(prod)}
-                  >
-                    Add
-                  </Button>
-                </label>
-              ))}
-
-              {/* Add Selected Button */}
-              {selectedWearWith.length > 0 && (
-                <div className="text-right mt-3">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      background: "var(--brand-secondary)",
-                      textTransform: "none",
-                      fontSize: "13px",
-                      px: 3,
-                      "&:hover": {
-                        background: "var(--brand-primary)",
-                      },
-                    }}
-                    onClick={handleAddSelectedWearWith}
-                  >
-                    Add Selected ({selectedWearWith.length})
-                  </Button>
+                  {/* Search Results */}
+                  {searchResults.length > 0 && (
+                    <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm max-h-72 overflow-y-auto">
+                      <div className="divide-y divide-gray-100">
+                        {searchResults.map((prod) => (
+                          <div key={prod.id} className="flex items-center justify-between p-3 hover:bg-blue-50/50 transition">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <img
+                                src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
+                                alt={prod.title}
+                                className="w-12 h-12 rounded-lg object-cover border border-gray-100"
+                              />
+                              <div>
+                                <span className="text-sm font-semibold text-gray-900 block truncate">{prod.title}</span>
+                                <span className="text-xs text-gray-500">${prod.sellingPrice}</span>
+                              </div>
+                            </div>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{ textTransform: "none", borderRadius: "6px", fontWeight: 600 }}
+                              onClick={() => handleAddWearWith(prod)}
+                            >
+                              Link Item
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Load More */}
-              {hasMore && (
-                <div className="text-center mt-3">
+                {/* Selected Items Carousel */}
+                {wearWith.length > 0 ? (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-gray-900">Linked Items ({wearWith.length})</h3>
+                    </div>
+                    
+                    {/* TikTok style horizontal scroll */}
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
+                      {wearWith.map((prod) => (
+                        <div
+                          key={prod.id}
+                          className="flex-shrink-0 w-36 group relative snap-start"
+                        >
+                          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300">
+                            <div className="aspect-[4/5] relative">
+                              <img
+                                src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
+                                alt={prod.title}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveWearWith(prod.id)}
+                                  className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-red-600 transform scale-90 group-hover:scale-100 transition-transform"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-snug">
+                                {prod.title}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-gray-500">No related products linked yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Form Navigation (Bottom) */}
+              <div className="mt-8 flex items-center justify-end border-t border-gray-200 pt-6">
+                <div className="flex gap-4">
                   <Button
                     variant="outlined"
-                    size="small"
-                    sx={{
-                      borderColor: "var(--brand-secondary)",
-                      color: "var(--brand-secondary)",
-                      textTransform: "none",
-                      fontSize: "13px",
-                      px: 3,
-                      "&:hover": {
-                        borderColor: "var(--brand-primary)",
-                        color: "var(--brand-primary)",
-                      },
+                    onClick={() => router.push("/seller/products")}
+                    sx={{ 
+                      borderRadius: '8px', 
+                      textTransform: 'none', 
+                      fontWeight: 600,
+                      px: 4,
+                      py: 1.5,
+                      borderColor: '#cbd5e1',
+                      color: '#475569'
                     }}
-                    onClick={() => handleSearchProducts(page + 1)}
                   >
-                    Load More
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    sx={{ 
+                      background: "var(--brand-secondary, #2563eb)", 
+                      borderRadius: '8px', 
+                      textTransform: 'none', 
+                      fontWeight: 600,
+                      boxShadow: 'none',
+                      px: 6,
+                      py: 1.5
+                    }}
+                  >
+                    {submitting ? "Saving..." : isEditMode ? "Update Product" : "Publish Product"}
                   </Button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
 
-          {/* Selected Wear With Items */}
-          {wearWith.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              {wearWith.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="relative border rounded-lg p-2 w-32 h-40 flex flex-col items-center justify-center bg-gray-50"
-                >
-                  <img
-                    src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
-                    alt={prod.title}
-                    className="w-20 h-20 object-cover rounded mb-2"
-                  />
-                  <span className="text-xs text-center font-medium line-clamp-2">
-                    {prod.title}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveWearWith(prod.id)}
-                    className="absolute top-1 right-1 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+            </form>
+          </div>
+
+          {/* Right: Live Preview Panel */}
+          <div className="lg:col-span-4 hidden lg:block">
+            <div className="sticky top-24">
+              <ProductPreviewCard
+                title={form.title}
+                price={form.sellingPrice}
+                imageUrl={images[0]?.url}
+                sellingPrice={form.sellingPrice}
+                costPrice={form.costPrice}
+                discountPrice={form.discountPrice}
+              />
+              
+              {/* Contextual Tips */}
+              <div className="mt-6 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="text-blue-500" size={18} />
+                  <h4 className="font-semibold text-blue-900 text-sm">Best Practices</h4>
                 </div>
-              ))}
+                <ul className="text-sm text-blue-800 space-y-2 list-disc pl-4">
+                  <li>Products with a video and 4+ high-quality images convert 30% better.</li>
+                  <li>A catchy title and detailed description improve search visibility.</li>
+                  <li>Adding complete variations (colors & sizes) reduces customer questions.</li>
+                  <li>Linked products can increase your average order value by up to 15%.</li>
+                </ul>
+              </div>
             </div>
-          )}
-        </Box>
-
-
-
-
-
-        {/* Actions */}
-        <Box className="lg:col-span-2 flex justify-end gap-3 mt-6">
-          <Button variant="outlined" onClick={() => router.push("/seller/products")}>
-            Cancel
-          </Button>
-          <Button variant="contained" sx={{ background: "var(--brand-secondary)" }} type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : isEditMode ? "Update Product" : "Add Product"}
-          </Button>
-        </Box>
-      </form>
+          </div>
+        </div>
+      </div>
 
       <PopupAlert
         type={popup.type as any}
         message={popup.message}
-        confirmText={"OK"}
+        confirmText="OK"
         onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))}
         show={popup.isOpen}
       />
+      
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </Box>
   );
 }
