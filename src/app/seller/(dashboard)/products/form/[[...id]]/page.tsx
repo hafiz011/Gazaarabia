@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
-import { Plus, Check, ImageIcon, Info, Layers, DollarSign, Shirt, Eye, AlertCircle, ShoppingBag } from "lucide-react";
+import { Plus, Check, ImageIcon, Info, Layers, DollarSign, Shirt, Eye, AlertCircle, ShoppingBag, ChevronRight, ChevronLeft } from "lucide-react";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
@@ -15,10 +15,10 @@ import { categoryService } from "@/lib/services/categoryService";
 import { subcategoryService } from "@/lib/services/subcategoryService";
 import { colorService } from "@/lib/services/colorService";
 import { sizeService } from "@/lib/services/sizeService";
-import { uploadService } from "@/lib/services/uploadService";
+// import { uploadService } from "@/lib/services/uploadService";
 import { materialCareService } from "@/lib/services/materialCareService";
 
-import { TextField, MenuItem, Box, Button } from "@mui/material";
+import { TextField, MenuItem, Box, Button, Popover } from "@mui/material";
 import { ROUTES } from "@/constants/routes";
 import RichTextEditor from "@/components/RichTextEditor";
 import { MediaUploader } from "@/components/seller/MediaUploader";
@@ -44,7 +44,6 @@ function ProductFormContent() {
   }, [session, router]);
 
   const [form, setForm] = useState({
-    slug: "",
     title: "",
     shortDescription: "",
     description: "",
@@ -70,6 +69,10 @@ function ProductFormContent() {
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [colors, setColors] = useState<any[]>([]);
   const [sizes, setSizes] = useState<any[]>([]);
+  const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
+  const [categoryAnchorEl, setCategoryAnchorEl] = useState<null | HTMLElement>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<any | null>(null);
+  const [drillDownCategory, setDrillDownCategory] = useState<any | null>(null);
   const [careAdvices, setCareAdvices] = useState<any[]>([]);
 
   const [wearWith, setWearWith] = useState<any[]>([]);
@@ -128,7 +131,9 @@ function ProductFormContent() {
 
       setBrands(brandsData.data ?? brandsData);
       setCategories(categoriesData.data ?? categoriesData);
-      setSubcategories(subcatData.data ?? subcatData);
+      const subList = subcatData.data ?? subcatData;
+      setSubcategories(subList);
+      setAllSubcategories(subList);
       setColors(colorsData.data ?? colorsData);
       setSizes(sizesData.data ?? sizesData);
       setCareAdvices(careData.data ?? careData);
@@ -146,7 +151,6 @@ function ProductFormContent() {
       const res = await productService.getById(token!, Number(id));
       const data = res?.data ?? null;
       setForm({
-        slug: data.slug || "",
         title: data.title || "",
         shortDescription: data.shortDescription || "",
         description: data.description || "",
@@ -256,7 +260,7 @@ function ProductFormContent() {
 
   const validateVariants = () => {
     for (const v of variants) {
-      if (!v.colorId || !v.sizeId || !v.sku.trim() || !v.price || !v.stock)
+      if (!v.colorId || !v.sizeId || !v.price || !v.stock)
         return false;
     }
     return true;
@@ -274,8 +278,8 @@ function ProductFormContent() {
       return;
     }
 
-    if (!form.title || !form.description || !form.slug || !form.brandId || !form.categoryId) {
-       setPopup({
+    if (!form.title || !form.description || !form.brandId || !form.categoryId) {
+      setPopup({
         isOpen: true,
         type: "warning",
         message: "Please fill in all basic product information.",
@@ -301,7 +305,7 @@ function ProductFormContent() {
       return;
     }
 
-    if (!form.costPrice || !form.sellingPrice || !form.baseQty || !form.barcode) {
+    if (!form.costPrice || !form.sellingPrice || !form.baseQty) {
       setPopup({
         isOpen: true,
         type: "warning",
@@ -425,7 +429,7 @@ function ProductFormContent() {
           {/* Left: Form */}
           <div className="lg:col-span-8 space-y-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              
+
               {/* MEDIA */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <div className="mb-6 flex items-center gap-2">
@@ -456,18 +460,133 @@ function ProductFormContent() {
                     </ul>
                   </div>
                 </div>
+
+
+
               </div>
 
               {/* BASIC INFO */}
               <div className="space-y-6">
-                {/* Categorization Card */}
+                {/* Product Details Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Layers className="text-blue-600" size={24} />
-                    Categorization
+                    <Info className="text-blue-600" size={24} />
+                    Product Details
                   </h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  <div className="space-y-6">
+                    <TextField
+                      label={<RequiredLabel text="Product Name" />}
+                      name="title"
+                      value={form.title}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={fieldStyle}
+                      placeholder="e.g., Premium Cotton T-Shirt"
+                    />
+
+                    <div className="relative">
+                      <TextField
+                        label={<RequiredLabel text="Category & Subcategory" />}
+                        value={(() => {
+                          const sub = allSubcategories.find((s) => String(s.id) === String(form.subcategoryId));
+                          const cat = categories.find((c) => String(c.id) === String(sub?.categoryId));
+                          return cat && sub ? `${cat.name} - ${sub.name}` : "";
+                        })()}
+                        onClick={(e) => setCategoryAnchorEl(e.currentTarget)}
+                        fullWidth
+                        autoComplete="off"
+                        sx={fieldStyle}
+                        placeholder="Select Category & Subcategory"
+                        InputProps={{
+                          readOnly: true,
+                          endAdornment: <ChevronRight size={18} className={`text-gray-400 transition-transform ${categoryAnchorEl ? 'rotate-90' : ''}`} />,
+                          sx: { cursor: 'pointer', '& input': { cursor: 'pointer' } }
+                        }}
+                      />
+
+                      <Popover
+                        open={Boolean(categoryAnchorEl)}
+                        anchorEl={categoryAnchorEl}
+                        onClose={() => setCategoryAnchorEl(null)}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'left',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'left',
+                        }}
+                        PaperProps={{
+                          sx: {
+                            mt: 1,
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            overflow: 'hidden',
+                            width: '500px', // Total width for two columns
+                            display: 'flex',
+                          }
+                        }}
+                      >
+                        {/* Categories Column */}
+                        <div className="w-1/2 border-r border-slate-100 py-2 bg-slate-50 overflow-y-auto max-h-[400px]">
+                          <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Categories</p>
+                          {categories.map((cat) => (
+                            <div
+                              key={cat.id}
+                              onMouseEnter={() => setHoveredCategory(cat)}
+                              className={`px-4 py-2.5 flex items-center justify-between cursor-pointer transition-colors ${hoveredCategory?.id === cat.id
+                                ? 'bg-blue-600 text-white'
+                                : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                              <span className="text-sm font-medium">{cat.name}</span>
+                              <ChevronRight size={14} className={hoveredCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Subcategories Column */}
+                        <div className="w-1/2 py-2 bg-white overflow-y-auto max-h-[400px]">
+                          {hoveredCategory ? (
+                            <>
+                              <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                {hoveredCategory.name} Subcategories
+                              </p>
+                              {allSubcategories
+                                .filter((s) => String(s.categoryId) === String(hoveredCategory.id))
+                                .map((sub) => (
+                                  <div
+                                    key={sub.id}
+                                    onClick={() => {
+                                      setForm((prev) => ({
+                                        ...prev,
+                                        subcategoryId: String(sub.id),
+                                        categoryId: String(sub.categoryId),
+                                      }));
+                                      setCategoryAnchorEl(null);
+                                    }}
+                                    className="px-4 py-2.5 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
+                                  >
+                                    {sub.name}
+                                  </div>
+                                ))}
+                              {allSubcategories.filter((s) => String(s.categoryId) === String(hoveredCategory.id)).length === 0 && (
+                                <div className="px-4 py-8 text-center text-slate-400 text-sm">
+                                  No subcategories found
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="h-full flex items-center justify-center p-8 text-center text-slate-400 text-sm italic">
+                              Hover over a category to see subcategories
+                            </div>
+                          )}
+                        </div>
+                      </Popover>
+                    </div>
+
                     <TextField
                       label={<RequiredLabel text="Brand" />}
                       select
@@ -482,9 +601,33 @@ function ProductFormContent() {
                       ))}
                     </TextField>
 
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Specifications <span className="text-red-500">*</span></label>
+                      <RichTextEditor
+                        value={form.shortDescription}
+                        onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
+                        minHeight={250}
+                        placeholder="Brief summary for specifications..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Full Description <span className="text-red-500">*</span></label>
+                      <RichTextEditor
+                        value={form.description}
+                        onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+                        minHeight={400}
+                        placeholder="Detailed features, materials..."
+                      />
+                    </div>
+
+                    {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
+
+
                     <TextField
                       select
-                      label={<RequiredLabel text="Care Advice" />}
+                      // label={<RequiredLabel text="Care Advice" />}
+                      label={<RequiredLabel text="Safety warning" />}
                       name="materialCareId"
                       value={form.materialCareId}
                       onChange={handleInputChange}
@@ -498,87 +641,11 @@ function ProductFormContent() {
                       ))}
                     </TextField>
 
-                    <TextField
-                      label={<RequiredLabel text="Category" />}
-                      select
-                      name="categoryId"
-                      value={form.categoryId}
-                      onChange={handleInputChange}
-                      fullWidth
-                      sx={fieldStyle}
-                    >
-                      {categories.map((c) => (
-                        <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                      ))}
-                    </TextField>
 
-                    <TextField
-                      label={<RequiredLabel text="Subcategory" />}
-                      select
-                      name="subcategoryId"
-                      value={form.subcategoryId}
-                      onChange={handleInputChange}
-                      disabled={!form.categoryId}
-                      fullWidth
-                      sx={fieldStyle}
-                    >
-                      {subcategories.map((s) => (
-                        <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                      ))}
-                    </TextField>
+                    {/* </div> */}
                   </div>
                 </div>
 
-                {/* Product Details Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Info className="text-blue-600" size={24} />
-                    Product Details
-                  </h2>
-
-                  <div className="space-y-6">
-                    <TextField
-                      label={<RequiredLabel text="Product Title" />}
-                      name="title"
-                      value={form.title}
-                      onChange={handleInputChange}
-                      fullWidth
-                      sx={fieldStyle}
-                      placeholder="e.g., Premium Cotton T-Shirt"
-                    />
-
-                    <TextField
-                      label={<RequiredLabel text="URL Slug" />}
-                      name="slug"
-                      value={form.slug}
-                      onChange={handleInputChange}
-                      fullWidth
-                      sx={fieldStyle}
-                      placeholder="e.g., premium-cotton-tshirt"
-                      helperText="Used in product link. Must be unique."
-                    />
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">Short Description <span className="text-red-500">*</span></label>
-                      <RichTextEditor
-                        value={form.shortDescription}
-                        onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
-                        minHeight={120}
-                        placeholder="Brief summary for listings..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">Full Description <span className="text-red-500">*</span></label>
-                      <RichTextEditor
-                        value={form.description}
-                        onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
-                        minHeight={250}
-                        placeholder="Detailed features, materials..."
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* VARIANTS */}
@@ -595,8 +662,8 @@ function ProductFormContent() {
                     type="button"
                     variant="contained"
                     onClick={handleVariantAdd}
-                    sx={{ 
-                      background: "var(--brand-secondary, #2563eb)", 
+                    sx={{
+                      background: "var(--brand-secondary, #2563eb)",
                       whiteSpace: "nowrap",
                       borderRadius: '8px',
                       textTransform: 'none',
@@ -688,16 +755,6 @@ function ProductFormContent() {
                   />
                 </div>
 
-                <div className="mt-4 mb-8 bg-green-50 rounded-xl p-4 flex gap-3 items-center border border-green-100">
-                  <DollarSign className="text-green-600 shrink-0" size={24} />
-                  <div>
-                    <p className="text-sm font-medium text-green-900">Estimated Profit Margin</p>
-                    <p className="text-2xl font-bold text-green-700">
-                      ${Math.max(0, Number(form.sellingPrice || 0) - Number(form.costPrice || 0)).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
                   <TextField
                     label={<RequiredLabel text="Base Quantity" />}
@@ -711,7 +768,7 @@ function ProductFormContent() {
                     helperText="Initial stock level for base product"
                   />
                   <TextField
-                    label={<RequiredLabel text="Barcode (EAN/UPC)" />}
+                    label="Barcode (EAN/UPC)"
                     name="barcode"
                     value={form.barcode}
                     onChange={handleInputChange}
@@ -721,125 +778,7 @@ function ProductFormContent() {
                 </div>
               </div>
 
-              {/* WEAR WITH */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Shirt className="text-blue-600" size={24} />
-                    Complete the Look
-                  </h2>
-                  <p className="text-gray-500 mt-1">Cross-sell related items customers might want to buy together.</p>
-                </div>
 
-                {/* Search Section */}
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-8">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Search Products to Link</h3>
-                  <div className="flex gap-3">
-                    <TextField
-                      placeholder="Search by title..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearchProducts()}
-                      fullWidth
-                      sx={{ ...fieldStyle, backgroundColor: "white" }}
-                    />
-                    <Button
-                      variant="contained"
-                      sx={{ 
-                        background: "var(--brand-secondary, #2563eb)", 
-                        whiteSpace: "nowrap",
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        boxShadow: 'none',
-                        px: 4
-                      }}
-                      onClick={handleSearchProducts}
-                      disabled={isSearching}
-                    >
-                      {isSearching ? "Searching..." : "Search"}
-                    </Button>
-                  </div>
-
-                  {/* Search Results */}
-                  {searchResults.length > 0 && (
-                    <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm max-h-72 overflow-y-auto">
-                      <div className="divide-y divide-gray-100">
-                        {searchResults.map((prod) => (
-                          <div key={prod.id} className="flex items-center justify-between p-3 hover:bg-blue-50/50 transition">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <img
-                                src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
-                                alt={prod.title}
-                                className="w-12 h-12 rounded-lg object-cover border border-gray-100"
-                              />
-                              <div>
-                                <span className="text-sm font-semibold text-gray-900 block truncate">{prod.title}</span>
-                                <span className="text-xs text-gray-500">${prod.sellingPrice}</span>
-                              </div>
-                            </div>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              sx={{ textTransform: "none", borderRadius: "6px", fontWeight: 600 }}
-                              onClick={() => handleAddWearWith(prod)}
-                            >
-                              Link Item
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Selected Items Carousel */}
-                {wearWith.length > 0 ? (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900">Linked Items ({wearWith.length})</h3>
-                    </div>
-                    
-                    {/* TikTok style horizontal scroll */}
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
-                      {wearWith.map((prod) => (
-                        <div
-                          key={prod.id}
-                          className="flex-shrink-0 w-36 group relative snap-start"
-                        >
-                          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300">
-                            <div className="aspect-[4/5] relative">
-                              <img
-                                src={prod?.productimage?.[0]?.url || "/images/placeholder.jpg"}
-                                alt={prod.title}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveWearWith(prod.id)}
-                                  className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-red-600 transform scale-90 group-hover:scale-100 transition-transform"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </div>
-                            <div className="p-3">
-                              <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-snug">
-                                {prod.title}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <p className="text-gray-500">No related products linked yet.</p>
-                  </div>
-                )}
-              </div>
 
               {/* Form Navigation (Bottom) */}
               <div className="mt-8 flex items-center justify-end border-t border-gray-200 pt-6">
@@ -847,9 +786,9 @@ function ProductFormContent() {
                   <Button
                     variant="outlined"
                     onClick={() => router.push("/seller/products")}
-                    sx={{ 
-                      borderRadius: '8px', 
-                      textTransform: 'none', 
+                    sx={{
+                      borderRadius: '8px',
+                      textTransform: 'none',
                       fontWeight: 600,
                       px: 4,
                       py: 1.5,
@@ -863,10 +802,10 @@ function ProductFormContent() {
                     variant="contained"
                     onClick={handleSubmit}
                     disabled={submitting}
-                    sx={{ 
-                      background: "var(--brand-secondary, #2563eb)", 
-                      borderRadius: '8px', 
-                      textTransform: 'none', 
+                    sx={{
+                      background: "var(--brand-secondary, #2563eb)",
+                      borderRadius: '8px',
+                      textTransform: 'none',
                       fontWeight: 600,
                       boxShadow: 'none',
                       px: 6,
@@ -892,7 +831,7 @@ function ProductFormContent() {
                 costPrice={form.costPrice}
                 discountPrice={form.discountPrice}
               />
-              
+
               {/* Contextual Tips */}
               <div className="mt-6 bg-blue-50/50 rounded-xl p-5 border border-blue-100">
                 <div className="flex items-center gap-2 mb-3">
@@ -903,7 +842,6 @@ function ProductFormContent() {
                   <li>Products with a video and 4+ high-quality images convert 30% better.</li>
                   <li>A catchy title and detailed description improve search visibility.</li>
                   <li>Adding complete variations (colors & sizes) reduces customer questions.</li>
-                  <li>Linked products can increase your average order value by up to 15%.</li>
                 </ul>
               </div>
             </div>
@@ -918,7 +856,7 @@ function ProductFormContent() {
         onConfirm={() => setPopup((p) => ({ ...p, isOpen: false }))}
         show={popup.isOpen}
       />
-      
+
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {
           display: none;

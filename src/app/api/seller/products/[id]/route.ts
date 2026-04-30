@@ -123,12 +123,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     const body = await req.json();
 
+    const slug = `${body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")}-${crypto.randomUUID().split("-")[0]}`;
 
     // 3. Update main product
     const updated = await prisma.products.update({
       where: { id: productId, sellerId: seller?.id }, // Ensure seller can only update their own product
       data: {
-        slug: body.slug.trim(),
+        slug: slug,
         title: body.title,
         shortDescription: body.shortDescription,
         description: body.description,
@@ -367,7 +368,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (!user || user.role.name.toLowerCase() !== "seller") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
-  
+
   const seller = await prisma.seller.findUnique({
     where: { userId: userId },
   });
