@@ -145,7 +145,7 @@ export const VariantCard = ({
             </TextField>
 
             <TextField
-              label="SKU *"
+              label="SKU"
               value={variant.sku}
               onChange={(e) => onVariantChange("sku", e.target.value)}
               fullWidth
@@ -164,7 +164,7 @@ export const VariantCard = ({
               sx={fieldStyle}
               inputProps={{ step: "0.01", min: "0" }}
               helperText={
-                autoFillPrice ? `Suggested: $${autoFillPrice}` : ""
+                autoFillPrice ? `Suggested: £${autoFillPrice}` : ""
               }
             />
           </div>

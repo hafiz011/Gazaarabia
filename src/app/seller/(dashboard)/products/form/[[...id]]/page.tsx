@@ -602,7 +602,7 @@ function ProductFormContent() {
                     </TextField>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">Specifications <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700">Specifications (Add 4 or 5 key Benefits and Features) <span className="text-red-500">*</span></label>
                       <RichTextEditor
                         value={form.shortDescription}
                         onChange={(value) => setForm((prev) => ({ ...prev, shortDescription: value }))}
@@ -620,9 +620,6 @@ function ProductFormContent() {
                         placeholder="Detailed features, materials..."
                       />
                     </div>
-
-                    {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
-
 
                     <TextField
                       select
@@ -737,7 +734,7 @@ function ProductFormContent() {
                     fullWidth
                     sx={fieldStyle}
                     InputProps={{
-                      startAdornment: <span className="text-gray-500 mr-2">$</span>,
+                      startAdornment: <span className="text-gray-500 mr-2">£</span>,
                     }}
                   />
                   <TextField
@@ -750,7 +747,7 @@ function ProductFormContent() {
                     fullWidth
                     sx={fieldStyle}
                     InputProps={{
-                      startAdornment: <span className="text-gray-500 mr-2">$</span>,
+                      startAdornment: <span className="text-gray-500 mr-2">£</span>,
                     }}
                   />
                 </div>

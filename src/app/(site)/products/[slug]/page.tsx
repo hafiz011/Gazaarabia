@@ -324,27 +324,9 @@ export default function ProductDetails() {
           <section className="max-w-[1600px] mx-auto px-4 lg:px-6 pt-20 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-[var(--background)]">
             {/*  IMAGES */}
             <div className="relative flex flex-col md:flex-row gap-4 items-center md:items-start md:h-[700px]">
-              {/* Thumbnails */}
-              {/* <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto"> */}
                 
                 <div className="order-2 md:order-1 flex md:flex-col gap-3 w-full md:w-20 overflow-x-auto md:overflow-y-auto justify-center">
 
-                {/* {images.map((img: any, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveThumb(index)}
-                    className={`relative w-20 h-20 flex-shrink-0 md:w-full md:aspect-[3/4] overflow-hidden rounded-lg border-2 transition ${activeThumb === index
-                      ? "border-[var(--brand-primary)]"
-                      : "border-gray-200 hover:border-[var(--brand-primary)]"
-                      }`}
-                  >
-                    <img
-                      src={img?.url}
-                      alt={img?.alt || `thumb-${index}`}
-                      className="w-full h-full object-contain bg-white"
-                    />
-                  </button>
-                ))} */}
 
                 {/* VIDEO THUMB (FIRST) */}
                 {hasVideo && (
@@ -391,39 +373,10 @@ export default function ProductDetails() {
 
               </div>
 
-              {/* Main Image */}
-              {/* <div
-                ref={imgRef}
-                // className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-2xl bg-white flex items-center justify-center cursor-crosshair border"
-
-                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent"
-
-
-                onMouseEnter={() => setZoomVisible(true)}
-                onMouseLeave={() => setZoomVisible(false)}
-                onMouseMove={handleMouseMove}
-              >
-                <img
-                  src={images[activeThumb || 0]?.url}
-                  alt={images[activeThumb || 0]?.alt || product?.title}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div> */}
-              {/* <div
-                ref={imgRef}
-               
-                className="order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent"
-
-
-                onMouseEnter={() => setZoomVisible(true)}
-                onMouseLeave={() => setZoomVisible(false)}
-                onMouseMove={handleMouseMove}
-              > */}
+             
 
               <div
-                ref={imgRef}
-                // className={`order-1 md:order-2 relative flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center cursor-crosshair bg-transparent  ${hasVideo && activeThumb === 0 ? "cursor-default" : "cursor-crosshair"}`}
-               
+                ref={imgRef}               
                className="order-1 md:order-2 relative w-full md:flex-1 h-[500px] md:h-[700px] rounded-xl overflow-hidden flex items-center justify-center bg-transparent"
                 onMouseEnter={() => !isMobile && setZoomVisible(true)}
                 onMouseLeave={() => !isMobile && setZoomVisible(false)}
@@ -453,15 +406,6 @@ export default function ProductDetails() {
 
 
               </div>
-
-              {/* Main Media (Video / Image) */}
-
-
-
-              {/* Zoom Preview (Desktop only) */}
-              {/* {zoomVisible && images[activeThumb || 0]?.url && ( */}
-
-              {/* {zoomVisible && !isMobile && images[activeThumb || 0]?.url && ( */}
 
               {zoomVisible && !isMobile && getZoomImageUrl() && (
 
