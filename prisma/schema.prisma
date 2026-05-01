@@ -16,82 +16,64 @@ model Roles {
 }
 
 model Users {
-  id             Int      @id @default(autoincrement())
-  name           String
-  email          String   @unique
-  phone          String?
-  password       String
-  roleId         Int
-  isGuest        Boolean  @default(false)
-
-  stripeCustomerId  String?   @unique
-
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-
-  createdAt      DateTime @default(now())
-  googleId       String?  @unique
-  role           Roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdCoupons Coupon[] @relation("CouponCreator")
-
-  affiliate Affiliate?
-
-  addresses     Address[]
-  wishlist      Wishlist[]
-  carts         Cart[]
-  orders        Orders[]
-  reviews       Review[]
-  notifications notifications[]
-  returnRequests ReturnRequest[]
-  seller         seller? //  opposite relation
-
+  id               Int             @id @default(autoincrement())
+  name             String
+  email            String          @unique
+  phone            String?
+  password         String
+  roleId           Int
+  isGuest          Boolean         @default(false)
+  stripeCustomerId String?         @unique
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime        @default(now())
+  googleId         String?         @unique
+  addresses        Address[]
+  affiliate        Affiliate?
+  carts            Cart[]
+  createdCoupons   Coupon[]        @relation("CouponCreator")
+  notifications    notifications[]
+  orders           Orders[]
+  returnRequests   ReturnRequest[]
+  reviews          Review[]
+  seller           seller?
+  role             Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  wishlist         Wishlist[]
 
   @@index([roleId], map: "users_roleId_fkey")
   @@map("users")
 }
 
 model seller {
-  id       Int     @id @default(autoincrement())
-  userId   Int     @unique
-  shopName String?
-  shopSlug String?  @unique
-  logo     String?
-  banner   String?
-  isActive Boolean @default(false)
-  status   String  @default("Pending")
-
-  // Commission Config
-  commissionValue Float  @default(5)
-
-  // Payout Config
-  payoutDays    Int   @default(30)
-  minimumPayout Float @default(50)
-
-  // Balances
-  availableBalance Float @default(0)
-  pendingBalance   Float @default(0)
-  totalEarned      Float @default(0)
-
-  // Store Integration
-  storeType          String?   // "shopify" | "woocommerce" | null
-  shopifyDomain      String?
+  id                 Int            @id @default(autoincrement())
+  userId             Int            @unique
+  shopName           String?
+  shopSlug           String?        @unique
+  logo               String?
+  banner             String?
+  isActive           Boolean        @default(false)
+  status             String         @default("Pending")
+  commissionValue    Float          @default(5)
+  payoutDays         Int            @default(30)
+  minimumPayout      Float          @default(50)
+  availableBalance   Float          @default(0)
+  pendingBalance     Float          @default(0)
+  totalEarned        Float          @default(0)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  lastSyncedAt       DateTime?
   shopifyAccessToken String?
-  wooSiteUrl         String?
+  shopifyDomain      String?
+  shopifySyncEnabled Boolean        @default(false)
+  storeType          String?
   wooConsumerKey     String?
   wooConsumerSecret  String?
-  shopifySyncEnabled Boolean   @default(false)
-  lastSyncedAt       DateTime?
-
-
-  products   products[]
-  payouts    SellerPayout[]
-  orderItems OrderItem[]
-  storeSyncs StoreSync[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user Users @relation(fields: [userId], references: [id])
+  wooSiteUrl         String?
+  orderItems         OrderItem[]
+  products           products[]
+  payouts            SellerPayout[]
+  user               Users          @relation(fields: [userId], references: [id])
+  storeSyncs         StoreSync[]
 
   @@index([userId])
   @@index([status])
@@ -99,15 +81,15 @@ model seller {
 }
 
 model StoreSync {
-  id         Int      @id @default(autoincrement())
-  sellerId   Int
-  seller     seller   @relation(fields: [sellerId], references: [id])
-  status     String   // "success" | "failed" | "running"
-  syncType   String   // "manual" | "auto"
-  imported   Int      @default(0)
-  skipped    Int      @default(0)
-  error      String?
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  sellerId  Int
+  status    String
+  syncType  String
+  imported  Int      @default(0)
+  skipped   Int      @default(0)
+  error     String?
+  createdAt DateTime @default(now())
+  seller    seller   @relation(fields: [sellerId], references: [id])
 
   @@index([sellerId])
   @@index([status])
@@ -115,61 +97,41 @@ model StoreSync {
 }
 
 model SellerPayout {
-  id            Int     @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   sellerId      Int
   amount        Float
-  status        String  @default("pending") // pending | paid
+  status        String    @default("pending")
   paymentMethod String?
   paymentRef    String?
   invoiceUrl    String?
   periodLabel   String?
-
-  createdAt DateTime  @default(now())
-  paidAt    DateTime?
-
-  seller seller @relation(fields: [sellerId], references: [id])
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
+  seller        seller    @relation(fields: [sellerId], references: [id])
 
   @@index([sellerId])
   @@index([status])
   @@map("seller_payouts")
 }
 
-model PlatformSettings {
-  id                     Int      @id @default(autoincrement())
-  defaultCommissionValue Float    @default(5)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-}
-
 model CategoryCommission {
-  id             Int     @id @default(autoincrement())
-  categoryId     Int
-  commission     Float
-  isActive       Boolean @default(true)
+  id         Int        @id @default(autoincrement())
+  categoryId Int        @unique
+  commission Float
+  isActive   Boolean    @default(true)
+  category   Categories @relation(fields: [categoryId], references: [id])
 
-  category      Categories   @relation(fields: [categoryId], references: [id])
-
-  @@unique([categoryId])
   @@map("category_commissions")
-}
-model SubcategoryCommission {
-  id            Int   @id @default(autoincrement())
-  subcategoryId Int   @unique
-  commission    Float 
-  isActive       Boolean @default(true)
-
-  subcategory Subcategory @relation(fields: [subcategoryId], references: [id])
 }
 
 model Sizes {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?   @db.LongText
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  productvariant productvariant[]
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  description    String?          @db.LongText
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   carts          Cart[]
+  productvariant productvariant[]
 
   @@map("sizes")
 }
@@ -182,59 +144,59 @@ model Colors {
   description    String?          @db.LongText
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  productvariant productvariant[]
   carts          Cart[]
+  productvariant productvariant[]
 
   @@map("colors")
 }
 
 model Categories {
-  id            Int           @id @default(autoincrement())
-  name          String        @unique
-  slug          String        @unique
-  submenuId     Int?
-  image         String?  
-  description   String?       @db.LongText
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  position      Int      @default(0)
-  products      products[]
-  subcategories Subcategory[]
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  slug               String              @unique
+  image              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  description        String?             @db.LongText
+  position           Int                 @default(0)
+  submenuId          Int?
+  submenu            Submenus?           @relation(fields: [submenuId], references: [id], onDelete: Cascade)
   categoryCommission CategoryCommission?
-  submenu   Submenus? @relation(fields: [submenuId], references: [id], onDelete: Cascade)
+  products           products[]
+  subcategories      Subcategory[]
+
   @@unique([submenuId, position])
   @@map("categories")
 }
 
 model Subcategory {
-  id            Int        @id @default(autoincrement())
-  name          String     @unique
-  slug          String     @unique
-  categoryId    Int
-  description   String?    @db.LongText
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  position      Int      @default(0)
-  products      products[]
-  subcategoryCommission SubcategoryCommission[]
-  category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id                    Int                    @id @default(autoincrement())
+  name                  String                 @unique
+  slug                  String                 @unique
+  categoryId            Int
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  description           String?                @db.LongText
+  position              Int                    @default(0)
+  products              products[]
+  category              Categories             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategorycommission subcategorycommission?
 
-  @@index([categoryId], map: "subcategories_categoryId_fkey")
   @@unique([categoryId, position])
+  @@index([categoryId], map: "subcategories_categoryId_fkey")
   @@map("subcategories")
 }
 
 model MaterialCare {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
-  description String   @db.LongText
+  description String     @db.LongText
   careType    String?
   material    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   icon        String?
-
-  products products[]
+  products    products[]
 
   @@map("material_care")
 }
@@ -262,8 +224,7 @@ model BlogCategories {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   blogs     Blogs[]
-
-  menus Menus[] @relation("BlogCategoryMenus")
+  menus     Menus[]  @relation("BlogCategoryMenus")
 
   @@map("blog_categories")
 }
@@ -293,7 +254,6 @@ model brand {
   products   products[]
 }
 
-
 model productimage {
   id        Int      @id @default(autoincrement())
   url       String
@@ -307,105 +267,94 @@ model productimage {
 }
 
 model products {
-  id               Int              @id @default(autoincrement())
-  sellerId         Int
-  slug             String           @unique
-  description      String?          @db.LongText
-  active           Boolean          @default(true)
-  barcode          String?
-  baseQty          Int
-  brandId          Int?
-  categoryId       Int?
-  costPrice        Float?
-  discountPrice    Float?
-  fitType          String?
-  sellingPrice     Float
-  commissionValue  Float   @default(5)
-  shortDescription String?           @db.LongText
-  subcategoryId    Int?
-  title            String
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  productimage     productimage[]
-  brand            brand?           @relation(fields: [brandId], references: [id], map: "Products_brandId_fkey")
-  categories       Categories?      @relation(fields: [categoryId], references: [id], map: "Products_categoryId_fkey")
-  subcategories    Subcategory?     @relation(fields: [subcategoryId], references: [id], map: "Products_subcategoryId_fkey")
-  seller         seller           @relation(fields: [sellerId], references: [id])
-  productvariant   productvariant[]
-
-  materialCareId Int?
-  materialCare   MaterialCare? @relation(fields: [materialCareId], references: [id])
-
-  wishlist      Wishlist[]
-  carts         Cart[]
-  orderItems    OrderItem[]
-  reviews       Review[]
-  variantImages VariantImage[]
-
-  soldHighlightDuration Int?     // duration in hours
-  soldCount             Int?     // number sold in this duration
-
-  ambassadorId          Int?     // assigned ambassador
-  ambassador            Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
-
-  // External Store Tracking
-  externalProductId  String?
-  externalVariantId  String?
-  externalSource     String?   // "shopify" | "woocommerce"
-  isExternalProduct  Boolean   @default(false)
-
-
-
-  // NEW — Back-relations for ProductRelation
-  asParentRelations ProductRelation[] @relation("ProductAsParent")
-  asChildRelations  ProductRelation[] @relation("ProductAsChild")
+  id                    Int               @id @default(autoincrement())
+  sellerId              Int
+  slug                  String            @unique
+  description           String?           @db.LongText
+  active                Boolean           @default(true)
+  barcode               String?
+  baseQty               Int
+  brandId               Int?
+  categoryId            Int?
+  costPrice             Float?
+  discountPrice         Float?
+  fitType               String?
+  sellingPrice          Float
+  commissionValue       Float             @default(5)
+  shortDescription      String?           @db.LongText
+  subcategoryId         Int?
+  title                 String
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  materialCareId        Int?
+  soldHighlightDuration Int?
+  soldCount             Int?
+  ambassadorId          Int?
+  externalProductId     String?
+  externalSource        String?
+  externalVariantId     String?
+  isExternalProduct     Boolean           @default(false)
+  carts                 Cart[]
+  orderItems            OrderItem[]
+  asChildRelations      ProductRelation[] @relation("ProductAsChild")
+  asParentRelations     ProductRelation[] @relation("ProductAsParent")
+  productimage          productimage[]
+  brand                 brand?            @relation(fields: [brandId], references: [id], map: "Products_brandId_fkey")
+  categories            Categories?       @relation(fields: [categoryId], references: [id], map: "Products_categoryId_fkey")
+  subcategories         Subcategory?      @relation(fields: [subcategoryId], references: [id], map: "Products_subcategoryId_fkey")
+  ambassador            Affiliate?        @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
+  materialCare          MaterialCare?     @relation(fields: [materialCareId], references: [id])
+  seller                seller            @relation(fields: [sellerId], references: [id])
+  productvariant        productvariant[]
+  reviews               Review[]
+  variantImages         VariantImage[]
+  wishlist              Wishlist[]
 
   @@index([sellerId])
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
   @@index([subcategoryId], map: "Products_subcategoryId_fkey")
+  @@index([ambassadorId], map: "products_ambassadorId_fkey")
+  @@index([materialCareId], map: "products_materialCareId_fkey")
 }
 
 model productvariant {
-  id        Int     @id @default(autoincrement())
-  sku       String
-  price     Float
-  stock     Int
-  isActive  Boolean @default(true)
-  colorId   Int?
-  sizeId    Int?
-  productId Int
-
+  id             Int            @id @default(autoincrement())
+  sku            String
+  price          Float
+  stock          Int
+  isActive       Boolean        @default(true)
+  colorId        Int?
+  sizeId         Int?
+  productId      Int
   videoUrl       String?
   videoThumbnail String?
-
-
-  products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
-  color    Colors?  @relation(fields: [colorId], references: [id])
-  size     Sizes?   @relation(fields: [sizeId], references: [id])
-
-  variantImages VariantImage[]
-  carts         Cart[]
-  orderItems    OrderItem[] // This is required to complete the relation
-  reviews       Review[]
+  carts          Cart[]
+  orderItems     OrderItem[]
+  products       products       @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
+  color          Colors?        @relation(fields: [colorId], references: [id])
+  size           Sizes?         @relation(fields: [sizeId], references: [id])
+  reviews        Review[]
+  variantImages  VariantImage[]
 
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
+  @@index([sizeId], map: "productvariant_sizeId_fkey")
 }
 
 model VariantImage {
-  id        Int     @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   url       String
   alt       String?
   variantId Int
   productId Int?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  product   products?      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   productvariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  variant productvariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  product products?      @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([productId], map: "variant_images_productId_fkey")
+  @@index([variantId], map: "variant_images_variantId_fkey")
   @@map("variant_images")
 }
 
@@ -414,7 +363,7 @@ model Address {
   firstName  String
   lastName   String?
   company    String?
-  address1   String  @db.LongText
+  address1   String   @db.LongText
   address2   String?  @db.LongText
   city       String
   country    String
@@ -423,11 +372,10 @@ model Address {
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  userId     Int
+  user       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  //  Relation to Users
-  userId Int
-  user   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "addresses_userId_fkey")
   @@map("addresses")
 }
 
@@ -436,243 +384,200 @@ model Wishlist {
   userId    Int
   productId Int
   createdAt DateTime @default(now())
+  product   products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user    Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product products @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId]) // Prevent duplicate wishlist entries
+  @@unique([userId, productId])
+  @@index([productId], map: "wishlist_productId_fkey")
   @@map("wishlist")
 }
 
 model Cart {
-  id        Int      @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   userId    Int
   productId Int
   colorId   Int?
   sizeId    Int?
   variantId Int
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  color     Colors?        @relation(fields: [colorId], references: [id])
+  product   products       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      Sizes?         @relation(fields: [sizeId], references: [id])
+  user      Users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant   productvariant @relation(fields: [variantId], references: [id])
 
-  user    Users          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product products       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  color   Colors?        @relation(fields: [colorId], references: [id])
-  size    Sizes?         @relation(fields: [sizeId], references: [id])
-  variant productvariant @relation(fields: [variantId], references: [id])
-
-  @@unique([userId, variantId]) // Prevent duplicate variant entries in the cart
+  @@unique([userId, variantId])
+  @@index([colorId], map: "carts_colorId_fkey")
+  @@index([productId], map: "carts_productId_fkey")
+  @@index([sizeId], map: "carts_sizeId_fkey")
+  @@index([variantId], map: "carts_variantId_fkey")
   @@map("carts")
 }
 
 model Orders {
-  id     Int @id @default(autoincrement())
-  userId Int
-
-  //  Amount Details
-  itemsTotal    Float
-  subtotal      Float
-  shippingCost  Float  @default(0)
-  discountTotal Float  @default(0)
-  taxTotal      Float  @default(0)
-  totalAmount   Float
-  currency      String @default("GBP")
-
-  //  Payment Info
-  paymentMethod  String
-  transactionId  String?
-  status         String  @default("pending")
-  paymentResponse Json?
-
-  //  Shipping Address Snapshot
-  addressId  Int?
-  firstName  String
-  lastName   String?
-  company    String?
-  address1   String
-  address2   String?
-  city       String
-  country    String
-  postalCode String
-  phone      String
-
-  //  Delivery Options
-  deliveryOptionId Int?
-  deliveryName     String?
-  deliveryEta      String?
-
-  //  Meta
-  notes          String?
-  couponCode     String?
-  couponDiscount Float?  @default(0)
-
-  // Coupon relation (NEW)
-  couponId Int?
-  coupon   Coupon? @relation(fields: [couponId], references: [id])
-
-  // Direct affiliate relation (NEW)
+  id                  Int               @id @default(autoincrement())
+  userId              Int
+  itemsTotal          Float
+  subtotal            Float
+  shippingCost        Float             @default(0)
+  discountTotal       Float             @default(0)
+  taxTotal            Float             @default(0)
+  totalAmount         Float
+  currency            String            @default("GBP")
+  paymentMethod       String
+  transactionId       String?
+  status              String            @default("pending")
+  paymentResponse     String?           @db.LongText
+  addressId           Int?
+  firstName           String
+  lastName            String?
+  company             String?
+  address1            String
+  address2            String?
+  city                String
+  country             String
+  postalCode          String
+  phone               String
+  deliveryOptionId    Int?
+  deliveryName        String?
+  deliveryEta         String?
+  notes               String?
+  couponCode          String?
+  couponDiscount      Float?            @default(0)
+  couponId            Int?
   affiliateId         Int?
-  affiliateCommission Float? // <-- store % used at order time
-  affiliateEarning    Float? // <-- store calculated earning (money)
-  // Affiliate relation (coupon-based)
-  affiliate           Affiliate? @relation("OrderAffiliateRelation", fields: [affiliateId], references: [id])
-
-  affiliatePaid Boolean @default(false)
-
-  invoiceNumber String?   // stores invoice code like INV-000001
-  invoiceUrl    String?   // link to PDF stored locally or S3
-
-  charityDonationId Int?
-  charityAmount Float? @default(0)
-  charityDonation CharityDonations?
-
-  ambassadorId   Int?
-  ambassadorPaid Boolean @default(false)
-
-  referralDiscount Float? @default(0)
-
-  // Ambassador relation (product-based)
-  ambassador          Affiliate? @relation("OrderAmbassadorRelation", fields: [ambassadorId], references: [id])
-
-
-  //  Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  //  Relations
-  user       Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-  returnRequests ReturnRequest[]
-
+  affiliateCommission Float?
+  affiliateEarning    Float?
+  affiliatePaid       Boolean           @default(false)
+  invoiceNumber       String?
+  invoiceUrl          String?
+  charityDonationId   Int?
+  charityAmount       Float?            @default(0)
+  ambassadorId        Int?
+  ambassadorPaid      Boolean           @default(false)
+  referralDiscount    Float?            @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  charityDonation     CharityDonations?
+  affiliate           Affiliate?        @relation("OrderAffiliateRelation", fields: [affiliateId], references: [id])
+  ambassador          Affiliate?        @relation("OrderAmbassadorRelation", fields: [ambassadorId], references: [id])
+  coupon              Coupon?           @relation(fields: [couponId], references: [id])
+  user                Users             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems          OrderItem[]
+  returnRequests      ReturnRequest[]
 
   @@index([userId])
+  @@index([affiliateId], map: "orders_affiliateId_fkey")
+  @@index([ambassadorId], map: "orders_ambassadorId_fkey")
+  @@index([couponId], map: "orders_couponId_fkey")
   @@map("orders")
 }
 
 model OrderItem {
-  id        Int  @id @default(autoincrement())
-  sellerId  Int
-  orderId   Int
-  productId Int
-  variantId Int // main source of truth (points to productvariant)
-  colorId   Int?
-  sizeId    Int?
+  id                           Int             @id @default(autoincrement())
+  sellerId                     Int
+  orderId                      Int
+  productId                    Int
+  variantId                    Int
+  colorId                      Int?
+  sizeId                       Int?
+  quantity                     Int
+  price                        Float
+  subtotal                     Float
+  sku                          String?
+  title                        String?
+  reviewed                     Boolean         @default(false)
+  commissionType               String          @default("percentage")
+  commissionValue              Float
+  commissionAmount             Float
+  sellerEarning                Float
+  payoutDays                   Int
+  payoutEligibleAt             DateTime
+  isPayoutEligible             Boolean         @default(false)
+  isPaidOut                    Boolean         @default(false)
+  ambassadorId                 Int?
+  ambassadorCommission         Float?
+  ambassadorEarning            Float?
+  ambassadorPaid               Boolean         @default(false)
+  returnStatus                 String?
+  refundedAmount               Float?
+  affiliateEarning             Float?
+  affiliateCommissionAdjusted  Boolean         @default(false)
+  ambassadorCommissionAdjusted Boolean         @default(false)
+  createdAt                    DateTime        @default(now())
+  updatedAt                    DateTime        @updatedAt
+  externalOrderId              String?
+  ambassador                   Affiliate?      @relation("OrderItemAmbassadorRelation", fields: [ambassadorId], references: [id])
+  order                        Orders          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product                      products        @relation(fields: [productId], references: [id])
+  seller                       seller          @relation(fields: [sellerId], references: [id])
+  variant                      productvariant  @relation(fields: [variantId], references: [id])
+  returnRequests               ReturnRequest[]
+  reviews                      Review[]
 
-  quantity Int
-  price    Float
-  subtotal Float
-  sku      String?
-  title    String?
-  reviewed Boolean @default(false)
-
- // Commission Snapshot
-  commissionType   String @default("percentage")
-  commissionValue  Float
-  commissionAmount Float
-  sellerEarning    Float
-
-  payoutDays       Int
-  payoutEligibleAt DateTime
-  isPayoutEligible Boolean  @default(false)
-  isPaidOut        Boolean  @default(false)
-
-  //  Ambassador earning tracking per product
-  ambassadorId         Int?
-  ambassadorCommission Float?
-  ambassadorEarning    Float?
-  ambassadorPaid       Boolean @default(false)   //  NEW: paid/unpaid status
-
-  returnStatus         String?
-  refundedAmount       Float?
- 
-  // External Order Tracking
-  externalOrderId   String?
-
-  // Affiliate commission per item
-  affiliateEarning       Float?
-  affiliateCommissionAdjusted Boolean @default(false)
-
-  // Ambassador commission per item
-  ambassadorCommissionAdjusted Boolean @default(false)
-
-
-  ambassador Affiliate? @relation("OrderItemAmbassadorRelation", fields: [ambassadorId], references: [id])
-
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  order   Orders         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product products       @relation(fields: [productId], references: [id])
-  variant productvariant @relation(fields: [variantId], references: [id]) //  matches productvariant.orderItems
-  seller  seller         @relation(fields: [sellerId], references: [id])
-
-  reviews Review[]
-  returnRequests ReturnRequest[]
-
-
+  @@index([ambassadorId], map: "orders_item_ambassadorId_fkey")
+  @@index([orderId], map: "orders_item_orderId_fkey")
+  @@index([productId], map: "orders_item_productId_fkey")
+  @@index([sellerId], map: "orders_item_sellerId_fkey")
+  @@index([variantId], map: "orders_item_variantId_fkey")
   @@map("orders_item")
 }
 
 model Review {
-  id        Int      @id @default(autoincrement())
-  rating    Int
-  comment   String   @db.LongText
-  image     String?
-  video     String?
-  isPinned  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Product Reference
-  productId Int
-  product   products @relation(fields: [productId], references: [id])
-
-  // Variant Reference 
-  variantId Int?
-  variant   productvariant? @relation(fields: [variantId], references: [id])
-
-  // User Reference
-  userId Int
-  user   Users @relation(fields: [userId], references: [id])
-
-  // Optional: Link back to order item
+  id          Int             @id @default(autoincrement())
+  rating      Int
+  comment     String          @db.LongText
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  productId   Int
+  variantId   Int?
+  userId      Int
   orderItemId Int?
-  orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
+  image       String?
+  isPinned    Boolean         @default(false)
+  video       String?
+  orderItem   OrderItem?      @relation(fields: [orderItemId], references: [id])
+  product     products        @relation(fields: [productId], references: [id])
+  user        Users           @relation(fields: [userId], references: [id])
+  variant     productvariant? @relation(fields: [variantId], references: [id])
 
+  @@index([orderItemId], map: "review_orderItemId_fkey")
+  @@index([productId], map: "review_productId_fkey")
+  @@index([userId], map: "review_userId_fkey")
+  @@index([variantId], map: "review_variantId_fkey")
   @@map("review")
 }
 
 model Menus {
-  id        Int      @id @default(autoincrement())
-  name      String
-  slug      String   @unique
-  type      String
-  images    Json?
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  submenus     Submenus[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  slug           String          @unique
+  type           String
+  images         String?         @db.LongText
+  position       Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   blogCategoryId Int?
-  blogCategory BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
+  blogCategory   BlogCategories? @relation("BlogCategoryMenus", fields: [blogCategoryId], references: [id])
+  submenus       Submenus[]
 
+  @@index([blogCategoryId], map: "menus_blogCategoryId_fkey")
   @@map("menus")
 }
 
-
 model Submenus {
-  id                 Int      @id @default(autoincrement())
-  name               String
-  slug               String   @unique
-  menuId             Int
-  position           Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  menu               Menus        @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
-  categories         Categories[]
-  
+  id         Int          @id @default(autoincrement())
+  name       String
+  slug       String       @unique
+  menuId     Int
+  position   Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  categories Categories[]
+  menu       Menus        @relation(fields: [menuId], references: [id], onDelete: Cascade, map: "submenus_menuId_fkey")
+
   @@unique([menuId, position])
   @@map("submenus")
 }
@@ -684,12 +589,11 @@ model ProductRelation {
   relationType String   @default("wear_with")
   sortOrder    Int?
   createdAt    DateTime @default(now())
-
-  // Properly linked relations with unique names
-  parent products @relation("ProductAsParent", fields: [parentId], references: [id], onDelete: Cascade)
-  child  products @relation("ProductAsChild", fields: [childId], references: [id], onDelete: Cascade)
+  child        products @relation("ProductAsChild", fields: [childId], references: [id], onDelete: Cascade)
+  parent       products @relation("ProductAsParent", fields: [parentId], references: [id], onDelete: Cascade)
 
   @@unique([parentId, childId, relationType])
+  @@index([childId], map: "product_relations_childId_fkey")
   @@map("product_relations")
 }
 
@@ -697,13 +601,14 @@ model notifications {
   id        Int      @id @default(autoincrement())
   userId    Int?
   email     String?
-  subject   String  @db.LongText
-  message   String  @db.LongText
-  type      String // e.g. "email", "sms", etc.
-  status    String // "sent", "failed"
+  subject   String   @db.LongText
+  message   String   @db.LongText
+  type      String
+  status    String
   createdAt DateTime @default(now())
+  user      Users?   @relation(fields: [userId], references: [id])
 
-  user Users? @relation(fields: [userId], references: [id])
+  @@index([userId], map: "notifications_userId_fkey")
 }
 
 model FaqCategory {
@@ -712,22 +617,21 @@ model FaqCategory {
   slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  faqs Faq[] // One-to-many relation
+  faqs      Faq[]
 
   @@map("faq_categories")
 }
 
 model Faq {
-  id         Int      @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   question   String
-  answer     String   @db.LongText
+  answer     String      @db.LongText
   categoryId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  category   FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  category FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
+  @@index([categoryId], map: "faqs_categoryId_fkey")
   @@map("faqs")
 }
 
@@ -743,221 +647,155 @@ model ContactUs {
 }
 
 model Affiliate {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @unique(map: "Affiliate_userId_unique")
-  user            Users    @relation(fields: [userId], references: [id])
-  baseCommission  Float    @default(10) // Admin's commission percentage
-  shareCommission Float    @default(7) // Affiliate's shared portion (% discount)
-  referralCode   String  @unique  
-  type        String   @default("affiliate") // "affiliate" or "ambassador"
+  id                   Int                   @id @default(autoincrement())
+  userId               Int                   @unique(map: "Affiliate_userId_unique")
+  baseCommission       Float                 @default(10)
+  shareCommission      Float                 @default(7)
+  referralCode         String                @unique
+  type                 String                @default("affiliate")
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  user                 Users                 @relation(fields: [userId], references: [id])
+  bankAccount          AffiliateBankAccount?
+  invoices             AffiliateInvoice[]
+  ambassadorInvoices   AmbassadorInvoice[]
+  coupons              Coupon[]
+  orders               Orders[]              @relation("OrderAffiliateRelation")
+  ambassadorOrders     Orders[]              @relation("OrderAmbassadorRelation")
+  orderItemAmbassadors OrderItem[]           @relation("OrderItemAmbassadorRelation")
+  payout               payout[]
+  products             products[]            @relation("AffiliateAmbassadorRelation")
 
-
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Back-relations
-  payouts Payout[]
-  coupons Coupon[] // coupons owned by this affiliate
-
-  invoices AffiliateInvoice[]
-  ambassadorInvoices AmbassadorInvoice[]
-
-
-  // Order-level commissions
-  orders            Orders[] @relation("OrderAffiliateRelation")
-  ambassadorOrders  Orders[] @relation("OrderAmbassadorRelation")
-
-  // Item-level ambassador commissions
-  orderItemAmbassadors OrderItem[] @relation("OrderItemAmbassadorRelation")
-
-  // Product-level ambassador mapping
-  products products[] @relation("AffiliateAmbassadorRelation")
-
-  bankAccount AffiliateBankAccount?
-
- @@map("affiliate")
-}
-
-model Payout {
-  id            Int       @id @default(autoincrement())
-  affiliateId   Int
-  affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
-  amount        Float
-  status        String    @default("pending") // pending | paid
-  paymentMethod String?
-  paymentRef    String?
-  invoiceUrl    String? 
-  periodLabel   String? 
-  createdAt     DateTime  @default(now())
-  paidAt        DateTime?
+  @@map("affiliate")
 }
 
 model Coupon {
-  id            Int    @id @default(autoincrement())
-  code          String @unique
-  discountType  String @default("percentage") // "percentage" | "fixed"
-  discountValue Float
-
-  // Relations
-  affiliateId Int?
-  affiliate   Affiliate? @relation(fields: [affiliateId], references: [id])
-
-  creatorId Int? // who created this coupon (admin or affiliate)
-  creator   Users? @relation("CouponCreator", fields: [creatorId], references: [id])
-
-  // Usage and limits
-  usageCount     Int       @default(0)
+  id             Int        @id @default(autoincrement())
+  code           String     @unique
+  discountType   String     @default("percentage")
+  discountValue  Float
+  affiliateId    Int?
+  creatorId      Int?
+  usageCount     Int        @default(0)
   maxUsage       Int?
-  perUserLimit   Int?      @default(1)
+  perUserLimit   Int?       @default(1)
   minOrderAmount Float?
   startDate      DateTime?
   endDate        DateTime?
-  isActive       Boolean   @default(true)
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  affiliate      Affiliate? @relation(fields: [affiliateId], references: [id])
+  creator        Users?     @relation("CouponCreator", fields: [creatorId], references: [id])
+  orders         Orders[]
 
-  //  Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  //  Optional relation to Orders (if you track coupon usage per order)
-  orders Orders[]
-
+  @@index([affiliateId], map: "coupon_affiliateId_fkey")
+  @@index([creatorId], map: "coupon_creatorId_fkey")
   @@map("coupon")
 }
 
-
 model AffiliateInvoice {
-  id           Int      @id @default(autoincrement())
-  affiliateId  Int
-  affiliate    Affiliate @relation(fields: [affiliateId], references: [id])
+  id              Int       @id @default(autoincrement())
+  affiliateId     Int
+  invoiceNumber   String
+  invoiceUrl      String
+  monthLabel      String
+  totalAmount     Float
+  isPaid          Boolean   @default(false)
+  paymentMethod   String?
+  paymentRef      String?
+  paidAt          DateTime?
+  deductionAmount Float?    @default(0)
+  createdAt       DateTime  @default(now())
+  affiliate       Affiliate @relation(fields: [affiliateId], references: [id])
 
-  invoiceNumber String
-  invoiceUrl    String
-  monthLabel    String
-  totalAmount   Float
-
-  // Payment
-  isPaid        Boolean  @default(false)
-  paymentMethod String?
-  paymentRef    String?
-  paidAt        DateTime?
-  deductionAmount Float? @default(0)
-
-
-  createdAt DateTime @default(now())
-
+  @@index([affiliateId], map: "affiliate_invoice_affiliateId_fkey")
   @@map("affiliate_invoice")
 }
 
-
 model HomePageSetting {
-  id              Int      @id @default(autoincrement())
-  heroSlides      Json?
-  shopByCategory  Json?
-  midBanner       String?
-  signatureProducts Json?
-  headerText         String?   @db.LongText
-  affiliateCommission Int?  
+  id                   Int      @id @default(autoincrement())
+  heroSlides           String?  @db.LongText
+  shopByCategory       String?  @db.LongText
+  midBanner            String?
+  signatureProducts    String?  @db.LongText
+  headerText           String?  @db.LongText
+  affiliateCommission  Int?
   ambassadorCommission Int?
-
-  
-  updatedAt       DateTime @updatedAt
+  updatedAt            DateTime @updatedAt
 
   @@map("homepage_settings")
 }
 
-
 model ReturnReason {
-  id           Int      @id @default(autoincrement())
-  label        String   @unique
-  requireImage Boolean  @default(false)
-  isActive     Boolean  @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id             Int             @id @default(autoincrement())
+  label          String          @unique
+  requireImage   Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   returnRequests ReturnRequest[]
 
-   @@map("return_reasons")
+  @@map("return_reasons")
 }
-
 
 model ReturnRequest {
-  id           Int      @id @default(autoincrement())
+  id                   Int          @id @default(autoincrement())
+  userId               Int
+  orderId              Int
+  orderItemId          Int
+  reasonId             Int
+  note                 String?      @db.LongText
+  images               String?      @db.LongText
+  status               String       @default("pending")
+  adminNote            String?      @db.LongText
+  refundAmount         Float?
+  expectedReturnAmount Float?       @default(0)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  order                Orders       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem            OrderItem    @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  reason               ReturnReason @relation(fields: [reasonId], references: [id], onDelete: Cascade)
+  user                 Users        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  userId       Int
-  orderId      Int
-  orderItemId  Int
-  reasonId     Int
-
-  user         Users        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order        Orders       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderItem    OrderItem    @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  reason       ReturnReason @relation(fields: [reasonId], references: [id], onDelete: Cascade)
-
-  // Customer Inputs
-  note         String?      @db.LongText  // optional explanation
-  images       Json?        // store image URLs
-
-  // Process & Status Tracking
-  status       String       @default("pending") 
-  // possible values:
-  // pending → waiting admin review
-  // approved → admin approved, waiting customer to return
-  // rejected → admin rejected
-  // returned → customer completed the return
-  // refunded → refund processed
-
-  adminNote    String?  @db.LongText
-  refundAmount Float?
-
-  expectedReturnAmount Float? @default(0) 
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  @@index([orderId], map: "return_requests_orderId_fkey")
+  @@index([orderItemId], map: "return_requests_orderItemId_fkey")
+  @@index([reasonId], map: "return_requests_reasonId_fkey")
+  @@index([userId], map: "return_requests_userId_fkey")
   @@map("return_requests")
 }
-
 
 model SolidarityReceipts {
   id           Int      @id @default(autoincrement())
   title        String
   description  String?  @db.LongText
   amount       Float
-  receiptImage String?   // store uploaded image URL
+  receiptImage String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@map("solidarity_receipts")
 }
 
-
 model CharityDonations {
-  id            Int       @id @default(autoincrement())
-  name          String?   // Optional donor name
-  email         String     // Required email
-  amount        Float      // Donation amount
-  anonymous     Boolean    @default(false)
-  message       String?    @db.LongText
-
-  transactionId String?    // PayPal/Stripe transaction ID
-  paymentMethod String?    // "paypal" | "stripe" | ""
-  paymentStatus String     @default("pending") 
-  // pending | success | failed
-
-  receiptUrl    String?    // Optional donation receipt PDF/image
-
-  orderId       Int?       @unique 
-  order         Orders? @relation(fields: [orderId], references: [id])
-
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id            Int      @id @default(autoincrement())
+  name          String?
+  email         String
+  amount        Float
+  anonymous     Boolean  @default(false)
+  message       String?  @db.LongText
+  transactionId String?
+  paymentMethod String?
+  paymentStatus String   @default("pending")
+  receiptUrl    String?
+  orderId       Int?     @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  order         Orders?  @relation(fields: [orderId], references: [id])
 
   @@map("charity_donations")
 }
-
 
 model Subscriber {
   id        Int      @id @default(autoincrement())
@@ -966,83 +804,96 @@ model Subscriber {
   phone     String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
-  updatedAt     DateTime   @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@map("subscribers")
 }
 
-
 model AmbassadorInvoice {
-  id            Int      @id @default(autoincrement())
-  ambassadorId  Int
-  ambassador    Affiliate @relation(fields: [ambassadorId], references: [id])
+  id              Int       @id @default(autoincrement())
+  ambassadorId    Int
+  invoiceNumber   String
+  invoiceUrl      String
+  monthLabel      String
+  totalAmount     Float
+  isPaid          Boolean   @default(false)
+  paymentMethod   String?
+  paymentRef      String?
+  paidAt          DateTime?
+  deductionAmount Float?    @default(0)
+  createdAt       DateTime  @default(now())
+  ambassador      Affiliate @relation(fields: [ambassadorId], references: [id])
 
-  invoiceNumber String
-  invoiceUrl    String
-  monthLabel    String
-  totalAmount   Float
-
-  isPaid        Boolean  @default(false)
-  paymentMethod String?
-  paymentRef    String?
-  paidAt        DateTime?
-  deductionAmount Float? @default(0)
-
-
-  createdAt DateTime @default(now())
-
+  @@index([ambassadorId], map: "ambassador_invoice_ambassadorId_fkey")
   @@map("ambassador_invoice")
 }
 
-
-
 model DeliverySettings {
-  id                       Int      @id @default(1)
-
-  freeDeliveryText         String?  @db.LongText
-
-  nextDayTitle             String?  @db.LongText
-  nextDayDeliveryTime      String?
-  nextDayCost              String?
-  nextDayOrderCutOff       String?
-
-  standardDeliveryTitle    String?  @db.LongText
-  standardDeliveryMinDays  Int?
-  standardDeliveryMaxDays  Int?
-  standardDeliveryCost     String?
-
-  returnText               String?  @db.LongText
-
-  //NEW INTERNATIONAL FIELDS
-  internationalTitle               String? @db.LongText
-  internationalDeliveryTime        String?
-  internationalCost                String?
-  internationalFreeDeliveryText    String?  @db.LongText
-  internationalCustomsText         String?  @db.LongText
-  internationalTrackingText        String?  @db.LongText
-
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                            Int      @id @default(1)
+  freeDeliveryText              String?  @db.LongText
+  nextDayTitle                  String?  @db.LongText
+  nextDayDeliveryTime           String?
+  nextDayCost                   String?
+  nextDayOrderCutOff            String?
+  standardDeliveryTitle         String?  @db.LongText
+  standardDeliveryMinDays       Int?
+  standardDeliveryMaxDays       Int?
+  standardDeliveryCost          String?
+  returnText                    String?  @db.LongText
+  internationalTitle            String?  @db.LongText
+  internationalDeliveryTime     String?
+  internationalCost             String?
+  internationalFreeDeliveryText String?  @db.LongText
+  internationalCustomsText      String?  @db.LongText
+  internationalTrackingText     String?  @db.LongText
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
 
   @@map("delivery_settings")
 }
 
-
 model AffiliateBankAccount {
-  id            Int      @id @default(autoincrement())
-  affiliateId   Int      @unique
-
+  id            Int       @id @default(autoincrement())
+  affiliateId   Int       @unique
   accountName   String
   accountNumber String
   sortCode      String?
   iban          String?
   paypalEmail   String?
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  affiliate Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  affiliate     Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
 
   @@map("affiliate_bank_accounts")
 }
 
+model payout {
+  id            Int       @id @default(autoincrement())
+  affiliateId   Int
+  amount        Float
+  status        String    @default("pending")
+  paymentMethod String?
+  paymentRef    String?
+  invoiceUrl    String?
+  periodLabel   String?
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
+  affiliate     Affiliate @relation(fields: [affiliateId], references: [id], map: "Payout_affiliateId_fkey")
+
+  @@index([affiliateId], map: "Payout_affiliateId_fkey")
+}
+
+model platformsettings {
+  id                     Int      @id @default(autoincrement())
+  defaultCommissionValue Float    @default(5)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime
+}
+
+model subcategorycommission {
+  id            Int         @id @default(autoincrement())
+  subcategoryId Int         @unique(map: "SubcategoryCommission_subcategoryId_key")
+  commission    Float
+  isActive      Boolean     @default(true)
+  subcategories Subcategory @relation(fields: [subcategoryId], references: [id], map: "SubcategoryCommission_subcategoryId_fkey")
+}
