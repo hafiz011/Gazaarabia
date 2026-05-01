@@ -23,17 +23,29 @@ export async function POST(req: Request) {
     // PAYMENT SUCCESS
     if (event.type === "payment_intent.succeeded") {
         const pi = event.data.object;
+        const orderId = pi.metadata?.orderId;
 
-        const orderId = pi.metadata?.orderId;  // attach this when creating PI
-
-        await prisma.orders.update({
-            where: { id: Number(orderId) },
-            data: {
-                status: "paid",
-                transactionId: pi.id,
-                paymentMethod: "stripe",
-            },
-        });
+        if (orderId && orderId !== "pending" && !isNaN(Number(orderId))) {
+            // Standard flow: update by ID
+            await prisma.orders.update({
+                where: { id: Number(orderId) },
+                data: {
+                    status: "paid",
+                    transactionId: pi.id,
+                    paymentMethod: "stripe",
+                },
+            });
+        } else {
+            // Fallback flow: update by transactionId (PaymentIntent ID)
+            // This handles the race condition where metadata isn't updated yet
+            await prisma.orders.updateMany({
+                where: { transactionId: pi.id },
+                data: {
+                    status: "paid",
+                    paymentMethod: "stripe",
+                },
+            });
+        }
     }
 
     return NextResponse.json({ received: true });

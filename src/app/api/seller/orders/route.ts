@@ -24,12 +24,20 @@ export async function GET(req: NextRequest) {
     }
 
 
+    const seller = await prisma.seller.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!seller) {
+      return NextResponse.json({ message: "Seller profile not found" }, { status: 404 });
+    }
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
     const sellerCondition = {
       orderItems: {
-        some: { sellerId: user.id }
+        some: { sellerId: seller.id }
       }
     };
 
@@ -65,7 +73,7 @@ export async function GET(req: NextRequest) {
 
 
         orderItems: {
-          where: { sellerId: user.id },
+          where: { sellerId: seller.id },
           select: {
             id: true,
             sellerId: true,

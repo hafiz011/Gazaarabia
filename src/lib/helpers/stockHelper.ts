@@ -21,7 +21,7 @@ export async function getVariantAvailableQuantity(variantId: number): Promise<nu
         where: {
             variantId,
             order: {
-                status: { in: ["paid", "completed", "success"] }, // adjust statuses to match your app
+                status: { in: ["paid", "completed", "success", "succeeded"] }, // adjust statuses to match your app
             },
         },
     });
@@ -53,7 +53,7 @@ export async function getProductAvailableQuantity(productId: number): Promise<nu
         where: {
             productId,
             order: {
-                status: { in: ["paid", "completed", "success"] }, // adjust according to your statuses
+                status: { in: ["paid", "completed", "success", "succeeded"] }, // adjust according to your statuses
             },
         },
     });

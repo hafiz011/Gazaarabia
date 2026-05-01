@@ -29,6 +29,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 0️. Backend Price Validation
+    let calculatedItemsTotal = 0;
+    for (const item of orderItems) {
+      const dbVariant = await prisma.productvariant.findUnique({
+        where: { id: item.variantId },
+        select: { price: true, productId: true },
+      });
+
+      if (!dbVariant) {
+        return NextResponse.json({ success: false, message: `Variant ${item.variantId} not found.` }, { status: 400 });
+      }
+
+      // If variant price is 0, fallback to product price
+      let unitPrice = dbVariant.price;
+      if (unitPrice === 0) {
+        const dbProduct = await prisma.products.findUnique({
+          where: { id: dbVariant.productId },
+          select: { sellingPrice: true }
+        });
+        unitPrice = dbProduct?.sellingPrice || 0;
+      }
+
+      calculatedItemsTotal += unitPrice * item.quantity;
+    }
+
+    // Re-calculate discounts and charity to get final expected total
+    let tempFinalDiscountTotal = 0;
+    let tempCouponData = null;
+    if (coupon?.code) {
+      tempCouponData = await prisma.coupon.findUnique({ where: { code: coupon.code } });
+    }
+
+    let tempReferralAffiliate = null;
+    let tempReferralAffiliateDiscount = 0;
+    if (referral?.affiliateId) {
+      tempReferralAffiliate = await prisma.affiliate.findUnique({ where: { id: referral.affiliateId }, select: { shareCommission: true } });
+      if (tempReferralAffiliate) {
+        tempReferralAffiliateDiscount = (calculatedItemsTotal * tempReferralAffiliate.shareCommission) / 100;
+      }
+    }
+
+    const tempCouponDiscount = coupon?.discountAmount ?? 0;
+
+    if (tempCouponData && tempReferralAffiliate) {
+      tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
+    } else if (tempCouponData) {
+      tempFinalDiscountTotal = tempCouponDiscount;
+    } else if (tempReferralAffiliate) {
+      tempFinalDiscountTotal = tempReferralAffiliateDiscount;
+    }
+
+    const expectedTotal = calculatedItemsTotal - tempFinalDiscountTotal + (parseFloat(charity?.amount || "0"));
+
+    // Check if difference is more than 0.01
+    if (Math.abs(expectedTotal - payment.totalAmount) > 0.01) {
+      console.error(`Guest Price mismatch: Expected ${expectedTotal}, Got ${payment.totalAmount}`);
+      return NextResponse.json(
+        { success: false, message: "Price mismatch detected. Please refresh your cart." },
+        { status: 400 }
+      );
+    }
+
     // 1️. Validate coupon if sent
     let couponData = null;
     if (coupon?.code) {
@@ -110,7 +172,7 @@ export async function POST(req: NextRequest) {
 
       affiliateCommission = affiliateInfo?.baseCommission ?? 0;
 
-      const itemsTotal = payment.itemsTotal ?? 0;
+      const itemsTotal = calculatedItemsTotal;
 
       const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
 
@@ -211,7 +273,13 @@ export async function POST(req: NextRequest) {
 
       if (!product) continue;
 
-      const subtotal = item.subtotal;
+      const dbVariant = await prisma.productvariant.findUnique({
+        where: { id: item.variantId },
+        select: { price: true }
+      });
+
+      const unitPrice = dbVariant?.price || product.sellingPrice;
+      const subtotal = unitPrice * item.quantity;
       // ============================
       // 1. SELLER COMMISSION
       // ============================
@@ -294,7 +362,7 @@ export async function POST(req: NextRequest) {
         // proportion of affiliate earning for this item
         const proportion = itemValue / totalItemValue;
 
-        const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
+        const earningBeforeDiscount = (calculatedItemsTotal * affiliateCommission) / 100;
 
         // const discountAmount = coupon?.discountAmount ?? 0;
 

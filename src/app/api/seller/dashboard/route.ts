@@ -24,66 +24,94 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        const seller = await prisma.seller.findUnique({
+            where: { userId: user.id },
+        });
+
+        if (!seller) {
+            return NextResponse.json({ message: "Seller profile not found" }, { status: 404 });
+        }
+
         try {
             const [
-            deliveryOptions,
-            products,
-            orders
+                productsCount,
+                ordersCount
             ] = await Promise.all([
-            prisma.deliveryOptions.count(),
-            prisma.products.count(),
-            prisma.orders.count(),
+                prisma.products.count({ where: { sellerId: seller.id } }),
+                prisma.orders.count({
+                    where: {
+                        orderItems: { some: { sellerId: seller.id } }
+                    }
+                }),
             ]);
 
 
 
             /* ================= ORDERS OVER TIME ================= */
             const ordersOverTimeRaw = await prisma.orders.findMany({
-            select: { createdAt: true },
-            orderBy: { createdAt: "asc" },
+                where: {
+                    orderItems: { some: { sellerId: seller.id } }
+                },
+                select: { createdAt: true },
+                orderBy: { createdAt: "asc" },
             });
 
             const ordersOverTime = ordersOverTimeRaw.reduce((acc: any, item) => {
-            const date = item.createdAt.toISOString().split("T")[0];
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
+                const date = item.createdAt.toISOString().split("T")[0];
+                acc[date] = (acc[date] || 0) + 1;
+                return acc;
             }, {});
 
             /* ================= REVENUE OVER TIME ================= */
-            const revenueOverTimeRaw = await prisma.orders.findMany({
-            select: {
-                createdAt: true,
-                totalAmount: true,
-            },
-            orderBy: { createdAt: "asc" },
+            const revenueOverTimeRaw = await prisma.orderItem.findMany({
+                where: {
+                    sellerId: seller.id,
+                    order: { status: "paid" }
+                },
+                select: {
+                    createdAt: true,
+                    sellerEarning: true,
+                },
+                orderBy: { createdAt: "asc" },
             });
 
             const revenueOverTime = revenueOverTimeRaw.reduce((acc: any, item) => {
-            const date = item.createdAt.toISOString().split("T")[0];
-            acc[date] = (acc[date] || 0) + item.totalAmount;
-            return acc;
+                const date = item.createdAt.toISOString().split("T")[0];
+                acc[date] = (acc[date] || 0) + item.sellerEarning;
+                return acc;
             }, {});
 
 
             /* ================= ORDER STATUS ================= */
-            const orderStatus = await prisma.orders.groupBy({
-            by: ["status"],
-            _count: { id: true },
+            const orderStatusRaw = await prisma.orders.findMany({
+                where: {
+                    orderItems: { some: { sellerId: seller.id } }
+                },
+                select: { status: true },
             });
+
+            const orderStatusMap = orderStatusRaw.reduce((acc: any, item) => {
+                acc[item.status] = (acc[item.status] || 0) + 1;
+                return acc;
+            }, {});
+
+            const orderStatus = Object.entries(orderStatusMap).map(([status, count]) => ({
+                status,
+                _count: { id: count }
+            }));
 
 
 
 
 
             return NextResponse.json({
-            deliveryOptions,
-            products,
-            orders,
-            charts: {
-                ordersOverTime,
-                revenueOverTime,
-                orderStatus,
-            },
+                products: productsCount,
+                orders: ordersCount,
+                charts: {
+                    ordersOverTime,
+                    revenueOverTime,
+                    orderStatus,
+                },
             });
         } catch (error) {
             console.error("DASHBOARD API ERROR:", error);

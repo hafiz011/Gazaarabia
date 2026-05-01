@@ -38,7 +38,9 @@ export async function POST(req: Request) {
 
             customer: customerId ?? undefined,
 
-            payment_method_types: ["card"],
+            automatic_payment_methods: {
+                enabled: true,
+            },
 
             // Save card only if logged in
             setup_future_usage: customerId ? "off_session" : undefined,

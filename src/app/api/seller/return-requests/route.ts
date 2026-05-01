@@ -10,21 +10,23 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     //  Check User Role
-    const seller = await prisma.users.findUnique({
-        where: { id: userId },
-        include: { role: true },
+    const seller = await prisma.seller.findUnique({
+        where: { userId: userId },
     });
 
-    if (seller?.role?.name?.toLowerCase() !== "seller")
-        return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+    if (!seller) {
+        return NextResponse.json({ success: false, message: "Seller profile not found" }, { status: 404 });
+    }
 
     try {
         const requests = await prisma.returnRequest.findMany({
+            where: {
+                orderItem: { sellerId: seller.id }
+            },
             include: {
                 user: { select: { name: true, email: true } },
                 order: { select: { id: true } },
                 orderItem: {
-                    where: { sellerId: seller.id },
                     select: {
                         product: { select: { title: true, productimage: { take: 1 } } },
                         quantity: true,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Eye, X, Phone } from "lucide-react";
+import { Search, Eye, X, Phone, ShoppingBag, DollarSign, Clock, CheckCircle, Package, TrendingUp } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -47,9 +47,9 @@ interface Order {
   id: number;
   transactionId: string | null;
   paymentMethod: string;
-  itemsTotal: number,
-  charityAmount: number,
-  discountTotal: number,
+  itemsTotal: number;
+  charityAmount: number;
+  discountTotal: number;
   totalAmount: number;
   status: string;
   createdAt: string;
@@ -64,15 +64,23 @@ interface Order {
   postalCode: string;
   phone?: string | null;
   orderItems: OrderItem[];
+  couponDiscount: number;
+  referralDiscount: number;
+  shippingCost?: number;
+  taxTotal?: number;
   coupon?: {
     code: string;
     discountType: string;
     discountValue: number;
+    affiliateId?: number | null;
   } | null;
 
   affiliate?: {
     user: { name: string; email: string };
   } | null;
+  charityAnonymous?: boolean;
+  charityName?: string;
+  charityEmail?: string;
 }
 
 export default function OrdersPage() {
@@ -116,6 +124,22 @@ export default function OrdersPage() {
     })();
   }, [token, debouncedSearch]);
 
+  const stats = useMemo(() => {
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((acc, order) =>
+      acc + order.orderItems.reduce((a, i) => a + (i.price * i.quantity), 0), 0);
+    const totalEarnings = orders.reduce((acc, order) =>
+      acc + order.orderItems.reduce((a, i) => a + (i.sellerEarning * i.quantity), 0), 0);
+    const pendingOrders = orders.filter(o => o.status.toLowerCase() === "pending").length;
+
+    return [
+      { label: "Total Orders", value: totalOrders, icon: ShoppingBag, color: "blue", bg: "bg-blue-50", text: "text-blue-600" },
+      { label: "Total Revenue", value: `£${totalRevenue.toFixed(2)}`, icon: TrendingUp, color: "green", bg: "bg-green-50", text: "text-green-600" },
+      { label: "Seller Earnings", value: `£${totalEarnings.toFixed(2)}`, icon: DollarSign, color: "emerald", bg: "bg-emerald-50", text: "text-emerald-600" },
+      { label: "Pending Orders", value: pendingOrders, icon: Clock, color: "orange", bg: "bg-orange-50", text: "text-orange-600" },
+    ];
+  }, [orders]);
+
   const filteredOrders = useMemo(() => orders, [orders]);
   const totalPages = Math.ceil(filteredOrders.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -124,11 +148,15 @@ export default function OrdersPage() {
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
-        return "bg-green-100 text-green-700";
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "cancelled":
+        return "bg-rose-100 text-rose-700 border-rose-200";
+      case "processing":
+        return "bg-indigo-100 text-indigo-700 border-indigo-200";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
 
@@ -137,7 +165,7 @@ export default function OrdersPage() {
 
   if (status === "loading" || initialLoading) return <Loader />;
   if (status === "unauthenticated") {
-    router.replace(ROUTES.SELLER.LOGIN); // Wait, shouldn't this be ROUTES.SELLER.LOGIN if it exists? Let me keep redirect as is or check if seller login route exists.
+    router.replace(ROUTES.SELLER.LOGIN);
     return null;
   }
   if (status === "authenticated" && session?.user?.role !== "seller") {
@@ -146,87 +174,145 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Orders Management</h1>
-        <div className="relative w-full sm:w-80">
-          <Search size={18} className="absolute left-4 top-2.5 text-gray-400" />
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
+      {/* Header & Search */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Order Management</h1>
+          <p className="text-gray-500 mt-1">Monitor and manage your sales and order fulfillment.</p>
+        </div>
+        <div className="relative group w-full lg:w-96">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400 group-focus-within:text-[var(--brand-primary)] transition-colors" />
+          </div>
           <input
             type="text"
-            placeholder="Search by order number, name, or status..."
+            placeholder="Search orders, customers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border border-gray-300 rounded-full pl-11 pr-4 py-2 text-sm 
-                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] bg-gray-50"
+            className="w-full bg-white border border-gray-200 rounded-2xl pl-11 pr-4 py-3 text-sm 
+                       focus:outline-none focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] 
+                       transition-all duration-300 shadow-sm"
           />
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow border border-[var(--soft-gray)] overflow-hidden">
-        <div className="overflow-x-auto relative">
-          {searchLoading && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
-              <span className="text-gray-600 text-sm font-medium">Searching...</span>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+            <div className="flex items-center justify-between">
+              <div className={`p-3 rounded-2xl ${stat.bg} ${stat.text} group-hover:scale-110 transition-transform`}>
+                <stat.icon size={24} />
+              </div>
             </div>
-          )}
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-medium border-b">
-              <tr>
-                <th className="py-3 px-5 text-left">Order Id</th>
-                <th className="py-3 px-5 text-left">Customer</th>
-                <th className="py-3 px-5 text-left">Commission Percentage</th>
-                <th className="py-3 px-5 text-left">Commission Amount</th>
-                <th className="py-3 px-5 text-left">Total Amt.</th>
-                <th className="py-3 px-5 text-left">Seller Earnings</th>
-                <th className="py-3 px-5 text-left">Payout Days</th>
-                <th className="py-3 px-5 text-left">Payout Eligible</th>
-                <th className="py-3 px-5 text-left">Payout Status</th>
-                <th className="py-3 px-5 text-left">Status</th>
-                <th className="py-3 px-5 text-left">Date</th>
-                <th className="py-3 px-5 text-right">Action</th>
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Orders Table Container */}
+      <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative">
+        {searchLoading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-20">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-600 text-sm font-semibold">Updating results...</span>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Order ID</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Commission</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Total Amt.</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Earnings</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Payout</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {paginatedOrders.length > 0 ? (
                 paginatedOrders.map((order, idx) => (
-                  <tr key={idx} className="border-b last:border-0 hover:bg-gray-50 transition">
-                    <td className="py-3 px-5 font-medium">#{order.id}</td>
-                    <td className="py-3 px-5 text-gray-600">{order.user.name ?? "N/A"}</td>
-                    <td className="py-3 px-5 text-gray-600">{order.orderItems.map((item) => item.commissionValue).join(", ")} %</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.orderItems.reduce((acc, item) => acc + item.commissionAmount * item.quantity, 0))}</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{formatGBP(order.orderItems.reduce((acc, item) => acc + item.sellerEarning * item.quantity, 0))}</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{Array.from(new Set(order.orderItems.map((item) => item.payoutDays))).join(", ")} Days</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{order.orderItems.some((item) => item.isPayoutEligible) ? "Yes" : "No"}</td>
-                    <td className="py-3 px-5 font-medium text-gray-900">{order.orderItems.some((item) => item.isPaidOut) ? "Paid" : "Pending"}</td>
-                    <td className="py-3 px-5">
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(
-                          order.status
-                        )}`}
-                      >
-                        {order.status}
+                  <tr key={idx} className="group hover:bg-gray-50/80 transition-colors">
+                    <td className="py-4 px-6">
+                      <span className="font-mono font-bold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-lg text-xs">#{order.id}</span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-900">{order.user.name ?? "N/A"}</span>
+                        <span className="text-xs text-gray-400">{order.user.email}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">
+                          {formatGBP(order.orderItems.reduce((acc, item) => acc + item.commissionAmount * item.quantity, 0))}
+                        </span>
+                        <span className="text-[10px] text-gray-400 ml-1">
+                          {Array.from(new Set(order.orderItems.map(i => i.commissionValue))).join(", ")}% Avg
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-bold text-gray-900">
+                        {formatGBP(order.orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}
                       </span>
                     </td>
-                    <td className="py-3 px-5 text-gray-600">
-                      {new Date(order.createdAt).toLocaleDateString("en-GB")}
+                    <td className="py-4 px-6">
+                      <span className="font-bold text-[var(--brand-primary)]">
+                        {formatGBP(order.orderItems.reduce((acc, item) => acc + item.sellerEarning * item.quantity, 0))}
+                      </span>
                     </td>
-                    <td className="py-3 px-3 text-right">
+                    <td className="py-4 px-6 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter ${order.orderItems.some(i => i.isPaidOut) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                          {order.orderItems.some(i => i.isPaidOut) ? "Paid" : "Pending"}
+                        </span>
+                        <span className="text-[10px] text-gray-400 mt-1">
+                          {Math.max(...order.orderItems.map(i => i.payoutDays))}d Cycle
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`px-3 py-1 text-[11px] font-bold rounded-full border ${getStatusClass(order.status)}`}>
+                        {order.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="py-4 px-6 text-right">
                       <button
                         onClick={() => setSelectedOrder(order)}
-                        className="text-[var(--brand-primary)] hover:bg-[var(--soft-gray)] p-2 rounded-full transition hover:scale-110"
+                        className="bg-white hover:bg-[var(--brand-primary)] text-gray-400 hover:text-white p-2.5 rounded-xl border border-gray-100 hover:border-[var(--brand-primary)] transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 group"
                       >
-                        <Eye size={20} />
+                        <Eye size={18} />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500">
-                    No orders found
+                  <td colSpan={12} className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                        <Package size={32} className="text-gray-300" />
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-semibold">No orders found</p>
+                        <p className="text-gray-400 text-sm mt-1">Adjust your search or filters to see more results.</p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -235,14 +321,16 @@ export default function OrdersPage() {
         </div>
 
         {filteredOrders.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredOrders.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-          />
+          <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredOrders.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
         )}
       </div>
 
@@ -268,277 +356,211 @@ export default function OrdersPage() {
 --------------------------------------------------- */
 function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }: any) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div className="relative bg-white/80 rounded-2xl w-full max-w-3xl shadow-lg overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-md animate-fadeIn top-14">
+      <div className="relative bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden border border-white/20 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex justify-between items-start px-6 py-5 border-b sticky top-0 bg-white z-10">
+        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-50 sticky top-0 bg-white/80 backdrop-blur-md z-10">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">Order #{order.id}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Placed on {new Date(order.createdAt).toLocaleString("en-GB")}
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-black text-gray-900">Order <span className="text-[var(--brand-primary)]">#{order.id}</span></h2>
+              <span className={`px-4 py-1 text-[10px] font-bold rounded-full border shadow-sm ${getStatusClass(order.status)}`}>
+                {order.status.toUpperCase()}
+              </span>
+            </div>
+            <p className="text-sm text-gray-400 mt-1 font-medium">
+              Placed on {new Date(order.createdAt).toLocaleString("en-GB", { dateStyle: 'long', timeStyle: 'short' })}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-semibold rounded-full ${getStatusClass(
-                order.status
-              )}`}
-            >
-              {order.status}
-            </span>
-            <button onClick={onClose} className="text-gray-500 hover:text-[var(--brand-primary)]">
-              <X size={22} />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="bg-gray-100 hover:bg-rose-50 text-gray-400 hover:text-rose-500 p-3 rounded-2xl transition-all duration-300 group"
+          >
+            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+          </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-6 py-5 space-y-8">
-          {/* Payment Info */}
-          <section>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Payment Details</h3>
-            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-2">
-              <p>Method: {order.paymentMethod.toUpperCase()}</p>
-              <p>Transaction ID: {order.transactionId ?? "N/A"}</p>
-              <p>Email: {order.user.email}</p>
-            </div>
-          </section>
-
-          {/* Discount / Affiliate Info */}
-          {/* {(order.coupon || order.affiliate) && (
-            <section>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Discount & Affiliate Details</h3>
-              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-2">
-
-                {order.coupon && (
-                  <p>
-                    <span className="font-medium text-gray-800">Coupon Used:</span>{" "}
-                    <span className="text-[var(--brand-primary)] font-semibold">{order.coupon.code}</span>{" "}
-                    ({order.coupon.discountType === "percentage"
-                      ? `${order.coupon.discountValue}% off`
-                      : `£${order.coupon.discountValue} off`}
-                    )
-                  </p>
-                )}
-
-                {order.couponDiscount > 0 && (
-                  <p>
-                    <span className="font-medium text-gray-800">Discount Applied:</span>{" "}
-                    {formatGBP(order.couponDiscount)}
-                  </p>
-                )}
-
-                {order.affiliate && (
-                  <p>
-                    <span className="font-medium text-gray-800">Referred By:</span>{" "}
-                    {order.affiliate.user.name}{" "}
-                    <span className="text-gray-500 text-xs">({order.affiliate.user.email})</span>
-                  </p>
-                )}
-              </div>
-            </section>
-          )} */}
-
-          {/* Discount / Affiliate Info */}
-          {(order.coupon || order.couponDiscount > 0 || order.affiliate) && (
-            <section>
-
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                {order.affiliate || order.coupon?.affiliateId
-                  ? "Affiliate & Discount Details"
-                  : order.coupon || order.couponDiscount > 0
-                    ? "Discount Details"
-                    : "Affiliate Details"}
-              </h3>
-
-
-              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-2">
-
-                {/* Coupon Used */}
-                {order.coupon && (
-                  <p>
-                    <span className="font-medium text-gray-800">Coupon Used:</span>{" "}
-                    <span className="text-[var(--brand-primary)] font-semibold">{order.coupon.code}</span>{" "}
-                    ({order.coupon.discountType === "percentage"
-                      ? `${order.coupon.discountValue}% off`
-                      : `£${order.coupon.discountValue} off`}
-                    )
-                  </p>
-                )}
-
-                {/* Discount Value */}
-                {order.couponDiscount > 0 && (
-                  <p>
-                    <span className="font-medium text-gray-800">Discount Applied:</span>{" "}
-                    {formatGBP(order.couponDiscount)}
-                  </p>
-                )}
-
-                {/* Affiliate Link (Affiliate Coupon) */}
-                {order.coupon?.affiliateId && order.affiliate && (
-                  <p>
-                    <span className="font-medium text-gray-800">Referred By:</span>{" "}
-                    {order.affiliate.user.name}{" "}
-                    <span className="text-gray-500 text-xs">({order.affiliate.user.email})</span>
-                    <span className="ml-2 text-[11px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      Affiliate Coupon
-                    </span>
-                  </p>
-                )}
-
-                {/* Admin Coupon (no affiliateId) */}
-                {order.coupon && !order.coupon.affiliateId && (
-                  <p>
-                    <span className="font-medium text-gray-800">Coupon Type:</span>{" "}
-                    <span className="ml-1 text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                      Admin / Sitewide Coupon
-                    </span>
-                  </p>
-                )}
-
-                {/* Referral Discount (from referral link) */}
-                {order.referralDiscount > 0 && (
-                  <p>
-                    <span className="font-medium text-gray-800">Referral Discount:</span>{" "}
-                    {formatGBP(order.referralDiscount)}
-                    <span className="ml-2 text-[11px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                      Referral Link
-                    </span>
-                  </p>
-                )}
-
-
-              </div>
-            </section>
-          )}
-
-          {/* Charity Donation */}
-          {order.charityAmount > 0 && (
-            <section>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Charity Donation</h3>
-              <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 space-y-1">
-                <p className="flex justify-between">
-                  <span className="font-medium">Amount Donated:</span>
-                  <span className="font-semibold text-[var(--brand-primary)]">
-                    {formatGBP(order.charityAmount)}
-                  </span>
-                </p>
-                {order.charityAnonymous ? (
-                  <p className="text-xs text-gray-500 italic">Donated anonymously</p>
-                ) : order.charityName || order.charityEmail ? (
-                  <div className="mt-2 text-xs text-gray-600">
-                    {order.charityName && <p>Name: {order.charityName}</p>}
-                    {order.charityEmail && <p>Email: {order.charityEmail}</p>}
+        <div className="overflow-y-auto px-8 py-8 space-y-8 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column: Delivery & Payment */}
+            <div className="space-y-8">
+              {/* Payment Details */}
+              <section className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <DollarSign size={14} /> Payment Details
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Method</span>
+                    <span className="text-sm font-bold text-gray-900 bg-white px-3 py-1 rounded-xl shadow-sm uppercase">{order.paymentMethod}</span>
                   </div>
-                ) : null}
-              </div>
-            </section>
-          )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Transaction ID</span>
+                    <span className="text-sm font-mono text-gray-600 max-w-[150px] truncate" title={order.transactionId}>{order.transactionId ?? "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Customer Email</span>
+                    <span className="text-sm font-medium text-gray-900">{order.user.email}</span>
+                  </div>
+                </div>
+              </section>
 
-          {/* order items total */}
-          <section>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Items Amount</h3>
-            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-900 space-y-1">
-              <p className="flex justify-between text-base font-semibold">
-                <span>Items Total:</span>
-                <span className="text-[var(--brand-primary)]">
-                  {formatGBP(order.itemsTotal)}
-                </span>
-              </p>
+              {/* Delivery Address */}
+              <section className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Package size={14} /> Shipping Destination
+                </h3>
+                <div className="space-y-1 text-gray-700">
+                  <p className="text-lg font-bold text-gray-900">{order.firstName} {order.lastName}</p>
+                  {order.company && <p className="text-sm text-gray-500">{order.company}</p>}
+                  <div className="mt-4 space-y-0.5 text-sm font-medium">
+                    <p>{order.address1}</p>
+                    {order.address2 && <p>{order.address2}</p>}
+                    <p>{order.city}, {order.country}</p>
+                    <p className="text-gray-400 font-mono">{order.postalCode}</p>
+                  </div>
+                  {order.phone && (
+                    <div className="flex items-center gap-2 mt-4 text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 w-fit px-3 py-2 rounded-xl border border-[var(--brand-primary)]/10">
+                      <Phone size={14} />
+                      <span className="text-sm font-bold tracking-tighter">{order.phone}</span>
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
-          </section>
-          {/* Total Paid */}
-          <section>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Total Paid</h3>
-            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-900 space-y-1">
-              <p className="flex justify-between text-base font-semibold">
-                <span>Total Amount Paid:</span>
-                <span className="text-[var(--brand-primary)]">
-                  {formatGBP(order.totalAmount)}
-                </span>
-              </p>
-            </div>
-          </section>
 
-          {/* Address */}
-          <section>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Delivery Address</h3>
-            <div className="border p-3 rounded-lg bg-white/60 text-sm text-gray-700 leading-snug space-y-1">
-              <p>
-                {order.firstName} {order.lastName}
-              </p>
-              {order.company && <p>{order.company}</p>}
-              <p>{order.address1}</p>
-              {order.address2 && <p>{order.address2}</p>}
-              <p>
-                {order.city}, {order.country}
-              </p>
-              <p>{order.postalCode}</p>
-              {order.phone && (
-                <p className="flex items-center gap-2">
-                  <Phone size={16} className="text-gray-500" />
-                  {order.phone}
-                </p>
+            {/* Right Column: Order Summary */}
+            <div className="space-y-8">
+              {/* Financial Summary */}
+              <section className="bg-slate-900 text-white rounded-[2rem] p-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                  <TrendingUp size={80} />
+                </div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Overview</h3>
+                <div className="space-y-4 relative z-10">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Items Subtotal</span>
+                    <span className="font-medium">{formatGBP(order.itemsTotal)}</span>
+                  </div>
+                  {order.discountTotal > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Total Discounts</span>
+                      <span className="text-rose-400 font-medium">-{formatGBP(order.discountTotal)}</span>
+                    </div>
+                  )}
+                  {order.charityAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-400">Charity Donation</span>
+                      <span className="text-emerald-400 font-medium">+{formatGBP(order.charityAmount)}</span>
+                    </div>
+                  )}
+                  <div className="pt-4 border-t border-slate-800 flex justify-between items-end">
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Paid</p>
+                      <p className="text-4xl font-black text-white mt-1 leading-none">{formatGBP(order.totalAmount)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Your Earning</p>
+                      <div className="bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-2xl text-lg font-black shadow-lg shadow-[var(--brand-primary)]/20">
+                        {formatGBP(order.orderItems.reduce((acc: any, i: any) => acc + i.sellerEarning * i.quantity, 0))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Discounts & Affiliate */}
+              {(order.coupon || order.couponDiscount > 0 || order.affiliate) && (
+                <section className="bg-indigo-50/30 rounded-3xl p-6 border border-indigo-100/50">
+                  <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-4">Promotions & Partners</h3>
+                  <div className="space-y-3">
+                    {order.coupon && (
+                      <div className="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-indigo-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                            <CheckCircle size={16} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-tight">Coupon</p>
+                            <p className="text-sm font-black text-indigo-600">{order.coupon.code}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-lg">
+                          {order.coupon.discountType === "percentage" ? `${order.coupon.discountValue}%` : `£${order.coupon.discountValue}`}
+                        </span>
+                      </div>
+                    )}
+                    {order.affiliate && (
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-2xl shadow-sm border border-indigo-50">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
+                          {order.affiliate.user.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-tight">Referred By</p>
+                          <p className="text-sm font-bold text-gray-900">{order.affiliate.user.name}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
               )}
-
             </div>
-          </section>
+          </div>
 
-          {/* Order Items */}
+          {/* Order Items Table */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
-            <div className="border rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100 border-b text-gray-700 text-xs uppercase tracking-wide">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <ShoppingBag size={14} /> Product Manifest
+              </h3>
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{order.orderItems?.length || 0} Items</span>
+            </div>
+            <div className="border border-gray-100 rounded-[2rem] overflow-hidden bg-white shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b border-gray-50">
                   <tr>
-                    <th className="py-2 px-3 text-left">Item</th>
-                    <th className="py-2 px-3 text-left">Variant</th>
-                    <th className="py-2 px-3 text-center w-16">Qty</th>
-                    <th className="py-2 px-3 text-right">Price</th>
-                    <th className="py-2 px-3 text-right">Subtotal</th>
-                    <th className="py-2 px-3 text-center w-24">Review</th>
+                    <th className="py-4 px-6">Product Item</th>
+                    <th className="py-4 px-6">Attributes</th>
+                    <th className="py-4 px-6 text-center">Qty</th>
+                    <th className="py-4 px-6 text-right">Unit Price</th>
+                    <th className="py-4 px-6 text-right">Subtotal</th>
+                    <th className="py-4 px-6 text-center">Feedback</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {order.orderItems?.length > 0 ? (
-                    order.orderItems.map((item: OrderItem, idx: number) => (
-                      <tr key={idx} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100/60`}>
-                        <td className="py-3 px-4 font-medium text-gray-900">{item.product?.title}</td>
-                        <td className="py-3 px-4 text-left text-gray-700">
-                          {item.variant?.sku || "N/A"}
-                          {item.variant?.color?.name && (
-                            <span className="ml-2 text-gray-500">({item.variant.color.name})</span>
-                          )}
-                          {item.variant?.size?.name && (
-                            <span className="ml-1 text-gray-500">- {item.variant.size.name}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center">{item.quantity}</td>
-                        <td className="py-3 px-4 text-right">{formatGBP(item.price)}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                          {formatGBP(item.price * item.quantity)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {item.reviewed && item.review ? (
-                            <button
-                              onClick={() => onViewReview(item.review)}
-                              className="text-[var(--brand-primary)] text-xs font-medium hover:underline"
-                            >
-                              View
-                            </button>
-                          ) : (
-                            <span className="text-gray-400 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="text-center py-5 text-gray-500">
-                        No order items found.
+                <tbody className="divide-y divide-gray-50">
+                  {order.orderItems?.map((item: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6">
+                        <span className="font-bold text-gray-900">{item.product?.title}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-wrap gap-2">
+                          {item.variant?.sku && <span className="text-[10px] font-mono font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">SKU: {item.variant.sku}</span>}
+                          {item.variant?.color?.name && <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">{item.variant.color.name}</span>}
+                          {item.variant?.size?.name && <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">{item.variant.size.name}</span>}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-900 font-bold text-sm">
+                          {item.quantity}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right font-medium text-gray-600">{formatGBP(item.price)}</td>
+                      <td className="py-4 px-6 text-right font-black text-gray-900">{formatGBP(item.price * item.quantity)}</td>
+                      <td className="py-4 px-6 text-center">
+                        {item.reviewed && item.review ? (
+                          <button
+                            onClick={() => onViewReview(item.review)}
+                            className="bg-amber-50 hover:bg-amber-100 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight transition-colors"
+                          >
+                            Read Review
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-bold text-gray-300 uppercase italic">No Review</span>
+                        )}
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -546,12 +568,12 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 bg-white border-t">
+        <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-red-700 transition font-medium"
+            className="px-10 py-3.5 bg-gray-900 hover:bg-black text-white rounded-2xl font-black text-sm transition-all duration-300 hover:shadow-xl active:scale-95"
           >
-            Close
+            DISMISS
           </button>
         </div>
       </div>
@@ -564,72 +586,68 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
 --------------------------------------------------- */
 function ReviewModal({ review, onClose }: any) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-      <div className="relative bg-white/90 rounded-2xl w-full max-w-md shadow-lg overflow-hidden border border-gray-200">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-white">
-          <h2 className="text-lg font-semibold text-gray-800">Customer Review</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-[var(--brand-primary)] transition">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fadeIn">
+      <div className="relative bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden border border-gray-100">
+        <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+          <h2 className="text-xl font-black text-gray-900">Customer Feedback</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900 transition-colors p-2 bg-white rounded-xl shadow-sm">
             <X size={20} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-4">
-          <div className="flex items-center gap-1">
+        <div className="p-8 space-y-6 text-center">
+          {/* Star Rating */}
+          <div className="flex justify-center gap-1.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <svg
                 key={star}
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill={star <= review.rating ? "#FACC15" : "#E5E7EB"}
-                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill={star <= review.rating ? "#F59E0B" : "#E2E8F0"}
+                className={`w-10 h-10 transition-transform ${star <= review.rating ? 'scale-110 drop-shadow-md' : ''}`}
               >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.959a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.959c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.54-1.118l1.287-3.959a1 1 0 00-.364-1.118L2.064 9.386c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.285-3.959z" />
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             ))}
           </div>
 
-          {/* Product */}
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+          {/* Product Info */}
+          <div className="bg-gray-50 rounded-3xl p-4 flex items-center gap-4 text-left border border-gray-100">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white shadow-sm flex-shrink-0 bg-white">
               {review.product?.productimage?.[0]?.url ? (
                 <img
                   src={review.product.productimage[0].url}
                   alt={review.product.title}
-                  className="w-full h-full object-contain bg-white"
+                  className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
-                  No Image
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <Package size={20} className="text-gray-300" />
                 </div>
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
-                {review.product?.title || "Product Title"}
-              </p>
-              {review.variant?.sku && (
-                <p className="text-xs text-gray-500">SKU: {review.variant.sku}</p>
-              )}
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Review for</p>
+              <p className="text-sm font-bold text-gray-900 line-clamp-1">{review.product?.title}</p>
+              {review.variant?.sku && <p className="text-[10px] font-mono text-gray-400 mt-0.5">SKU: {review.variant.sku}</p>}
             </div>
           </div>
 
           {/* Comment */}
-          <p className="text-sm text-gray-700 leading-relaxed italic border-t pt-3">
-            “{review.comment || "No comment provided."}”
-          </p>
-
-          {/* Info */}
-          <div className="text-xs text-gray-500 border-t pt-3">
-            <p>
-              <span className="font-medium text-gray-700">Reviewer:</span>{" "}
-              {review.user?.name || "Customer"}{" "}
-              <span className="text-gray-400">({review.user?.email})</span>
+          <div className="relative">
+            <div className="absolute -top-4 -left-2 text-6xl text-gray-100 font-serif leading-none">“</div>
+            <p className="text-lg text-gray-700 italic font-medium leading-relaxed px-4 relative z-10">
+              {review.comment || "No comment provided."}
             </p>
-            <p>
-              <span className="font-medium text-gray-700">Date:</span>{" "}
-              {new Date(review.createdAt).toLocaleDateString("en-GB")}
+            <div className="absolute -bottom-10 -right-2 text-6xl text-gray-100 font-serif leading-none rotate-180">“</div>
+          </div>
+
+          {/* Footer Info */}
+          <div className="pt-8 border-t border-gray-50 flex flex-col items-center gap-1">
+            <p className="text-sm font-black text-gray-900">{review.user?.name || "Customer"}</p>
+            <p className="text-xs text-gray-400">{review.user?.email}</p>
+            <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mt-2">
+              {new Date(review.createdAt).toLocaleDateString("en-GB", { dateStyle: 'full' })}
             </p>
           </div>
         </div>

@@ -73,7 +73,7 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'none'",
 
               // Scripts
-              "script-src 'self' 'unsafe-inline' https://www.paypal.com",
+              "script-src 'self' 'unsafe-inline' https://www.paypal.com https://js.stripe.com https://apple-pay-gateway.apple.com https://pay.google.com",
 
               // Styles (unsafe-inline allowed for Next.js/React styles)
               "style-src 'self' 'unsafe-inline'",
@@ -84,10 +84,10 @@ const nextConfig: NextConfig = {
               // Fonts
               "font-src 'self' data:",
 
-              "frame-src https://www.paypal.com",
+              "frame-src https://www.paypal.com https://js.stripe.com https://apple-pay-gateway.apple.com https://pay.google.com",
 
               // API / backend calls
-              "connect-src 'self' https: https://www.paypal.com https://www.paypalobjects.com",
+              "connect-src 'self' https: https://www.paypal.com https://www.paypalobjects.com https://api.stripe.com https://apple-pay-gateway.apple.com https://pay.google.com",
 
               // Forms
               "form-action 'self'",

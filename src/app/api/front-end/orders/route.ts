@@ -27,6 +27,70 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 0️. Backend Price Validation
+    let calculatedItemsTotal = 0;
+    for (const item of orderItems) {
+      const dbVariant = await prisma.productvariant.findUnique({
+        where: { id: item.variantId },
+        select: { price: true, productId: true },
+      });
+
+      if (!dbVariant) {
+        return NextResponse.json({ success: false, message: `Variant ${item.variantId} not found.` }, { status: 400 });
+      }
+
+      // If variant price is 0, fallback to product price
+      let unitPrice = dbVariant.price;
+      if (unitPrice === 0) {
+          const dbProduct = await prisma.products.findUnique({
+              where: { id: dbVariant.productId },
+              select: { sellingPrice: true }
+          });
+          unitPrice = dbProduct?.sellingPrice || 0;
+      }
+
+      calculatedItemsTotal += unitPrice * item.quantity;
+    }
+
+    // Re-calculate discounts and charity to get final expected total
+    // (Logic copied from later steps to ensure consistency)
+    let tempFinalDiscountTotal = 0;
+    let tempCouponData = null;
+    if (coupon?.code) {
+        tempCouponData = await prisma.coupon.findUnique({ where: { code: coupon.code } });
+    }
+
+    let tempReferralAffiliate = null;
+    let tempReferralAffiliateDiscount = 0;
+    if (referral?.affiliateId) {
+        tempReferralAffiliate = await prisma.affiliate.findUnique({ where: { id: referral.affiliateId }, select: { shareCommission: true } });
+        if (tempReferralAffiliate) {
+            tempReferralAffiliateDiscount = (calculatedItemsTotal * tempReferralAffiliate.shareCommission) / 100;
+        }
+    }
+
+    const tempCouponDiscount = coupon?.discountAmount ?? 0; // We still trust the coupon discount amount from frontend for now, or we could re-calculate it.
+    // To be even safer, we should re-calculate coupon discount too, but that depends on coupon type (fixed vs percentage).
+    
+    if (tempCouponData && tempReferralAffiliate) {
+        tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
+    } else if (tempCouponData) {
+        tempFinalDiscountTotal = tempCouponDiscount;
+    } else if (tempReferralAffiliate) {
+        tempFinalDiscountTotal = tempReferralAffiliateDiscount;
+    }
+
+    const expectedTotal = calculatedItemsTotal - tempFinalDiscountTotal + (parseFloat(charity?.amount || "0"));
+    
+    // Check if difference is more than 0.01 (handling floating point issues)
+    if (Math.abs(expectedTotal - payment.totalAmount) > 0.01) {
+        console.error(`Price mismatch: Expected ${expectedTotal}, Got ${payment.totalAmount}`);
+        return NextResponse.json(
+            { success: false, message: "Price mismatch detected. Please refresh your cart." },
+            { status: 400 }
+        );
+    }
+
     // 1️. Optional: validate coupon again before saving
     let couponData = null;
     if (coupon?.code) {
@@ -116,7 +180,7 @@ export async function POST(req: NextRequest) {
       affiliateCommission = affiliateInfo?.baseCommission ?? 0;
 
       // calculate the commission on order items
-      const itemsTotal = payment.itemsTotal ?? 0;
+      const itemsTotal = calculatedItemsTotal;
 
       const earningBeforeDiscount = (itemsTotal * affiliateCommission) / 100;
 
@@ -150,7 +214,13 @@ export async function POST(req: NextRequest) {
 
       if (!product) continue;
 
-      const subtotal = item.subtotal;
+      const dbVariant = await prisma.productvariant.findUnique({
+        where: { id: item.variantId },
+        select: { price: true }
+      });
+
+      const unitPrice = dbVariant?.price || product.sellingPrice;
+      const subtotal = unitPrice * item.quantity;
 
       // ============================
       // 1. SELLER COMMISSION
@@ -232,7 +302,7 @@ export async function POST(req: NextRequest) {
         // proportion of affiliate earning for this item
         const proportion = itemValue / totalItemValue;
 
-        const earningBeforeDiscount = (payment.itemsTotal * affiliateCommission) / 100;
+        const earningBeforeDiscount = (calculatedItemsTotal * affiliateCommission) / 100;
 
         // const discountAmount = coupon?.discountAmount ?? 0;
 

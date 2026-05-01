@@ -189,10 +189,16 @@ function StripeWrapper({
     return (
         <div
             className="
-        fixed inset-0 bg-black/60 z-[9999] 
+        fixed inset-0 bg-black/60 z-50 
         flex items-center justify-center px-4
         overflow-y-auto
+        pointer-events-auto
     "
+            style={{
+                position: "fixed",
+                zIndex: 50,
+                backdropFilter: "blur(2px)"
+            }}
         >
             <div
                 className="
@@ -201,12 +207,17 @@ function StripeWrapper({
             max-w-lg 
             rounded-2xl 
             p-6 
-            shadow-xl 
+            shadow-2xl 
             relative
             my-10
             max-h-[90vh]
             overflow-y-auto
+            z-50
         "
+                style={{
+                    position: "relative",
+                    zIndex: 51
+                }}
             >
 
                 {/* Close button */}
