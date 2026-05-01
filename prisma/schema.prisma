@@ -619,6 +619,9 @@ model Review {
   id        Int      @id @default(autoincrement())
   rating    Int
   comment   String   @db.LongText
+  image     String?
+  video     String?
+  isPinned  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

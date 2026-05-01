@@ -120,7 +120,7 @@ export const VariantCard = ({
               sx={fieldStyle}
             >
               <MenuItem value="">Select Color</MenuItem>
-              {colors.map((c) => (
+              {[...colors].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
                 <MenuItem key={c.id} value={c.id}>
                   {c.name}
                 </MenuItem>

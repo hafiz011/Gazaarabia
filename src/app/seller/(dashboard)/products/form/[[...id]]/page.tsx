@@ -532,7 +532,7 @@ function ProductFormContent() {
                         {/* Categories Column */}
                         <div className="w-1/2 border-r border-slate-100 py-2 bg-slate-50 overflow-y-auto max-h-[400px]">
                           <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Categories</p>
-                          {categories.map((cat) => (
+                          {[...categories].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((cat) => (
                             <div
                               key={cat.id}
                               onMouseEnter={() => setHoveredCategory(cat)}
@@ -556,6 +556,7 @@ function ProductFormContent() {
                               </p>
                               {allSubcategories
                                 .filter((s) => String(s.categoryId) === String(hoveredCategory.id))
+                                .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                                 .map((sub) => (
                                   <div
                                     key={sub.id}
@@ -623,8 +624,7 @@ function ProductFormContent() {
 
                     <TextField
                       select
-                      // label={<RequiredLabel text="Care Advice" />}
-                      label={<RequiredLabel text="Safety warning" />}
+                      label={<RequiredLabel text="Material & Care Guide" />}
                       name="materialCareId"
                       value={form.materialCareId}
                       onChange={handleInputChange}

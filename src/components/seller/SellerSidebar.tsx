@@ -44,8 +44,15 @@ import { ROUTES } from "@/constants/routes";
 
 
 const links = [
-  { href: "/seller", label: "Dashboard", icon: LayoutDashboard },
-
+  // {
+  //   label: "Dashboard",
+  //   icon: LayoutDashboard,
+  //   children: [
+  //     { href: "/seller", label: "Overview", icon: LayoutDashboard },
+  //     { href: "/seller/analytics", label: "Analytics", icon: Star },
+  //   ],
+  // },
+  { href: "/seller", label: "Overview", icon: LayoutDashboard },
   {
     label: "Orders",
     icon: ShoppingCart,
@@ -61,30 +68,46 @@ const links = [
     children: [
       { href: "/seller/products/form", label: "Add Product", icon: Plus },
       { href: "/seller/products", label: "Manage Products", icon: Boxes },
-
-      // { href: "/seller/return-reasons", label: "Return Reasons", icon: HelpCircle },
     ],
   },
 
 
-
-
-
-  // {
-  //   label: "Logistics",
-  //   icon: Truck,
-  //   children: [
-  //     // { href: "/admin/delivery-options", label: "Delivery Options", icon: Truck },
-  //     { href: "/seller/delivery-settings", label: "Delivery Settings", icon: Package },
-  //   ],
-  // },
+  {
+    label: "Logistics",
+    icon: Truck,
+    children: [
+      { href: "/seller/delivery-options", label: "Delivery Options", icon: Truck },
+      { href: "/seller/delivery-settings", label: "Delivery Settings", icon: Package },
+    ],
+  },
 
   {
     label: "Finance",
     icon: BadgeDollarSign,
     children: [
       { href: "/seller/payouts", label: "My Payouts", icon: BadgeDollarSign },
+      { href: "/seller/earnings", label: "Earnings History", icon: BadgeDollarSign },
     ],
+  },
+
+  { href: "/seller/customers", label: "Customers", icon: Users },
+  { href: "/seller/reviews", label: "Customer Reviews", icon: Star },
+
+  // {
+  //   label: "Settings",
+  //   icon: Settings,
+  //   children: [
+  //     { href: "/seller/profile", label: "Store Profile", icon: Settings },
+  //     { href: "/seller/settings", label: "Store Settings", icon: Settings },
+  //   ],
+  // },
+
+  { href: "/seller/profile", label: "Store Profile", icon: Settings },
+
+  {
+    href: "/seller/support",
+    label: "Support",
+    icon: HelpCircle,
   },
 ];
 
@@ -190,83 +213,13 @@ export default function SellerSidebar({
         <div className="flex flex-col flex-1 overflow-hidden">
           <nav className="flex-1 overflow-y-auto px-3 mt-5 pb-10 relative z-30">
 
-            {/* {links.map((item) => {
-              const isGroup = !!item.children;
 
-              if (isGroup) {
-                const Icon = item.icon;
-                const isOpen = openGroups.includes(item.label);
-                const isActive = item.children.some((child) => pathname.startsWith(child.href));
-
-                return (
-                  <div key={item.label} className="mb-1">
-                    <button
-                      onClick={() => toggleGroup(item.label)}
-                      className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition cursor-pointer
-                    ${isActive ? "bg-[var(--brand-primary)] text-white" : "text-gray-300 hover:bg-[var(--brand-secondary)] hover:text-white"}`}
-                      style={{ justifyContent: collapsed ? "center" : "flex-start" }}
-                    >
-                      <Icon size={20} />
-                      {!collapsed && (
-                        <>
-                          <span className="whitespace-nowrap">{item.label}</span>
-                          <ChevronRight size={16} className={`ml-auto transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                        </>
-                      )}
-                    </button>
-
-                    {!collapsed && (
-                      <div className="overflow-hidden transition-all" style={{ maxHeight: isOpen ? `${item.children.length * 38}px` : "0px" }}>
-                        <div className="ml-8 mt-1 flex flex-col gap-1">
-                          {item.children.map((child) => (
-                            <Link
-                              key={child.href}
-                              href={child.href}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition
-                            ${pathname === child.href ? "text-white" : "text-gray-400 hover:text-white"}`}
-                            >
-                              <child.icon size={16} />
-                              <span className="whitespace-nowrap">{child.label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition
-                ${isActive ? "bg-[var(--brand-primary)] text-white" : "text-gray-300 hover:bg-[var(--brand-secondary)] hover:text-white"}`}
-                  style={{ justifyContent: collapsed ? "center" : "flex-start" }}
-                >
-                  <Icon size={20} />
-                  {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
-                </Link>
-              );
-            })} */}
 
             {links
               .filter((item) => {
 
-                // Admin sees everything
+                // seller sees everything
                 if (userRole === "seller") return true;
-
-                // Content Manager only allowed specific pages
-                // if (userRole === "content_manager") {
-                //   if (!item.children) return allowedForContentManager.includes(item.href);
-
-                //   // If parent has blog-related children
-                //   return item.children.some((c) =>
-                //     allowedForContentManager.includes(c.href)
-                //   );
-                // }
 
                 // Others see nothing
                 return false;
@@ -309,9 +262,6 @@ export default function SellerSidebar({
                             {item.children
                               .filter((child) => {
                                 if (userRole === "seller") return true;
-                                // if (userRole === "content_manager")
-                                //   return allowedForContentManager.includes(child.href);
-                                // return false;
                               })
                               .map((child) => {
                                 const ChildIcon = child.icon;

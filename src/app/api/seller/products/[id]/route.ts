@@ -235,8 +235,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               price: parseFloat(v.price),
               stock: parseInt(v.stock),
               isActive: v.isActive ?? true,
-              // colorId: v.colorId ? parseInt(v.colorId) : null,
-              // sizeId: v.sizeId ? parseInt(v.sizeId) : null,
 
               color: v.colorId
                 ? { connect: { id: parseInt(v.colorId) } }
@@ -272,8 +270,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
               price: parseFloat(v.price),
               stock: parseInt(v.stock),
               isActive: v.isActive ?? true,
-              // colorId: v.colorId ? parseInt(v.colorId) : null,
-              // sizeId: v.sizeId ? parseInt(v.sizeId) : null,
 
               color: v.colorId
                 ? { connect: { id: parseInt(v.colorId) } }

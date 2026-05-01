@@ -35,7 +35,11 @@ export async function GET(req: Request) {
         try {
             const [
                 productsCount,
-                ordersCount
+                ordersCount,
+                recentOrders,
+                topProducts,
+                lowStockCount,
+                reviewsCount,
             ] = await Promise.all([
                 prisma.products.count({ where: { sellerId: seller.id } }),
                 prisma.orders.count({
@@ -43,9 +47,42 @@ export async function GET(req: Request) {
                         orderItems: { some: { sellerId: seller.id } }
                     }
                 }),
+                prisma.orders.findMany({
+                    where: { orderItems: { some: { sellerId: seller.id } } },
+                    orderBy: { createdAt: "desc" },
+                    take: 5,
+                    include: {
+                        orderItems: {
+                            where: { sellerId: seller.id },
+                            select: {
+                                quantity: true,
+                                price: true,
+                                title: true,
+                            }
+                        }
+                    }
+                }),
+                prisma.products.findMany({
+                    where: { sellerId: seller.id },
+                    orderBy: { orderItems: { _count: "desc" } },
+                    take: 5,
+                    select: {
+                        id: true,
+                        title: true,
+                        sellingPrice: true,
+                        _count: { select: { orderItems: true } }
+                    }
+                }),
+                prisma.productvariant.count({
+                    where: {
+                        products: { sellerId: seller.id },
+                        stock: { lte: 5 }
+                    }
+                }),
+                prisma.review.count({
+                    where: { product: { sellerId: seller.id } }
+                })
             ]);
-
-
 
             /* ================= ORDERS OVER TIME ================= */
             const ordersOverTimeRaw = await prisma.orders.findMany({
@@ -100,13 +137,36 @@ export async function GET(req: Request) {
                 _count: { id: count }
             }));
 
-
-
-
+            // Calculate total revenue from order items
+            const totalRevenue = revenueOverTimeRaw.reduce((sum, item) => sum + item.sellerEarning, 0);
+            const avgOrderValue = ordersCount > 0 ? totalRevenue / ordersCount : 0;
 
             return NextResponse.json({
                 products: productsCount,
                 orders: ordersCount,
+                revenue: totalRevenue,
+                avgOrderValue: Number(avgOrderValue.toFixed(2)),
+                lowStock: lowStockCount,
+                reviews: reviewsCount,
+                recentOrders: recentOrders.map(order => ({
+                    id: order.id,
+                    total: order.totalAmount,
+                    status: order.status,
+                    createdAt: order.createdAt,
+                    customer: order.firstName + " " + order.lastName,
+                    itemsCount: order.orderItems.reduce((sum, item) => sum + item.quantity, 0)
+                })),
+                topProducts: topProducts.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    price: p.sellingPrice,
+                    salesCount: p._count.orderItems
+                })),
+                balances: {
+                    available: seller.availableBalance,
+                    pending: seller.pendingBalance,
+                    totalEarned: seller.totalEarned,
+                },
                 charts: {
                     ordersOverTime,
                     revenueOverTime,

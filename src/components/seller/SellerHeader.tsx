@@ -22,11 +22,7 @@ export default function SellerHeader({ onMenuToggle }: { onMenuToggle: () => voi
       subtitle: "Manage the available products.",
       action: { label: "Add Product", href: "/seller/products/form" },
     },
-    "/seller/reviews": {
-      title: "Reviews",
-      subtitle: "Manage the products reviews.",
-      action: { label: "Add Review", href: "/seller/reviews/form" },
-    },
+
     "/seller/delivery-options": {
       title: "Delivery Options",
       subtitle: "Manage the delivery options.",

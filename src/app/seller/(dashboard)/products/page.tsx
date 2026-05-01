@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Pencil, ShoppingBag, Trash2, Search, Plus, Package, CheckCircle, XCircle, AlertCircle, TrendingUp, Tag, MoreVertical } from "lucide-react";
+import { Pencil, ShoppingBag, Trash2, Search, Plus, Package, CheckCircle, XCircle, AlertCircle, TrendingUp, Tag, MoreVertical, Star } from "lucide-react";
 import Pagination from "@/components/seller/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
@@ -20,6 +20,10 @@ interface Product {
   productimage?: { url: string }[];
   active: boolean;
   createdAt: string;
+  totalStock: number;
+  totalSold: number;
+  averageRating: number;
+  totalReviews: number;
 }
 
 export default function ProductListPage() {
@@ -38,6 +42,12 @@ export default function ProductListPage() {
     type: "",
     message: "",
   });
+  const [apiStats, setApiStats] = useState({
+    totalStock: 0,
+    totalSold: 0,
+    averageRating: 0,
+    totalReviews: 0
+  });
 
   const fetchProducts = async () => {
     try {
@@ -45,7 +55,10 @@ export default function ProductListPage() {
       else setLoading(true);
 
       const res = await productService.getAll(token!, searchTerm);
-      setProducts(res.data || res);
+      setProducts(res.data || []);
+      if (res.stats) {
+        setApiStats(res.stats);
+      }
     } catch (error) {
       console.error(" Error fetching products:", error);
     } finally {
@@ -110,7 +123,7 @@ export default function ProductListPage() {
           <p className="text-gray-500 mt-2 font-medium">Manage, track and optimize your product catalog.</p>
         </div>
 
-        <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+        {/* <div className="flex flex-wrap gap-4 w-full lg:w-auto">
           <button
             onClick={() => router.push("/seller/products/form")}
             className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-[1.5rem] font-bold transition-all shadow-xl shadow-black/10 active:scale-95 group"
@@ -118,15 +131,15 @@ export default function ProductListPage() {
             <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
             Create Product
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Total Products", value: stats.total, icon: Package, color: "blue" },
-          { label: "Active Items", value: stats.active, icon: CheckCircle, color: "emerald" },
-          { label: "Inactive/Draft", value: stats.inactive, icon: XCircle, color: "rose" },
+          { label: "Total Stock", value: apiStats.totalStock, icon: Package, color: "blue", suffix: " Units" },
+          { label: "Total Sold", value: apiStats.totalSold, icon: ShoppingBag, color: "emerald", suffix: " Items" },
+          { label: "Average Rating", value: apiStats.averageRating, icon: Star, color: "amber", suffix: " / 5.0" },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
             <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-${stat.color}-500/5 rounded-full transition-transform group-hover:scale-150 duration-700`} />
@@ -136,7 +149,10 @@ export default function ProductListPage() {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                <h3 className="text-3xl font-black text-gray-900 mt-1">{stat.value}</h3>
+                <h3 className="text-3xl font-black text-gray-900 mt-1">
+                  {stat.value}
+                  <span className="text-sm font-bold text-gray-400 ml-1">{stat.suffix}</span>
+                </h3>
               </div>
             </div>
           </div>
@@ -172,6 +188,7 @@ export default function ProductListPage() {
             <thead>
               <tr className="bg-gray-50/50">
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Info</th>
+                <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Brand & Category</th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inventory Details</th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Pricing</th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-center">Status</th>
@@ -181,7 +198,7 @@ export default function ProductListPage() {
             <tbody className="divide-y divide-gray-50">
               {loading && !initialLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-32 text-center">
+                  <td colSpan={6} className="py-32 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-12 h-12 border-4 border-[var(--brand-primary)]/20 border-t-[var(--brand-primary)] rounded-full animate-spin" />
                       <p className="text-sm font-bold text-gray-400 uppercase tracking-widest animate-pulse">Syncing Inventory...</p>
@@ -204,19 +221,47 @@ export default function ProductListPage() {
                         </div>
                         <div>
                           <p className="font-black text-gray-900 text-lg line-clamp-1">{p.title}</p>
-                          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">ID: #{p.id}</p>
+                          {/* Brand and categories */}
+
+
+                          <div className="flex items-center gap-3 mt-1">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">ID: #{p.id}</p>
+                            <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md">
+                              <Star size={10} fill="currentColor" className="text-amber-500" />
+                              <span className="text-[10px] font-black text-amber-700">{p.averageRating}</span>
+                              <span className="text-[8px] font-bold text-amber-400">({p.totalReviews})</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-6 px-8">
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <Tag size={12} className="text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700">{p.brand?.name || "No Brand"}</span>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Tag size={12} className="text-blue-400" />
+                          <span className="text-[10px] font-black uppercase tracking-wider">{p.brand?.name || "No Brand"}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <AlertCircle size={12} className="text-gray-400" />
-                          <span className="text-xs font-medium text-gray-500">{p.categories?.name || "General"}</span>
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <AlertCircle size={12} className="text-gray-300" />
+                          <span className="text-[10px] font-bold uppercase tracking-tight">{p.categories?.name || "General"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-6 px-8">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-4 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-50">
+                          <div className="flex items-center gap-2">
+                            <Package size={14} className="text-blue-500" />
+                            <span className="text-[10px] font-black text-blue-900 uppercase tracking-wider">Stock</span>
+                          </div>
+                          <span className="text-sm font-black text-blue-600">{p.totalStock}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 bg-emerald-50/50 px-3 py-1.5 rounded-xl border border-emerald-50">
+                          <div className="flex items-center gap-2">
+                            <ShoppingBag size={14} className="text-emerald-500" />
+                            <span className="text-[10px] font-black text-emerald-900 uppercase tracking-wider">Sold</span>
+                          </div>
+                          <span className="text-sm font-black text-emerald-600">{p.totalSold}</span>
                         </div>
                       </div>
                     </td>
@@ -257,7 +302,7 @@ export default function ProductListPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-32 text-center">
+                  <td colSpan={6} className="py-32 text-center">
                     <div className="flex flex-col items-center gap-6 max-w-sm mx-auto">
                       <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
                         <ShoppingBag size={48} />

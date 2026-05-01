@@ -39,28 +39,74 @@ export async function GET(request: NextRequest) {
         ? { title: { contains: search } }
         : {};
 
-      const [total, products] = await Promise.all([
+      const [totalCount, productsRaw, globalStats] = await Promise.all([
         prisma.products.count({ where: { ...where, sellerId: seller?.id } }),
         prisma.products.findMany({
           where: { ...where, sellerId: seller?.id },
-          // skip: (page - 1) * pageSize,
-          // take: pageSize,
           include: {
             brand: true,
             categories: true,
             subcategories: true,
             productimage: true,
             productvariant: true,
+            reviews: {
+              select: { rating: true }
+            },
+            orderItems: {
+              select: { quantity: true }
+            }
           },
           orderBy: { createdAt: "desc" },
         }),
+        // Calculate global aggregates for cards
+        prisma.$transaction(async (tx) => {
+          const variants = await tx.productvariant.aggregate({
+            where: { products: { sellerId: seller?.id } },
+            _sum: { stock: true }
+          });
+
+          const orderItems = await tx.orderItem.aggregate({
+            where: { product: { sellerId: seller?.id } },
+            _sum: { quantity: true }
+          });
+
+          const reviews = await tx.review.aggregate({
+            where: { product: { sellerId: seller?.id } },
+            _avg: { rating: true },
+            _count: { id: true }
+          });
+
+          return {
+            totalStock: variants._sum.stock || 0,
+            totalSold: orderItems._sum.quantity || 0,
+            averageRating: reviews._avg.rating ? Number(reviews._avg.rating.toFixed(1)) : 0,
+            totalReviews: reviews._count.id
+          };
+        })
       ]);
+
+      // Calculate per-product stats
+      const products = productsRaw.map(p => {
+        const totalStock = p.productvariant.reduce((acc, v) => acc + (v.stock || 0), 0);
+        const totalSold = p.orderItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
+        const totalReviews = p.reviews.length;
+        const averageRating = totalReviews > 0 
+          ? Number((p.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1))
+          : 0;
+
+        return {
+          ...p,
+          totalStock,
+          totalSold,
+          averageRating,
+          totalReviews
+        };
+      });
 
       return NextResponse.json({
         success: true,
-        total,
-        // page,
-        // pageSize,
+        total: totalCount,
+        stats: globalStats,
         data: products,
       });
     } catch (error) {
