@@ -45,16 +45,16 @@ CREATE TABLE `sellers` (
     `availableBalance` DOUBLE NOT NULL DEFAULT 0,
     `pendingBalance` DOUBLE NOT NULL DEFAULT 0,
     `totalEarned` DOUBLE NOT NULL DEFAULT 0,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-    `lastSyncedAt` DATETIME(3) NULL,
-    `shopifyAccessToken` VARCHAR(191) NULL,
-    `shopifyDomain` VARCHAR(191) NULL,
-    `shopifySyncEnabled` BOOLEAN NOT NULL DEFAULT false,
     `storeType` VARCHAR(191) NULL,
+    `shopifyDomain` VARCHAR(191) NULL,
+    `shopifyAccessToken` VARCHAR(191) NULL,
+    `wooSiteUrl` VARCHAR(191) NULL,
     `wooConsumerKey` VARCHAR(191) NULL,
     `wooConsumerSecret` VARCHAR(191) NULL,
-    `wooSiteUrl` VARCHAR(191) NULL,
+    `shopifySyncEnabled` BOOLEAN NOT NULL DEFAULT false,
+    `lastSyncedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `sellers_userId_key`(`userId`),
     UNIQUE INDEX `sellers_shopSlug_key`(`shopSlug`),
@@ -98,6 +98,16 @@ CREATE TABLE `seller_payouts` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `PlatformSettings` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `defaultCommissionValue` DOUBLE NOT NULL DEFAULT 5,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `category_commissions` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `categoryId` INTEGER NOT NULL,
@@ -105,6 +115,17 @@ CREATE TABLE `category_commissions` (
     `isActive` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `category_commissions_categoryId_key`(`categoryId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SubcategoryCommission` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `subcategoryId` INTEGER NOT NULL,
+    `commission` DOUBLE NOT NULL,
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
+
+    UNIQUE INDEX `SubcategoryCommission_subcategoryId_key`(`subcategoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -139,12 +160,12 @@ CREATE TABLE `categories` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
+    `submenuId` INTEGER NULL,
     `image` VARCHAR(191) NULL,
+    `description` LONGTEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `description` LONGTEXT NULL,
     `position` INTEGER NOT NULL DEFAULT 0,
-    `submenuId` INTEGER NULL,
 
     UNIQUE INDEX `categories_name_key`(`name`),
     UNIQUE INDEX `categories_slug_key`(`slug`),
@@ -158,9 +179,9 @@ CREATE TABLE `subcategories` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
     `categoryId` INTEGER NOT NULL,
+    `description` LONGTEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `description` LONGTEXT NULL,
     `position` INTEGER NOT NULL DEFAULT 0,
 
     UNIQUE INDEX `subcategories_name_key`(`name`),
@@ -282,8 +303,8 @@ CREATE TABLE `products` (
     `soldCount` INTEGER NULL,
     `ambassadorId` INTEGER NULL,
     `externalProductId` VARCHAR(191) NULL,
-    `externalSource` VARCHAR(191) NULL,
     `externalVariantId` VARCHAR(191) NULL,
+    `externalSource` VARCHAR(191) NULL,
     `isExternalProduct` BOOLEAN NOT NULL DEFAULT false,
 
     UNIQUE INDEX `products_slug_key`(`slug`),
@@ -291,8 +312,6 @@ CREATE TABLE `products` (
     INDEX `Products_brandId_fkey`(`brandId`),
     INDEX `Products_categoryId_fkey`(`categoryId`),
     INDEX `Products_subcategoryId_fkey`(`subcategoryId`),
-    INDEX `products_ambassadorId_fkey`(`ambassadorId`),
-    INDEX `products_materialCareId_fkey`(`materialCareId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -311,7 +330,6 @@ CREATE TABLE `productvariant` (
 
     INDEX `ProductVariant_productId_fkey`(`productId`),
     INDEX `productvariant_colorId_fkey`(`colorId`),
-    INDEX `productvariant_sizeId_fkey`(`sizeId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -325,8 +343,6 @@ CREATE TABLE `variant_images` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    INDEX `variant_images_productId_fkey`(`productId`),
-    INDEX `variant_images_variantId_fkey`(`variantId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -347,7 +363,6 @@ CREATE TABLE `addresses` (
     `updatedAt` DATETIME(3) NOT NULL,
     `userId` INTEGER NOT NULL,
 
-    INDEX `addresses_userId_fkey`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -358,7 +373,6 @@ CREATE TABLE `wishlist` (
     `productId` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `wishlist_productId_fkey`(`productId`),
     UNIQUE INDEX `wishlist_userId_productId_key`(`userId`, `productId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -375,10 +389,6 @@ CREATE TABLE `carts` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    INDEX `carts_colorId_fkey`(`colorId`),
-    INDEX `carts_productId_fkey`(`productId`),
-    INDEX `carts_sizeId_fkey`(`sizeId`),
-    INDEX `carts_variantId_fkey`(`variantId`),
     UNIQUE INDEX `carts_userId_variantId_key`(`userId`, `variantId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -397,7 +407,7 @@ CREATE TABLE `orders` (
     `paymentMethod` VARCHAR(191) NOT NULL,
     `transactionId` VARCHAR(191) NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
-    `paymentResponse` LONGTEXT NULL,
+    `paymentResponse` JSON NULL,
     `addressId` INTEGER NULL,
     `firstName` VARCHAR(191) NOT NULL,
     `lastName` VARCHAR(191) NULL,
@@ -430,9 +440,6 @@ CREATE TABLE `orders` (
     `updatedAt` DATETIME(3) NOT NULL,
 
     INDEX `orders_userId_idx`(`userId`),
-    INDEX `orders_affiliateId_fkey`(`affiliateId`),
-    INDEX `orders_ambassadorId_fkey`(`ambassadorId`),
-    INDEX `orders_couponId_fkey`(`couponId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -465,18 +472,13 @@ CREATE TABLE `orders_item` (
     `ambassadorPaid` BOOLEAN NOT NULL DEFAULT false,
     `returnStatus` VARCHAR(191) NULL,
     `refundedAmount` DOUBLE NULL,
+    `externalOrderId` VARCHAR(191) NULL,
     `affiliateEarning` DOUBLE NULL,
     `affiliateCommissionAdjusted` BOOLEAN NOT NULL DEFAULT false,
     `ambassadorCommissionAdjusted` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `externalOrderId` VARCHAR(191) NULL,
 
-    INDEX `orders_item_ambassadorId_fkey`(`ambassadorId`),
-    INDEX `orders_item_orderId_fkey`(`orderId`),
-    INDEX `orders_item_productId_fkey`(`productId`),
-    INDEX `orders_item_sellerId_fkey`(`sellerId`),
-    INDEX `orders_item_variantId_fkey`(`variantId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -485,20 +487,16 @@ CREATE TABLE `review` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `rating` INTEGER NOT NULL,
     `comment` LONGTEXT NOT NULL,
+    `image` VARCHAR(191) NULL,
+    `video` VARCHAR(191) NULL,
+    `isPinned` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `productId` INTEGER NOT NULL,
     `variantId` INTEGER NULL,
     `userId` INTEGER NOT NULL,
     `orderItemId` INTEGER NULL,
-    `image` VARCHAR(191) NULL,
-    `isPinned` BOOLEAN NOT NULL DEFAULT false,
-    `video` VARCHAR(191) NULL,
 
-    INDEX `review_orderItemId_fkey`(`orderItemId`),
-    INDEX `review_productId_fkey`(`productId`),
-    INDEX `review_userId_fkey`(`userId`),
-    INDEX `review_variantId_fkey`(`variantId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -508,14 +506,13 @@ CREATE TABLE `menus` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
     `type` VARCHAR(191) NOT NULL,
-    `images` LONGTEXT NULL,
+    `images` JSON NULL,
     `position` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `blogCategoryId` INTEGER NULL,
 
     UNIQUE INDEX `menus_slug_key`(`slug`),
-    INDEX `menus_blogCategoryId_fkey`(`blogCategoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -543,7 +540,6 @@ CREATE TABLE `product_relations` (
     `sortOrder` INTEGER NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `product_relations_childId_fkey`(`childId`),
     UNIQUE INDEX `product_relations_parentId_childId_relationType_key`(`parentId`, `childId`, `relationType`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -559,7 +555,6 @@ CREATE TABLE `notifications` (
     `status` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `notifications_userId_fkey`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -585,7 +580,6 @@ CREATE TABLE `faqs` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    INDEX `faqs_categoryId_fkey`(`categoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -619,6 +613,22 @@ CREATE TABLE `affiliate` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Payout` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `affiliateId` INTEGER NOT NULL,
+    `amount` DOUBLE NOT NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
+    `paymentMethod` VARCHAR(191) NULL,
+    `paymentRef` VARCHAR(191) NULL,
+    `invoiceUrl` VARCHAR(191) NULL,
+    `periodLabel` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `paidAt` DATETIME(3) NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `coupon` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(191) NOT NULL,
@@ -637,8 +647,6 @@ CREATE TABLE `coupon` (
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `coupon_code_key`(`code`),
-    INDEX `coupon_affiliateId_fkey`(`affiliateId`),
-    INDEX `coupon_creatorId_fkey`(`creatorId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -657,17 +665,16 @@ CREATE TABLE `affiliate_invoice` (
     `deductionAmount` DOUBLE NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `affiliate_invoice_affiliateId_fkey`(`affiliateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `homepage_settings` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `heroSlides` LONGTEXT NULL,
-    `shopByCategory` LONGTEXT NULL,
+    `heroSlides` JSON NULL,
+    `shopByCategory` JSON NULL,
     `midBanner` VARCHAR(191) NULL,
-    `signatureProducts` LONGTEXT NULL,
+    `signatureProducts` JSON NULL,
     `headerText` LONGTEXT NULL,
     `affiliateCommission` INTEGER NULL,
     `ambassadorCommission` INTEGER NULL,
@@ -697,7 +704,7 @@ CREATE TABLE `return_requests` (
     `orderItemId` INTEGER NOT NULL,
     `reasonId` INTEGER NOT NULL,
     `note` LONGTEXT NULL,
-    `images` LONGTEXT NULL,
+    `images` JSON NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
     `adminNote` LONGTEXT NULL,
     `refundAmount` DOUBLE NULL,
@@ -705,10 +712,6 @@ CREATE TABLE `return_requests` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    INDEX `return_requests_orderId_fkey`(`orderId`),
-    INDEX `return_requests_orderItemId_fkey`(`orderItemId`),
-    INDEX `return_requests_reasonId_fkey`(`reasonId`),
-    INDEX `return_requests_userId_fkey`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -774,7 +777,6 @@ CREATE TABLE `ambassador_invoice` (
     `deductionAmount` DOUBLE NULL DEFAULT 0,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `ambassador_invoice_ambassadorId_fkey`(`ambassadorId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -819,44 +821,6 @@ CREATE TABLE `affiliate_bank_accounts` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateTable
-CREATE TABLE `payout` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `affiliateId` INTEGER NOT NULL,
-    `amount` DOUBLE NOT NULL,
-    `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
-    `paymentMethod` VARCHAR(191) NULL,
-    `paymentRef` VARCHAR(191) NULL,
-    `invoiceUrl` VARCHAR(191) NULL,
-    `periodLabel` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `paidAt` DATETIME(3) NULL,
-
-    INDEX `Payout_affiliateId_fkey`(`affiliateId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `platformsettings` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `defaultCommissionValue` DOUBLE NOT NULL DEFAULT 5,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `subcategorycommission` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `subcategoryId` INTEGER NOT NULL,
-    `commission` DOUBLE NOT NULL,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
-
-    UNIQUE INDEX `SubcategoryCommission_subcategoryId_key`(`subcategoryId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 -- AddForeignKey
 ALTER TABLE `users` ADD CONSTRAINT `users_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `roles`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -871,6 +835,9 @@ ALTER TABLE `seller_payouts` ADD CONSTRAINT `seller_payouts_sellerId_fkey` FOREI
 
 -- AddForeignKey
 ALTER TABLE `category_commissions` ADD CONSTRAINT `category_commissions_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SubcategoryCommission` ADD CONSTRAINT `SubcategoryCommission_subcategoryId_fkey` FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `categories` ADD CONSTRAINT `categories_submenuId_fkey` FOREIGN KEY (`submenuId`) REFERENCES `submenus`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -894,13 +861,13 @@ ALTER TABLE `products` ADD CONSTRAINT `Products_categoryId_fkey` FOREIGN KEY (`c
 ALTER TABLE `products` ADD CONSTRAINT `Products_subcategoryId_fkey` FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `products` ADD CONSTRAINT `products_ambassadorId_fkey` FOREIGN KEY (`ambassadorId`) REFERENCES `affiliate`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `products` ADD CONSTRAINT `products_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `products` ADD CONSTRAINT `products_materialCareId_fkey` FOREIGN KEY (`materialCareId`) REFERENCES `material_care`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `products` ADD CONSTRAINT `products_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `products` ADD CONSTRAINT `products_ambassadorId_fkey` FOREIGN KEY (`ambassadorId`) REFERENCES `affiliate`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `productvariant` ADD CONSTRAINT `ProductVariant_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -912,43 +879,43 @@ ALTER TABLE `productvariant` ADD CONSTRAINT `productvariant_colorId_fkey` FOREIG
 ALTER TABLE `productvariant` ADD CONSTRAINT `productvariant_sizeId_fkey` FOREIGN KEY (`sizeId`) REFERENCES `sizes`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `variant_images` ADD CONSTRAINT `variant_images_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `variant_images` ADD CONSTRAINT `variant_images_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `variant_images` ADD CONSTRAINT `variant_images_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `variant_images` ADD CONSTRAINT `variant_images_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `addresses` ADD CONSTRAINT `addresses_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `wishlist` ADD CONSTRAINT `wishlist_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `wishlist` ADD CONSTRAINT `wishlist_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `carts` ADD CONSTRAINT `carts_colorId_fkey` FOREIGN KEY (`colorId`) REFERENCES `colors`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `carts` ADD CONSTRAINT `carts_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `carts` ADD CONSTRAINT `carts_sizeId_fkey` FOREIGN KEY (`sizeId`) REFERENCES `sizes`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `wishlist` ADD CONSTRAINT `wishlist_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `carts` ADD CONSTRAINT `carts_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `carts` ADD CONSTRAINT `carts_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `carts` ADD CONSTRAINT `carts_colorId_fkey` FOREIGN KEY (`colorId`) REFERENCES `colors`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `carts` ADD CONSTRAINT `carts_sizeId_fkey` FOREIGN KEY (`sizeId`) REFERENCES `sizes`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `carts` ADD CONSTRAINT `carts_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `orders` ADD CONSTRAINT `orders_couponId_fkey` FOREIGN KEY (`couponId`) REFERENCES `coupon`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `orders` ADD CONSTRAINT `orders_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `orders` ADD CONSTRAINT `orders_ambassadorId_fkey` FOREIGN KEY (`ambassadorId`) REFERENCES `affiliate`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `orders` ADD CONSTRAINT `orders_couponId_fkey` FOREIGN KEY (`couponId`) REFERENCES `coupon`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `orders` ADD CONSTRAINT `orders_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -963,22 +930,22 @@ ALTER TABLE `orders_item` ADD CONSTRAINT `orders_item_orderId_fkey` FOREIGN KEY 
 ALTER TABLE `orders_item` ADD CONSTRAINT `orders_item_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `orders_item` ADD CONSTRAINT `orders_item_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `orders_item` ADD CONSTRAINT `orders_item_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `review` ADD CONSTRAINT `review_orderItemId_fkey` FOREIGN KEY (`orderItemId`) REFERENCES `orders_item`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `orders_item` ADD CONSTRAINT `orders_item_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `review` ADD CONSTRAINT `review_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `review` ADD CONSTRAINT `review_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `review` ADD CONSTRAINT `review_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `review` ADD CONSTRAINT `review_variantId_fkey` FOREIGN KEY (`variantId`) REFERENCES `productvariant`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `review` ADD CONSTRAINT `review_orderItemId_fkey` FOREIGN KEY (`orderItemId`) REFERENCES `orders_item`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `menus` ADD CONSTRAINT `menus_blogCategoryId_fkey` FOREIGN KEY (`blogCategoryId`) REFERENCES `blog_categories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -987,10 +954,10 @@ ALTER TABLE `menus` ADD CONSTRAINT `menus_blogCategoryId_fkey` FOREIGN KEY (`blo
 ALTER TABLE `submenus` ADD CONSTRAINT `submenus_menuId_fkey` FOREIGN KEY (`menuId`) REFERENCES `menus`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `product_relations` ADD CONSTRAINT `product_relations_childId_fkey` FOREIGN KEY (`childId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `product_relations` ADD CONSTRAINT `product_relations_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `product_relations` ADD CONSTRAINT `product_relations_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `product_relations` ADD CONSTRAINT `product_relations_childId_fkey` FOREIGN KEY (`childId`) REFERENCES `products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `notifications` ADD CONSTRAINT `notifications_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1002,6 +969,9 @@ ALTER TABLE `faqs` ADD CONSTRAINT `faqs_categoryId_fkey` FOREIGN KEY (`categoryI
 ALTER TABLE `affiliate` ADD CONSTRAINT `affiliate_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Payout` ADD CONSTRAINT `Payout_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `coupon` ADD CONSTRAINT `coupon_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1009,6 +979,9 @@ ALTER TABLE `coupon` ADD CONSTRAINT `coupon_creatorId_fkey` FOREIGN KEY (`creato
 
 -- AddForeignKey
 ALTER TABLE `affiliate_invoice` ADD CONSTRAINT `affiliate_invoice_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `return_requests` ADD CONSTRAINT `return_requests_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `return_requests` ADD CONSTRAINT `return_requests_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `orders`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1020,9 +993,6 @@ ALTER TABLE `return_requests` ADD CONSTRAINT `return_requests_orderItemId_fkey` 
 ALTER TABLE `return_requests` ADD CONSTRAINT `return_requests_reasonId_fkey` FOREIGN KEY (`reasonId`) REFERENCES `return_reasons`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `return_requests` ADD CONSTRAINT `return_requests_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `charity_donations` ADD CONSTRAINT `charity_donations_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `orders`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1030,10 +1000,4 @@ ALTER TABLE `ambassador_invoice` ADD CONSTRAINT `ambassador_invoice_ambassadorId
 
 -- AddForeignKey
 ALTER TABLE `affiliate_bank_accounts` ADD CONSTRAINT `affiliate_bank_accounts_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `payout` ADD CONSTRAINT `Payout_affiliateId_fkey` FOREIGN KEY (`affiliateId`) REFERENCES `affiliate`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `subcategorycommission` ADD CONSTRAINT `SubcategoryCommission_subcategoryId_fkey` FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
