@@ -139,6 +139,8 @@ model PlatformSettings {
   defaultCommissionValue Float    @default(5)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
+
+  @@map("platform_settings")
 }
 
 model CategoryCommission {
