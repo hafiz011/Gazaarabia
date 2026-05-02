@@ -94,8 +94,8 @@ function ImageUploadField({ value, onChange, folder, token, editing, aspect, pla
 
     const isSquare = aspect === "square";
     const containerClass = isSquare
-        ? "w-full aspect-square max-w-[140px]"
-        : "w-full h-[110px]";
+        ? "w-full aspect-square"
+        : "w-full h-[80px]";
 
     if (!editing) {
         return (
@@ -165,7 +165,6 @@ export default function SellerProfilePage() {
         name: "",
         phone: "",
         shopName: "",
-        shopSlug: "",
         logo: "",
         banner: "",
     });
@@ -183,7 +182,7 @@ export default function SellerProfilePage() {
                         name: data.seller.user.name || "",
                         phone: data.seller.user.phone || "",
                         shopName: data.seller.shopName || "",
-                        shopSlug: data.seller.shopSlug || "",
+                        // shopSlug: data.seller.shopSlug || "",
                         logo: data.seller.logo || "",
                         banner: data.seller.banner || "",
                     });
@@ -220,7 +219,6 @@ export default function SellerProfilePage() {
             name: profile.seller.user.name || "",
             phone: profile.seller.user.phone || "",
             shopName: profile.seller.shopName || "",
-            shopSlug: profile.seller.shopSlug || "",
             logo: profile.seller.logo || "",
             banner: profile.seller.banner || "",
         });
@@ -286,28 +284,97 @@ export default function SellerProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* LEFT: Store Card */}
                 <div className="lg:col-span-1 space-y-6">
-                    {/* Store Banner + Logo */}
+                    {/* Store Banner + Logo - Social Media Style */}
                     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="relative h-32 bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden">
-                            {seller.banner && (
-                                <img src={seller.banner} alt="Banner" className="w-full h-full object-cover opacity-70" />
-                            )}
-                            {editing && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                                    <Camera size={24} className="text-white" />
+                        {/* Banner Section - Upload Zone */}
+                        {editing ? (
+                            <label className="relative block h-40 bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden group cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="sr-only"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file && file.type.startsWith("image/")) {
+                                            const formData = new FormData();
+                                            formData.append("file", file);
+                                            fetch(`/api/upload?folder=seller-banners`, {
+                                                method: "POST",
+                                                headers: { Authorization: `Bearer ${session?.user?.token || ""}` },
+                                                body: formData,
+                                            })
+                                                .then(res => res.json())
+                                                .then(data => {
+                                                    if (data.url) setForm({ ...form, banner: data.url });
+                                                })
+                                                .catch(err => console.error("Upload failed", err));
+                                        }
+                                    }}
+                                />
+                                {form.banner && (
+                                    <img src={form.banner} alt="Banner" className="w-full h-full object-cover" />
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                    <Camera size={32} className="text-white" />
+                                    <span className="text-xs font-bold text-white uppercase tracking-widest">Update Cover</span>
                                 </div>
-                            )}
-                        </div>
-                        <div className="px-6 pb-6 -mt-8">
-                            <div className="relative w-16 h-16 rounded-2xl bg-white border-4 border-white shadow-lg overflow-hidden mb-4">
-                                {seller.logo ? (
-                                    <img src={seller.logo} alt="Logo" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-2xl font-black text-blue-600">
-                                        {(seller.shopName || seller.user.name || "S").charAt(0)}
-                                    </div>
+                            </label>
+                        ) : (
+                            <div className="relative h-40 bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden">
+                                {form.banner && (
+                                    <img src={form.banner} alt="Banner" className="w-full h-full object-cover" />
                                 )}
                             </div>
+                        )}
+
+                        {/* Logo Section - Overlapped */}
+                        <div className="px-6 pb-6 -mt-12 relative z-10">
+                            {editing ? (
+                                <label className="relative w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-lg overflow-hidden group cursor-pointer inline-block mb-4">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="sr-only"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file && file.type.startsWith("image/")) {
+                                                const formData = new FormData();
+                                                formData.append("file", file);
+                                                fetch(`/api/upload?folder=seller-logos`, {
+                                                    method: "POST",
+                                                    headers: { Authorization: `Bearer ${session?.user?.token || ""}` },
+                                                    body: formData,
+                                                })
+                                                    .then(res => res.json())
+                                                    .then(data => {
+                                                        if (data.url) setForm({ ...form, logo: data.url });
+                                                    })
+                                                    .catch(err => console.error("Upload failed", err));
+                                            }
+                                        }}
+                                    />
+                                    {form.logo ? (
+                                        <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-3xl font-black text-blue-600">
+                                            {(seller.shopName || seller.user.name || "S").charAt(0)}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Camera size={20} className="text-white" />
+                                    </div>
+                                </label>
+                            ) : (
+                                <div className="relative w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-lg overflow-hidden inline-block mb-4">
+                                    {form.logo ? (
+                                        <img src={form.logo} alt="Logo" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-3xl font-black text-blue-600">
+                                            {(seller.shopName || seller.user.name || "S").charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <h3 className="text-xl font-black text-gray-900">{seller.shopName || seller.user.name}</h3>
                             <p className="text-xs text-gray-400 font-medium mt-1">/{seller.shopSlug || "no-slug"}</p>
 
@@ -397,19 +464,9 @@ export default function SellerProfilePage() {
                                     </p>
                                 )}
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Store Settings */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
-                        <h3 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2">
-                            <Store size={18} className="text-[var(--brand-primary)]" />
-                            Store Settings
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                            <div className="flex flex-col gap-1.5">
                             {[
                                 { key: "shopName", label: "Shop Name", placeholder: "My Awesome Store" },
-                                { key: "shopSlug", label: "Shop Slug (URL)", placeholder: "my-awesome-store" },
                             ].map((field) => (
                                 <div key={field.key} className="flex flex-col gap-1.5">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{field.label}</label>
@@ -428,37 +485,9 @@ export default function SellerProfilePage() {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Image Upload: Logo & Banner */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Logo Upload */}
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Store Logo</label>
-                                <ImageUploadField
-                                    value={form.logo}
-                                    onChange={(url) => setForm({ ...form, logo: url })}
-                                    folder="seller-logos"
-                                    token={session?.user?.token || ""}
-                                    editing={editing}
-                                    aspect="square"
-                                    placeholder="Upload Logo"
-                                />
-                            </div>
-                            {/* Banner Upload */}
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Store Banner</label>
-                                <ImageUploadField
-                                    value={form.banner}
-                                    onChange={(url) => setForm({ ...form, banner: url })}
-                                    folder="seller-banners"
-                                    token={session?.user?.token || ""}
-                                    editing={editing}
-                                    aspect="banner"
-                                    placeholder="Upload Banner"
-                                />
-                            </div>
-                        </div>
                     </div>
+
+
 
                     {/* Payout Config (Read-only) */}
                     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
@@ -475,7 +504,7 @@ export default function SellerProfilePage() {
                                 <div key={i} className="bg-gray-50 rounded-2xl px-5 py-4 border border-gray-100">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
                                     <p className="text-xl font-black text-gray-900 mt-2">{item.value}</p>
-                                    <p className="text-[10px] text-gray-400 mt-1">Admin-controlled</p>
+                                    {/* <p className="text-[10px] text-gray-400 mt-1">Admin-controlled</p> */}
                                 </div>
                             ))}
                         </div>
@@ -483,5 +512,6 @@ export default function SellerProfilePage() {
                 </div>
             </div>
         </div>
+    </div>
     );
 }

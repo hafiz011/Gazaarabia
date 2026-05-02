@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import crypto from 'crypto';
+
 
 const prisma = new PrismaClient();
 
@@ -116,12 +118,16 @@ export async function PATCH(req: Request) {
         }
 
         const body = await req.json();
-        const { shopName, shopSlug, logo, banner, name, phone } = body;
+        const { shopName, logo, banner, name, phone } = body;
 
         // Update seller record
         const updateSellerData: any = {};
         if (shopName !== undefined) updateSellerData.shopName = shopName;
-        if (shopSlug !== undefined) updateSellerData.shopSlug = shopSlug;
+        // Auto-generate unique slug from shopName if shopName is provided
+        if (shopName !== undefined) {
+            const slug = `${shopName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")}-${crypto.randomUUID().split("-")[0]}`;
+            updateSellerData.shopSlug = slug;
+        }
         if (logo !== undefined) updateSellerData.logo = logo;
         if (banner !== undefined) updateSellerData.banner = banner;
 
