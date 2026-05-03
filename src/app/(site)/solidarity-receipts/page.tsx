@@ -59,7 +59,7 @@ export default function PublicSolidarityReceiptsPage() {
     useEffect(() => {
         paginate(allReceipts, currentPage);
 
-        router.replace(`?page=${currentPage}`, undefined, { scroll: false });
+        router.replace(`?page=${currentPage}`, { scroll: false });
     }, [currentPage, allReceipts]);
 
     const paginate = (list: any[], page: number) => {
