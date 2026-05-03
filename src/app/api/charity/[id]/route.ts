@@ -20,8 +20,9 @@ export async function GET(req: NextRequest, { params }: any) {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     try {
+        const resolvedParams = await params;
         const donation = await prisma.charityDonations.findUnique({
-            where: { id: Number(params.id) },
+            where: { id: Number(resolvedParams.id) },
             include: {
                 order: {
                     include: {
