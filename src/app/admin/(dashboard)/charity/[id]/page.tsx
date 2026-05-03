@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import { GBP } from "@/lib/utils";
 
-export default function CharityDetailPage({ params }: any) {
+interface Params {
+    id: string;
+}
+
+export default function CharityDetailPage({ params }: { params: Promise<Params> }) {
     const { id } = use(params);
     const router = useRouter();
     const { data: session, status } = useSession();

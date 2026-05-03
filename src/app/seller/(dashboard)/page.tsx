@@ -139,11 +139,11 @@ export default function DashboardPage() {
           gradient="from-emerald-600 to-emerald-400"
         />
         <StatsCard
-          title="Avg. Order Value"
-          value={`£${dashboardData.avgOrderValue || 0}`}
-          icon={<TrendingUp size={24} />}
-          trend="-2.4%"
-          trendType="down"
+          title="Avg. Ratings"
+          value={`${dashboardData.avgRating || 0} / 5`}
+          icon={<Star size={24} />}
+          trend="Based on reviews"
+          trendType="up"
           color="bg-violet-500"
           gradient="from-violet-600 to-violet-400"
         />
@@ -363,8 +363,8 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${order.status === 'paid' || order.status === 'delivered'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-amber-50 text-amber-600'
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-amber-50 text-amber-600'
                         }`}>
                         {order.status}
                       </span>

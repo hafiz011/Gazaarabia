@@ -134,8 +134,7 @@ export default function OrdersPage() {
 
     return [
       { label: "Total Orders", value: totalOrders, icon: ShoppingBag, color: "blue", bg: "bg-blue-50", text: "text-blue-600" },
-      { label: "Total Revenue", value: `£${totalRevenue.toFixed(2)}`, icon: TrendingUp, color: "green", bg: "bg-green-50", text: "text-green-600" },
-      { label: "Seller Earnings", value: `£${totalEarnings.toFixed(2)}`, icon: DollarSign, color: "emerald", bg: "bg-emerald-50", text: "text-emerald-600" },
+      { label: "Earnings", value: `£${totalEarnings.toFixed(2)}`, icon: DollarSign, color: "emerald", bg: "bg-emerald-50", text: "text-emerald-600" },
       { label: "Pending Orders", value: pendingOrders, icon: Clock, color: "orange", bg: "bg-orange-50", text: "text-orange-600" },
     ];
   }, [orders]);
@@ -384,27 +383,6 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column: Delivery & Payment */}
             <div className="space-y-8">
-              {/* Payment Details */}
-              <section className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <DollarSign size={14} /> Payment Details
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Method</span>
-                    <span className="text-sm font-bold text-gray-900 bg-white px-3 py-1 rounded-xl shadow-sm uppercase">{order.paymentMethod}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Transaction ID</span>
-                    <span className="text-sm font-mono text-gray-600 max-w-[150px] truncate" title={order.transactionId}>{order.transactionId ?? "N/A"}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Customer Email</span>
-                    <span className="text-sm font-medium text-gray-900">{order.user.email}</span>
-                  </div>
-                </div>
-              </section>
-
               {/* Delivery Address */}
               <section className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -431,44 +409,6 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
 
             {/* Right Column: Order Summary */}
             <div className="space-y-8">
-              {/* Financial Summary */}
-              <section className="bg-slate-900 text-white rounded-[2rem] p-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                  <TrendingUp size={80} />
-                </div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Financial Overview</h3>
-                <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Items Subtotal</span>
-                    <span className="font-medium">{formatGBP(order.itemsTotal)}</span>
-                  </div>
-                  {order.discountTotal > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Total Discounts</span>
-                      <span className="text-rose-400 font-medium">-{formatGBP(order.discountTotal)}</span>
-                    </div>
-                  )}
-                  {order.charityAmount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-emerald-400">Charity Donation</span>
-                      <span className="text-emerald-400 font-medium">+{formatGBP(order.charityAmount)}</span>
-                    </div>
-                  )}
-                  <div className="pt-4 border-t border-slate-800 flex justify-between items-end">
-                    <div>
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Paid</p>
-                      <p className="text-4xl font-black text-white mt-1 leading-none">{formatGBP(order.totalAmount)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Your Earning</p>
-                      <div className="bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-2xl text-lg font-black shadow-lg shadow-[var(--brand-primary)]/20">
-                        {formatGBP(order.orderItems.reduce((acc: any, i: any) => acc + i.sellerEarning * i.quantity, 0))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
               {/* Discounts & Affiliate */}
               {(order.coupon || order.couponDiscount > 0 || order.affiliate) && (
                 <section className="bg-indigo-50/30 rounded-3xl p-6 border border-indigo-100/50">

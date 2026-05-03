@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 
 export async function GET(req: Request) {
-     try {
+    try {
         /* ================= AUTH ================= */
         const token: any = getTokenFromHeader(req);
         const userId = getUserIdFromToken(token);
@@ -31,6 +31,10 @@ export async function GET(req: Request) {
         if (!seller) {
             return NextResponse.json({ message: "Seller profile not found" }, { status: 404 });
         }
+
+
+
+
 
         try {
             const [
@@ -99,11 +103,20 @@ export async function GET(req: Request) {
                 return acc;
             }, {});
 
+            /* ================= AVG RATING ================= */
+            const reviewsRaw = await prisma.review.findMany({
+                where: { product: { sellerId: seller.id } },
+                select: { rating: true }
+            });
+            const avgRating = reviewsRaw.length > 0
+                ? reviewsRaw.reduce((sum, r) => sum + r.rating, 0) / reviewsRaw.length
+                : 0;
+
             /* ================= REVENUE OVER TIME ================= */
             const revenueOverTimeRaw = await prisma.orderItem.findMany({
                 where: {
                     sellerId: seller.id,
-                    order: { status: "paid" }
+                    order: { status: { in: ["paid", "delivered", "completed", "shipped", "succeeded"] } }
                 },
                 select: {
                     createdAt: true,
@@ -139,13 +152,12 @@ export async function GET(req: Request) {
 
             // Calculate total revenue from order items
             const totalRevenue = revenueOverTimeRaw.reduce((sum, item) => sum + item.sellerEarning, 0);
-            const avgOrderValue = ordersCount > 0 ? totalRevenue / ordersCount : 0;
 
             return NextResponse.json({
                 products: productsCount,
                 orders: ordersCount,
                 revenue: totalRevenue,
-                avgOrderValue: Number(avgOrderValue.toFixed(2)),
+                avgRating: Number(avgRating.toFixed(1)),
                 lowStock: lowStockCount,
                 reviews: reviewsCount,
                 recentOrders: recentOrders.map(order => ({
@@ -176,8 +188,8 @@ export async function GET(req: Request) {
         } catch (error) {
             console.error("DASHBOARD API ERROR:", error);
             return NextResponse.json(
-            { error: "Failed to fetch dashboard data" },
-            { status: 500 }
+                { error: "Failed to fetch dashboard data" },
+                { status: 500 }
             );
         }
     } catch (error) {
