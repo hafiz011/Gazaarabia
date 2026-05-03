@@ -24,6 +24,15 @@ export default function PublicSolidarityReceiptsPage() {
     const [zoomImage, setZoomImage] = useState<string | null>(null);
 
     useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setZoomImage(null);
+        };
+
+        if (zoomImage) window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [zoomImage]);
+
+    useEffect(() => {
         fetchReceipts();
     }, []);
 
@@ -50,7 +59,7 @@ export default function PublicSolidarityReceiptsPage() {
     useEffect(() => {
         paginate(allReceipts, currentPage);
 
-        router.push(`?page=${currentPage}`, { scroll: false });
+        router.replace(`?page=${currentPage}`, undefined, { scroll: false });
     }, [currentPage, allReceipts]);
 
     const paginate = (list: any[], page: number) => {
@@ -102,6 +111,9 @@ export default function PublicSolidarityReceiptsPage() {
                             {visibleReceipts.map((item) => (
                                 <div
                                     key={item.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={item.title || "View certificate"}
                                     className={`
                                         bg-white
                                         rounded-xl
@@ -115,11 +127,17 @@ export default function PublicSolidarityReceiptsPage() {
                                         p-4
                                     `}
                                     onClick={() => setZoomImage(item.receiptImage)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            setZoomImage(item.receiptImage);
+                                        }
+                                    }}
                                 >
-                                    <div className="w-full h-72 flex items-center justify-center bg-white">
+                                    <figure className="w-full h-72 flex items-center justify-center bg-white">
                                         <img
                                             src={item.receiptImage}
-                                            alt="Solidarity Certificate"
+                                            alt={item.title || "Solidarity Certificate"}
                                             loading="lazy"
                                             className={`
                                                 max-w-full
@@ -129,7 +147,24 @@ export default function PublicSolidarityReceiptsPage() {
                                                 duration-700
                                             `}
                                         />
+                                    </figure>
+                                    <div className="mt-4 text-center">
+                                        <h2 className="text-lg font-semibold text-[var(--brand-primary)]">
+                                            {item.title || "Certificate"}
+                                        </h2>
+                                        <p className="text-sm text-[var(--text-muted)] mt-1">
+                                            {item.amount && (
+                                                <span className="font-bold">${item.amount.toFixed(2)}</span>
+                                            )}
+                                        </p>
+                                        <p className="text-sm text-[var(--text-secondary)] mt-1">
+                                            {new Date(item.createdAt).toLocaleDateString()}
+                                        </p>
                                     </div>
+                                    <div
+                                        className="mt-2 text-[var(--text-secondary)] leading-relaxed mt-2 line-clamp-3"
+                                        dangerouslySetInnerHTML={{ __html: item.description || "No description provided." }}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -160,21 +195,25 @@ export default function PublicSolidarityReceiptsPage() {
                         p-4
                         animate-fadeIn
                     `}
+                    role="dialog"
+                    aria-modal="true"
                     onClick={() => setZoomImage(null)}
                 >
-                    <img
-                        src={zoomImage}
-                        alt="Zoomed Certificate"
-                        className={`
-                            max-w-[90%]
-                            max-h-[90%]
-                            rounded-xl
-                            shadow-2xl
-                            border
-                            border-gray-300
-                            animate-zoomIn
-                        `}
-                    />
+                    <div onClick={(e) => e.stopPropagation()} className="rounded-xl">
+                        <img
+                            src={zoomImage}
+                            alt="Zoomed Certificate"
+                            className={`
+                                max-w-[90%]
+                                max-h-[90%]
+                                rounded-xl
+                                shadow-2xl
+                                border
+                                border-gray-300
+                                animate-zoomIn
+                            `}
+                        />
+                    </div>
                 </div>
             )}
 

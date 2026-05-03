@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
 import { uploadService } from "@/lib/services/uploadService";
+import RichTextEditor from "@/components/RichTextEditor";
 
 interface PopUpInterfaceLocal {
     isOpen: boolean; type: string; message: string;
@@ -207,8 +208,9 @@ export default function SolidarityReceiptPage() {
                                             </td>
                                             <td className="px-6 py-5">
                                                 <p className="font-semibold text-gray-900">{item.title}</p>
-                                                {item.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{item.description}</p>}
+                                                {item.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-2" dangerouslySetInnerHTML={{ __html: item.description }}></p>}
                                             </td>
+
                                             <td className="px-6 py-5 font-bold text-green-600">£{Number(item.amount).toFixed(2)}</td>
                                             <td className="px-6 py-5 text-right">
                                                 <div className="flex justify-end gap-2">
@@ -239,7 +241,7 @@ export default function SolidarityReceiptPage() {
 
             {/* Add/Edit Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[999]  flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => { setIsModalOpen(false); setFormData({ title: "", description: "", amount: "", receiptImage: "" }); }} />
                     <div className="relative bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
                         <div className="bg-[#1E2A4A] p-6 text-white text-center">
@@ -255,8 +257,7 @@ export default function SolidarityReceiptPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Description</label>
-                                    <textarea value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={3} />
+                                    <RichTextEditor value={formData.description} onChange={(value) => setFormData(p => ({ ...p, description: value }))} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Amount *</label>

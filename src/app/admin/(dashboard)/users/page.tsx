@@ -203,6 +203,7 @@ export default function UserListPage() {
               <option value="admin">Admin</option>
               <option value="content_manager">Content Manager</option>
               <option value="customer">Customer</option>
+              <option value="seller">Seller</option>
             </select>
 
             {/* DATE RANGE */}
