@@ -42,11 +42,11 @@ export async function POST(req: NextRequest) {
       // If variant price is 0, fallback to product price
       let unitPrice = dbVariant.price;
       if (unitPrice === 0) {
-          const dbProduct = await prisma.products.findUnique({
-              where: { id: dbVariant.productId },
-              select: { sellingPrice: true }
-          });
-          unitPrice = dbProduct?.sellingPrice || 0;
+        const dbProduct = await prisma.products.findUnique({
+          where: { id: dbVariant.productId },
+          select: { sellingPrice: true }
+        });
+        unitPrice = dbProduct?.sellingPrice || 0;
       }
 
       calculatedItemsTotal += unitPrice * item.quantity;
@@ -57,38 +57,38 @@ export async function POST(req: NextRequest) {
     let tempFinalDiscountTotal = 0;
     let tempCouponData = null;
     if (coupon?.code) {
-        tempCouponData = await prisma.coupon.findUnique({ where: { code: coupon.code } });
+      tempCouponData = await prisma.coupon.findUnique({ where: { code: coupon.code } });
     }
 
     let tempReferralAffiliate = null;
     let tempReferralAffiliateDiscount = 0;
     if (referral?.affiliateId) {
-        tempReferralAffiliate = await prisma.affiliate.findUnique({ where: { id: referral.affiliateId }, select: { shareCommission: true } });
-        if (tempReferralAffiliate) {
-            tempReferralAffiliateDiscount = (calculatedItemsTotal * tempReferralAffiliate.shareCommission) / 100;
-        }
+      tempReferralAffiliate = await prisma.affiliate.findUnique({ where: { id: referral.affiliateId }, select: { shareCommission: true } });
+      if (tempReferralAffiliate) {
+        tempReferralAffiliateDiscount = (calculatedItemsTotal * tempReferralAffiliate.shareCommission) / 100;
+      }
     }
 
     const tempCouponDiscount = coupon?.discountAmount ?? 0; // We still trust the coupon discount amount from frontend for now, or we could re-calculate it.
     // To be even safer, we should re-calculate coupon discount too, but that depends on coupon type (fixed vs percentage).
-    
+
     if (tempCouponData && tempReferralAffiliate) {
-        tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
+      tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
     } else if (tempCouponData) {
-        tempFinalDiscountTotal = tempCouponDiscount;
+      tempFinalDiscountTotal = tempCouponDiscount;
     } else if (tempReferralAffiliate) {
-        tempFinalDiscountTotal = tempReferralAffiliateDiscount;
+      tempFinalDiscountTotal = tempReferralAffiliateDiscount;
     }
 
     const expectedTotal = calculatedItemsTotal - tempFinalDiscountTotal + (parseFloat(charity?.amount || "0"));
-    
+
     // Check if difference is more than 0.01 (handling floating point issues)
     if (Math.abs(expectedTotal - payment.totalAmount) > 0.01) {
-        console.error(`Price mismatch: Expected ${expectedTotal}, Got ${payment.totalAmount}`);
-        return NextResponse.json(
-            { success: false, message: "Price mismatch detected. Please refresh your cart." },
-            { status: 400 }
-        );
+      console.error(`Price mismatch: Expected ${expectedTotal}, Got ${payment.totalAmount}`);
+      return NextResponse.json(
+        { success: false, message: "Price mismatch detected. Please refresh your cart." },
+        { status: 400 }
+      );
     }
 
     // 1️. Optional: validate coupon again before saving
@@ -380,13 +380,9 @@ export async function POST(req: NextRequest) {
         itemsTotal: payment.itemsTotal,
         subtotal: payment.subtotal,
         paymentMethod: payment.paymentMethod,
-        // transactionId: payment.paypalOrderId,
-        // status: (payment.paymentStatus || "completed").toLowerCase(),
-        // paypalResponse: payment.paypalResponse,
-
         transactionId: payment.transactionId,
 
-        status: (payment.paymentStatus || "completed").toLowerCase(),
+        status: (payment.paymentStatus || "paid").toLowerCase(),
 
         paymentResponse: payment.paymentResponse,
 

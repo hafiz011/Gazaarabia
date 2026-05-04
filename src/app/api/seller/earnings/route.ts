@@ -37,7 +37,7 @@ export async function GET(req: Request) {
         const recentEarnings = await prisma.orderItem.findMany({
             where: {
                 product: { sellerId: seller.id },
-                order: { status: 'paid' } // Only count paid orders
+                order: { status: { in: ['succeeded', 'paid'] } }
             },
             include: {
                 product: {
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
             where: {
                 product: { sellerId: seller.id },
                 order: {
-                    status: 'paid',
+                    status: { in: ['succeeded', 'paid'] },
                     createdAt: { gte: thirtyDaysAgo }
                 }
             },

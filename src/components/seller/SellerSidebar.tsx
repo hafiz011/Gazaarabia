@@ -85,12 +85,12 @@ const links = [
     label: "Finance",
     icon: BadgeDollarSign,
     children: [
-      { href: "/seller/payouts", label: "My Payouts", icon: BadgeDollarSign },
+      // { href: "/seller/payouts", label: "My Payouts", icon: BadgeDollarSign },
       { href: "/seller/earnings", label: "Earnings History", icon: BadgeDollarSign },
     ],
   },
 
-  { href: "/seller/customers", label: "Customers", icon: Users },
+  // { href: "/seller/customers", label: "Customers", icon: Users },
   { href: "/seller/reviews", label: "Customer Reviews", icon: Star },
 
   // {

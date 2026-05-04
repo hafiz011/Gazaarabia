@@ -62,10 +62,41 @@ export async function GET(req: Request) {
                                 quantity: true,
                                 price: true,
                                 title: true,
+                                sellerEarning: true,
+                                createdAt: true,
                             }
                         }
                     }
                 }),
+                // prisma.orderItem.findMany({
+                //     where: {
+                //         sellerId: seller.id,
+                //         order: { status: { in: ['succeeded', 'paid'] } }
+                //     },
+                //     orderBy: { order: { createdAt: "desc" } },
+                //     take: 5,
+                //     select: {
+                //         id: true,
+                //         order: {
+                //             select: {
+                //                 id: true,
+                //                 createdAt: true,
+                //                 status: true,
+                //                 firstName: true,
+                //                 lastName: true,
+                //                 totalAmount: true,
+                //             }
+                //         },
+                //         product: {
+                //             select: {
+                //                 title: true,
+                //                 sellingPrice: true,
+                //             }
+                //         },
+                //         quantity: true,
+                //     }
+                // }),
+
                 prisma.products.findMany({
                     where: { sellerId: seller.id },
                     orderBy: { orderItems: { _count: "desc" } },
@@ -116,7 +147,7 @@ export async function GET(req: Request) {
             const revenueOverTimeRaw = await prisma.orderItem.findMany({
                 where: {
                     sellerId: seller.id,
-                    order: { status: { in: ["paid", "delivered", "completed", "shipped", "succeeded"] } }
+                    order: { status: { in: ["succeeded", "paid"] } }
                 },
                 select: {
                     createdAt: true,
@@ -162,7 +193,7 @@ export async function GET(req: Request) {
                 reviews: reviewsCount,
                 recentOrders: recentOrders.map(order => ({
                     id: order.id,
-                    total: order.totalAmount,
+                    total: order.orderItems.reduce((sum, item) => sum + item.sellerEarning, 0),
                     status: order.status,
                     createdAt: order.createdAt,
                     customer: order.firstName + " " + order.lastName,
