@@ -5,6 +5,7 @@ import { Search, Eye } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 import { returnRequestSellerService } from "@/lib/services/seller/returnRequestService";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import { PopUpInterface } from "@/lib/types";
 
 export default function ReturnRequestListPage() {
     const [requests, setRequests] = useState<any[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -39,13 +41,16 @@ export default function ReturnRequestListPage() {
     //  Fetch Requests
     useEffect(() => {
         if (token) fetchRequests();
-    }, [token]);
+    }, [token, currentPage, pageSize]);
 
     const fetchRequests = async () => {
         try {
             setLoading(true);
-            const res = await returnRequestSellerService.getAll(token!);
-            if (res.success) setRequests(res.data);
+            const res = await returnRequestSellerService.getAll(token!, currentPage, pageSize);
+            if (res.success) {
+                setRequests(res.data);
+                setTotalCount(res.total || 0);
+            }
         } catch {
             setPopUpAlertData({
                 isOpen: true,
@@ -58,19 +63,20 @@ export default function ReturnRequestListPage() {
         }
     };
 
-    //  Filter Rows
+    //  Filter Rows (Still useful for simple search, but ideally move to server)
     const filtered = useMemo(() => {
+        if (!searchTerm) return requests;
         return requests.filter((r) =>
             r.orderItem.product.title.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [requests, searchTerm]);
 
     //  Pagination Calculations
-    const totalPages = Math.ceil(filtered.length / pageSize);
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const paginated = filtered; // Data is already paginated from server
     const startIndex = (currentPage - 1) * pageSize;
-    const paginated = filtered.slice(startIndex, startIndex + pageSize);
 
-    if (status === "loading" || loading) return <Loader />;
+    if (status === "loading" || loading) return <SellerLoader />;
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
@@ -154,7 +160,7 @@ export default function ReturnRequestListPage() {
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    totalItems={filtered.length}
+                    totalItems={totalCount}
                     pageSize={pageSize}
                     onPageChange={setCurrentPage}
                     onPageSizeChange={setPageSize}

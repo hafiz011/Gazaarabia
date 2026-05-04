@@ -26,6 +26,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { earningService } from "@/lib/services/seller/earningService";
 import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 import { ROUTES } from "@/constants/routes";
 
 interface EarningItem {
@@ -76,7 +77,7 @@ export default function EarningPage() {
         }).format(amount);
     };
 
-    if (loading) return <Loader />;
+    if (loading) return <SellerLoader />;
 
     return (
         <div className="space-y-8 pb-10">
@@ -135,7 +136,7 @@ export default function EarningPage() {
                     </div>
                 </div>
                 <div className="h-[350px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <AreaChart data={data?.chartData || []}>
                             <defs>
                                 <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">

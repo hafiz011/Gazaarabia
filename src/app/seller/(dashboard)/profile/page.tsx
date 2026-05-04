@@ -26,6 +26,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { profileService } from "@/lib/services/seller/profileService";
 import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 import { ROUTES } from "@/constants/routes";
 
 interface SellerProfile {
@@ -228,7 +229,7 @@ export default function SellerProfilePage() {
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
-    if (loading) return <Loader />;
+    if (loading) return <SellerLoader />;
     if (!profile) return null;
 
     const { seller, stats } = profile;
@@ -465,53 +466,53 @@ export default function SellerProfilePage() {
                                 )}
                             </div>
                             <div className="flex flex-col gap-1.5">
-                            {[
-                                { key: "shopName", label: "Shop Name", placeholder: "My Awesome Store" },
-                            ].map((field) => (
-                                <div key={field.key} className="flex flex-col gap-1.5">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{field.label}</label>
-                                    {editing ? (
-                                        <input
-                                            value={(form as any)[field.key]}
-                                            onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                                            placeholder={field.placeholder}
-                                            className="border border-gray-200 rounded-2xl px-5 py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
-                                        />
-                                    ) : (
-                                        <p className="text-sm font-bold text-gray-900 bg-gray-50 px-5 py-3.5 rounded-2xl truncate">
-                                            {(seller as any)[field.key] || <span className="text-gray-300 font-medium">Not set</span>}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
+                                {[
+                                    { key: "shopName", label: "Shop Name", placeholder: "My Awesome Store" },
+                                ].map((field) => (
+                                    <div key={field.key} className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{field.label}</label>
+                                        {editing ? (
+                                            <input
+                                                value={(form as any)[field.key]}
+                                                onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                                                placeholder={field.placeholder}
+                                                className="border border-gray-200 rounded-2xl px-5 py-3.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
+                                            />
+                                        ) : (
+                                            <p className="text-sm font-bold text-gray-900 bg-gray-50 px-5 py-3.5 rounded-2xl truncate">
+                                                {(seller as any)[field.key] || <span className="text-gray-300 font-medium">Not set</span>}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
 
 
-                    {/* Payout Config (Read-only) */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
-                        <h3 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2">
-                            <DollarSign size={18} className="text-[var(--brand-primary)]" />
-                            Payout Configuration
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            {[
-                                { label: "Commission Rate", value: `${seller.commissionValue}%` },
-                                { label: "Payout Period", value: `${seller.payoutDays} days` },
-                                { label: "Minimum Payout", value: formatCurrency(seller.minimumPayout) },
-                            ].map((item, i) => (
-                                <div key={i} className="bg-gray-50 rounded-2xl px-5 py-4 border border-gray-100">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
-                                    <p className="text-xl font-black text-gray-900 mt-2">{item.value}</p>
-                                    {/* <p className="text-[10px] text-gray-400 mt-1">Admin-controlled</p> */}
-                                </div>
-                            ))}
+                        {/* Payout Config (Read-only) */}
+                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
+                            <h3 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2">
+                                <DollarSign size={18} className="text-[var(--brand-primary)]" />
+                                Payout Configuration
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {[
+                                    { label: "Commission Rate", value: `${seller.commissionValue}%` },
+                                    { label: "Payout Period", value: `${seller.payoutDays} days` },
+                                    { label: "Minimum Payout", value: formatCurrency(seller.minimumPayout) },
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-gray-50 rounded-2xl px-5 py-4 border border-gray-100">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
+                                        <p className="text-xl font-black text-gray-900 mt-2">{item.value}</p>
+                                        {/* <p className="text-[10px] text-gray-400 mt-1">Admin-controlled</p> */}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     );
 }

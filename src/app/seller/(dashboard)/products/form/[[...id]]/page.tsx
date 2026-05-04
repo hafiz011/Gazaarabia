@@ -355,7 +355,7 @@ function ProductFormContent() {
     if (!searchQuery.trim()) return;
     try {
       setIsSearching(true);
-      const res = await productService.getAll(token, searchQuery);
+      const res = await productService.getAll(token, { search: searchQuery });
       const products = res.data ?? [];
       setSearchResults(products.filter((p: any) => p.id !== Number(id)));
     } catch {

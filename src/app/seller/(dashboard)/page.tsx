@@ -19,6 +19,8 @@ import {
   Truck
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 import { ROUTES } from "@/constants/routes";
 import { dashboardService } from "@/lib/services/seller/dashboardService";
 import {
@@ -60,34 +62,37 @@ export default function DashboardPage() {
     )
     : [];
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") router.replace(ROUTES.SELLER.LOGIN);
-    else if (status === "authenticated" && session?.user?.role !== "seller") {
-      router.push(ROUTES.HOME);
-    }
-  }, [status, session, router]);
+  const [isFetched, setIsFetched] = useState(false);
 
   useEffect(() => {
-    if (!session?.user?.token) return;
-    (async () => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace(ROUTES.SELLER.LOGIN);
+    } else if (status === "authenticated" && session?.user?.role !== "seller") {
+      router.push(ROUTES.HOME);
+    }
+  }, [status, session?.user?.role, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.token || isFetched) return;
+    
+    const fetchData = async () => {
       try {
         const data = await dashboardService.getDashboard(session.user.token);
         setDashboardData(data);
+        setIsFetched(true);
       } catch (err) {
         console.error("Dashboard load error:", err);
       } finally {
         setLoading(false);
       }
-    })();
-  }, [session]);
+    };
+
+    fetchData();
+  }, [status, session?.user?.token, isFetched]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--brand-primary)]"></div>
-      </div>
-    );
+    return <SellerLoader />;
   }
 
   if (!dashboardData) {
@@ -252,7 +257,7 @@ export default function DashboardPage() {
             </select>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={revenueChartData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -299,7 +304,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={ordersChartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis

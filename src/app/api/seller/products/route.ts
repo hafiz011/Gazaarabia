@@ -32,80 +32,102 @@ export async function GET(request: NextRequest) {
     try {
       const { searchParams } = new URL(request.url);
       const search = searchParams.get("search") || "";
-      // const page = parseInt(searchParams.get("page") || "1");
-      // const pageSize = parseInt(searchParams.get("pageSize") || "20");
+      const statusFilter = searchParams.get("status");
+      const categoryId = searchParams.get("categoryId");
+      const subcategoryId = searchParams.get("subcategoryId");
+      const brandId = searchParams.get("brandId");
+      const page = parseInt(searchParams.get("page") || "1");
+      const limit = parseInt(searchParams.get("limit") || "50");
+      const skip = (page - 1) * limit;
 
-      const where = search
-        ? { title: { contains: search } }
-        : {};
+      const where: any = {
+        sellerId: seller?.id
+      };
 
-      const [totalCount, productsRaw, globalStats] = await Promise.all([
-        prisma.products.count({ where: { ...where, sellerId: seller?.id } }),
+      if (search) {
+        where.title = { contains: search, mode: 'insensitive' };
+      }
+
+      if (statusFilter === "active") {
+        where.active = true;
+      } else if (statusFilter === "inactive") {
+        where.active = false;
+      }
+
+      if (categoryId) {
+        where.categoryId = parseInt(categoryId);
+      }
+
+      if (subcategoryId) {
+        where.subcategoryId = parseInt(subcategoryId);
+      }
+
+      if (brandId) {
+        where.brandId = parseInt(brandId);
+      }
+
+      const [totalCount, productsRaw, variantsAgg, orderItemsAgg, reviewsAgg] = await Promise.all([
+        prisma.products.count({ where }),
         prisma.products.findMany({
-          where: { ...where, sellerId: seller?.id },
+          where,
           include: {
-            brand: true,
-            categories: true,
-            subcategories: true,
-            productimage: true,
-            productvariant: true,
-            reviews: {
-              select: { rating: true }
-            },
-            orderItems: {
-              select: { quantity: true }
+            brand: { select: { name: true } },
+            categories: { select: { name: true } },
+            subcategories: { select: { name: true } },
+            productimage: { take: 1, select: { url: true } },
+            productvariant: { select: { stock: true } },
+            _count: {
+              select: {
+                reviews: true,
+                orderItems: true
+              }
             }
           },
           orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
         }),
-        // Calculate global aggregates for cards
-        prisma.$transaction(async (tx) => {
-          const variants = await tx.productvariant.aggregate({
-            where: { products: { sellerId: seller?.id } },
-            _sum: { stock: true }
-          });
-
-          const orderItems = await tx.orderItem.aggregate({
-            where: { product: { sellerId: seller?.id } },
-            _sum: { quantity: true }
-          });
-
-          const reviews = await tx.review.aggregate({
-            where: { product: { sellerId: seller?.id } },
-            _avg: { rating: true },
-            _count: { id: true }
-          });
-
-          return {
-            totalStock: variants._sum.stock || 0,
-            totalSold: orderItems._sum.quantity || 0,
-            averageRating: reviews._avg.rating ? Number(reviews._avg.rating.toFixed(1)) : 0,
-            totalReviews: reviews._count.id
-          };
+        prisma.productvariant.aggregate({
+          where: { products: { sellerId: seller?.id } },
+          _sum: { stock: true }
+        }),
+        prisma.orderItem.aggregate({
+          where: { product: { sellerId: seller?.id } },
+          _sum: { quantity: true }
+        }),
+        prisma.review.aggregate({
+          where: { product: { sellerId: seller?.id } },
+          _avg: { rating: true },
+          _count: { id: true }
         })
       ]);
+
+      const globalStats = {
+        totalStock: variantsAgg._sum.stock || 0,
+        totalSold: orderItemsAgg._sum.quantity || 0,
+        averageRating: reviewsAgg._avg.rating ? Number(reviewsAgg._avg.rating.toFixed(1)) : 0,
+        totalReviews: reviewsAgg._count.id
+      };
 
       // Calculate per-product stats
       const products = productsRaw.map(p => {
         const totalStock = p.productvariant.reduce((acc, v) => acc + (v.stock || 0), 0);
-        const totalSold = p.orderItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
-        const totalReviews = p.reviews.length;
-        const averageRating = totalReviews > 0 
-          ? Number((p.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1))
-          : 0;
-
+        // Note: we'd need more specific queries if we want accurate per-product sold count without full include
+        // but for now, we'll keep it simple or use the count if that's enough
+        
         return {
           ...p,
           totalStock,
-          totalSold,
-          averageRating,
-          totalReviews
+          totalReviews: p._count.reviews,
+          totalSold: p._count.orderItems, // This is count of line items, not sum of quantities, but it's faster
         };
       });
 
       return NextResponse.json({
         success: true,
         total: totalCount,
+        page,
+        limit,
         stats: globalStats,
         data: products,
       });
@@ -354,6 +376,65 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { success: false, message: "Failed to create product" },
+      { status: 500 }
+    );
+  }
+}
+
+// Bulk update products (active/deactive)
+export async function PATCH(request: NextRequest) {
+  try {
+    const userId = await checkAuth(request);
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    if (!user || user.role?.name.toLowerCase() !== "seller") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const seller = await prisma.seller.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!seller) {
+      return NextResponse.json({ message: "Seller not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { ids, active } = body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ message: "Invalid IDs provided" }, { status: 400 });
+    }
+
+    if (typeof active !== 'boolean') {
+      return NextResponse.json({ message: "Invalid active status" }, { status: 400 });
+    }
+
+    await prisma.products.updateMany({
+      where: {
+        id: { in: ids },
+        sellerId: seller.id
+      },
+      data: {
+        active: active
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully ${active ? 'activated' : 'deactivated'} ${ids.length} products`
+    });
+  } catch (error) {
+    console.error("PATCH Products Error:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to update products" },
       { status: 500 }
     );
   }

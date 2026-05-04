@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 import { orderSellerService } from "@/lib/services/seller/orderSellerService";
 import React from "react";
 
@@ -91,6 +92,7 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,8 +115,9 @@ export default function OrdersPage() {
       try {
         if (isInitial) setInitialLoading(true);
         else setSearchLoading(true);
-        const res = await orderSellerService.getAll(token, debouncedSearch);
+        const res = await orderSellerService.getAll(token, debouncedSearch, currentPage, pageSize);
         setOrders(res.data || []);
+        setTotalCount(res.total || 0);
       } catch (error) {
         console.error("Failed to fetch orders:", error);
       } finally {
@@ -122,7 +125,7 @@ export default function OrdersPage() {
         else setSearchLoading(false);
       }
     })();
-  }, [token, debouncedSearch]);
+  }, [token, debouncedSearch, currentPage, pageSize]);
 
   const stats = useMemo(() => {
     const totalOrders = orders.length;
@@ -139,10 +142,8 @@ export default function OrdersPage() {
     ];
   }, [orders]);
 
-  const filteredOrders = useMemo(() => orders, [orders]);
-  const totalPages = Math.ceil(filteredOrders.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const paginatedOrders = orders; // Already paginated from API
 
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
@@ -162,7 +163,7 @@ export default function OrdersPage() {
   const formatGBP = (amount: number) =>
     new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
-  if (status === "loading" || initialLoading) return <Loader />;
+  if (status === "loading" || initialLoading) return <SellerLoader />;
   if (status === "unauthenticated") {
     router.replace(ROUTES.SELLER.LOGIN);
     return null;
@@ -319,12 +320,12 @@ export default function OrdersPage() {
           </table>
         </div>
 
-        {filteredOrders.length > 0 && (
+        {orders.length > 0 && (
           <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={filteredOrders.length}
+              totalItems={totalCount}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}

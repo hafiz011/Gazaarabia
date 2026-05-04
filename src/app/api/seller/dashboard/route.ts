@@ -37,6 +37,9 @@ export async function GET(req: Request) {
 
 
         try {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
             const [
                 productsCount,
                 ordersCount,
@@ -44,6 +47,10 @@ export async function GET(req: Request) {
                 topProducts,
                 lowStockCount,
                 reviewsCount,
+                ordersOverTimeRaw,
+                reviewsAgg,
+                revenueOverTimeRaw,
+                orderStatusRaw
             ] = await Promise.all([
                 prisma.products.count({ where: { sellerId: seller.id } }),
                 prisma.orders.count({
@@ -68,35 +75,6 @@ export async function GET(req: Request) {
                         }
                     }
                 }),
-                // prisma.orderItem.findMany({
-                //     where: {
-                //         sellerId: seller.id,
-                //         order: { status: { in: ['succeeded', 'paid'] } }
-                //     },
-                //     orderBy: { order: { createdAt: "desc" } },
-                //     take: 5,
-                //     select: {
-                //         id: true,
-                //         order: {
-                //             select: {
-                //                 id: true,
-                //                 createdAt: true,
-                //                 status: true,
-                //                 firstName: true,
-                //                 lastName: true,
-                //                 totalAmount: true,
-                //             }
-                //         },
-                //         product: {
-                //             select: {
-                //                 title: true,
-                //                 sellingPrice: true,
-                //             }
-                //         },
-                //         quantity: true,
-                //     }
-                // }),
-
                 prisma.products.findMany({
                     where: { sellerId: seller.id },
                     orderBy: { orderItems: { _count: "desc" } },
@@ -116,17 +94,44 @@ export async function GET(req: Request) {
                 }),
                 prisma.review.count({
                     where: { product: { sellerId: seller.id } }
+                }),
+                /* ================= ORDERS OVER TIME (Last 30 Days) ================= */
+                prisma.orders.findMany({
+                    where: {
+                        orderItems: { some: { sellerId: seller.id } },
+                        createdAt: { gte: thirtyDaysAgo }
+                    },
+                    select: { createdAt: true },
+                    orderBy: { createdAt: "asc" },
+                }),
+                /* ================= AVG RATING ================= */
+                prisma.review.aggregate({
+                    where: { product: { sellerId: seller.id } },
+                    _avg: { rating: true }
+                }),
+                /* ================= REVENUE OVER TIME (Last 30 Days) ================= */
+                prisma.orderItem.findMany({
+                    where: {
+                        sellerId: seller.id,
+                        order: { 
+                            status: { in: ["succeeded", "paid"] },
+                            createdAt: { gte: thirtyDaysAgo }
+                        }
+                    },
+                    select: {
+                        createdAt: true,
+                        sellerEarning: true,
+                    },
+                    orderBy: { createdAt: "asc" },
+                }),
+                /* ================= ORDER STATUS ================= */
+                prisma.orders.findMany({
+                    where: {
+                        orderItems: { some: { sellerId: seller.id } }
+                    },
+                    select: { status: true },
                 })
             ]);
-
-            /* ================= ORDERS OVER TIME ================= */
-            const ordersOverTimeRaw = await prisma.orders.findMany({
-                where: {
-                    orderItems: { some: { sellerId: seller.id } }
-                },
-                select: { createdAt: true },
-                orderBy: { createdAt: "asc" },
-            });
 
             const ordersOverTime = ordersOverTimeRaw.reduce((acc: any, item) => {
                 const date = item.createdAt.toISOString().split("T")[0];
@@ -134,42 +139,13 @@ export async function GET(req: Request) {
                 return acc;
             }, {});
 
-            /* ================= AVG RATING ================= */
-            const reviewsRaw = await prisma.review.findMany({
-                where: { product: { sellerId: seller.id } },
-                select: { rating: true }
-            });
-            const avgRating = reviewsRaw.length > 0
-                ? reviewsRaw.reduce((sum, r) => sum + r.rating, 0) / reviewsRaw.length
-                : 0;
-
-            /* ================= REVENUE OVER TIME ================= */
-            const revenueOverTimeRaw = await prisma.orderItem.findMany({
-                where: {
-                    sellerId: seller.id,
-                    order: { status: { in: ["succeeded", "paid"] } }
-                },
-                select: {
-                    createdAt: true,
-                    sellerEarning: true,
-                },
-                orderBy: { createdAt: "asc" },
-            });
+            const avgRating = reviewsAgg._avg.rating || 0;
 
             const revenueOverTime = revenueOverTimeRaw.reduce((acc: any, item) => {
                 const date = item.createdAt.toISOString().split("T")[0];
                 acc[date] = (acc[date] || 0) + item.sellerEarning;
                 return acc;
             }, {});
-
-
-            /* ================= ORDER STATUS ================= */
-            const orderStatusRaw = await prisma.orders.findMany({
-                where: {
-                    orderItems: { some: { sellerId: seller.id } }
-                },
-                select: { status: true },
-            });
 
             const orderStatusMap = orderStatusRaw.reduce((acc: any, item) => {
                 acc[item.status] = (acc[item.status] || 0) + 1;

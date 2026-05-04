@@ -18,27 +18,47 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: false, message: "Seller profile not found" }, { status: 404 });
     }
 
-    try {
-        const requests = await prisma.returnRequest.findMany({
-            where: {
-                orderItem: { sellerId: seller.id }
-            },
-            include: {
-                user: { select: { name: true, email: true } },
-                order: { select: { id: true } },
-                orderItem: {
-                    select: {
-                        product: { select: { title: true, productimage: { take: 1 } } },
-                        quantity: true,
-                        price: true,
-                    },
-                },
-                reason: true,
-            },
-            orderBy: { createdAt: "desc" },
-        });
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
-        return NextResponse.json({ success: true, data: requests }, { status: 200 });
+    try {
+        const [requests, total] = await Promise.all([
+            prisma.returnRequest.findMany({
+                where: {
+                    orderItem: { sellerId: seller.id }
+                },
+                include: {
+                    user: { select: { name: true, email: true } },
+                    order: { select: { id: true } },
+                    orderItem: {
+                        select: {
+                            product: { select: { title: true, productimage: { take: 1 } } },
+                            quantity: true,
+                            price: true,
+                        },
+                    },
+                    reason: true,
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.returnRequest.count({
+                where: {
+                    orderItem: { sellerId: seller.id }
+                }
+            })
+        ]);
+
+        return NextResponse.json({ 
+            success: true, 
+            data: requests,
+            total,
+            page,
+            limit
+        }, { status: 200 });
     } catch (err) {
         console.error("GET Return Requests Error:", err);
         return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });

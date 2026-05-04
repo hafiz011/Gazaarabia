@@ -19,6 +19,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { reviewService } from "@/lib/services/seller/reviewService";
+import SellerLoader from "@/components/seller/SellerLoader";
 
 
 interface Review {
@@ -61,8 +62,13 @@ export default function ReviewsPage() {
             (async () => {
                 try {
                     setLoading(true);
-                    const data = await reviewService.getReviews(session.user.token);
-                    setReviews(data || []);
+                    const res = await reviewService.getReviews(session.user.token);
+                    if (res?.success) {
+                        setReviews(res.data || []);
+                    } else {
+                        // Fallback if res is the direct array (old version)
+                        setReviews(Array.isArray(res) ? res : []);
+                    }
                 } catch (err) {
                     console.error("Failed to fetch reviews", err);
                 } finally {
@@ -88,29 +94,25 @@ export default function ReviewsPage() {
         } catch (err) {
             console.error("Failed to toggle pin", err);
             // Revert on error
-            const data = await reviewService.getReviews(session.user.token);
-            setReviews(data || []);
+            const res = await reviewService.getReviews(session.user.token);
+            setReviews(res?.success ? res.data : (Array.isArray(res) ? res : []));
         }
     };
 
-    const averageRating = reviews.length > 0 
-        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+    const averageRating = reviews.length > 0
+        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
         : 0;
 
     const ratingDistribution = [5, 4, 3, 2, 1].map(star => ({
         star,
         count: reviews.filter(r => r.rating === star).length,
-        percentage: reviews.length > 0 
-            ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100 
+        percentage: reviews.length > 0
+            ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100
             : 0
     }));
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--brand-primary)]"></div>
-            </div>
-        );
+        return <SellerLoader />;
     }
 
     return (
@@ -140,10 +142,10 @@ export default function ReviewsPage() {
                             <div className="text-6xl font-black text-gray-900 mb-4">{averageRating}</div>
                             <div className="flex items-center text-yellow-500 mb-2">
                                 {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                        key={i} 
-                                        size={20} 
-                                        fill={i < Math.round(Number(averageRating)) ? "currentColor" : "none"} 
+                                    <Star
+                                        key={i}
+                                        size={20}
+                                        fill={i < Math.round(Number(averageRating)) ? "currentColor" : "none"}
                                         className={i < Math.round(Number(averageRating)) ? "" : "text-gray-200"}
                                     />
                                 ))}
@@ -160,8 +162,8 @@ export default function ReviewsPage() {
                                             {dist.star} <Star size={14} fill="currentColor" className="text-yellow-500" />
                                         </div>
                                         <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-yellow-400 rounded-full transition-all duration-1000" 
+                                            <div
+                                                className="h-full bg-yellow-400 rounded-full transition-all duration-1000"
                                                 style={{ width: `${dist.percentage}%` }}
                                             />
                                         </div>
@@ -205,7 +207,7 @@ export default function ReviewsPage() {
                     <p className="text-gray-500 max-w-md mx-auto mb-8">
                         When customers review your products, they will appear here. Build trust by delivering great products and service!
                     </p>
-                    <button 
+                    <button
                         onClick={() => router.push('/seller/products')}
                         className="bg-[var(--brand-primary)] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition"
                     >
@@ -221,13 +223,12 @@ function ReviewCard({ review, onTogglePin }: { review: Review, onTogglePin: (id:
     return (
         <div className={`bg-white rounded-3xl border ${review.isPinned ? 'border-blue-200 shadow-lg ring-1 ring-blue-50' : 'border-gray-100 shadow-sm'} overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full relative`}>
             {/* Pin Toggle */}
-            <button 
+            <button
                 onClick={() => onTogglePin(review.id, review.isPinned)}
-                className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-20 ${
-                    review.isPinned 
-                    ? 'bg-blue-500 text-white shadow-md rotate-12 scale-110' 
-                    : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 border border-gray-100'
-                }`}
+                className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-20 ${review.isPinned
+                        ? 'bg-blue-500 text-white shadow-md rotate-12 scale-110'
+                        : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 border border-gray-100'
+                    }`}
                 title={review.isPinned ? "Unpin Review" : "Pin Review to Top"}
             >
                 <Pin size={18} fill={review.isPinned ? "currentColor" : "none"} />
@@ -251,10 +252,10 @@ function ReviewCard({ review, onTogglePin }: { review: Review, onTogglePin: (id:
                             </div>
                             <div className="flex items-center text-yellow-500 mt-1">
                                 {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                        key={i} 
-                                        size={14} 
-                                        fill={i < review.rating ? "currentColor" : "none"} 
+                                    <Star
+                                        key={i}
+                                        size={14}
+                                        fill={i < review.rating ? "currentColor" : "none"}
                                         className={i < review.rating ? "mr-0.5" : "text-gray-200 mr-0.5"}
                                     />
                                 ))}
@@ -321,4 +322,4 @@ function ReviewCard({ review, onTogglePin }: { review: Review, onTogglePin: (id:
             </div>
         </div>
     );
-}
+}

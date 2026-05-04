@@ -1,7 +1,7 @@
 export const orderSellerService = {
-    getAll: async (token: string, search?: string) => {
-        let url = `/api/seller/orders`;
-        if (search) url += `?search=${encodeURIComponent(search)}`;
+    getAll: async (token: string, search?: string, page: number = 1, limit: number = 50) => {
+        let url = `/api/seller/orders?page=${page}&limit=${limit}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
 
         const res = await fetch(url, {
             headers: { Authorization: `Bearer ${token}` },

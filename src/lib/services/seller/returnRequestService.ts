@@ -1,7 +1,7 @@
 export const returnRequestSellerService = {
-    getAll: async (token: string) => {
+    getAll: async (token: string, page: number = 1, limit: number = 10) => {
         try {
-            const res = await fetch(`/api/seller/return-requests`, {
+            const res = await fetch(`/api/seller/return-requests?page=${page}&limit=${limit}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

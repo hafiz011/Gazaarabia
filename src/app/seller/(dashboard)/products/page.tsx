@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Pencil, ShoppingBag, Trash2, Search, Plus, Package, CheckCircle, XCircle, AlertCircle, TrendingUp, Tag, MoreVertical, Star } from "lucide-react";
+import { Pencil, ShoppingBag, Trash2, Search, Plus, Package, CheckCircle, XCircle, AlertCircle, TrendingUp, Tag, MoreVertical, Star, Filter, ChevronDown, Check } from "lucide-react";
 import Pagination from "@/components/seller/Pagination";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
@@ -9,6 +9,7 @@ import { productService } from "@/lib/services/seller/productService";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Loader from "@/components/Loader";
+import SellerLoader from "@/components/seller/SellerLoader";
 
 interface Product {
   id: number;
@@ -32,7 +33,9 @@ export default function ProductListPage() {
   const token = session?.user?.token;
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -49,13 +52,49 @@ export default function ProductListPage() {
     totalReviews: 0
   });
 
+  // Bulk Selection & Filtering State
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      setCategories(data.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   const fetchProducts = async () => {
     try {
       if (initialLoading) setLoading(false);
       else setLoading(true);
 
-      const res = await productService.getAll(token!, searchTerm);
+      const res = await productService.getAll(token!, {
+        search: debouncedSearch,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        categoryId: categoryFilter !== "all" ? categoryFilter : undefined,
+        page: currentPage,
+        limit: pageSize,
+      });
       setProducts(res.data || []);
+      setTotalCount(res.total || 0);
       if (res.stats) {
         setApiStats(res.stats);
       }
@@ -68,26 +107,14 @@ export default function ProductListPage() {
   };
 
   useEffect(() => {
-    if (token) fetchProducts();
-  }, [token, searchTerm]);
+    if (token) {
+      fetchProducts();
+      if (categories.length === 0) fetchCategories();
+    }
+  }, [token, debouncedSearch, statusFilter, categoryFilter, currentPage, pageSize]);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) =>
-      (p.title || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [products, searchTerm]);
-
-  // Stats calculation
-  const stats = useMemo(() => {
-    const total = products.length;
-    const active = products.filter(p => p.active).length;
-    const inactive = total - active;
-    return { total, active, inactive };
-  }, [products]);
-
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const paginatedProducts = products; // Already paginated from API
 
   const handleDelete = (id: number) => {
     setPopUpAlertData({
@@ -107,10 +134,52 @@ export default function ProductListPage() {
     router.push(`/seller/products/form/${id}`);
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === paginatedProducts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedProducts.map((p) => p.id));
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkStatusUpdate = async (active: boolean) => {
+    if (selectedIds.length === 0) return;
+
+    try {
+      setIsBulkUpdating(true);
+      await productService.bulkUpdateStatus(token!, selectedIds, active);
+
+      setPopUpAlertData({
+        isOpen: true,
+        type: "success",
+        message: `Successfully ${active ? 'activated' : 'deactivated'} ${selectedIds.length} products.`,
+      });
+
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      setPopUpAlertData({
+        isOpen: true,
+        type: "error",
+        message: "Failed to update products.",
+      });
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
   const formatGBP = (amount: number) =>
     new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
-  if (status === "loading" || initialLoading) return <Loader />;
+  if (status === "loading" || initialLoading) return <SellerLoader />;
+
 
   return (
     <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-fadeIn">
@@ -162,24 +231,117 @@ export default function ProductListPage() {
       {/* Main Content Area */}
       <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden relative">
         {/* Toolbar */}
-        <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="relative w-full md:w-96 group">
-            <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--brand-primary)] transition-colors" />
-            <input
-              type="text"
-              placeholder="Search by title, brand, or category..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-6 py-4 text-sm font-medium focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all outline-none"
-            />
+        <div className="p-8 border-b border-gray-50 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="relative w-full md:w-96 group">
+              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--brand-primary)] transition-colors" />
+              <input
+                type="text"
+                placeholder="Search by title, brand, or category..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-6 py-4 text-sm font-medium focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-6 py-4 rounded-2xl font-bold text-sm transition-all ${showFilters ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+              >
+                <Filter size={18} />
+                Filters
+                <ChevronDown size={16} className={`transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
+              <div className="hidden lg:block h-8 w-px bg-gray-100 mx-2" />
+              <div className="flex items-center gap-4 text-sm text-gray-400 font-bold uppercase tracking-widest">
+                <span>Showing {paginatedProducts.length} of {totalCount} Results</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-400 font-bold uppercase tracking-widest">
-            <span>Showing {paginatedProducts.length} of {filteredProducts.length} Results</span>
-          </div>
+          {/* Expanded Filters */}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-50 animate-fadeIn">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--brand-primary)]/20 outline-none appearance-none"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Live (Active)</option>
+                  <option value="inactive">Draft (Inactive)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Category</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[var(--brand-primary)]/20 outline-none appearance-none"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setCategoryFilter("all");
+                    setSearchTerm("");
+                  }}
+                  className="text-sm font-bold text-gray-400 hover:text-rose-500 transition-colors pb-3"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Actions Bar */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center justify-between bg-[var(--brand-primary)] text-white px-6 py-4 rounded-2xl animate-slideUp">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-black text-sm">
+                  {selectedIds.length}
+                </div>
+                <span className="font-bold text-sm">Products Selected</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  disabled={isBulkUpdating}
+                  onClick={() => handleBulkStatusUpdate(true)}
+                  className="px-6 py-2 bg-white text-[var(--brand-primary)] rounded-xl font-bold text-sm hover:bg-gray-50 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  <CheckCircle size={16} />
+                  Activate
+                </button>
+                <button
+                  disabled={isBulkUpdating}
+                  onClick={() => handleBulkStatusUpdate(false)}
+                  className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 flex items-center gap-2 border border-white/20"
+                >
+                  <XCircle size={16} />
+                  Deactivate
+                </button>
+                <div className="w-px h-6 bg-white/20 mx-2" />
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="text-white/70 hover:text-white font-bold text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Table Container */}
@@ -187,6 +349,17 @@ export default function ProductListPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50">
+                <th className="py-6 px-8 w-12">
+                  <div
+                    onClick={handleSelectAll}
+                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all ${selectedIds.length === paginatedProducts.length && paginatedProducts.length > 0
+                      ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]"
+                      : "border-gray-200 hover:border-[var(--brand-primary)]"
+                      }`}
+                  >
+                    {selectedIds.length === paginatedProducts.length && paginatedProducts.length > 0 && <Check size={14} className="text-white" />}
+                  </div>
+                </th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Info</th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Brand & Category</th>
                 <th className="py-6 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inventory Details</th>
@@ -207,7 +380,18 @@ export default function ProductListPage() {
                 </tr>
               ) : paginatedProducts.length > 0 ? (
                 paginatedProducts.map((p, idx) => (
-                  <tr key={p.id} className="group hover:bg-gray-50/50 transition-all duration-300">
+                  <tr key={p.id} className={`group hover:bg-gray-50/50 transition-all duration-300 ${selectedIds.includes(p.id) ? 'bg-gray-50/80' : ''}`}>
+                    <td className="py-6 px-8">
+                      <div
+                        onClick={() => handleSelectOne(p.id)}
+                        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all ${selectedIds.includes(p.id)
+                          ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]"
+                          : "border-gray-200 hover:border-[var(--brand-primary)]"
+                          }`}
+                      >
+                        {selectedIds.includes(p.id) && <Check size={14} className="text-white" />}
+                      </div>
+                    </td>
                     <td className="py-6 px-8">
                       <div className="flex items-center gap-6">
                         <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -326,12 +510,12 @@ export default function ProductListPage() {
         </div>
 
         {/* Footer Pagination */}
-        {!initialLoading && filteredProducts.length > 0 && (
+        {!initialLoading && products.length > 0 && (
           <div className="p-8 bg-gray-50/30 border-t border-gray-50">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={filteredProducts.length}
+              totalItems={totalCount}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}

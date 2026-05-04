@@ -31,38 +31,52 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Seller profile not found" }, { status: 404 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get("page") || "1");
+        const limit = parseInt(searchParams.get("limit") || "50");
+        const skip = (page - 1) * limit;
+
         /* ================= FETCH REVIEWS ================= */
-        const reviews = await prisma.review.findMany({
-            where: {
-                product: {
-                    sellerId: seller.id
+        const [total, reviews] = await Promise.all([
+            prisma.review.count({
+                where: {
+                    product: { sellerId: seller.id }
                 }
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
+            }),
+            prisma.review.findMany({
+                where: {
+                    product: {
+                        sellerId: seller.id
                     }
                 },
-                product: {
-                    select: {
-                        id: true,
-                        title: true,
-                        slug: true,
-                        productimage: {
-                            where: { primary: true },
-                            take: 1
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        }
+                    },
+                    product: {
+                        select: {
+                            id: true,
+                            title: true,
+                            slug: true,
+                            productimage: {
+                                where: { primary: true },
+                                take: 1
+                            }
                         }
                     }
-                }
-            },
-            orderBy: [
-                { isPinned: 'desc' },
-                { createdAt: 'desc' }
-            ]
-        });
+                },
+                orderBy: [
+                    { isPinned: 'desc' },
+                    { createdAt: 'desc' }
+                ],
+                skip,
+                take: limit,
+            })
+        ]);
 
         // Format data to match frontend expectations
         const formattedReviews = reviews.map(review => ({
@@ -90,7 +104,13 @@ export async function GET(req: Request) {
             }
         }));
 
-        return NextResponse.json(formattedReviews);
+        return NextResponse.json({
+            success: true,
+            total,
+            page,
+            limit,
+            data: formattedReviews
+        });
     } catch (error) {
         console.error("SELLER REVIEWS API ERROR:", error);
         return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
