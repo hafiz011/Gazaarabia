@@ -8,21 +8,27 @@ export default function SellerLoader() {
       <div className="relative w-24 h-24">
         {/* Outer ring */}
         <div className="absolute inset-0 border-4 border-gray-100 rounded-full" />
-        
+
         {/* Spinning gradient ring */}
         <div className="absolute inset-0 border-4 border-t-[var(--brand-primary)] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-        
+
         {/* Pulsing center icon-like shape */}
-        <div className="absolute inset-4 bg-gradient-to-tr from-[var(--brand-primary)] to-[var(--brand-secondary)] rounded-2xl opacity-20 animate-pulse" />
+        <div className="absolute inset-4 bg-white rounded-2xl shadow-sm flex items-center justify-center overflow-hidden animate-pulse">
+          <img
+            src="/images/logo.png"
+            alt="Gaza Arabia Logo"
+            className="w-full h-full object-contain p-2"
+          />
+        </div>
       </div>
-      
+
       <div className="flex flex-col items-center space-y-2">
         <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">
           Gaza<span className="text-[var(--brand-primary)]">Arabia</span>
         </h3>
         <div className="flex items-center gap-1">
-          <span className="w-1 h-1 bg-[var(--brand-primary)] rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <span className="w-1 h-1 bg-[var(--brand-primary)] rounded-full animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-1 h-1 bg-[var(--brand-primary)] rounded-full animate-bounce [animation-delay:-0.2s]" />
+          <span className="w-1 h-1 bg-[var(--brand-primary)] rounded-full animate-bounce [animation-delay:-0.10s]" />
           <span className="w-1 h-1 bg-[var(--brand-primary)] rounded-full animate-bounce" />
         </div>
         <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.3em] mt-4">
