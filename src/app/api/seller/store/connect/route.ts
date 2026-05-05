@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import type { StoreType } from '@/types/store'
+import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
 interface ConnectBody {
   sellerId:    number
@@ -17,8 +18,24 @@ interface ConnectBody {
 }
 
 export async function POST(req: NextRequest) {
+  const token: any = getTokenFromHeader(req);
+  const userId = getUserIdFromToken(token);
+
+  if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const body: ConnectBody = await req.json()
   const { sellerId, storeType, credentials } = body
+
+  // Verify that the sellerId belongs to the authenticated user
+  const seller = await prisma.seller.findUnique({
+    where: { id: sellerId }
+  })
+
+  if (!seller || seller.userId !== userId) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
 
   const updateData: Record<string, any> = { storeType }
 

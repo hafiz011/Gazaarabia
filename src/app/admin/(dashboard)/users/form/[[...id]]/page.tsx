@@ -413,6 +413,9 @@ export default function UserFormPage() {
                             <option value="">Select role</option>
                             <option value="customer">Customer</option>
                             <option value="content_manager">Content Manager</option>
+                            <option value="seller">Seller</option>
+                            <option value="admin">Admin</option>
+                            <option value="affiliate">Affiliate</option>
                         </select>
 
                         <div className="flex justify-end gap-3">

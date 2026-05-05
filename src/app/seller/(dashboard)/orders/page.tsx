@@ -250,7 +250,7 @@ export default function OrdersPage() {
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
                         <span className="font-semibold text-gray-900">{order.user.name ?? "N/A"}</span>
-                        <span className="text-xs text-gray-400">{order.user.email}</span>
+                        {/* <span className="text-xs text-gray-400">{order.user.email}</span> */}
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -398,12 +398,12 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
                     <p>{order.city}, {order.country}</p>
                     <p className="text-gray-400 font-mono">{order.postalCode}</p>
                   </div>
-                  {order.phone && (
+                  {/* {order.phone && (
                     <div className="flex items-center gap-2 mt-4 text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 w-fit px-3 py-2 rounded-xl border border-[var(--brand-primary)]/10">
                       <Phone size={14} />
                       <span className="text-sm font-bold tracking-tighter">{order.phone}</span>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </section>
             </div>

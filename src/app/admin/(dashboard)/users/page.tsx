@@ -204,6 +204,7 @@ export default function UserListPage() {
               <option value="content_manager">Content Manager</option>
               <option value="customer">Customer</option>
               <option value="seller">Seller</option>
+              <option value="affiliate">Affiliate</option>
             </select>
 
             {/* DATE RANGE */}
