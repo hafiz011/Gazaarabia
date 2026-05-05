@@ -17,7 +17,7 @@ export async function GET() {
     // 1. Find and update eligible order items
     // Step 1a: Get IDs of all 'paid' orders (workaround for Prisma updateMany limitation)
     const paidOrders = await prisma.orders.findMany({
-      where: { status: "paid" },
+      where: { status: { in: ["succeeded", "paid", "processing", "shipped", "delivered"] } },
       select: { id: true }
     });
     const paidOrderIds = paidOrders.map(o => o.id);

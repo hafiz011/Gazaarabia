@@ -1,0 +1,12 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/sync-all",
+            "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/payout-eligibility",
+            "schedule": "0 */6 * * *"
+        }
+    ]
+}

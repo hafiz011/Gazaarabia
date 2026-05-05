@@ -158,7 +158,7 @@ model SubcategoryCommission {
   id            Int   @id @default(autoincrement())
   subcategoryId Int   @unique
   commission    Float 
-  isActive       Boolean @default(true)
+  isActive      Boolean @default(true)
 
   subcategory Subcategory @relation(fields: [subcategoryId], references: [id])
 }
@@ -351,7 +351,7 @@ model products {
   ambassador            Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
 
   // External Store Tracking
-  externalProductId  String?
+  externalProductId  String?   @unique
   externalVariantId  String?
   externalSource     String?   // "shopify" | "woocommerce"
   isExternalProduct  Boolean   @default(false)
@@ -1046,4 +1046,20 @@ model AffiliateBankAccount {
   affiliate Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
 
   @@map("affiliate_bank_accounts")
+}
+
+
+model CronLog {
+  id         Int      @id @default(autoincrement())
+  type       String   // "sync-all"
+  status     String   // "success" | "failed" | "partial"
+  totalSellers  Int   @default(0)
+  successful    Int   @default(0)
+  failed        Int   @default(0)
+  totalImported Int   @default(0)
+  details    Json?    // full results array
+  duration   Int?     // milliseconds
+  createdAt  DateTime @default(now())
+
+  @@map("cron_logs")
 }

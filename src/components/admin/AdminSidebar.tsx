@@ -76,6 +76,7 @@ const links = [
       { href: "/admin/material-cares", label: "Material Cares", icon: Droplets },
       { href: "/admin/brands", label: "Brands", icon: Tag },
       { href: "/admin/return-reasons", label: "Return Reasons", icon: HelpCircle },
+      { href: "/admin/sync-all", label: "Sync All", icon: Package },
     ],
   },
 
