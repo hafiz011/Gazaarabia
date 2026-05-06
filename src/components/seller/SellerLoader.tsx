@@ -15,7 +15,7 @@ export default function SellerLoader() {
         {/* Pulsing center icon-like shape */}
         <div className="absolute inset-4 bg-white rounded-2xl shadow-sm flex items-center justify-center overflow-hidden animate-pulse">
           <img
-            src="/images/logo.png"
+            src="/favicon.png"
             alt="Gaza Arabia Logo"
             className="w-full h-full object-contain p-2"
           />
