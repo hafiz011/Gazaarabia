@@ -30,6 +30,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Stripe customer not found" }, { status: 400 });
         }
 
+        // Get origin for return_url
+        const origin = req.headers.get("origin") || req.headers.get("referer")?.split("/").slice(0, 3).join("/") || "http://localhost:3000";
+        const returnUrl = `${origin}/payment/callback`;
+
         // 3. Charge saved card
         const intent = await stripe.paymentIntents.create({
             amount: Math.round(amount * 100),
@@ -38,13 +42,24 @@ export async function POST(req: Request) {
             payment_method: paymentMethodId,
             off_session: true,
             confirm: true,
+            payment_method_types: ["card"],
+            // return_url is REQUIRED for off-session payments that need 3D Secure
+            return_url: returnUrl,
             metadata: {
                 orderId: "pending",
                 userId: String(userId)
             },
-            // For off-session payments, return_url is not used. Instead, handle 3D Secure via error handling on the client.
-            return_url: `${process.env.DOMAIN}/checkout?success=true`,
         });
+
+        // Check if 3D Secure authentication is required
+        if (intent.status === "requires_confirmation" || intent.status === "requires_payment_method") {
+            return NextResponse.json({
+                success: false,
+                requiresAction: true,
+                clientSecret: intent.client_secret,
+                message: "3D Secure authentication required"
+            });
+        }
 
         return NextResponse.json({ success: true, intent });
 

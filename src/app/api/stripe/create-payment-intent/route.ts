@@ -38,9 +38,9 @@ export async function POST(req: Request) {
 
             customer: customerId ?? undefined,
 
-            automatic_payment_methods: {
-                enabled: true,
-            },
+            // PaymentElement automatically detects available methods (wallets, cards, etc.)
+            // Only specify 'card' explicitly - other methods are auto-detected if available
+            payment_method_types: ["card"],
 
             // Save card only if logged in
             setup_future_usage: customerId ? "off_session" : undefined,
