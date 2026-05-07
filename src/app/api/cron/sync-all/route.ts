@@ -93,5 +93,6 @@ export async function GET(req: NextRequest) {
         totalImported,
         duration: `${duration}ms`,
         syncedAt: new Date().toISOString(),
+        results,
     })
 }

@@ -41,7 +41,9 @@ export async function POST(req: Request) {
             metadata: {
                 orderId: "pending",
                 userId: String(userId)
-            }
+            },
+            // For off-session payments, return_url is not used. Instead, handle 3D Secure via error handling on the client.
+            return_url: `${process.env.DOMAIN}/checkout?success=true`,
         });
 
         return NextResponse.json({ success: true, intent });

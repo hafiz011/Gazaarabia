@@ -289,4 +289,4 @@ export default function CronLogs() {
             </div>
         </div>
     )
-}
+}
