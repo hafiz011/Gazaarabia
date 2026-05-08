@@ -493,7 +493,9 @@ function ProductFormContent() {
                         value={(() => {
                           const sub = allSubcategories.find((s) => String(s.id) === String(form.subcategoryId));
                           const cat = categories.find((c) => String(c.id) === String(sub?.categoryId));
-                          return cat && sub ? `${cat.name} - ${sub.name}` : "";
+                          // return cat && sub ? `${cat.name} - ${sub.name}` : "";
+                          const catDisplay = cat ? (cat.submenu?.menu?.name ? `${cat.submenu.menu.name} > ${cat.name}` : cat.name) : "";
+                          return catDisplay && sub ? `${catDisplay} > ${sub.name}` : "";
                         })()}
                         onClick={(e) => setCategoryAnchorEl(e.currentTarget)}
                         fullWidth
@@ -548,12 +550,15 @@ function ProductFormContent() {
                                 : 'text-slate-600 hover:bg-slate-200'
                                 }`}
                             >
-                              <span className="text-sm font-medium">{cat.name}</span>
+                              {/* <span className="text-sm font-medium">{cat.name}</span> */}
+                              <span className="text-sm font-medium">
+                                {cat.name}{cat.submenu?.menu?.name ? ` - ${cat.submenu.menu.name}` : ""}
+                              </span>
                               <ChevronRight size={14} className={hoveredCategory?.id === cat.id ? 'text-white' : 'text-slate-400'} />
                             </div>
                           ))}
                         </div>
- 
+
                         {/* Subcategories Column */}
                         <div className="w-full sm:w-1/2 py-2 bg-white overflow-y-auto max-h-[300px] sm:max-h-[400px]">
                           {hoveredCategory ? (
