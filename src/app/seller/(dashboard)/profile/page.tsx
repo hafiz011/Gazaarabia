@@ -237,7 +237,7 @@ export default function SellerProfilePage() {
 
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-12">
             {/* Toast */}
             {toast && (
                 <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold transition-all duration-300 ${toast.type === "success" ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"}`}>
@@ -247,32 +247,32 @@ export default function SellerProfilePage() {
             )}
 
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-gray-900">Store Profile</h1>
-                    <p className="text-gray-500 font-medium mt-1">Manage your seller account and store settings.</p>
+                    <p className="text-sm text-gray-500 font-medium mt-1">Manage your seller account and store settings.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                     {editing ? (
                         <>
                             <button
                                 onClick={handleCancel}
-                                className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all"
                             >
                                 <X size={16} /> Cancel
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 bg-[var(--brand-primary)] px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--brand-primary)] px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all disabled:opacity-50"
                             >
-                                <Save size={16} /> {saving ? "Saving..." : "Save Changes"}
+                                <Save size={16} /> {saving ? "Saving..." : "Save"}
                             </button>
                         </>
                     ) : (
                         <button
                             onClick={() => setEditing(true)}
-                            className="flex items-center gap-2 bg-[var(--brand-primary)] px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--brand-primary)] px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all"
                         >
                             <Pencil size={16} /> Edit Profile
                         </button>
@@ -426,7 +426,7 @@ export default function SellerProfilePage() {
                 {/* RIGHT: Editable Form */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Personal Info */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
+                    <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-gray-100 shadow-sm p-5 sm:p-8">
                         <h3 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2">
                             <User size={18} className="text-[var(--brand-primary)]" />
                             Personal Information

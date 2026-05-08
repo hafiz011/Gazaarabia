@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.token || isFetched) return;
-    
+
     const fetchData = async () => {
       try {
         const data = await dashboardService.getDashboard(session.user.token);
@@ -110,13 +110,13 @@ export default function DashboardPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Store Overview</h1>
-          <p className="text-gray-500">Welcome back! Here's what's happening with your store today.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Store Overview</h1>
+          <p className="text-sm sm:text-base text-gray-500">Welcome back! Here's what's happening with your store today.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2">
+          <div className="bg-white px-3 sm:px-4 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2">
             <Clock size={16} className="text-gray-400" />
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-xs sm:text-sm font-medium text-gray-600">
               {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
@@ -166,39 +166,39 @@ export default function DashboardPage() {
       {/* Store Balances & Quick Links */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Wallet Balance */}
-        <div className="lg:col-span-1 bg-gradient-to-br from-[#1e2a4a] to-[#2d3b5d] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
+        <div className="lg:col-span-1 bg-gradient-to-br from-[#1e2a4a] to-[#2d3b5d] rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden group">
           <div className="absolute -right-10 -top-10 bg-white/10 w-40 h-40 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
-          <h3 className="text-white/70 font-medium mb-6 flex items-center gap-2">
+          <h3 className="text-white/70 font-medium mb-4 sm:mb-6 flex items-center gap-2">
             <DollarSign size={20} />
             Available Balance
           </h3>
-          <div className="text-4xl font-bold mb-8">
+          <div className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8">
             £{dashboardData.balances?.available?.toLocaleString() || '0.00'}
           </div>
           <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/10">
             <div>
-              <p className="text-white/50 text-xs mb-1 uppercase tracking-wider">Pending</p>
-              <p className="font-semibold text-lg">£{dashboardData.balances?.pending?.toLocaleString() || '0.00'}</p>
+              <p className="text-white/50 text-[10px] sm:text-xs mb-1 uppercase tracking-wider">Pending</p>
+              <p className="font-semibold text-base sm:text-lg">£{dashboardData.balances?.pending?.toLocaleString() || '0.00'}</p>
             </div>
             <div>
-              <p className="text-white/50 text-xs mb-1 uppercase tracking-wider">Total Earned</p>
-              <p className="font-semibold text-lg">£{dashboardData.balances?.totalEarned?.toLocaleString() || '0.00'}</p>
+              <p className="text-white/50 text-[10px] sm:text-xs mb-1 uppercase tracking-wider">Total Earned</p>
+              <p className="font-semibold text-base sm:text-lg">£{dashboardData.balances?.totalEarned?.toLocaleString() || '0.00'}</p>
             </div>
           </div>
           <button
             onClick={() => router.push('/seller/payouts')}
-            className="w-full mt-8 bg-white text-[#1e2a4a] py-3 rounded-xl font-bold hover:bg-gray-100 transition shadow-lg"
+            className="w-full mt-6 sm:mt-8 bg-white text-[#1e2a4a] py-3 rounded-xl font-bold hover:bg-gray-100 transition shadow-lg text-sm sm:text-base"
           >
             Withdraw Funds
           </button>
         </div>
 
         {/* Quick Access */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             Quick Actions
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <QuickLink
               icon={<ShoppingBag size={24} />}
               label="Add Product"
@@ -225,18 +225,18 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="mt-8 p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
+          <div className="mt-6 sm:mt-8 p-4 sm:p-5 bg-amber-50 border border-amber-100 rounded-xl sm:rounded-2xl flex items-start gap-3 sm:gap-4">
             <div className="bg-amber-500 p-2 rounded-lg text-white">
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h4 className="font-bold text-amber-900">Inventory Alert</h4>
-              <p className="text-amber-800 text-sm">
+              <h4 className="font-bold text-amber-900 text-sm sm:text-base">Inventory Alert</h4>
+              <p className="text-amber-800 text-xs sm:text-sm">
                 You have {dashboardData.lowStock} products running low on stock. Update them now to avoid losing sales.
               </p>
               <button
                 onClick={() => router.push('/seller/products')}
-                className="mt-2 text-amber-900 font-bold text-sm underline flex items-center gap-1"
+                className="mt-2 text-amber-900 font-bold text-xs sm:text-sm underline flex items-center gap-1"
               >
                 View Products <ChevronRight size={14} />
               </button>
@@ -248,10 +248,10 @@ export default function DashboardPage() {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-gray-900">Revenue Performance</h3>
-            <select className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1 text-sm outline-none">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">Revenue Performance</h3>
+            <select className="bg-gray-50 border border-gray-200 rounded-lg px-2 sm:px-3 py-1 text-xs sm:text-sm outline-none">
               <option>Last 30 Days</option>
               <option>Last 7 Days</option>
             </select>
@@ -295,12 +295,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Orders Bar Chart */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-gray-900">Orders Overview</h3>
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">Orders Overview</h3>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-              <span className="text-xs text-gray-500 font-medium">Daily Orders</span>
+              <span className="w-2 sm:w-3 h-2 sm:h-3 rounded-full bg-emerald-500"></span>
+              <span className="text-[10px] sm:text-xs text-gray-500 font-medium">Daily Orders</span>
             </div>
           </div>
           <div className="h-[300px] w-full">
@@ -333,41 +333,41 @@ export default function DashboardPage() {
       {/* Recent Activity Table & Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10">
         {/* Recent Orders */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-5 sm:p-6 border-b border-gray-50 flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">Recent Orders</h3>
             <button
               onClick={() => router.push('/seller/orders')}
-              className="text-sm font-bold text-[var(--brand-primary)] hover:underline"
+              className="text-xs sm:text-sm font-bold text-[var(--brand-primary)] hover:underline"
             >
               View All
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
+            <table className="w-full text-left min-w-[500px] whitespace-nowrap">
               <thead>
-                <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider">
-                  <th className="px-6 py-4 font-semibold">Order ID</th>
-                  <th className="px-6 py-4 font-semibold">Customer</th>
-                  <th className="px-6 py-4 font-semibold">Amount</th>
-                  <th className="px-6 py-4 font-semibold">Status</th>
+                <tr className="bg-gray-50/50 text-gray-500 text-[10px] sm:text-xs uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-4 font-semibold">Order ID</th>
+                  <th className="px-4 sm:px-6 py-4 font-semibold">Customer</th>
+                  <th className="px-4 sm:px-6 py-4 font-semibold">Amount</th>
+                  <th className="px-4 sm:px-6 py-4 font-semibold text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {dashboardData.recentOrders?.map((order: any) => (
                   <tr key={order.id} className="hover:bg-gray-50/50 transition">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-gray-900">#{order.id}</span>
+                    <td className="px-4 sm:px-6 py-4">
+                      <span className="font-bold text-gray-900 text-sm sm:text-base">#{order.id}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{order.customer}</div>
-                      <div className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</div>
+                    <td className="px-4 sm:px-6 py-4">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px]">{order.customer}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-gray-900">£{order.total.toFixed(2)}</span>
+                    <td className="px-4 sm:px-6 py-4">
+                      <span className="font-bold text-gray-900 text-sm sm:text-base">£{order.total.toFixed(2)}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${order.status === 'paid' || order.status === 'delivered'
+                    <td className="px-4 sm:px-6 py-4 text-right">
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${order.status === 'paid' || order.status === 'delivered'
                         ? 'bg-emerald-50 text-emerald-600'
                         : 'bg-amber-50 text-amber-600'
                         }`}>
@@ -382,28 +382,28 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Selling Products */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-50">
-            <h3 className="text-lg font-bold text-gray-900">Top Products</h3>
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-5 sm:p-6 border-b border-gray-50">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">Top Products</h3>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-5 sm:p-6 space-y-5 sm:y-6">
             {dashboardData.topProducts?.map((product: any, idx: number) => (
-              <div key={product.id} className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center font-bold text-gray-400">
+              <div key={product.id} className="flex items-center gap-3 sm:gap-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-50 flex items-center justify-center font-bold text-gray-400 text-xs sm:text-sm">
                   {idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-gray-900 truncate">{product.title}</h4>
-                  <p className="text-xs text-gray-500">£{product.price} • {product.salesCount} sales</p>
+                  <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate">{product.title}</h4>
+                  <p className="text-[10px] sm:text-xs text-gray-500">£{product.price} • {product.salesCount} sales</p>
                 </div>
-                <div className="flex items-center gap-1 text-emerald-600 font-bold text-sm">
-                  <ArrowUpRight size={16} />
+                <div className="flex items-center gap-1 text-emerald-600 font-bold text-[10px] sm:text-sm shrink-0">
+                  <ArrowUpRight size={14} className="sm:size-[16px]" />
                   Top
                 </div>
               </div>
             ))}
             {(!dashboardData.topProducts || dashboardData.topProducts.length === 0) && (
-              <div className="py-10 text-center text-gray-400">
+              <div className="py-10 text-center text-gray-400 text-sm">
                 No sales data yet.
               </div>
             )}

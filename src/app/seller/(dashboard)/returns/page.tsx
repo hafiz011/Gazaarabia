@@ -79,12 +79,12 @@ export default function ReturnRequestListPage() {
     if (status === "loading" || loading) return <SellerLoader />;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-                    <h1 className="text-xl font-semibold text-gray-800">Return Requests</h1>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
+                    <h1 className="text-xl font-bold text-gray-900">Return Requests</h1>
 
                     <div className="relative w-full sm:w-72">
                         <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
@@ -96,7 +96,7 @@ export default function ReturnRequestListPage() {
                                 setSearchTerm(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="w-full border rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)]"
+                            className="w-full border border-gray-200 bg-gray-50 rounded-full pl-10 pr-4 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all"
                         />
                     </div>
                 </div>
@@ -105,7 +105,7 @@ export default function ReturnRequestListPage() {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
+                    <table className="w-full min-w-[800px] whitespace-nowrap text-sm">
                         <thead className="bg-gray-100 text-gray-700 text-xs uppercase font-medium">
                             <tr>
                                 <th className="py-3 px-3 text-center">Sn.</th>

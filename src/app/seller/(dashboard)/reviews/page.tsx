@@ -116,12 +116,12 @@ export default function ReviewsPage() {
     }
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Customer Reviews</h1>
-                    <p className="text-gray-500">Manage feedback and build your store's reputation.</p>
+                    <p className="text-sm text-gray-500">Manage feedback and build your store's reputation.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm flex items-center gap-2">
@@ -226,8 +226,8 @@ function ReviewCard({ review, onTogglePin }: { review: Review, onTogglePin: (id:
             <button
                 onClick={() => onTogglePin(review.id, review.isPinned)}
                 className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-20 ${review.isPinned
-                        ? 'bg-blue-500 text-white shadow-md rotate-12 scale-110'
-                        : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 border border-gray-100'
+                    ? 'bg-blue-500 text-white shadow-md rotate-12 scale-110'
+                    : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 border border-gray-100'
                     }`}
                 title={review.isPinned ? "Unpin Review" : "Pin Review to Top"}
             >

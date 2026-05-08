@@ -25,17 +25,15 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
 
       {/* Main Content Area */}
       <div
-        className={`flex flex-col flex-1 min-h-screen relative z-10 transition-all duration-300 ease-in-out`}
-        style={{
-          //  Shifts content when sidebar expands/collapses
-          marginLeft: collapsed ? "80px" : "256px",
-        }}
+        className={`flex flex-col flex-1 w-full min-w-0 min-h-screen relative z-10 transition-all duration-300 ease-in-out ${
+          collapsed ? "md:ml-[80px]" : "md:ml-64"
+        }`}
       >
         {/* Header */}
         <SellerHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Main Area */}
-        <main className="flex-1 p-6 bg-[#f5f6fa] overflow-y-auto">
+        <main className="flex-1 w-full min-w-0 p-4 sm:p-6 bg-[#f5f6fa] overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </div>

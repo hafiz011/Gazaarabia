@@ -389,34 +389,36 @@ function ProductFormContent() {
     <Box className="min-h-screen bg-[#F5F5F5] pb-24">
       {/* Top Banner */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="text-blue-600" size={24} />
-            <h1 className="text-xl font-bold text-gray-900">
+            <ShoppingBag className="text-blue-600" size={20} />
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">
               {isEditMode ? "Update Product" : "Publish New Product"}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <Button
               variant="outlined"
               onClick={() => router.push("/seller/products")}
-              sx={{ textTransform: 'none', borderRadius: '8px', fontWeight: 600, borderColor: '#E2E8F0', color: '#64748B' }}
+              fullWidth
+              sx={{ textTransform: 'none', borderRadius: '8px', fontWeight: 600, borderColor: '#E2E8F0', color: '#64748B', py: 1 }}
             >
               Cancel
             </Button>
             <Button
               variant="contained"
               onClick={handleSubmit}
+              fullWidth
               disabled={submitting}
-              sx={{ background: "var(--brand-secondary, #2563eb)", textTransform: 'none', borderRadius: '8px', fontWeight: 600, boxShadow: 'none' }}
+              sx={{ background: "var(--brand-secondary, #2563eb)", textTransform: 'none', borderRadius: '8px', fontWeight: 600, boxShadow: 'none', py: 1 }}
             >
-              {submitting ? "Saving..." : isEditMode ? "Update Product" : "Publish Product"}
+              {submitting ? "..." : isEditMode ? "Update" : "Publish"}
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {alertMessage.isOpen && alertMessage.type && (
           <AlertMessage
             type={alertMessage.type}
@@ -432,11 +434,11 @@ function ProductFormContent() {
 
               {/* MEDIA */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <div className="mb-6 flex items-center gap-2">
-                  <ImageIcon className="text-blue-600" size={24} />
+                <div className="mb-6 flex items-start sm:items-center gap-2">
+                  <ImageIcon className="text-blue-600 mt-1 sm:mt-0" size={24} />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Product Media</h2>
-                    <p className="text-gray-500 mt-1">Upload high-quality images and video to showcase your product.</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Product Media</h2>
+                    <p className="text-sm text-gray-500 mt-1">Upload high-quality images and video to showcase your product.</p>
                   </div>
                 </div>
 
@@ -468,8 +470,8 @@ function ProductFormContent() {
               {/* BASIC INFO */}
               <div className="space-y-6">
                 {/* Product Details Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                     <Info className="text-blue-600" size={24} />
                     Product Details
                   </h2>
@@ -524,18 +526,23 @@ function ProductFormContent() {
                             borderRadius: '12px',
                             border: '1px solid #e2e8f0',
                             overflow: 'hidden',
-                            width: '500px', // Total width for two columns
+                            width: { xs: 'calc(100vw - 32px)', sm: '500px' }, // Total width for two columns
                             display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' }
                           }
                         }}
                       >
                         {/* Categories Column */}
-                        <div className="w-1/2 border-r border-slate-100 py-2 bg-slate-50 overflow-y-auto max-h-[400px]">
+                        <div className="w-full sm:w-1/2 border-r border-slate-100 py-2 bg-slate-50 overflow-y-auto max-h-[300px] sm:max-h-[400px]">
                           <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Categories</p>
                           {[...categories].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((cat) => (
                             <div
                               key={cat.id}
                               onMouseEnter={() => setHoveredCategory(cat)}
+                              onClick={() => {
+                                // On mobile, clicking a category should also set it for subcategory view
+                                setHoveredCategory(cat);
+                              }}
                               className={`px-4 py-2.5 flex items-center justify-between cursor-pointer transition-colors ${hoveredCategory?.id === cat.id
                                 ? 'bg-blue-600 text-white'
                                 : 'text-slate-600 hover:bg-slate-200'
@@ -546,9 +553,9 @@ function ProductFormContent() {
                             </div>
                           ))}
                         </div>
-
+ 
                         {/* Subcategories Column */}
-                        <div className="w-1/2 py-2 bg-white overflow-y-auto max-h-[400px]">
+                        <div className="w-full sm:w-1/2 py-2 bg-white overflow-y-auto max-h-[300px] sm:max-h-[400px]">
                           {hoveredCategory ? (
                             <>
                               <p className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">

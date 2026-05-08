@@ -165,7 +165,7 @@ export default function DeliverySettingsPage() {
     if (!hydrated) return null;
 
     return (
-        <Box className="p-6 max-w-4xl mx-auto">
+        <Box className="p-4 sm:p-6 max-w-4xl mx-auto">
             {(alert.isOpen && alert.type) && (
                 <AlertMessage
                     type={alert.type}
@@ -175,9 +175,9 @@ export default function DeliverySettingsPage() {
             )}
 
             <form onSubmit={handleSubmit}>
-                <Box className="bg-white p-6 rounded-xl shadow border border-[var(--soft-gray)]">
-                    <div className="mb-6 border-b pb-4">
-                        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Delivery Settings</h2>
+                <Box className="bg-white p-4 sm:p-8 rounded-xl shadow-sm border border-gray-100">
+                    <div className="mb-6 border-b border-gray-100 pb-4">
+                        <h2 className="text-xl font-bold text-gray-900">Delivery Settings</h2>
                     </div>
 
                     {loading ? (

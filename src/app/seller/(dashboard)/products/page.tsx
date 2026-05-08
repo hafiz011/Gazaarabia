@@ -308,7 +308,7 @@ export default function ProductListPage() {
 
           {/* Bulk Actions Bar */}
           {selectedIds.length > 0 && (
-            <div className="flex items-center justify-between bg-[var(--brand-primary)] text-white px-6 py-4 rounded-2xl animate-slideUp">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-[var(--brand-primary)] text-white px-4 sm:px-6 py-4 rounded-2xl animate-slideUp gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-black text-sm">
                   {selectedIds.length}
@@ -346,7 +346,7 @@ export default function ProductListPage() {
 
         {/* Table Container */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1000px] whitespace-nowrap text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50">
                 <th className="py-6 px-8 w-12">

@@ -226,7 +226,7 @@ export default function OrdersPage() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1000px] whitespace-nowrap text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="py-5 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Order ID</th>
@@ -356,31 +356,31 @@ export default function OrdersPage() {
 --------------------------------------------------- */
 function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }: any) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-md animate-fadeIn top-14">
-      <div className="relative bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden border border-white/20 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/40 backdrop-blur-md animate-fadeIn">
+      <div className="relative bg-white rounded-3xl sm:rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]">
         {/* Header */}
-        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-50 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+        <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-50 sticky top-0 bg-white/80 backdrop-blur-md z-10">
           <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black text-gray-900">Order <span className="text-[var(--brand-primary)]">#{order.id}</span></h2>
-              <span className={`px-4 py-1 text-[10px] font-bold rounded-full border shadow-sm ${getStatusClass(order.status)}`}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900">Order <span className="text-[var(--brand-primary)]">#{order.id}</span></h2>
+              <span className={`px-2 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold rounded-full border shadow-sm ${getStatusClass(order.status)}`}>
                 {order.status.toUpperCase()}
               </span>
             </div>
-            <p className="text-sm text-gray-400 mt-1 font-medium">
-              Placed on {new Date(order.createdAt).toLocaleString("en-GB", { dateStyle: 'long', timeStyle: 'short' })}
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 font-medium">
+              {new Date(order.createdAt).toLocaleString("en-GB", { dateStyle: 'medium', timeStyle: 'short' })}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="bg-gray-100 hover:bg-rose-50 text-gray-400 hover:text-rose-500 p-3 rounded-2xl transition-all duration-300 group"
+            className="bg-gray-100 hover:bg-rose-50 text-gray-400 hover:text-rose-500 p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 group"
           >
-            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+            <X size={20} className="sm:size-6 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-8 py-8 space-y-8 scrollbar-hide">
+        <div className="overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 scrollbar-hide">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column: Delivery & Payment */}
             <div className="space-y-8">
@@ -456,8 +456,8 @@ function OrderModal({ order, onClose, onViewReview, formatGBP, getStatusClass }:
               </h3>
               <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{order.orderItems?.length || 0} Items</span>
             </div>
-            <div className="border border-gray-100 rounded-[2rem] overflow-hidden bg-white shadow-sm">
-              <table className="w-full text-left border-collapse">
+            <div className="border border-gray-100 rounded-2xl sm:rounded-[2rem] overflow-x-auto bg-white shadow-sm">
+              <table className="w-full min-w-[800px] whitespace-nowrap text-left border-collapse">
                 <thead className="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b border-gray-50">
                   <tr>
                     <th className="py-4 px-6">Product Item</th>

@@ -73,14 +73,14 @@ const links = [
   },
 
 
-  {
-    label: "Logistics",
-    icon: Truck,
-    children: [
-      { href: "/seller/delivery-options", label: "Delivery Options", icon: Truck },
-      { href: "/seller/delivery-settings", label: "Delivery Settings", icon: Package },
-    ],
-  },
+  // {
+  //   label: "Logistics",
+  //   icon: Truck,
+  //   children: [
+  //     { href: "/seller/delivery-options", label: "Delivery Options", icon: Truck },
+  //     { href: "/seller/delivery-settings", label: "Delivery Settings", icon: Package },
+  //   ],
+  // },
 
   {
     label: "Finance",
@@ -106,7 +106,7 @@ const links = [
   { href: "/seller/profile", label: "Store Profile", icon: Settings },
 
   {
-    href: "/seller/support",
+    href: "/contact",
     label: "Support",
     icon: HelpCircle,
   },
@@ -203,7 +203,7 @@ export default function SellerSidebar({
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-gray-300 hover:text-white transition"
+            className="hidden md:block text-gray-300 hover:text-white transition"
             title={collapsed ? "Expand" : "Collapse"}
           >
             {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}

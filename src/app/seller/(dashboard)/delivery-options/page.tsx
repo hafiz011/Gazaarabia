@@ -114,7 +114,7 @@ export default function DeliveryOptionsListPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {(alertMessageData.isOpen && alertMessageData.type) && (
         <AlertMessage
           type={alertMessageData.type}
@@ -123,9 +123,9 @@ export default function DeliveryOptionsListPage() {
         />
       )}
 
-      <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4">
-          <h1 className="text-xl font-semibold text-gray-800">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
+          <h1 className="text-xl font-bold text-gray-900">
             Manage Delivery Options
           </h1>
           <div className="relative w-full sm:w-72">
@@ -138,8 +138,8 @@ export default function DeliveryOptionsListPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full border border-gray-300 rounded-full pl-10 pr-4 py-2 text-sm 
-                         focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] transition"
+              className="w-full border border-gray-200 bg-gray-50 rounded-full pl-10 pr-4 py-2 text-sm 
+                         focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all"
             />
           </div>
         </div>
@@ -177,8 +177,6 @@ export default function DeliveryOptionsListPage() {
                       } hover:bg-gray-100 transition relative`}
                   >
                     <td className="py-3 px-5">{startIndex + idx + 1}</td>
-                    {/* <td className="py-3 px-5 font-medium">{option.name}</td>
-                    <td className="py-3 px-5">{option.description}</td> */}
                     <td className="py-3 px-5 font-medium max-w-[180px] truncate">{option.name}</td>
                     <td className="py-3 px-5 max-w-[280px] truncate">{option.description}</td>
 

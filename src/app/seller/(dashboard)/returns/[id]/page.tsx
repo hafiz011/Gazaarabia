@@ -85,16 +85,16 @@ export default function ReturnRequestDetailPage() {
 
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
+        <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 sm:space-y-8">
 
             {/* Title */}
-            <h1 className="text-3xl font-semibold text-[var(--navy-blue)]">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Return Request <span className="text-[var(--brand-primary)]">#{reqData.id}</span>
             </h1>
 
             {/* Status Timeline */}
-            <div className="bg-white rounded-xl shadow border p-6">
-                <div className="flex items-center justify-between">
+            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center justify-between min-w-[600px] sm:min-w-0">
 
                     {timeline.map((step, index) => {
                         const isRejected = reqData.status === "rejected" && step.key === "rejected";
@@ -108,9 +108,9 @@ export default function ReturnRequestDetailPage() {
                             <div key={step.key} className="flex-1 flex items-center">
 
                                 {/* Node */}
-                                <div className="flex flex-col items-center relative">
+                                <div className="flex flex-col items-center relative shrink-0">
                                     <div
-                                        className={`w-10 h-10 flex items-center justify-center rounded-full border-2 transition
+                                        className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-2 transition
                     ${isRejected
                                                 ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white"
                                                 : isCompleted
@@ -118,10 +118,10 @@ export default function ReturnRequestDetailPage() {
                                                     : "border-[var(--mid-gray)] text-[var(--mid-gray)]"
                                             }`}
                                     >
-                                        {isRejected ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                                        {isRejected ? <XCircle size={16} className="sm:size-[18px]" /> : <CheckCircle size={16} className="sm:size-[18px]" />}
                                     </div>
 
-                                    <p className="mt-2 text-xs font-medium text-[var(--text-secondary)]">
+                                    <p className="mt-2 text-[10px] sm:text-xs font-bold text-gray-600 whitespace-nowrap">
                                         {step.label}
                                     </p>
                                 </div>

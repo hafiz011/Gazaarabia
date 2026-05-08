@@ -51,23 +51,23 @@ export default function IntegrationsPage() {
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn pb-20">
             {/* Premium Header Section */}
-            <div className="relative bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden group">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+            <div className="relative bg-white p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity hidden sm:block">
                     <LayoutGrid size={160} />
                 </div>
 
                 <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
-                        <div className="p-5 bg-blue-600 text-white rounded-[2rem] shadow-2xl shadow-blue-200">
-                            <LayoutGrid size={40} />
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 sm:gap-6 mb-8">
+                        <div className="p-4 sm:p-5 bg-blue-600 text-white rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-blue-200 w-fit">
+                            <LayoutGrid size={32} className="sm:size-10" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Apps & Integrations</h1>
-                            <p className="text-gray-500 mt-2 text-lg font-medium">Power up your store by connecting with global e-commerce platforms.</p>
+                            <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">Apps & Integrations</h1>
+                            <p className="text-sm sm:text-lg text-gray-500 mt-2 font-medium leading-tight">Power up your store by connecting with global e-commerce platforms.</p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div className="flex items-start gap-4 p-6 bg-blue-50/50 text-blue-800 rounded-3xl border border-blue-100/50">
                             <div className="p-2 bg-blue-100 rounded-xl">
                                 <Info size={20} />

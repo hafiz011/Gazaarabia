@@ -80,21 +80,21 @@ export default function EarningPage() {
     if (loading) return <SellerLoader />;
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-gray-900">Store Earnings</h1>
-                    <p className="text-gray-500 font-medium mt-1">Track your revenue and manage your payouts.</p>
+                    <p className="text-sm text-gray-500 font-medium mt-1">Track your revenue and manage your payouts.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
                         <Download size={16} />
-                        Export Data
+                        Export
                     </button>
-                    <button className="flex items-center gap-2 bg-[var(--brand-primary)] px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all">
+                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--brand-primary)] px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all">
                         <CreditCard size={16} />
-                        Request Payout
+                        Payout
                     </button>
                 </div>
             </div>
@@ -106,7 +106,7 @@ export default function EarningPage() {
                     { label: "Pending Balance", value: data?.balances.pending || 0, icon: Clock, color: "amber", desc: "In verification" },
                     { label: "Total Earned", value: data?.balances.totalEarned || 0, icon: TrendingUp, color: "emerald", desc: "Lifetime earnings" },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div key={i} className="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
                         <div className={`absolute top-0 right-0 w-32 h-32 -mr-12 -mt-12 bg-${stat.color}-500/5 rounded-full group-hover:scale-125 transition-transform duration-700`} />
                         <div className="relative z-10">
                             <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-600 flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform`}>
@@ -123,7 +123,7 @@ export default function EarningPage() {
             </div>
 
             {/* Chart Section */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8">
+            <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-sm p-6 sm:p-8">
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
@@ -184,15 +184,15 @@ export default function EarningPage() {
             </div>
 
             {/* Recent Transactions */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+            <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-6 sm:p-8 border-b border-gray-50 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
                     <button className="text-xs font-bold text-[var(--brand-primary)] hover:underline flex items-center gap-1">
                         View All <ChevronRight size={14} />
                     </button>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full min-w-[600px] whitespace-nowrap text-left">
                         <thead>
                             <tr className="bg-gray-50/50">
                                 <th className="py-5 px-8 text-[10px] font-black uppercase tracking-widest text-gray-400">Order & Product</th>
