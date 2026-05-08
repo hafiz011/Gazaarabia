@@ -42,7 +42,9 @@ export async function POST(req: Request) {
             payment_method: paymentMethodId,
             off_session: true,
             confirm: true,
-            payment_method_types: ["card"],
+            // payment_method_types: ["card"],
+
+            
             // return_url is REQUIRED for off-session payments that need 3D Secure
             return_url: returnUrl,
             metadata: {
