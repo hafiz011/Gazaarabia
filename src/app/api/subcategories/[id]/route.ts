@@ -126,10 +126,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         ...(commission !== undefined && commission !== null
           ? {
             subcategoryCommission: {
-              deleteMany: {},
-              create: {
-                commission: parseFloat(commission),
-              },
+              upsert: {
+                create: { commission: parseFloat(commission) },
+                update: { commission: parseFloat(commission) },
+              }
             },
           }
           : {}),

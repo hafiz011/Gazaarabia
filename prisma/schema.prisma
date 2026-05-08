@@ -145,13 +145,12 @@ model PlatformSettings {
 
 model CategoryCommission {
   id             Int     @id @default(autoincrement())
-  categoryId     Int
+  categoryId     Int     @unique
   commission     Float
   isActive       Boolean @default(true)
 
   category      Categories   @relation(fields: [categoryId], references: [id])
 
-  @@unique([categoryId])
   @@map("category_commissions")
 }
 model SubcategoryCommission {
@@ -216,9 +215,9 @@ model Subcategory {
   description   String?    @db.LongText
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
-  position      Int      @default(0)
+  position      Int        @default(0)
   products      products[]
-  subcategoryCommission SubcategoryCommission[]
+  subcategoryCommission SubcategoryCommission?
   category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId], map: "subcategories_categoryId_fkey")
