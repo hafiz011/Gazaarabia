@@ -33,7 +33,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
         <SellerHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Main Area */}
-        <main className="flex-1 w-full min-w-0 p-4 sm:p-6 bg-[#f5f6fa] overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 w-full min-w-0 p-2 sm:p-3 bg-[#f5f6fa] overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </div>

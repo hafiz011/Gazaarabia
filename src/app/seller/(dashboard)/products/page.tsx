@@ -182,9 +182,9 @@ export default function ProductListPage() {
 
 
   return (
-    <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-fadeIn">
+    <div className="p-2 sm:p-3 max-w-[1600px] mx-auto w-full space-y-8 animate-fadeIn">
       {/* Header & Stats Section */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
         <div>
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">
             Inventory <span className="text-[var(--brand-primary)]">Management</span>
