@@ -861,7 +861,11 @@ model HomePageSetting {
   affiliateCommission Int?  
   ambassadorCommission Int?
 
-  
+  // NEW — Homepage section data
+  trendingProducts   Json?    // Array of product IDs (admin-picked)
+  bestSellerProducts Json?    // Array of product IDs (admin-picked or auto)
+  shopByColors       Json?    // Array of color IDs to feature
+
   updatedAt       DateTime @updatedAt
 
   @@map("homepage_settings")

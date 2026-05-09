@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-// import "swiper/css";
-// import "swiper/css/pagination";
-// import "swiper/css/effect-fade";
-
 // @ts-ignore
 import "swiper/css";
 // @ts-ignore
@@ -26,6 +22,9 @@ import { homePageFrontend } from "@/lib/services/front-end/homePage";
 import Loader from "@/components/Loader";
 import SubscribePopup from "@/components/SubscribePopup";
 import BecomeAffiliateSection from "@/components/home/becomeAffiliateSection";
+import TrendingNow from "@/components/home/trendingNow";
+import BestSellers from "@/components/home/bestSellers";
+import ShopByColor from "@/components/home/shopByColor";
 
 export default function HomeHero() {
 
@@ -35,6 +34,9 @@ export default function HomeHero() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
+  const [bestSellerProducts, setBestSellerProducts] = useState([]);
+  const [shopByColors, setShopByColors] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -53,6 +55,16 @@ export default function HomeHero() {
         }
         if (Array.isArray(data?.reviews)) {
           setReviews(data?.reviews)
+        }
+        // NEW sections
+        if (Array.isArray(data?.trendingProducts)) {
+          setTrendingProducts(data.trendingProducts)
+        }
+        if (Array.isArray(data?.bestSellerProducts)) {
+          setBestSellerProducts(data.bestSellerProducts)
+        }
+        if (Array.isArray(data?.shopByColors)) {
+          setShopByColors(data.shopByColors)
         }
       } catch (err) {
         console.error("Homepage fetch error:", err);
@@ -85,12 +97,17 @@ export default function HomeHero() {
 
       <LaunchAnnouncementBanner />
 
-      {/* <HeroSlider heroSlides={heroSlides} /> */}
+      <HeroSlider heroSlides={heroSlides} />
 
-      {/* <ShopByCategory categories={categories} />
+      {/* 🆕 Trending Now — Horizontal Carousel */}
+      <TrendingNow products={trendingProducts} />
 
+      {/* Shop by Category — Redesigned Bento Grid */}
+      <ShopByCategory categories={categories} />
+
+      {/* Mid Banner */}
       {homeData?.midBanner &&
-        <section className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden">
+        <section className="relative w-full h-[40vh] sm:h-[50vh] md:h-[70vh] lg:h-[80vh] overflow-hidden">
           <motion.div
             initial={{ scale: 1.05, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
@@ -103,6 +120,7 @@ export default function HomeHero() {
               alt="Luxury Modestwear Banner"
               fill
               priority
+              sizes="100vw"
               className="object-cover object-center"
             />
           </motion.div>
@@ -110,6 +128,13 @@ export default function HomeHero() {
         </section>
       }
 
+      {/* 🆕 Best Sellers — Featured Grid */}
+      <BestSellers products={bestSellerProducts} />
+
+      {/* 🆕 Shop by Color — Color Swatches */}
+      <ShopByColor colors={shopByColors} />
+
+      {/* Signature Collection */}
       <section id="signature-collection">
         <SignatureCollection products={products} />
       </section>
@@ -122,11 +147,11 @@ export default function HomeHero() {
       <MoreThanFashionSection />
 
 
-      <WearTheChange /> */}
+      <WearTheChange />
 
 
       {/* Add Affiliate Section HERE */}
-      {/* <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} /> */}
+      <BecomeAffiliateSection data={{ commission: homeData?.affiliateCommission }} />
 
     </>
   );

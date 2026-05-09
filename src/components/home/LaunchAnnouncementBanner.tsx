@@ -27,7 +27,7 @@ const LaunchAnnouncementBanner = () => {
   }, []);
 
   useEffect(() => {
-    const launchDate = new Date("2026-05-10T00:00:00").getTime();
+    const launchDate = new Date("2026-05-20T00:00:00").getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -115,43 +115,43 @@ const LaunchAnnouncementBanner = () => {
         {/* Countdown */}
         <motion.div variants={counterVariants} className="flex flex-col items-center gap-6">
           {!timeLeft.isLive ? (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 lg:gap-6">
+            <div className="flex items-center justify-center gap-1 sm:gap-3 md:gap-4 lg:gap-6">
               {/* Days */}
-              <div className="text-center">
-                <div className="text-3xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
+              <div className="text-center min-w-[60px] sm:min-w-[80px]">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
                   {String(timeLeft.days).padStart(2, "0")}
                 </div>
-                <div className="text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">DAYS</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">DAYS</div>
               </div>
 
-              <div className="text-2xl md:text-4xl lg:text-5xl text-white/60">:</div>
+              <div className="text-xl sm:text-2xl md:text-4xl lg:text-5xl text-white/60 mb-4 sm:mb-6 md:mb-8">:</div>
 
               {/* Hours */}
-              <div className="text-center">
-                <div className="text-3xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
+              <div className="text-center min-w-[60px] sm:min-w-[80px]">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
                   {String(timeLeft.hours).padStart(2, "0")}
                 </div>
-                <div className="text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">HOURS</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">HOURS</div>
               </div>
 
-              <div className="text-2xl md:text-4xl lg:text-5xl text-white/60">:</div>
+              <div className="text-xl sm:text-2xl md:text-4xl lg:text-5xl text-white/60 mb-4 sm:mb-6 md:mb-8">:</div>
 
               {/* Minutes */}
-              <div className="text-center">
-                <div className="text-3xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
+              <div className="text-center min-w-[60px] sm:min-w-[80px]">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
                   {String(timeLeft.minutes).padStart(2, "0")}
                 </div>
-                <div className="text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">MINUTES</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">MINUTES</div>
               </div>
 
-              <div className="text-2xl md:text-4xl lg:text-5xl text-white/60">:</div>
+              <div className="text-xl sm:text-2xl md:text-4xl lg:text-5xl text-white/60 mb-4 sm:mb-6 md:mb-8">:</div>
 
               {/* Seconds */}
-              <div className="text-center">
-                <div className="text-3xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
+              <div className="text-center min-w-[60px] sm:min-w-[80px]">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tabular-nums">
                   {String(timeLeft.seconds).padStart(2, "0")}
                 </div>
-                <div className="text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">SECONDS</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-white/80 tracking-wide mt-1 md:mt-2">SECONDS</div>
               </div>
             </div>
           ) : (

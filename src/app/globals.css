@@ -172,6 +172,15 @@ a {
 
 /* ============= home page end ============= */
 
+/* Scrollbar hide utility — used for horizontal scroll sections on mobile */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 
 
 
