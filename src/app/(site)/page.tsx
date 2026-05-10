@@ -95,7 +95,7 @@ export default function HomeHero() {
     <>
       <SubscribePopup />
 
-      {/* <LaunchAnnouncementBanner /> */}
+      <LaunchAnnouncementBanner />
 
       <HeroSlider heroSlides={heroSlides} />
 

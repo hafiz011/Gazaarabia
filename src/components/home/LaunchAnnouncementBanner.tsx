@@ -27,7 +27,7 @@ const LaunchAnnouncementBanner = () => {
   }, []);
 
   useEffect(() => {
-    const launchDate = new Date("2026-05-20T00:00:00").getTime();
+    const launchDate = new Date("2026-05-20T12:00:00").getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
