@@ -313,6 +313,7 @@ model products {
   slug             String           @unique
   description      String?          @db.LongText
   active           Boolean          @default(true)
+  isDeleted        Boolean          @default(false)
   barcode          String?
   baseQty          Int
   brandId          Int?

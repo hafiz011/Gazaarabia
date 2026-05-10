@@ -122,9 +122,22 @@ export default function ProductListPage() {
       type: "confirm",
       message: "Are you sure you want to delete this product?",
       onConfirm: async () => {
-        await productService.remove(token!, id);
-        setProducts((prev) => prev.filter((p) => p.id !== id));
-        setPopUpAlertData((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await productService.remove(token!, id);
+          setProducts((prev) => prev.filter((p) => p.id !== id));
+          setPopUpAlertData({
+            isOpen: true,
+            type: "success",
+            message: "Product deleted successfully.",
+          });
+        } catch (error: any) {
+          console.error("Delete product error:", error);
+          setPopUpAlertData({
+            isOpen: true,
+            type: "error",
+            message: error.message || "Failed to delete product.",
+          });
+        }
       },
       onCancel: () => setPopUpAlertData((prev) => ({ ...prev, isOpen: false })),
     });

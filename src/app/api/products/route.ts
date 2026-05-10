@@ -45,7 +45,10 @@ export async function GET(req: NextRequest) {
     //   : {};
 
     // ---------------- WHERE ----------------
-    const where: any = {};
+    const showDeleted = searchParams.get("showDeleted") === "true";
+    const where: any = {
+      isDeleted: showDeleted
+    };
 
     if (search) {
       where.title = { contains: search };

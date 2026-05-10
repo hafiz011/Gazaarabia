@@ -45,6 +45,7 @@ export async function GET(
     /* ---------------- Build WHERE ---------------- */
     const productWhere: any = {
       active: true,
+      isDeleted: false,
       sellingPrice: {
         gte: priceMin,
         lte: priceMax,

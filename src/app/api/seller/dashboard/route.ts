@@ -52,7 +52,7 @@ export async function GET(req: Request) {
                 revenueOverTimeRaw,
                 orderStatusRaw
             ] = await Promise.all([
-                prisma.products.count({ where: { sellerId: seller.id } }),
+                prisma.products.count({ where: { sellerId: seller.id, isDeleted: false } }),
                 prisma.orders.count({
                     where: {
                         orderItems: { some: { sellerId: seller.id } }

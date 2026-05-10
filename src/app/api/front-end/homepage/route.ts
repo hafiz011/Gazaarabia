@@ -30,7 +30,7 @@ export async function GET() {
 
         // ── Existing: Signature Products ──
         const products = await prisma.products.findMany({
-            where: { id: { in: settings.signatureProducts as number[] } },
+            where: { id: { in: settings.signatureProducts as number[] }, isDeleted: false },
             select: {
                 id: true,
                 title: true,
@@ -61,7 +61,7 @@ export async function GET() {
 
         const trendingProducts = trendingIds
             ? await prisma.products.findMany({
-                where: { id: { in: trendingIds }, active: true },
+                where: { id: { in: trendingIds }, active: true, isDeleted: false },
                 select: {
                     id: true,
                     title: true,
@@ -80,7 +80,7 @@ export async function GET() {
                 }
             })
             : await prisma.products.findMany({
-                where: { active: true },
+                where: { active: true, isDeleted: false },
                 orderBy: { createdAt: "desc" },
                 take: 12,
                 select: {
@@ -112,7 +112,7 @@ export async function GET() {
 
         if (bestSellerIds) {
             bestSellerProducts = await prisma.products.findMany({
-                where: { id: { in: bestSellerIds }, active: true },
+                where: { id: { in: bestSellerIds }, active: true, isDeleted: false },
                 select: {
                     id: true,
                     title: true,
@@ -144,7 +144,7 @@ export async function GET() {
 
                 if (topProductIds.length > 0) {
                     bestSellerProducts = await prisma.products.findMany({
-                        where: { id: { in: topProductIds }, active: true },
+                        where: { id: { in: topProductIds }, active: true, isDeleted: false },
                         select: {
                             id: true,
                             title: true,
@@ -170,7 +170,7 @@ export async function GET() {
             } catch {
                 // Fallback: just use latest products if no orders yet
                 bestSellerProducts = await prisma.products.findMany({
-                    where: { active: true },
+                    where: { active: true, isDeleted: false },
                     orderBy: { createdAt: "desc" },
                     take: 8,
                     select: {

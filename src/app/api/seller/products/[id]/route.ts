@@ -377,26 +377,63 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
     }
 
-    const variantIds = await prisma.productvariant.findMany({
-      where: { productId },
-      select: { id: true },
+    // 1. Check if there are any order items for this product
+    const orderItemCount = await prisma.orderItem.count({
+      where: { productId }
     });
 
-    const variantIdsList = variantIds.map((v: any) => v.id);
-    if (variantIdsList.length > 0) {
-      await prisma.variantImage.deleteMany({ where: { variantId: { in: variantIdsList } } });
+    if (orderItemCount > 0) {
+      // --- SOFT DELETE ---
+      // If there are orders, we MUST keep the record for financial history.
+      await prisma.products.update({
+        where: { id: productId, sellerId: seller?.id },
+        data: {
+          isDeleted: true,
+          active: false
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Product has been soft deleted successfully and sales record preserved.",
+      });
+    } else {
+      // --- PERMANENT DELETE ---
+      // If no orders exist, we can safely remove everything from the database.
+
+      // Cleanup variants and related data
+      const variants = await prisma.productvariant.findMany({
+        where: { productId },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v: any) => v.id);
+
+      if (variantIds.length > 0) {
+        // Remove images, cart items, and reviews for these variants
+        await prisma.variantImage.deleteMany({ where: { variantId: { in: variantIds } } });
+        await prisma.cart.deleteMany({ where: { variantId: { in: variantIds } } });
+        await prisma.review.deleteMany({ where: { variantId: { in: variantIds } } });
+      }
+
+      // Cleanup product-level relations
+      await prisma.productimage.deleteMany({ where: { productId } });
+      await prisma.wishlist.deleteMany({ where: { productId } });
+      await prisma.productRelation.deleteMany({
+        where: { OR: [{ parentId: productId }, { childId: productId }] }
+      });
+
+      // Finally remove variants and the product itself
+      await prisma.productvariant.deleteMany({ where: { productId } });
+      await prisma.products.delete({
+        where: { id: productId, sellerId: seller?.id }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Product deleted successfully",
+      });
     }
-
-    await prisma.productvariant.deleteMany({ where: { productId } });
-    await prisma.productimage.deleteMany({ where: { productId } });
-    await prisma.products.delete({ where: { id: productId, sellerId: seller?.id } });
-
-    return NextResponse.json({
-      success: true,
-      message: "Product deleted successfully",
-    });
-  } catch (error) {
-    console.error("DELETE Product Error:", error);
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, message: "Failed to delete product" },
       { status: 500 }

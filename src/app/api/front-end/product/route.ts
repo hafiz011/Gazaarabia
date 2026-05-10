@@ -16,6 +16,8 @@ export async function GET(req: Request) {
   }
 
   const where: Prisma.productsWhereInput = {
+    isDeleted: false,
+    active: true,
     OR: [
       { title: { contains: q.toLowerCase() } },
       { slug: { contains: q.toLowerCase() } },
@@ -44,5 +46,5 @@ export async function GET(req: Request) {
     prisma.products.count({ where }),
   ]);
 
-  return NextResponse.json({ products, total,  totalPages: Math.ceil(total / limit), page});
+  return NextResponse.json({ products, total, totalPages: Math.ceil(total / limit), page });
 }

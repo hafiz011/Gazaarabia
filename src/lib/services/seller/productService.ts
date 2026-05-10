@@ -99,7 +99,11 @@ export const productService = {
       },
     });
 
-    if (!res.ok) throw new Error("Failed to delete product");
-    return await res.json();
+    const result = await res.json();
+    if (!res.ok) {
+      const errorMessage = result?.message || "Failed to delete product";
+      throw new Error(errorMessage);
+    }
+    return result;
   },
 };

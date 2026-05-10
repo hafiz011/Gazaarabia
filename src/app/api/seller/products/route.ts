@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
       const skip = (page - 1) * limit;
 
       const where: any = {
-        sellerId: seller?.id
+        sellerId: seller?.id,
+        isDeleted: false
       };
 
       if (search) {
