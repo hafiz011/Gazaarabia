@@ -248,14 +248,14 @@ export default function HomePageSettings() {
         }
 
         // Full width banner required
-        if (!midBanner) {
-            setPopup({
-                isOpen: true,
-                type: "warning",
-                message: "Please upload the Full Width Banner.",
-            });
-            return;
-        }
+        // if (!midBanner) {
+        //     setPopup({
+        //         isOpen: true,
+        //         type: "warning",
+        //         message: "Please upload the Full Width Banner.",
+        //     });
+        //     return;
+        // }
 
         // Signature products required
         if (signatureProducts.length === 0) {

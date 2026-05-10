@@ -95,12 +95,15 @@ export default function HomeHero() {
     <>
       <SubscribePopup />
 
-      <LaunchAnnouncementBanner />
+      {/* <LaunchAnnouncementBanner /> */}
 
       <HeroSlider heroSlides={heroSlides} />
 
-      {/* 🆕 Trending Now — Horizontal Carousel */}
+      {/* Trending Now — Horizontal Carousel */}
       <TrendingNow products={trendingProducts} />
+
+      {/* Best Sellers — Featured Grid */}
+      <BestSellers products={bestSellerProducts} />
 
       {/* Shop by Category — Redesigned Bento Grid */}
       <ShopByCategory categories={categories} />
@@ -128,10 +131,9 @@ export default function HomeHero() {
         </section>
       }
 
-      {/* 🆕 Best Sellers — Featured Grid */}
-      <BestSellers products={bestSellerProducts} />
 
-      {/* 🆕 Shop by Color — Color Swatches */}
+
+      {/* Shop by Color — Color Swatches */}
       <ShopByColor colors={shopByColors} />
 
       {/* Signature Collection */}
