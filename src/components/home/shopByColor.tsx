@@ -21,7 +21,7 @@ export default function ShopByColor({ colors }: ShopByColorProps) {
   if (!colors || colors.length === 0) return null;
 
   const handleColorClick = (colorId: number) => {
-    router.push(`/shop?color=${colorId}`);
+    router.push(`/shop/all?colors[]=${colorId}`);
   };
 
   const isLightColor = (hex: string): boolean => {

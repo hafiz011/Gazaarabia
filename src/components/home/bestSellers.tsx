@@ -181,7 +181,7 @@ export default function BestSellers({ products }: BestSellersProps) {
           className="text-center mt-6 sm:mt-8 md:mt-10"
         >
           <button
-            onClick={() => router.push("/shop?sort=best-selling")}
+            onClick={() => router.push("/shop/all?sort=bestseller")}
             className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-semibold px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-gray-900/20 hover:-translate-y-0.5 active:translate-y-0"
           >
             <TrendingUp size={14} />

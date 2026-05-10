@@ -321,7 +321,7 @@ export default function ProductDetails() {
           />
 
           {/* ========================== PRODUCT SECTION ========================== */}
-          <section className="max-w-[1600px] mx-auto px-4 lg:px-6 pt-20 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-[var(--background)]">
+          <section className="max-w-[1600px] mx-auto px-4 lg:px-6 pt-6 md:pt-20 pb-12 md:pb-20 grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 bg-[var(--background)]">
             {/*  IMAGES */}
             <div className="relative flex flex-col md:flex-row gap-4 items-center md:items-start md:h-[700px]">
                 

@@ -108,8 +108,8 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
             <section className="bg-[var(--background)] min-h-[60vh]">
 
                 {/* ===== SEARCH PAGE HEADER ===== */}
-                <div className="w-full pt-16 pb-10 text-center">
-                    <h1 className="text-[28px] md:text-[32px] tracking-[0.2em] uppercase text-gray-900">
+                <div className="w-full pt-8 md:pt-16 pb-6 md:pb-10 text-center">
+                    <h1 className="text-[24px] md:text-[32px] tracking-[0.2em] uppercase text-gray-900">
                         Search Results
                     </h1>
 

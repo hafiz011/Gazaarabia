@@ -82,7 +82,7 @@ export default function TrendingNow({ products }: TrendingNowProps) {
             </div>
 
             <button
-              onClick={() => router.push("/shop?sort=newest")}
+              onClick={() => router.push("/shop/all?sort=new")}
               className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-black transition-colors group whitespace-nowrap"
             >
               View All

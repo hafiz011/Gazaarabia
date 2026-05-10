@@ -32,19 +32,37 @@ export default function Pagination({
             {/* Page Numbers */}
             {Array.from({ length: totalPages }).map((_, index) => {
                 const page = index + 1;
-                return (
-                    <button
-                        key={page}
-                        onClick={() => onPageChange(page)}
-                        className={`px-4 py-2 border rounded-full text-sm font-medium transition
-              ${currentPage === page
-                                ? "bg-black text-white border-black"
-                                : "border-gray-300 hover:bg-black hover:text-white"
-                            }`}
-                    >
-                        {page}
-                    </button>
-                );
+                // Show first, last, and current +/- 2
+                if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                    return (
+                        <button
+                            key={page}
+                            onClick={() => onPageChange(page)}
+                            className={`w-10 h-10 flex items-center justify-center border rounded-full text-sm font-medium transition
+                  ${currentPage === page
+                                    ? "bg-black text-white border-black"
+                                    : "border-gray-300 hover:bg-black hover:text-white"
+                                }`}
+                        >
+                            {page}
+                        </button>
+                    );
+                }
+
+                // Show ellipsis
+                if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                        <span key={page} className="flex items-center justify-center w-8 text-gray-400">
+                            ...
+                        </span>
+                    );
+                }
+
+                return null;
             })}
 
             {/* Next Button */}

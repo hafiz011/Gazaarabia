@@ -576,12 +576,12 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <section className="max-w-[1200px] mx-auto px-4 lg:px-8 py-12 mt-8 min-h-screen bg-[var(--soft-gray)]/30 rounded-xl">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-10 uppercase tracking-tight text-center lg:text-left">
+      <section className="max-w-[1200px] mx-auto px-4 lg:px-8 py-8 md:py-12 md:mt-8 min-h-screen bg-white md:bg-[var(--soft-gray)]/30 md:rounded-xl">
+        <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-8 md:mb-10 uppercase tracking-tight text-center lg:text-left">
           Checkout
         </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-10">
           {/* Left side */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-2xl p-6 border border-[var(--soft-gray)] shadow-sm">

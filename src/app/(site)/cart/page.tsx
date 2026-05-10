@@ -234,11 +234,11 @@ export default function CartPage() {
           </Link>
         </section>
       ) : (
-        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 bg-[var(--soft-gray)]/20 min-h-screen">
-          <h1 className="text-3xl font-semibold text-[var(--text-primary)] mt-5 mb-8 tracking-tight uppercase text-center lg:text-left">
+        <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 md:py-12 min-h-screen bg-white md:bg-[var(--soft-gray)]/20 md:rounded-2xl">
+          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] mt-0 md:mt-5 mb-8 tracking-tight uppercase text-center lg:text-left">
             Shopping Bag
           </h1>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
             {/*  Cart Items */}
             <div className="lg:col-span-2 space-y-10">
               {cartItems.map((item, index) => (

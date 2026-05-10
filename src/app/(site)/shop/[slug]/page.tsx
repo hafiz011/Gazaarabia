@@ -47,13 +47,15 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   });
 
   const [price, setPrice] = useState([0, 1000]);
+  const [sort, setSort] = useState<string>(searchParams.get("sort") || "new");
+
   const [filters, setFilters] = useState({
-    availability: [] as string[], // ["in", "out"]
-    sizes: [] as number[],        // size IDs
-    colors: [] as number[],       // color IDs
-    subcategories: [] as number[],// subcategory IDs
-    priceMin: 0,
-    priceMax: 1000,
+    availability: searchParams.getAll("availability[]"),
+    sizes: searchParams.getAll("sizes[]").map(Number),
+    colors: searchParams.getAll("colors[]").map(Number),
+    subcategories: searchParams.getAll("subcategories[]").map(Number),
+    priceMin: Number(searchParams.get("priceMin")) || 0,
+    priceMax: Number(searchParams.get("priceMax")) || 1000,
   });
 
   const appliedFilterCount =
@@ -62,8 +64,6 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     filters.colors.length +
     filters.subcategories.length +
     (filters.priceMin !== 0 || filters.priceMax !== 1000 ? 1 : 0);
-
-  const [sort, setSort] = useState<string>("new");
 
 
 
@@ -180,7 +180,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
         <CategoryHeader
           selectedSlug={slug}
-          title={slug.replace(/-/g, " ")}
+          title={slug === "all" ? "All Products" : slug.replace(/-/g, " ")}
           description="Our coats and cover-ups epitomise sophistication and timeless elegance..."
           parentCategory={parentCategory}
           categories={subcategories}
@@ -188,8 +188,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
         />
 
         {/* ================= SORT + FILTER BAR ================= */}
-        {/* <div className="w-full border-y border-gray-200 bg-[var(--background)]"> */}
-      <div className="w-full border-b border-black/10 bg-[var(--background)]">
+        <div className="w-full border-b border-black/10 bg-[var(--background)] sticky top-[60px] md:top-[60px] z-30 shadow-sm">
           <div className="max-w-[1600px] mx-auto px-4 py-4 flex justify-between items-center text-sm uppercase tracking-wider">
 
             {/* SORT BUTTON */}
@@ -242,10 +241,9 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
           </div>
         </div>
 
-        {/* ================= SORT PANEL ================= */}
         {showSort && (
-          <div className="w-full bg-[var(--background)] border-b border-black/10 animate-[fadeIn_0.25s_ease]">
-            <div className="max-w-[1600px] mx-auto px-6 py-8 flex flex-wrap gap-x-12 gap-y-6 text-sm uppercase tracking-wider">
+          <div className="w-full bg-[var(--background)] border-b border-black/10 animate-[fadeIn_0.25s_ease] fixed md:relative top-[113px] md:top-0 left-0 z-40 md:z-auto max-h-[60vh] overflow-y-auto">
+            <div className="max-w-[1600px] mx-auto px-6 py-8 flex flex-col md:flex-row md:flex-wrap gap-x-12 gap-y-6 text-sm uppercase tracking-wider">
 
               {[
                 { label: "Bestsellers", value: "bestseller" },
@@ -279,9 +277,9 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
 
         {/* ================= FILTER PANEL ================= */}
         {showFilters && (
-          <div className="w-full bg-[var(--background)] border-b border-black/10 animate-[fadeIn_0.25s_ease]">
+          <div className="w-full bg-[var(--background)] border-b border-black/10 animate-[fadeIn_0.25s_ease] fixed md:relative top-[113px] md:top-0 left-0 z-40 md:z-auto max-h-[calc(100vh-120px)] overflow-y-auto pb-10">
 
-            <div className="max-w-[1600px] mx-auto px-8 py-14 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-12 gap-y-14 text-sm">
+            <div className="max-w-[1600px] mx-auto px-6 md:px-8 py-10 md:py-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-12 gap-y-10 md:gap-y-14 text-sm">
 
               {/* FILTER BLOCK */}
               {/* AVAILABILITY */}

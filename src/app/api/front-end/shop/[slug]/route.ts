@@ -76,6 +76,7 @@ export async function GET(
       };
     }
 
+
     /* ---------------- Sorting ---------------- */
     let orderBy: any = { createdAt: "desc" }; // default = New arrivals
 
@@ -97,18 +98,10 @@ export async function GET(
     let subcategories: any[] = [];
     let parentCategory: any = null;
 
-    const category = await prisma.categories.findUnique({
-      where: { slug },
-      select: { id: true, name: true, slug: true },
-    });
-
-    if (category) {
+    if (slug === "all") {
       [products, total, subcategories] = await Promise.all([
         prisma.products.findMany({
-          where: {
-            categoryId: category.id,
-            ...productWhere,
-          },
+          where: productWhere,
           include: {
             productimage: true,
             productvariant: {
@@ -123,66 +116,103 @@ export async function GET(
           orderBy,
         }),
         prisma.products.count({
-          where: {
-            categoryId: category.id,
-            ...productWhere,
-          },
+          where: productWhere,
         }),
         prisma.subcategory.findMany({
-          where: { categoryId: category.id },
+          take: 10, // Just return some subcategories for the header
           orderBy: { name: "asc" },
         }),
       ]);
 
-      parentCategory = category;
+      parentCategory = { id: 0, name: "All Products", slug: "all" };
     } else {
-      const subcategory = await prisma.subcategory.findUnique({
+      const category = await prisma.categories.findUnique({
         where: { slug },
-        select: { id: true, categoryId: true, name: true, slug: true },
-      });
-
-      if (!subcategory) {
-        return NextResponse.json(
-          { error: "Invalid category or subcategory slug" },
-          { status: 404 }
-        );
-      }
-
-      [products, total, subcategories] = await Promise.all([
-        prisma.products.findMany({
-          where: {
-            subcategoryId: subcategory.id,
-            ...productWhere,
-          },
-          include: {
-            productimage: true,
-            productvariant: {
-              include: { color: true, size: true },
-            },
-            brand: true,
-            categories: true,
-            subcategories: true,
-          },
-          skip,
-          take: limit,
-          orderBy,
-        }),
-        prisma.products.count({
-          where: {
-            subcategoryId: subcategory.id,
-            ...productWhere,
-          },
-        }),
-        prisma.subcategory.findMany({
-          where: { categoryId: subcategory.categoryId },
-          orderBy: { name: "asc" },
-        }),
-      ]);
-
-      parentCategory = await prisma.categories.findUnique({
-        where: { id: subcategory.categoryId },
         select: { id: true, name: true, slug: true },
       });
+
+      if (category) {
+        [products, total, subcategories] = await Promise.all([
+          prisma.products.findMany({
+            where: {
+              categoryId: category.id,
+              ...productWhere,
+            },
+            include: {
+              productimage: true,
+              productvariant: {
+                include: { color: true, size: true },
+              },
+              brand: true,
+              categories: true,
+              subcategories: true,
+            },
+            skip,
+            take: limit,
+            orderBy,
+          }),
+          prisma.products.count({
+            where: {
+              categoryId: category.id,
+              ...productWhere,
+            },
+          }),
+          prisma.subcategory.findMany({
+            where: { categoryId: category.id },
+            orderBy: { name: "asc" },
+          }),
+        ]);
+
+        parentCategory = category;
+      } else {
+        const subcategory = await prisma.subcategory.findUnique({
+          where: { slug },
+          select: { id: true, categoryId: true, name: true, slug: true },
+        });
+
+        if (!subcategory) {
+          return NextResponse.json(
+            { error: "Invalid category or subcategory slug" },
+            { status: 404 }
+          );
+        }
+
+        [products, total, subcategories] = await Promise.all([
+          prisma.products.findMany({
+            where: {
+              subcategoryId: subcategory.id,
+              ...productWhere,
+            },
+            include: {
+              productimage: true,
+              productvariant: {
+                include: { color: true, size: true },
+              },
+              brand: true,
+              categories: true,
+              subcategories: true,
+            },
+            skip,
+            take: limit,
+            orderBy,
+          }),
+          prisma.products.count({
+            where: {
+              subcategoryId: subcategory.id,
+              ...productWhere,
+            },
+          }),
+          prisma.subcategory.findMany({
+            where: { categoryId: subcategory.categoryId },
+            orderBy: { name: "asc" },
+          }),
+        ]);
+
+        parentCategory = await prisma.categories.findUnique({
+          where: { id: subcategory.categoryId },
+          select: { id: true, name: true, slug: true },
+        });
+      }
     }
 
     /* ---------------- Wishlist ---------------- */

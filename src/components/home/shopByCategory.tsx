@@ -47,7 +47,7 @@ export default function ShopByCategory({ categories }: ShopByCategoryProps) {
           </h2>
           <div className="w-16 sm:w-20 md:w-24 h-[3px] mx-auto mt-2 sm:mt-3 rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]" />
           <p className="text-gray-500 text-xs sm:text-sm md:text-base max-w-2xl mx-auto font-light leading-relaxed mt-3 sm:mt-4 px-2">
-            Explore our curated collection of timeless essentials — crafted for the modern modest woman.
+            Explore our curated collection of timeless essentials — designed to elevate your wardrobe with effortless style and sustainable sophistication.
           </p>
         </motion.div>
 
