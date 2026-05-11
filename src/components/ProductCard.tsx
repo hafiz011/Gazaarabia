@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import { Heart, Plus, Star } from "lucide-react";
@@ -90,19 +91,16 @@ export default function ProductCard({ product, onWishlistToggle, onCardClick }: 
 
           {product.productimage.map((img: any, index: number) => (
             <SwiperSlide key={index}>
-              {/* <img
-                src={img.url}
-                alt={product.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              /> */}
-
-              <img
-                src={img.url}
-                alt={product.title}
-                className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105"
-              />
-
-
+              <div className="relative w-full h-full">
+                <Image
+                  src={img.url}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                  priority={index === 0}
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
             </SwiperSlide>
           ))}
         </Swiper>

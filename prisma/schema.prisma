@@ -366,6 +366,9 @@ model products {
   @@index([brandId], map: "Products_brandId_fkey")
   @@index([categoryId], map: "Products_categoryId_fkey")
   @@index([subcategoryId], map: "Products_subcategoryId_fkey")
+  @@index([active, isDeleted, createdAt(sort: Desc)])
+  @@index([slug])
+  @@index([isExternalProduct])
 }
 
 model productvariant {
@@ -549,6 +552,8 @@ model Orders {
 
 
   @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
   @@map("orders")
 }
 
@@ -614,6 +619,11 @@ model OrderItem {
   returnRequests ReturnRequest[]
 
 
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+  @@index([sellerId])
+  @@index([payoutEligibleAt])
   @@map("orders_item")
 }
 
@@ -643,6 +653,10 @@ model Review {
   orderItemId Int?
   orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
 
+  @@index([productId])
+  @@index([variantId])
+  @@index([userId])
+  @@index([rating])
   @@map("review")
 }
 

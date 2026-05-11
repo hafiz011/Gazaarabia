@@ -1,13 +1,46 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+/**
+ * Get available (remaining) stock for multiple products in a single batch (Fixes N+1)
+ */
+export async function getBulkProductAvailableStock(productIds: number[]) {
+    if (productIds.length === 0) return new Map<number, number>();
+
+    // 1. Fetch products baseQty with minimal select
+    const products = await prisma.products.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, baseQty: true }
+    });
+
+    // 2. Fetch sum of sold quantities in a single aggregation
+    const sales = await prisma.orderItem.groupBy({
+        by: ['productId'],
+        where: {
+            productId: { in: productIds },
+            order: {
+                status: { in: ["paid", "completed", "success", "succeeded"] },
+            }
+        },
+        _sum: { quantity: true }
+    });
+
+    const salesMap = new Map(sales.map(s => [s.productId, s._sum.quantity || 0]));
+    
+    // 3. Map result
+    const stockMap = new Map<number, number>();
+    products.forEach(p => {
+        const sold = salesMap.get(p.id) || 0;
+        const available = (p.baseQty || 0) - sold;
+        stockMap.set(p.id, available > 0 ? available : 0);
+    });
+
+    return stockMap;
+}
 
 /**
  * Get available (remaining) stock for a specific variant
- * available = productvariant.stock - sum(ordered qty for that variant in completed orders)
  */
 export async function getVariantAvailableQuantity(variantId: number): Promise<number> {
-    // fetch variant stock & active flag
     const variant = await prisma.productvariant.findUnique({
         where: { id: variantId },
         select: { stock: true, isActive: true },
@@ -15,13 +48,12 @@ export async function getVariantAvailableQuantity(variantId: number): Promise<nu
 
     if (!variant || !variant.isActive) return 0;
 
-    // sum ordered quantities for this variant where order.status indicates completed/paid
     const ordered = await prisma.orderItem.aggregate({
         _sum: { quantity: true },
         where: {
             variantId,
             order: {
-                status: { in: ["paid", "completed", "success", "succeeded"] }, // adjust statuses to match your app
+                status: { in: ["paid", "completed", "success", "succeeded"] },
             },
         },
     });
@@ -33,11 +65,9 @@ export async function getVariantAvailableQuantity(variantId: number): Promise<nu
 }
 
 /**
- * Get available (remaining) stock for a product using products.baseQty as source of truth
- * available = products.baseQty - sum(ordered qty for that product in completed orders)
+ * Get available (remaining) stock for a product using products.baseQty
  */
 export async function getProductAvailableQuantity(productId: number): Promise<number> {
-    // fetch product baseQty and (optionally) active flag
     const product = await prisma.products.findUnique({
         where: { id: productId },
         select: { baseQty: true, active: true },
@@ -47,13 +77,12 @@ export async function getProductAvailableQuantity(productId: number): Promise<nu
         return 0;
     }
 
-    // sum ordered quantities for this product where order.status indicates completed/paid
     const ordered = await prisma.orderItem.aggregate({
         _sum: { quantity: true },
         where: {
             productId,
             order: {
-                status: { in: ["paid", "completed", "success", "succeeded"] }, // adjust according to your statuses
+                status: { in: ["paid", "completed", "success", "succeeded"] },
             },
         },
     });
@@ -64,9 +93,6 @@ export async function getProductAvailableQuantity(productId: number): Promise<nu
     return available > 0 ? available : 0;
 }
 
-/**
- * Optional wrapper: prefer variant check if variantId provided; else product check
- */
 export async function getAvailableQuantity(params: {
     variantId?: number;
     productId?: number;

@@ -139,14 +139,26 @@ export async function GET(
               categoryId: category.id,
               ...productWhere,
             },
-            include: {
-              productimage: true,
-              productvariant: {
-                include: { color: true, size: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              sellingPrice: true,
+              discountPrice: true,
+              baseQty: true,
+              productimage: {
+                select: { url: true, alt: true, primary: true }
               },
-              brand: true,
-              categories: true,
-              subcategories: true,
+              productvariant: {
+                select: {
+                  id: true,
+                  price: true,
+                  stock: true,
+                  color: { select: { name: true, hexCode: true } },
+                  size: { select: { name: true } }
+                }
+              },
+              brand: { select: { name: true } },
             },
             skip,
             take: limit,
@@ -184,14 +196,26 @@ export async function GET(
               subcategoryId: subcategory.id,
               ...productWhere,
             },
-            include: {
-              productimage: true,
-              productvariant: {
-                include: { color: true, size: true },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              sellingPrice: true,
+              discountPrice: true,
+              baseQty: true,
+              productimage: {
+                select: { url: true, alt: true, primary: true }
               },
-              brand: true,
-              categories: true,
-              subcategories: true,
+              productvariant: {
+                select: {
+                  id: true,
+                  price: true,
+                  stock: true,
+                  color: { select: { name: true, hexCode: true } },
+                  size: { select: { name: true } }
+                }
+              },
+              brand: { select: { name: true } },
             },
             skip,
             take: limit,
@@ -223,35 +247,45 @@ export async function GET(
       wishlistIdsSet = new Set(wishlistIds);
     }
 
-    /* ---------------- Enrich products ---------------- */
-    const enrichedProducts = await Promise.all(
-      products.map(async (product) => {
-        const isInWishlist = wishlistIdsSet.has(product.id);
+    /* ---------------- Bulk Fetching (Fixing N+1) ---------------- */
+    const productIds = products.map((p) => p.id);
+    const [stockMap, ratingsMap] = await Promise.all([
+      import("@/lib/helpers/stockHelper").then((m) =>
+        m.getBulkProductAvailableStock(productIds)
+      ),
+      import("@/lib/helpers/reviewHelper").then((m) =>
+        m.getBulkProductRatingStats(productIds)
+      ),
+    ]);
 
-        const productAvailableStock =
-          await getProductAvailableQuantity(product.id);
+    /* ---------------- Enrich products (Phase 1 & 6) ---------------- */
+    const enrichedProducts = products.map((product) => {
+      const isInWishlist = wishlistIdsSet.has(product.id);
+      const availableStock = stockMap.get(product.id) || 0;
+      const stats = ratingsMap.get(product.id) || {
+        averageRating: 0,
+        totalReviews: 0,
+      };
 
-        const variantsWithStock = await Promise.all(
-          product.productvariant.map(async (variant: any) => {
-            const variantStock =
-              await getVariantAvailableQuantity(variant.id);
-            return { ...variant, availableStock: variantStock };
-          })
-        );
+      // Lightweight variant mapping for listing view
+      const variants = product.productvariant.map((v: any) => ({
+        id: v.id,
+        price: v.price,
+        stock: v.stock,
+        color: v.color?.name,
+        hexCode: v.color?.hexCode,
+        size: v.size?.name,
+      }));
 
-        const { averageRating, totalReviews } =
-          await getProductRatingStats(product.id);
-
-        return {
-          ...product,
-          isInWishlist,
-          availableStock: productAvailableStock,
-          productvariant: variantsWithStock,
-          rating: averageRating,
-          reviewsCount: totalReviews,
-        };
-      })
-    );
+      return {
+        ...product,
+        isInWishlist,
+        availableStock,
+        productvariant: variants,
+        rating: stats.averageRating,
+        reviewsCount: stats.totalReviews,
+      };
+    });
 
     /* ---------------- Response ---------------- */
     return NextResponse.json({

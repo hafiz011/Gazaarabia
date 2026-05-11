@@ -231,7 +231,7 @@ export default function Header() {
       try {
         const res = await getAllProducts(debouncedQuery, true);
         setProductsData(res);
-        
+
         // Tracking
         if (res?.products?.length > 0) {
           fbEvent("Search", { search_string: debouncedQuery });
