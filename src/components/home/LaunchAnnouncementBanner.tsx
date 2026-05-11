@@ -167,7 +167,7 @@ const LaunchAnnouncementBanner = () => {
         {/* Date */}
         <div className="text-center pt-4 md:pt-8">
           <p className="text-sm md:text-lg font-light tracking-widest text-white/80">
-            10 MAY 2026
+            20 MAY 2026
           </p>
         </div>
 

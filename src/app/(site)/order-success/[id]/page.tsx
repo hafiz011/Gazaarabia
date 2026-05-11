@@ -10,6 +10,8 @@ import Loader from "@/components/Loader";
 import PopupAlert from "@/components/PopupAlert";
 import { PopUpInterface } from "@/lib/types";
 import Image from "next/image";
+import { fbEvent } from "@/components/analytics/FacebookPixel";
+import { gaEvent } from "@/components/analytics/GoogleAnalytics";
 
 interface SelectedVariantData {
   id: number;
@@ -81,6 +83,7 @@ export default function OrderSuccessPage() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasTracked, setHasTracked] = useState(false);
   const [popUpAlertData, setPopUpAlertData] = useState<PopUpInterface>({
     isOpen: false,
     type: "",
@@ -108,6 +111,18 @@ export default function OrderSuccessPage() {
 
         if (response?.success) {
           setOrder(response.data);
+          
+          // Track Purchase
+          if (!hasTracked) {
+            fbEvent("Purchase", {
+              value: response.data.totalAmount,
+              currency: "GBP",
+              content_ids: response.data.orderItems.map((item: any) => item.productId),
+              content_type: "product",
+            });
+            gaEvent("purchase", "Ecommerce", `Order #${response.data.id}`, response.data.totalAmount);
+            setHasTracked(true);
+          }
         } else {
           setPopUpAlertData({
             isOpen: true,

@@ -13,16 +13,15 @@ import MobileMenuDrawer from "./MobileMenuDrawer";
 import { FaFacebookF, FaInstagram, FaYoutube, FaTiktok } from "react-icons/fa";
 import { getAllProducts } from "@/lib/services/front-end/productService";
 import ProductCard from "./ProductCard";
+import { fbEvent } from "@/components/analytics/FacebookPixel";
+import { gaEvent } from "@/components/analytics/GoogleAnalytics";
 
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
 interface Subcategory {
   id: number;
-  name: string;
-  slug: string;
-}
-
-interface SubcategoryLink {
-  id?: number;
   name: string;
   slug: string;
 }
@@ -61,6 +60,9 @@ interface MenuItem {
   dropdown: MenuDropdown;
 }
 
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export default function Header() {
   const router = useRouter();
@@ -68,41 +70,107 @@ export default function Header() {
   const isHomePage = pathname === "/";
 
   const { data: session } = useSession();
-  const token = session?.user?.token || null;
+  const { cartCount } = useCart();
 
+  // Navigation State
   const [menus, setMenus] = useState<MenuItem[]>([]);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<MenuItem | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<Submenu | null>(null);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
 
-  const hoverOpenRef = useRef<NodeJS.Timeout | null>(null);
-  const hoverCloseRef = useRef<NodeJS.Timeout | null>(null);
-
+  // UI State
   const [toolbarText, setToolbarText] = useState<string>("");
   const [hovered, setHovered] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
-
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [cartDrawer, setCartDrawer] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  // Search State
   const [searchMode, setSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [productsData, setProductsData] = useState<any>(null);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const { cartCount } = useCart();
+  // Refs for hover timing
+  const hoverOpenRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverCloseRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoized fetch to prevent re-creation
+  // Menu Navigation Helpers
+  const getMenuLink = useCallback((menu: MenuItem) => {
+    if (menu.type === "blog") return "/blogs/journal";
+    if (menu.type === "product") return `/shop/${menu.slug}`;
+    return "/";
+  }, []);
+
+  const getSubmenuLink = useCallback((menu: MenuItem, link: any) => {
+    if (menu.type === "blog") return `/blogs/journal/${link.slug}`;
+    return `/shop/${link.slug}`;
+  }, []);
+
+  // Toggle Handlers (Click-based)
+  // Toggle Handlers (Click-based)
+  const closeAllMenus = useCallback(() => {
+    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
+    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
+
+    setActiveMenu(null);
+    setActiveSubmenu(null);
+    setActiveCategory(null);
+  }, []);
+
+  const handleMenuHover = (menu: MenuItem) => {
+    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
+    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
+
+    // Intent delay for top level - reduced for snappier feel
+    hoverOpenRef.current = setTimeout(() => {
+      setActiveMenu(menu);
+      setActiveSubmenu(null);
+      setActiveCategory(null);
+    }, 20);
+  };
+
+
+  const handleSubmenuHover = (sub: Submenu) => {
+    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
+
+    // Snappier but still debounced for sub-levels
+    setActiveSubmenu(sub);
+    setActiveCategory(null);
+  };
+
+  const handleCategoryHover = (cat: Category) => {
+    setActiveCategory(cat);
+  };
+
+  const cancelClose = useCallback(() => {
+    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
+    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
+
+    hoverCloseRef.current = setTimeout(() => {
+      closeAllMenus();
+    }, 20);
+  }, [closeAllMenus]);
+
+
+
+
+
+  // Fetch menu data
   const fetchMenus = useCallback(async () => {
     try {
       const res = await fetch("/api/header", { cache: "no-store" });
       const data = await res.json();
-      if (data.success) setMenus(data.data);
-      if (data?.headerText) {
-        setToolbarText(data.headerText);
+      if (data.success) {
+        setMenus(data.data);
+        if (data.headerText) setToolbarText(data.headerText);
       }
     } catch (err) {
       console.error("Failed to load menus:", err);
@@ -111,683 +179,312 @@ export default function Header() {
 
   useEffect(() => {
     fetchMenus();
+    setMounted(true);
   }, [fetchMenus]);
 
+  // Handle Escape key to close menus
   useEffect(() => {
-    setMounted(true);
-    let animationFrameId: number;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeAllMenus();
+        setSearchMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [closeAllMenus]);
 
+
+  // Scroll handler with RequestAnimationFrame
+  useEffect(() => {
+    let animationFrameId: number;
     const handleScroll = () => {
       animationFrameId = requestAnimationFrame(() => {
-        setScrolled(window.scrollY > 50);
+        setScrolled(window.scrollY > 20);
       });
     };
-
-    handleScroll();
     window.addEventListener("scroll", handleScroll);
+    handleScroll();
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
-  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
-  const isScrolled = mounted ? scrolled : false;
-
-  const getMenuLink = useCallback((menu: MenuItem) => {
-    if (menu.type === "blog") return "/blogs/journal";
-    if (menu.type === "product") return `/shop/${menu.slug}`;
-    return "/";
-  }, []);
-
-  const getSubmenuLink = useCallback((menu: MenuItem, link: SubcategoryLink) => {
-    if (menu.type === "blog") return `/blogs/journal/${link.slug}`;
-    return `/shop/${link.slug}`;
-  }, []);
-
-  const searchBtn = useCallback(() => {
-    setSearchMode(true);
-  }, []);
-
-  useEffect(() => {
-    if (searchMode) {
-      document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none"; // important for mobile
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-    };
-  }, [searchMode]);
-
-
+  // Search Debounce (300ms)
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 300); // 300ms debounce
-
-    return () => {
-      clearTimeout(handler);
-    };
+    }, 20);
+    return () => clearTimeout(handler);
   }, [searchQuery]);
 
-
+  // Search API Call
   useEffect(() => {
     if (!debouncedQuery || debouncedQuery.trim().length < 2) {
       setProductsData(null);
       setSearchLoading(false);
       return;
     }
-    const fetch = async () => {
+    const fetchSearch = async () => {
       setSearchLoading(true);
-      const res = await getAllProducts(debouncedQuery, true);
-      setProductsData(res);
-      setSearchLoading(false);
+      try {
+        const res = await getAllProducts(debouncedQuery, true);
+        setProductsData(res);
+        
+        // Tracking
+        if (res?.products?.length > 0) {
+          fbEvent("Search", { search_string: debouncedQuery });
+          gaEvent("search", "Search", debouncedQuery);
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+      } finally {
+        setSearchLoading(false);
+      }
     };
-
-    fetch();
+    fetchSearch();
   }, [debouncedQuery]);
 
-  const searchProduct = (search: string) => {
-    setSearchQuery(search);
-  };
-
-  // Auto-set first submenu when activeMenu changes
+  // Body scroll lock
   useEffect(() => {
-    if (activeMenu && menus.length > 0) {
-      const menu = menus.find((m) => m.slug === activeMenu);
-      if (menu?.dropdown?.submenus?.length) {
-        setActiveSubmenu(menu.dropdown.submenus[0]);
-      } else {
-        setActiveSubmenu(null);
-        setActiveCategory(null);
-      }
-    }
-  }, [activeMenu, menus]);
-
-  // Auto-set first category when activeSubmenu changes
-  useEffect(() => {
-    if (activeSubmenu?.categories?.length) {
-      setActiveCategory(activeSubmenu.categories[0]);
+    if (searchMode || isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
     } else {
-      setActiveCategory(null);
+      document.body.style.overflow = "";
     }
-  }, [activeSubmenu]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [searchMode, isMobileMenuOpen]);
 
-  // Memoized filtered submenus for current active menu
-  const activeMenuSubmenus = useMemo(() => {
-    if (!activeMenu) return [];
-    const menu = menus.find((m) => m.slug === activeMenu);
-    return menu?.dropdown?.submenus || [];
-  }, [menus, activeMenu]);
 
-  // Memoized banners for current active menu
-  const activeMenuBanners = useMemo(() => {
-    if (!activeMenu) return [];
-    const menu = menus.find((m) => m.slug === activeMenu);
-    return menu?.dropdown?.banners || [];
-  }, [menus, activeMenu]);
 
-  // Memoized categories for current active submenu
-  const activeSubmenuCategories = useMemo(() => {
-    return activeSubmenu?.categories || [];
-  }, [activeSubmenu]);
 
-  // Memoized delayed open/close handlers to prevent flicker
-  const scheduleOpenMenu = useCallback((slug: string | null) => {
-    if (hoverCloseRef.current) {
-      clearTimeout(hoverCloseRef.current);
-      hoverCloseRef.current = null;
-    }
-    if (hoverOpenRef.current) clearTimeout(hoverOpenRef.current);
-    hoverOpenRef.current = setTimeout(() => {
-      setActiveMenu(slug);
-    }, 100);
-  }, []);
 
-  const scheduleCloseMenu = useCallback(() => {
-    if (hoverOpenRef.current) {
-      clearTimeout(hoverOpenRef.current);
-      hoverOpenRef.current = null;
-    }
-    if (hoverCloseRef.current) clearTimeout(hoverCloseRef.current);
-    hoverCloseRef.current = setTimeout(() => {
-      setActiveMenu(null);
-      setActiveSubmenu(null);
-    }, 150);
-  }, []);
+
+  // Header styles based on state
+  const headerBaseClass = "fixed top-0 left-0 w-full z-[100] transition-all duration-300";
+  const headerBgClass = isHomePage
+    ? scrolled
+      ? "bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20"
+      : hovered || activeMenu
+        ? "bg-white/40 backdrop-blur-2xl shadow-sm border-b border-white/10"
+        : "bg-transparent"
+    : "bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-100";
+
+  const textColorClass = isHomePage && !scrolled && !hovered && !activeMenu && !searchMode
+    ? "text-white"
+    : "text-[var(--text-primary)]";
 
   return (
-
-
-    <header
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`site-header fixed top-0 left-0 w-full z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ${isHomePage
-        ? isScrolled
-          ? "bg-white/60 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.05)] border-b border-white/30 "
-          // scrolled
-          : hovered
-            ? "bg-white/25 backdrop-blur-2xl border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.06)] "  // hover
-            : "bg-transparent"  // fresh hero section
-        : "bg-white/70 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border-b border-gray-200"  // other pages
-        }
-`}
-    >
-      {/* {toolbarText && ( */}
-      <div
-        className={`bg-[var(--brand-primary)] text-white text-xs py-2 tracking-wide relative z-10 
-  transition-all duration-300 overflow-hidden
-  ${isScrolled ? "h-0 py-0 opacity-0" : "h-auto opacity-100"}`}
+    <>
+      <header
+        className={`${headerBaseClass} ${headerBgClass}`}
+        onMouseEnter={() => {
+          setHovered(true);
+          cancelClose();
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+          scheduleClose();
+        }}
       >
-        <div className="max-w-[1400px] mx-auto px-4 flex items-center justify-between">
-
-          {/* LEFT TEXT */}
-          <span className="font-medium">
-            {toolbarText}
-          </span>
-
-          {/* RIGHT SOCIAL ICONS */}
-          <div className="hidden sm:flex gap-4 items-center">
-            <Link href="https://www.instagram.com/gazaarabia/" target="_blank">
-              <FaInstagram className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
-            </Link>
-            <Link href="https://www.facebook.com/gazaarabia/" target="_blank">
-              <FaFacebookF className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
-            </Link>
-            <Link href="https://www.tiktok.com/@gazaarabia/" target="_blank">
-              <FaTiktok className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
-            </Link>
-            <Link href="https://www.youtube.com/@GazaArabia_Official" target="_blank">
-              <FaYoutube className="text-white text-sm hover:opacity-80 transition cursor-pointer" />
-            </Link>
+        {/* TOP BAR */}
+        <div
+          className={`bg-[var(--brand-primary)] text-white text-[11px] py-1.5 tracking-[0.1em] transition-all duration-300 overflow-hidden ${scrolled ? "h-0 opacity-0" : "h-auto opacity-100"
+            }`}
+        >
+          <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between uppercase font-bold">
+            <span>{toolbarText || "Free shipping on orders over £100"}</span>
+            <div className="hidden sm:flex gap-4 items-center">
+              <Link href="https://instagram.com/gazaarabia" target="_blank"><FaInstagram /></Link>
+              <Link href="https://facebook.com/gazaarabia" target="_blank"><FaFacebookF /></Link>
+              <Link href="https://tiktok.com/@gazaarabia" target="_blank"><FaTiktok /></Link>
+              <Link href="https://youtube.com/@gazaarabia" target="_blank"><FaYoutube /></Link>
+            </div>
           </div>
-
         </div>
-      </div>
-      {/* )} */}
 
+        {/* MAIN HEADER */}
+        <div className="relative h-[70px] lg:h-[80px]">
+          <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-4 lg:px-10">
+            {/* Left: Mobile Menu + Search */}
+            <div className={`flex items-center gap-4 lg:hidden ${textColorClass}`}>
+              <button onClick={() => setIsMobileMenuOpen(true)}>
+                <Menu size={24} />
+              </button>
+              <button onClick={() => setSearchMode(true)}>
+                <Search size={22} />
+              </button>
+            </div>
 
-      {/* Main Header */}
-      <div className="w-full relative z-50">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-4 lg:px-6 h-[60px] relative">
-          {/* Mobile Menu Button + Search */}
-          {/* <div className="flex items-center gap-3 lg:hidden z-50">
-            <button onClick={toggleMenu}>
-              {isOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
-            <Search size={22} />
-          </div> */}
-
-
-          <div
-            className={`flex items-center gap-3 lg:hidden z-50 ${isHomePage && (!isScrolled && !hovered)
-              ? "text-white"
-              : "text-[var(--text-primary)]"
-              }`}
-          >
-            <button onClick={toggleMenu} className="transition-colors duration-300">
-              {isOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
-            {/* <Search size={22} className="transition-colors duration-300" /> */}
-
-            <Search
-              size={22}
-              className="transition-colors duration-300 cursor-pointer"
-              onClick={() => { setSearchMode(true); setHovered(true) }}
-            />
-
-
-          </div>
-
-
-          {/* Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 z-40">
-            <Link href="/" className="flex items-center h-full w-40 sm:w-44 mx-auto">
-              <div className="relative w-full h-12 flex items-center justify-center">
+            {/* Logo */}
+            <div className="flex items-center h-full">
+              <Link href="/" className="relative w-32 lg:w-48 h-12 flex items-center justify-center">
                 <Image
-                  src={
-                    isHomePage && (!isScrolled && !hovered)
-                      ? "/images/logo.png"
-                      : "/images/logo-dark.png"
-                  }
+                  src={textColorClass === "text-white" ? "/images/logo.png" : "/images/logo-dark.png"}
                   alt="Gazaarabia"
                   fill
                   priority
-                  className="object-contain transition-opacity duration-300"
+                  sizes="(max-width: 768px) 128px, 192px"
+                  className="object-contain"
                 />
-              </div>
-            </Link>
-          </div>
-
-          {/*  Desktop Menu */}
-
-          {searchMode && (
-            <div className="hidden lg:flex w-full max-w-3xl items-center border-b border-gray-300 focus-within:border-black transition-colors duration-200 search-bar">
-              {/* <Search className="mr-3 text-gray-400" size={20} /> */}
-
-              <input
-                autoFocus
-                type="text"
-                placeholder="Search products..."
-                className="
-                  flex-1
-                  h-12
-                  bg-transparent
-                  outline-none
-                  border-none
-                  ring-0
-                  focus:ring-0
-                  focus:outline-none
-                  text-lg
-                  placeholder-gray-400
-                "
-                value={searchQuery}
-                onChange={(e) => { searchProduct(e.target.value) }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                    setSearchMode(false);
-                  }
-                }}
-              />
-
-              <button
-                onClick={() => { setSearchMode(false); setSearchQuery("") }}
-                className="ml-3 p-2 hover:bg-black/5 rounded-full transition"
-              >
-                <X size={22} />
-              </button>
-
-
-
-              {/* <div className="fixed left-0 right-0 top-[122px] bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown z-40"> */}
-
-              {debouncedQuery && debouncedQuery.length >= 2 && productsData &&
-                <div className="
-                  fixed 
-                  left-0 
-                  right-0 
-                  top-[122px] 
-                  bg-white 
-                  text-[var(--text-primary)] 
-                  shadow-xl 
-                  pt-10 
-                  pb-12 
-                  border-gray-200 
-                  animate-dropdown 
-                  z-40
-                  max-h-[80vh]
-                  overflow-y-auto
-                ">
-
-                  <div className="mx-auto max-w-[1600px] px-10 min-h-[300px]">
-
-                    {searchLoading ? (
-                      <div className="flex items-center justify-center min-h-[300px]">
-                        <Loader className="animate-spin" size={40} />
-                      </div>
-                    ) : (
-                      <div className="w-full">
-
-                        {/* PRODUCTS GRID */}
-                        {(productsData?.products?.length > 0) ?
-                          <div
-                            className="
-                            grid 
-                            grid-cols-2
-                            sm:grid-cols-2
-                            md:grid-cols-3
-                            lg:grid-cols-3
-                            xl:grid-cols-4
-                            2xl:grid-cols-5
-                            gap-x-6 gap-y-12
-                            justify-items-stretch
-                            w-full
-                          "
-                          >
-                            {productsData?.products?.map((product: any) => (
-                              <ProductCard
-                                key={product.id}
-                                product={product}
-                                onCardClick={() => setSearchMode(false)}
-                              />
-                            ))}
-                          </div>
-
-                          :
-                          <>
-                            <div className="w-full pt-16 pb-10 text-center">
-                              <p className="mt-3 text-sm tracking-wide text-gray-600 max-w-xl mx-auto">
-                                No search results for <span className="italic">"{searchQuery}"</span>.<br />
-                                Please try searching again using different words.
-                              </p>
-                            </div>
-                          </>
-                        }
-
-
-
-                        {/* VIEW ALL BUTTON */}
-                        {(productsData?.total > 5) &&
-                          <div className="mt-10 flex justify-center">
-                            <button
-                              onClick={() => {
-                                router.push(`/search?q=${searchQuery}`);
-                                setSearchMode(false);
-                              }}
-                              className="
-                              text-sm
-                              tracking-widest
-                              uppercase
-                              text-gray-800
-                              border-b
-                              border-gray-400
-                              hover:border-black
-                              hover:text-black
-                              transition
-                              pb-1
-                            "
-                            >
-                              View all {productsData?.total} products
-                            </button>
-                          </div>
-                        }
-
-
-                      </div>
-                    )}
-
-                  </div>
-                </div>
-
-              }
-
+              </Link>
             </div>
-          )}
 
-
-          {!searchMode && (
-
-            <nav
-              className={`hidden lg:flex items-center h-full gap-8 text-[14px] font-medium tracking-wider uppercase ${isHomePage && (!isScrolled && !hovered)
-                ? "text-white"
-                : "text-[var(--text-primary)]"
-                }`}
-            >
-              {/* Dynamic Menus from API */}
+            {/* Desktop Nav - Centered */}
+            <nav className={`hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center h-full gap-8 text-[13px] font-bold tracking-widest uppercase ${textColorClass}`}>
               {menus.map((item) => (
                 <div
                   key={item.id}
-                  className="relative group h-full flex items-center"
-                  onMouseEnter={() => {
-                    // Stage 1: hover main menu -> show submenu strip after delay
-                    if (item.dropdown?.submenus?.length) {
-                      scheduleOpenMenu(item.slug);
-                    } else {
-                      scheduleCloseMenu();
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    // start scheduled close when leaving main menu item
-                    scheduleCloseMenu();
-                  }}
+                  className="h-full flex items-center relative group"
+                  onMouseEnter={() => handleMenuHover(item)}
                 >
                   <Link
                     href={getMenuLink(item)}
-                    className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] group-hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
+                    className={`hover:text-[var(--brand-primary)] transition-colors relative py-2 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[var(--brand-primary)] after:transition-all hover:after:w-full ${activeMenu?.id === item.id ? "text-[var(--brand-primary)] after:w-full" : ""}`}
                   >
                     {item.name}
                   </Link>
-                  {/* NOTE: Mega menu rendering moved to global area below nav (see after nav) */}
                 </div>
               ))}
-
-
-              {/* -------------------------------------- */}
-              {/* FIXED MENU ITEMS (Always Visible)      */}
-              {/* -------------------------------------- */}
-
-              {/* AMBASSADOR */}
-              <Link
-                href="/become-partner"
-                onMouseEnter={() => setActiveMenu(null)}
-                className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--brand-primary)] hover:after:w-full after:transition-all after:duration-300 hover:text-[var(--brand-primary)] transition"
-              >
-                AMBASSADOR
-              </Link>
-
+              <Link href="/become-partner" className="hover:text-[var(--brand-primary)] transition-colors">Ambassador</Link>
             </nav>
 
-          )}
-
-          {/*  Right Icons (Desktop + Mobile) */}
-          <div
-            className={`flex items-center gap-4 ${isHomePage && (!isScrolled && !hovered)
-              ? "text-white"
-              : "text-[var(--text-primary)]"
-              }`}
-          >
-            {/* Desktop Icons */}
-            <div className="hidden lg:flex gap-4">
-              {/* <div className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition">
+            {/* Right: Search, Account, Wishlist, Cart */}
+            <div className={`flex items-center gap-2 lg:gap-5 ${textColorClass}`}>
+              <button onClick={() => setSearchMode(true)} className="hidden lg:flex p-2 hover:bg-black/5 rounded-full transition">
                 <Search size={20} />
-              </div> */}
-
-              <div
-                onClick={() => searchBtn()}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
-              >
-                <Search size={20} />
-              </div>
-
-              <div
-                onClick={() => setProfileDrawer(true)}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
-              >
-                <User size={20} />
-              </div>
-
-              <div
-                onClick={() => router.push("/wishlist")}
-                className="p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
-              >
+              </button>
+              <button onClick={() => setProfileDrawer(true)} className="p-2 hover:bg-black/5 rounded-full transition">
+                <User size={22} />
+              </button>
+              <button onClick={() => router.push("/wishlist")} className="hidden lg:flex p-2 hover:bg-black/5 rounded-full transition">
                 <Heart size={20} />
-              </div>
-
-              <div
-                onClick={() => setCartDrawer(true)}
-                className="relative p-2 rounded-full hover:bg-[var(--brand-primary)]/10 cursor-pointer transition"
-              >
-                <ShoppingBag size={20} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[var(--brand-primary)] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile Icons */}
-            <div className="flex lg:hidden gap-3">
-              <User
-                size={22}
-                className="cursor-pointer"
-                onClick={() => setProfileDrawer(true)}
-              />
-              <Heart
-                size={22}
-                className="cursor-pointer"
-                onClick={() => router.push("/wishlist")}
-              />
-              <div
-                onClick={() => setCartDrawer(true)}
-                className="relative cursor-pointer"
-              >
+              </button>
+              <button onClick={() => setCartDrawer(true)} className="relative p-2 hover:bg-black/5 rounded-full transition">
                 <ShoppingBag size={22} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-[var(--brand-primary)] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
+                  <span className="absolute top-1 right-1 bg-[var(--brand-primary)] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
                     {cartCount}
                   </span>
                 )}
-              </div>
+              </button>
             </div>
           </div>
 
-          {/* ===== Stage 2: Submenu Strip (full-width bar) ===== */}
-          {menus.length > 0 && (
-            <div
-              className={`fixed left-0 right-0 top-[90px] z-40 transition-all duration-200 ${activeMenu ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-              onMouseEnter={() => {
-                if (hoverCloseRef.current) {
-                  clearTimeout(hoverCloseRef.current);
-                  hoverCloseRef.current = null;
-                }
-              }}
-              onMouseLeave={() => scheduleCloseMenu()}
-            >
-              <div className="bg-white border-b border-gray-100">
-                <div className="max-w-[1400px] mx-auto px-4">
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar py-3">
-                    {activeMenuSubmenus.map((submenu) => (
-                      <button
-                        key={submenu.id}
-                        onMouseEnter={() => {
-                          if (hoverCloseRef.current) {
-                            clearTimeout(hoverCloseRef.current);
-                            hoverCloseRef.current = null;
-                          }
-                          setActiveSubmenu(submenu);
-                        }}
-                        className={`px-4 py-2 rounded-full text-sm font-medium uppercase transition ${activeSubmenu?.id === submenu.id ? "bg-gray-100 text-[var(--brand-primary)]" : "text-gray-600 hover:bg-gray-50"}`}>
-                        {submenu.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* MEGA MENU: Stage 2 (Submenu Strip) */}
+          <div
+            className={`absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-2xl transition-all duration-300 ease-out z-50 will-change-transform ${activeMenu && activeMenu.dropdown?.submenus?.length ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+              }`}
+            onMouseEnter={cancelClose}
+          >
+            <div className="max-w-[1600px] mx-auto px-10 flex gap-6 overflow-x-auto no-scrollbar py-4">
+              {activeMenu?.dropdown?.submenus.map((sub) => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onMouseEnter={() => handleSubmenuHover(sub)}
+                  className={`px-6 py-2.5 rounded-full text-[12px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${activeSubmenu?.id === sub.id ? "bg-gray-900 text-white shadow-lg scale-105" : "text-gray-500 hover:bg-gray-100"
+                    }`}
+                >
+                  {sub.name}
+                </button>
+              ))}
             </div>
-          )}
 
-          {/* ===== Stage 3: Mega Menu (3-level: submenu → category → subcategory) ===== */}
-          {activeMenu && activeSubmenu && activeCategory && (
-            <div
-              className={`fixed left-0 right-0 top-[150px] z-40 transition-all duration-300 ${isScrolled ? "-mt-[40px]" : ""}`}
-              onMouseEnter={() => {
-                if (hoverCloseRef.current) {
-                  clearTimeout(hoverCloseRef.current);
-                  hoverCloseRef.current = null;
-                }
-              }}
-              onMouseLeave={() => scheduleCloseMenu()}
-            >
-              <div className="bg-white text-[var(--text-primary)] shadow-xl pt-10 pb-12 border-t border-gray-200 animate-dropdown">
-                <div className="mx-auto max-w-[1400px] px-10 grid grid-cols-5 gap-8">
+            {/* MEGA MENU: Stage 3 (Categories + Subcategories + Banners) */}
+            <div className={`bg-gray-50/50 transition-all duration-300 ease-out overflow-hidden ${activeMenu && activeSubmenu ? "max-h-[600px]" : "max-h-0"}`}>
+              <div className="max-w-[1600px] mx-auto px-10 py-10 grid grid-cols-5 gap-12">
+                {/* Categories Column */}
+                <div className="col-span-1 space-y-1">
+                  <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Collections</h4>
+                  {activeSubmenu?.categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onMouseEnter={() => handleCategoryHover(cat)}
+                      className={`w-full flex items-center justify-between text-[13px] uppercase tracking-wide py-2.5 px-4 rounded-lg transition-all duration-200 cursor-pointer ${activeCategory?.id === cat.id ? "bg-white shadow-md text-[var(--brand-primary)] font-bold translate-x-1" : "text-gray-600 hover:text-black hover:bg-white/50"
+                        }`}
+                    >
+                      <span>{cat.name}</span>
+                      {activeCategory?.id === cat.id && <ChevronRight size={14} className="animate-in fade-in slide-in-from-left-1" />}
+                    </button>
+                  ))}
+                </div>
 
-                  {/* MIDDLE: Categories */}
-                  <div className="col-span-1 border-r border-gray-100 pr-6">
-                    <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">Categories</div>
-                    <div className="flex flex-col space-y-1">
-                      {activeSubmenuCategories.map((category) => (
-                        <button
-                          key={category.id}
-                          onMouseEnter={() => setActiveCategory(category)}
-                          className={`group relative flex items-start gap-2 text-sm tracking-wide uppercase px-3 py-2 rounded-md transition-all duration-200 ${activeCategory?.id === category.id
-                            ? "bg-gray-50 text-[var(--brand-primary)] font-semibold"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                            }`}
-                        >
-                          {activeCategory?.id === category.id && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] bg-[var(--brand-primary)] rounded-full" />
-                          )}
-                          <span className="text-left flex-1 leading-tight">{category.name}</span>
-                          <ChevronRight
-                            size={14}
-                            className={`transition-transform duration-200 ${activeCategory?.id === category.id
-                              ? "translate-x-1 text-[var(--brand-primary)]"
-                              : "text-gray-400 group-hover:translate-x-1"
-                              }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* RIGHT: Subcategories */}
-                  <div className="col-span-1">
-                    <div className="mb-4 text-xs tracking-widest uppercase text-gray-400">
-                      {activeCategory?.name || "Subcategories"}
-                    </div>
-                    <div className="flex flex-col space-y-1">
-                      {activeCategory?.subcategories?.length ? (
-                        activeCategory.subcategories.map((subcat: Subcategory) => (
-                          <Link
-                            key={subcat.slug}
-                            href={`/shop/${subcat.slug}`}
-                            className="group flex items-center justify-between text-sm text-gray-600 px-3 py-1.5 rounded-md transition-all duration-200 hover:text-[var(--brand-primary)] hover:bg-gray-50"
-                          >
-                            <span>{subcat.name}</span>
-                            <ChevronRight
-                              size={14}
-                              className="opacity-0 group-hover:opacity-100 transition"
-                            />
-                          </Link>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400">No subcategories</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* BANNERS */}
-                  <div className="col-span-2 grid grid-cols-2 gap-6">
-                    {activeMenuBanners.map((banner: BannerItem, index: number) => (
+                {/* Subcategories Column */}
+                <div className="col-span-1 ">
+                  <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+                    {activeCategory?.name || "Shop By"}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1">
+                    {activeCategory?.subcategories.map((subcat) => (
                       <Link
-                        href={banner.link}
-                        key={index}
-                        className="mega-menu-banner flex items-center justify-center h-[45vh] max-h-[400px] bg-gray-50 rounded-md shadow-sm hover:shadow-lg transition"
+                        key={subcat.id}
+                        href={`/shop/${subcat.slug}`}
+                        className="text-[13px] text-gray-600 hover:text-[var(--brand-primary)] py-2 px-3 rounded-md transition hover:bg-white/50"
+                        onClick={() => closeAllMenus()}
                       >
-                        <div className="relative w-full h-full flex items-center justify-center">
-                          <Image
-                            src={banner.image}
-                            alt={banner.title}
-                            fill
-                            priority
-                            className="object-contain"
-                          />
-                        </div>
+                        {subcat.name}
                       </Link>
                     ))}
+                    {activeCategory && (
+                      <Link
+                        href={`/shop/${activeCategory.slug}`}
+                        className="text-[12px] font-bold text-[var(--brand-primary)] py-2 px-3 mt-2 inline-flex items-center gap-1 group"
+                        onClick={() => closeAllMenus()}
+                      >
+                        View All <ChevronRight size={14} className="group-hover:translate-x-1 transition" />
+                      </Link>
+                    )}
                   </div>
+                </div>
+
+                {/* Banners Column */}
+                <div className="col-span-3 grid grid-cols-2 gap-6">
+                  {activeMenu?.dropdown.banners.slice(0, 2).map((banner, i) => (
+                    <Link
+                      key={i}
+                      href={banner.link}
+                      className="relative aspect-[16/9] rounded-xl overflow-hidden group shadow-md hover:shadow-xl transition-all duration-500"
+                    >
+                      <Image
+                        src={banner.image}
+                        alt={banner.title}
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-6">
+                        <span className="text-white text-[18px] font-black uppercase tracking-widest">{banner.title}</span>
+                        <span className="text-white/80 text-[11px] uppercase font-bold tracking-widest mt-1">Explore Now</span>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      </header>
 
-
-      {/* ===== MOBILE SEARCH FULLSCREEN OVERLAY ===== */}
-      {searchMode && (
-        <div className="lg:hidden fixed inset-0 bg-white flex flex-col animate-slideIn" style={{ zIndex: 100 }}>
-          {/* Header of Search Overlay */}
-          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 bg-white shadow-sm">
-            <button
-              onClick={() => { setSearchMode(false); setSearchQuery(""); setProductsData(null); }}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft size={24} className="text-gray-700" />
+      {/* FULL-WIDTH SEARCH OVERLAY */}
+      <div className={`fixed inset-0 z-[200] bg-white transition-all duration-500 ${searchMode ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
+        <div className="h-full flex flex-col">
+          {/* Search Header */}
+          <div className="max-w-[1600px] mx-auto w-full px-4 lg:px-10 py-6 flex items-center gap-6 border-b border-gray-100">
+            <button onClick={() => { setSearchMode(false); setSearchQuery(""); }} className="p-2 hover:bg-gray-100 rounded-full transition">
+              <ArrowLeft size={28} />
             </button>
-            <div className="flex-1 flex items-center bg-gray-100/80 rounded-full px-4 py-2 border border-transparent focus-within:bg-white focus-within:border-gray-300 focus-within:shadow-sm transition-all duration-300">
-              <Search size={18} className="text-gray-400 mr-2" />
+            <div className="flex-1 flex items-center">
+              <Search size={24} className="text-gray-400 mr-4" />
               <input
                 autoFocus
                 type="text"
-                placeholder="Search products..."
+                placeholder="WHAT ARE YOU LOOKING FOR?"
+                className="w-full text-2xl lg:text-4xl font-bold uppercase tracking-widest outline-none border-none placeholder:text-gray-200"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -796,33 +493,39 @@ export default function Header() {
                     setSearchMode(false);
                   }
                 }}
-                className="flex-1 bg-transparent outline-none text-[15px] placeholder-gray-500 w-full"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => { setSearchQuery(""); setProductsData(null); }}
-                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                >
-                  <X size={16} className="text-gray-500" />
-                </button>
-              )}
             </div>
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-black">
+                <X size={32} />
+              </button>
+            )}
           </div>
 
-          {/* Search Results Area */}
-          <div className="flex-1 overflow-y-auto bg-gray-50">
-            {searchLoading ? (
-              <div className="flex items-center justify-center h-40">
-                <Loader className="animate-spin text-[var(--brand-primary)]" size={32} />
-              </div>
-            ) : debouncedQuery.length >= 2 ? (
-              productsData?.products?.length > 0 ? (
-                <div className="p-4 pb-20 max-w-[600px] mx-auto">
-                  <div className="mb-4 text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">
-                    Products
+          {/* Search Content */}
+          <div className="flex-1 overflow-y-auto no-scrollbar py-12">
+            <div className="max-w-[1600px] mx-auto px-4 lg:px-10">
+              {searchLoading ? (
+                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                  <Loader className="animate-spin text-[var(--brand-primary)]" size={48} />
+                  <span className="text-sm font-bold tracking-[0.3em] text-gray-400 uppercase">Searching...</span>
+                </div>
+              ) : productsData?.products?.length > 0 ? (
+                <div className="space-y-12">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                    <h3 className="text-sm font-black tracking-[0.2em] uppercase text-gray-400">Results ({productsData.total})</h3>
+                    <button
+                      onClick={() => {
+                        router.push(`/search?q=${searchQuery}`);
+                        setSearchMode(false);
+                      }}
+                      className="text-[12px] font-bold uppercase tracking-widest text-[var(--brand-primary)] hover:underline"
+                    >
+                      View All Results
+                    </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {productsData.products.map((product: any) => (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+                    {productsData.products.slice(0, 10).map((product: any) => (
                       <ProductCard
                         key={product.id}
                         product={product}
@@ -830,66 +533,57 @@ export default function Header() {
                       />
                     ))}
                   </div>
-
-                  {/* VIEW ALL BUTTON */}
-                  {(productsData?.total > 5) && (
-                    <div className="mt-8 mb-6 flex justify-center">
-                      <button
-                        onClick={() => {
-                          router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-                          setSearchMode(false);
-                        }}
-                        className="
-                          text-sm font-medium tracking-widest uppercase
-                          text-gray-800 border-b border-gray-400
-                          hover:border-black hover:text-black
-                          transition-colors pb-1
-                        "
-                      >
-                        View all {productsData?.total} products
-                      </button>
-                    </div>
-                  )}
+                </div>
+              ) : debouncedQuery.length >= 2 ? (
+                <div className="text-center py-24">
+                  <p className="text-2xl font-bold text-gray-300 tracking-widest uppercase">No results found for "{searchQuery}"</p>
+                  <p className="text-sm text-gray-400 mt-4 uppercase tracking-widest">Try different keywords or check your spelling</p>
                 </div>
               ) : (
-                <div className="w-full pt-20 pb-10 text-center px-6">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
-                    <Search size={24} className="text-gray-300" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div>
+                    <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Trending Categories</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {["Abayas", "Kaftans", "Hijabs", "New In", "Sale"].map(cat => (
+                        <Link
+                          key={cat}
+                          href={`/shop/${cat.toLowerCase()}`}
+                          className="px-6 py-3 border border-gray-200 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                          onClick={() => setSearchMode(false)}
+                        >
+                          {cat}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-[15px] text-gray-600">
-                    No results found for <span className="font-semibold text-black">"{searchQuery}"</span>
-                  </p>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Try checking your spelling or using less specific keywords.
-                  </p>
                 </div>
-              )
-            ) : (
-              debouncedQuery.length > 0 && (
-                <div className="w-full pt-12 text-center px-6">
-                  <p className="text-[14px] text-gray-500">
-                    Type at least 2 characters to search...
-                  </p>
-                </div>
-              )
-            )}
+              )}
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* MENU BACKDROP */}
+      {activeMenu && (
+        <div
+          className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-[90] transition-all duration-300 animate-in fade-in pointer-events-none"
+        />
       )}
 
 
 
-      {/*  Drawers */}
-      <ProfileDrawer isOpen={profileDrawer} onClose={() => setProfileDrawer(false)} />
-      <CartDrawer isOpen={cartDrawer} onClose={() => setCartDrawer(false)} />
-
+      {/* Mobile Menu Drawer */}
       <MobileMenuDrawer
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
         menus={menus}
         getMenuLink={getMenuLink}
         getSubmenuLink={getSubmenuLink}
       />
-    </header>
+
+      {/* Other Drawers */}
+      <ProfileDrawer isOpen={profileDrawer} onClose={() => setProfileDrawer(false)} />
+      <CartDrawer isOpen={cartDrawer} onClose={() => setCartDrawer(false)} />
+    </>
   );
 }

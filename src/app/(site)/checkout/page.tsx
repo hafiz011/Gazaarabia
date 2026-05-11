@@ -32,6 +32,8 @@ import { loadWithExpiry, saveWithExpiry } from "@/lib/helpers/localExpiry";
 import { referralService } from "@/lib/services/referralService";
 import StripePaymentModal from "@/components/StripePaymentModal";
 import { PaymentIntent } from "@stripe/stripe-js";
+import { fbEvent } from "@/components/analytics/FacebookPixel";
+import { gaEvent } from "@/components/analytics/GoogleAnalytics";
 
 
 interface AffiliateInfo {
@@ -79,6 +81,7 @@ export default function CheckoutPage() {
   const [affiliateDiscountAmount, setAffiliateDiscountAmount] = useState(0);
 
   const [stripeOpen, setStripeOpen] = useState(false);
+  const [hasTrackedInit, setHasTrackedInit] = useState(false);
 
 
 
@@ -230,6 +233,22 @@ export default function CheckoutPage() {
       if (saved) setGuestAddress(saved);
     }
   }, [token]);
+
+
+  // Track Initiate Checkout
+  useEffect(() => {
+    if (!loading && cart.length > 0 && !hasTrackedInit) {
+      fbEvent("InitiateCheckout", {
+        content_ids: cart.map((item) => item.productId),
+        content_type: "product",
+        value: subtotal,
+        currency: "GBP",
+        num_items: cart.length,
+      });
+      gaEvent("begin_checkout", "Ecommerce", "Checkout Started", subtotal);
+      setHasTrackedInit(true);
+    }
+  }, [loading, cart, subtotal, hasTrackedInit]);
 
 
   //  Handle guest save from modal

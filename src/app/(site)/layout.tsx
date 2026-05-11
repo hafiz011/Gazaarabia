@@ -4,10 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CartProvider } from "../context/CartContext";
 
-export const metadata: Metadata = {
-  title: "Gazaarabia",
-  // description: "Inspired by Gazaarabia — Modern modest fashion",
-};
+
 
 export default function RootLayout({
   children,

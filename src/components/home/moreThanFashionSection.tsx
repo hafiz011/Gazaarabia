@@ -62,6 +62,7 @@ export default function MoreThanFashionSection() {
                 src="/images/home/more-than-fashion.jpg"
                 alt="More Than Fashion"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-center rounded-2xl"
                 priority
               />

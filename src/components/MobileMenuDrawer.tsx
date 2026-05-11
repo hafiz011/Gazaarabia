@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, memo } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import Link from "next/link";
-import { X, ArrowLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { X, ArrowLeft, ChevronRight, User, Heart, ShoppingBag, Settings } from "lucide-react";
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube } from "react-icons/fa";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -49,203 +50,6 @@ interface MobileMenuDrawerProps {
 }
 
 // ============================================================================
-// NESTED COMPONENTS (Memoized for Performance)
-// ============================================================================
-
-interface CategoryItemProps {
-  category: Category;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onCategorySelect: (category: Category) => void;
-  onNavigate: (path: string) => void;
-  activeMenu: MenuItem;
-  getSubmenuLink: (menu: MenuItem, link: any) => string;
-}
-
-const CategoryItem = memo(function CategoryItem({
-  category,
-  isExpanded,
-  onToggle,
-  onCategorySelect,
-  onNavigate,
-  activeMenu,
-  getSubmenuLink,
-}: CategoryItemProps) {
-  const hasSubcats = category.subcategories && category.subcategories.length > 0;
-
-  return (
-    <>
-      {/* Category Header/Link */}
-      {hasSubcats ? (
-        <button
-          onClick={() => {
-            onCategorySelect(category);
-            onToggle();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onToggle();
-            }
-          }}
-          className={`
-            flex items-center justify-between w-full pl-9 pr-5 py-3.5 text-[14px] 
-            transition-colors duration-200
-            ${isExpanded ? "text-[var(--brand-primary)] font-semibold" : "text-gray-700 hover:text-black"}
-          `}
-          aria-expanded={isExpanded}
-          role="button"
-          tabIndex={0}
-        >
-          <span className="uppercase tracking-wider text-xs">{category.name}</span>
-          <ChevronDown
-            size={16}
-            className={`transition-transform duration-300 ${
-              isExpanded ? "rotate-180 text-[var(--brand-primary)]" : "text-gray-400"
-            }`}
-            aria-hidden="true"
-          />
-        </button>
-      ) : (
-        <Link
-          href={getSubmenuLink(activeMenu, category)}
-          onClick={() => onNavigate("/")}
-          className="block pl-9 pr-5 py-3.5 text-[14px] text-gray-700 hover:text-black hover:bg-gray-50 transition-colors uppercase tracking-wider text-xs"
-        >
-          {category.name}
-        </Link>
-      )}
-
-      {/* Subcategories (Expanded) */}
-      {isExpanded && hasSubcats && (
-        <div className="bg-white border-t border-gray-50 pb-3 pt-1">
-          {/* View All Category Link */}
-          <Link
-            href={getSubmenuLink(activeMenu, category)}
-            onClick={() => onNavigate("/")}
-            className="block pl-12 pr-5 py-2.5 text-[13px] font-semibold text-[var(--brand-primary)] hover:bg-gray-50 transition-colors uppercase tracking-wider"
-          >
-            View all {category.name}
-          </Link>
-
-          {/* Individual Subcategory Links */}
-          {category.subcategories.map((subcat) => (
-            <Link
-              key={subcat.slug}
-              href={getSubmenuLink(activeMenu, subcat)}
-              onClick={() => onNavigate("/")}
-              className="block pl-12 pr-5 py-2.5 text-[14px] text-gray-500 hover:text-black hover:bg-gray-50 transition-colors"
-            >
-              {subcat.name}
-            </Link>
-          ))}
-        </div>
-      )}
-    </>
-  );
-});
-
-interface SubmenuItemProps {
-  submenu: Submenu;
-  isExpanded: boolean;
-  expandedCategory: number | string | null;
-  onToggle: () => void;
-  onCategoryToggle: (categoryId: number | string) => void;
-  onCategorySelect: (category: Category) => void;
-  onNavigate: (path: string) => void;
-  activeMenu: MenuItem;
-  getSubmenuLink: (menu: MenuItem, link: any) => string;
-}
-
-const SubmenuItem = memo(function SubmenuItem({
-  submenu,
-  isExpanded,
-  expandedCategory,
-  onToggle,
-  onCategoryToggle,
-  onCategorySelect,
-  onNavigate,
-  activeMenu,
-  getSubmenuLink,
-}: SubmenuItemProps) {
-  const hasCategories = submenu.categories && submenu.categories.length > 0;
-
-  return (
-    <div className="border-b border-gray-50">
-      {/* Submenu Header/Link */}
-      {hasCategories ? (
-        <button
-          onClick={onToggle}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onToggle();
-            }
-          }}
-          className={`
-            flex items-center justify-between w-full px-5 py-4 text-[15px] 
-            font-medium transition-colors duration-200
-            ${
-              isExpanded
-                ? "bg-gray-50 text-[var(--brand-primary)]"
-                : "text-gray-800 hover:bg-gray-50 active:bg-gray-50"
-            }
-          `}
-          aria-expanded={isExpanded}
-          role="button"
-          tabIndex={0}
-        >
-          <span className="uppercase tracking-wide">{submenu.name}</span>
-          <ChevronDown
-            size={18}
-            className={`transition-transform duration-300 ${
-              isExpanded ? "rotate-180 text-[var(--brand-primary)]" : "text-gray-400"
-            }`}
-            aria-hidden="true"
-          />
-        </button>
-      ) : (
-        <Link
-          href={getSubmenuLink(activeMenu, submenu)}
-          onClick={() => onNavigate("/")}
-          className="flex items-center justify-between w-full px-5 py-4 text-[15px] font-medium text-gray-800 hover:bg-gray-50 transition-colors uppercase tracking-wide"
-        >
-          {submenu.name}
-        </Link>
-      )}
-
-      {/* Categories (Expanded) */}
-      {isExpanded && hasCategories && (
-        <div className="bg-white overflow-hidden">
-          {/* Submenu "View All" Link */}
-          <Link
-            href={getSubmenuLink(activeMenu, submenu)}
-            onClick={() => onNavigate("/")}
-            className="block pl-9 pr-5 py-3 text-[13px] font-semibold text-[var(--brand-primary)] bg-gray-50/50 hover:bg-gray-100 transition-colors uppercase tracking-wider"
-          >
-            View all {submenu.name}
-          </Link>
-
-          {/* Category Items */}
-          {submenu.categories.map((category) => (
-            <CategoryItem
-              key={category.id}
-              category={category}
-              isExpanded={expandedCategory === category.id}
-              onToggle={() => onCategoryToggle(category.id)}
-              onCategorySelect={onCategorySelect}
-              onNavigate={onNavigate}
-              activeMenu={activeMenu}
-              getSubmenuLink={getSubmenuLink}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -256,186 +60,236 @@ export default function MobileMenuDrawer({
   getMenuLink,
   getSubmenuLink,
 }: MobileMenuDrawerProps) {
-  // =========================================================================
-  // STATE MANAGEMENT
-  // =========================================================================
+  // Navigation State - 4 levels as required
   const [activeMenu, setActiveMenu] = useState<MenuItem | null>(null);
-  const [expandedSubmenu, setExpandedSubmenu] = useState<number | string | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<number | string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<Submenu | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // =========================================================================
-  // LIFECYCLE & BODY LOCK
-  // =========================================================================
+  // Handle mounting and body scroll lock
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (isOpen) {
       setIsMounted(true);
       document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none";
     } else {
       document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-      // Keep mounted for exit animation
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setIsMounted(false);
-        resetMenuState();
+        resetNavigation();
       }, 300);
-      return () => clearTimeout(timer);
     }
-
     return () => {
+      if (timer) clearTimeout(timer);
       document.body.style.overflow = "";
-      document.body.style.touchAction = "";
     };
   }, [isOpen]);
 
-  // =========================================================================
-  // KEYBOARD SUPPORT
-  // =========================================================================
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        activeMenu ? resetMenuState() : onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, activeMenu, onClose]);
-
-  // =========================================================================
-  // STATE UPDATE HANDLERS (Memoized)
-  // =========================================================================
-
-  const resetMenuState = useCallback(() => {
+  const resetNavigation = useCallback(() => {
     setActiveMenu(null);
-    setExpandedSubmenu(null);
-    setExpandedCategory(null);
+    setActiveSubmenu(null);
+    setActiveCategory(null);
   }, []);
 
-  const goBack = useCallback(() => {
-    setExpandedSubmenu(null);
-    setExpandedCategory(null);
-    setActiveMenu(null);
-  }, []);
+  const handleBack = useCallback(() => {
+    if (activeCategory) {
+      setActiveCategory(null);
+    } else if (activeSubmenu) {
+      setActiveSubmenu(null);
+    } else if (activeMenu) {
+      setActiveMenu(null);
+    }
+  }, [activeMenu, activeSubmenu, activeCategory]);
 
-  const handleMenuSelect = useCallback((menu: MenuItem) => {
-    setActiveMenu(menu);
-    setExpandedSubmenu(null);
-    setExpandedCategory(null);
-  }, []);
+  // Transform calculation: translateX(-${currentPanel * 25}%)
+  const currentPanel = activeCategory ? 3 : activeSubmenu ? 2 : activeMenu ? 1 : 0;
 
-  const handleSubmenuToggle = useCallback((submenuId: number | string) => {
-    setExpandedSubmenu((prev) => (prev === submenuId ? null : submenuId));
-    setExpandedCategory(null);
-  }, []);
-
-  const handleCategoryToggle = useCallback((categoryId: number | string) => {
-    setExpandedCategory((prev) => (prev === categoryId ? null : categoryId));
-  }, []);
-
-  const handleNavigate = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  // =========================================================================
-  // EARLY RETURNS
-  // =========================================================================
   if (!isMounted && !isOpen) return null;
 
-  // =========================================================================
-  // RENDER
-  // =========================================================================
   return (
-    <div
-      className={`fixed inset-0 flex lg:hidden z-[100] transition-all duration-300 ${
-        isOpen ? "visible opacity-100" : "invisible opacity-0"
-      }`}
-      role="presentation"
-    >
-      {/* BACKDROP */}
+    <div className={`fixed inset-0 z-[300] lg:hidden transition-all duration-300 ${isOpen ? "visible" : "invisible"}`}>
+      {/* Backdrop with Blur */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity duration-500 ${isOpen ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
-        role="presentation"
-        aria-hidden="true"
       />
 
-      {/* DRAWER PANEL */}
+      {/* Drawer Panel: 85% width, max 400px */}
       <div
-        className={`
-          relative w-[85%] max-w-[360px] h-full bg-white shadow-2xl flex flex-col
-          transition-transform duration-300 ease-out will-change-transform
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Mobile navigation menu"
+        className={`absolute top-0 left-0 h-full w-[85%] max-w-[400px] bg-white shadow-[20px_0_60px_rgba(0,0,0,0.1)] transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {/* DRAWER HEADER */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 min-h-[64px] flex-shrink-0">
-          {activeMenu ? (
-            <button
-              onClick={goBack}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  goBack();
-                }
-              }}
-              className="flex items-center gap-2 text-[15px] font-medium text-gray-700 hover:text-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 rounded-md px-1"
-              aria-label="Go back to menu"
-            >
-              <ArrowLeft size={20} aria-hidden="true" />
-              <span>Back</span>
-            </button>
-          ) : (
-            <h2 className="font-bold tracking-widest uppercase text-xl text-black">Menu</h2>
-          )}
+        {/* HEADER: Dynamic level name + Back/Close */}
+        <div className="flex items-center justify-between px-6 h-[70px] border-b border-gray-50 bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            {(activeMenu || activeSubmenu || activeCategory) && (
+              <button
+                onClick={handleBack}
+                className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors"
+                aria-label="Go back"
+              >
+                <ArrowLeft size={22} className="text-gray-900" />
+              </button>
+            )}
+            <h2 className="text-[14px] font-black tracking-[0.2em] uppercase text-gray-900">
+              {activeCategory
+                ? activeCategory.name
+                : activeSubmenu
+                  ? activeSubmenu.name
+                  : activeMenu
+                    ? activeMenu.name
+                    : "Navigation"}
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClose();
-              }
-            }}
-            className="p-2 -mr-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+            className="p-2 -mr-2 hover:bg-gray-50 rounded-full transition-colors"
             aria-label="Close menu"
           >
-            <X size={22} aria-hidden="true" />
+            <X size={26} className="text-gray-900" />
           </button>
         </div>
 
-        {/* MAIN CONTENT AREA */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {/* MENU LIST VIEW */}
-          {!activeMenu && (
-            <MainMenuView
-              menus={menus}
-              getMenuLink={getMenuLink}
-              onMenuSelect={handleMenuSelect}
-              onNavigate={handleNavigate}
-            />
-          )}
+        {/* CONTENT AREA: 4 sliding panels at 25% each */}
+        <div className="flex-1 overflow-hidden relative overscroll-contain">
+          <div
+            className="flex w-[400%] h-full transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) will-change-transform"
+            style={{ transform: `translateX(-${currentPanel * 25}%)` }}
+          >
+            {/* PANEL 0: Main Menus + Account */}
+            <div className="w-1/4 h-full overflow-y-auto no-scrollbar flex-shrink-0 bg-white">
+              <div className="py-6">
+                <div className="px-8 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Departments</div>
+                {menus.map((menu) => (
+                  <MenuListItem
+                    key={menu.id}
+                    label={menu.name}
+                    onClick={() => {
+                      if (menu.dropdown?.submenus?.length) {
+                        setActiveMenu(menu);
+                      } else {
+                        onClose();
+                      }
+                    }}
+                    href={menu.dropdown?.submenus?.length ? undefined : getMenuLink(menu)}
+                    hasArrow={menu.dropdown?.submenus?.length > 0}
+                  />
+                ))}
 
-          {/* SUBMENU & CATEGORY VIEW */}
-          {activeMenu && (
-            <SubmenuView
-              menu={activeMenu}
-              expandedSubmenu={expandedSubmenu}
-              expandedCategory={expandedCategory}
-              onSubmenuToggle={handleSubmenuToggle}
-              onCategoryToggle={handleCategoryToggle}
-              onNavigate={handleNavigate}
-              getSubmenuLink={getSubmenuLink}
-            />
-          )}
+                <div className="mt-8 pt-8 border-t border-gray-50">
+                  <div className="px-8 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Member Space</div>
+                  <MenuListItem label="My Profile" icon={<User size={20} />} href="/account/details" onClick={onClose} hasArrow={false} />
+                  <MenuListItem label="Wishlist" icon={<Heart size={20} />} href="/wishlist" onClick={onClose} hasArrow={false} />
+                  <MenuListItem label="Shopping Bag" icon={<ShoppingBag size={20} />} href="/cart" onClick={onClose} hasArrow={false} />
+                  <MenuListItem label="Ambassador" icon={<Settings size={20} />} href="/become-partner" onClick={onClose} hasArrow={false} />
+                </div>
+              </div>
+            </div>
+
+            {/* PANEL 1: Submenus */}
+            <div className="w-1/4 h-full overflow-y-auto no-scrollbar border-l border-gray-50 flex-shrink-0 bg-white">
+              {activeMenu && (
+                <div className="py-6">
+                  <Link
+                    href={getMenuLink(activeMenu)}
+                    onClick={onClose}
+                    className="flex items-center px-8 py-5 text-[14px] font-black text-[var(--brand-primary)] uppercase tracking-widest bg-gray-50/50 mb-2"
+                  >
+                    Explore {activeMenu.name}
+                  </Link>
+                  {activeMenu.dropdown.submenus.map((submenu) => (
+                    <MenuListItem
+                      key={submenu.id}
+                      label={submenu.name}
+                      onClick={() => {
+                        if (submenu.categories?.length) {
+                          setActiveSubmenu(submenu);
+                        } else {
+                          onClose();
+                        }
+                      }}
+                      href={submenu.categories?.length ? undefined : getSubmenuLink(activeMenu, submenu)}
+                      hasArrow={submenu.categories?.length > 0}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* PANEL 2: Categories */}
+            <div className="w-1/4 h-full overflow-y-auto no-scrollbar border-l border-gray-50 flex-shrink-0 bg-white">
+              {activeMenu && activeSubmenu && (
+                <div className="py-6">
+                  <Link
+                    href={getSubmenuLink(activeMenu, activeSubmenu)}
+                    onClick={onClose}
+                    className="flex items-center px-8 py-5 text-[14px] font-black text-[var(--brand-primary)] uppercase tracking-widest bg-gray-50/50 mb-2"
+                  >
+                    {activeSubmenu.name} All
+                  </Link>
+                  {activeSubmenu.categories.map((category) => (
+                    <MenuListItem
+                      key={category.id}
+                      label={category.name}
+                      onClick={() => {
+                        if (category.subcategories?.length) {
+                          setActiveCategory(category);
+                        } else {
+                          onClose();
+                        }
+                      }}
+                      href={category.subcategories?.length ? undefined : getSubmenuLink(activeMenu, category)}
+                      hasArrow={category.subcategories?.length > 0}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* PANEL 3: Subcategories */}
+            <div className="w-1/4 h-full overflow-y-auto no-scrollbar border-l border-gray-50 flex-shrink-0 bg-white">
+              {activeMenu && activeSubmenu && activeCategory && (
+                <div className="py-6">
+                  <Link
+                    href={getSubmenuLink(activeMenu, activeCategory)}
+                    onClick={onClose}
+                    className="flex items-center px-8 py-5 text-[14px] font-black text-[var(--brand-primary)] uppercase tracking-widest bg-gray-50/50 mb-2"
+                  >
+                    {activeCategory.name} Overview
+                  </Link>
+                  {activeCategory.subcategories?.length > 0 ? (
+                    activeCategory.subcategories.map((subcat) => (
+                      <MenuListItem
+                        key={subcat.id}
+                        label={subcat.name}
+                        href={getSubmenuLink(activeMenu, subcat)}
+                        onClick={onClose}
+                        hasArrow={false}
+                      />
+                    ))
+                  ) : (
+                    <div className="px-8 py-12 text-center text-[12px] font-bold text-gray-400 uppercase tracking-widest">
+                      No collections found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER: Social Icons */}
+        <div className="p-8 border-t border-gray-50 bg-gray-50/20">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Stay Connected</span>
+            <div className="flex gap-6">
+              <a href="https://instagram.com/gazaarabia" target="_blank" className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"><FaInstagram size={20} /></a>
+              <a href="https://facebook.com/gazaarabia" target="_blank" className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"><FaFacebookF size={18} /></a>
+              <a href="https://tiktok.com/@gazaarabia" target="_blank" className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"><FaTiktok size={18} /></a>
+              <a href="https://youtube.com/@gazaarabia" target="_blank" className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"><FaYoutube size={20} /></a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -443,127 +297,47 @@ export default function MobileMenuDrawer({
 }
 
 // ============================================================================
-// MAIN MENU VIEW
+// HELPER COMPONENTS
 // ============================================================================
 
-interface MainMenuViewProps {
-  menus: MenuItem[];
-  getMenuLink: (menu: MenuItem) => string;
-  onMenuSelect: (menu: MenuItem) => void;
-  onNavigate: () => void;
+interface MenuListItemProps {
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  hasArrow?: boolean;
+  icon?: React.ReactNode;
 }
 
-const MainMenuView = memo(function MainMenuView({
-  menus,
-  getMenuLink,
-  onMenuSelect,
-  onNavigate,
-}: MainMenuViewProps) {
+const MenuListItem = memo(({ label, onClick, href, hasArrow = true, icon }: MenuListItemProps) => {
+  const content = (
+    <div className="flex items-center justify-between w-full px-8 py-5 group transition-all duration-300">
+      <div className="flex items-center gap-5">
+        {icon && <div className="text-gray-300 group-hover:text-[var(--brand-primary)] transition-colors">{icon}</div>}
+        <span className="text-[14px] font-bold tracking-widest text-gray-700 group-hover:text-black uppercase transition-colors">
+          {label}
+        </span>
+      </div>
+      {hasArrow && (
+        <ChevronRight size={18} className="text-gray-300 group-hover:text-[var(--brand-primary)] transition-all duration-300 group-hover:translate-x-1" />
+      )}
+    </div>
+  );
+
+  const className = "block w-full text-left hover:bg-gray-50/50 transition-colors border-b border-gray-50/50";
+
+  if (href) {
+    return (
+      <Link href={href} onClick={onClick} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
   return (
-    <nav className="bg-white">
-      {/* CATEGORIES SECTION */}
-      <div className="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-        Categories
-      </div>
-      {menus.map((item) => {
-        const hasDropdown = item.dropdown?.submenus?.length > 0;
-
-        return (
-          <div key={item.id}>
-            {!hasDropdown ? (
-              // Simple Link (no submenu)
-              <Link
-                href={getMenuLink(item)}
-                onClick={onNavigate}
-                className="block px-5 py-3.5 text-[15px] font-medium tracking-wide uppercase text-gray-900 hover:text-[var(--brand-primary)] active:bg-gray-50 transition-colors"
-              >
-                {item.name}
-              </Link>
-            ) : (
-              // Button to enter submenu view
-              <button
-                onClick={() => onMenuSelect(item)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onMenuSelect(item);
-                  }
-                }}
-                className="flex justify-between w-full items-center px-5 py-3.5 text-[15px] font-medium tracking-wide uppercase text-gray-900 hover:text-[var(--brand-primary)] active:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-inset"
-                aria-label={`Browse ${item.name}`}
-              >
-                <span>{item.name}</span>
-                <ChevronRight size={18} className="text-gray-400" aria-hidden="true" />
-              </button>
-            )}
-          </div>
-        );
-      })}
-
-      {/* SUPPORT SECTION */}
-      <div className="mt-6 border-t border-gray-100 pt-4">
-        <div className="px-5 py-2 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-          Support
-        </div>
-        <Link
-          href="/become-partner"
-          onClick={onNavigate}
-          className="block px-5 py-3 text-[15px] font-medium tracking-wide uppercase text-gray-900 hover:text-[var(--brand-primary)] active:bg-gray-50 transition-colors"
-        >
-          Ambassador
-        </Link>
-      </div>
-    </nav>
+    <button onClick={onClick} className={className}>
+      {content}
+    </button>
   );
 });
 
-// ============================================================================
-// SUBMENU VIEW
-// ============================================================================
-
-interface SubmenuViewProps {
-  menu: MenuItem;
-  expandedSubmenu: number | string | null;
-  expandedCategory: number | string | null;
-  onSubmenuToggle: (id: number | string) => void;
-  onCategoryToggle: (id: number | string) => void;
-  onNavigate: () => void;
-  getSubmenuLink: (menu: MenuItem, link: any) => string;
-}
-
-const SubmenuView = memo(function SubmenuView({
-  menu,
-  expandedSubmenu,
-  expandedCategory,
-  onSubmenuToggle,
-  onCategoryToggle,
-  onNavigate,
-  getSubmenuLink,
-}: SubmenuViewProps) {
-  return (
-    <nav className="bg-white flex flex-col">
-      {/* SUBMENU HEADER */}
-      <div className="px-5 py-4 bg-gray-50/80 border-b border-gray-100 flex-shrink-0">
-        <h3 className="text-[17px] font-bold tracking-wide uppercase text-gray-900">{menu.name}</h3>
-      </div>
-
-      {/* SUBMENU ITEMS */}
-      <div className="flex-1 overflow-y-auto">
-        {menu.dropdown?.submenus?.map((submenu) => (
-          <SubmenuItem
-            key={submenu.id}
-            submenu={submenu}
-            isExpanded={expandedSubmenu === submenu.id}
-            expandedCategory={expandedCategory}
-            onToggle={() => onSubmenuToggle(submenu.id)}
-            onCategoryToggle={onCategoryToggle}
-            onCategorySelect={() => {}} // Not used in submenu view
-            onNavigate={onNavigate}
-            activeMenu={menu}
-            getSubmenuLink={getSubmenuLink}
-          />
-        ))}
-      </div>
-    </nav>
-  );
-});
+MenuListItem.displayName = "MenuListItem";
