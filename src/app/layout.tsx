@@ -5,8 +5,7 @@ import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
 import { CartProvider } from "./context/CartContext";
 import CookieConsentModal from "@/components/CookieConsentModal";
-import FacebookPixel from "@/components/analytics/FacebookPixel";
-import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 
 
 export const metadata: Metadata = {
@@ -90,8 +89,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <FacebookPixel />
-        <GoogleAnalytics />
+        {/* Google Tag Manager */}
+        <GoogleTagManager />
         <SessionProviderWrapper>
           <PayPalProviderWrapper>
             <CartProvider>
