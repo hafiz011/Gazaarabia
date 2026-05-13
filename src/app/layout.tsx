@@ -6,6 +6,9 @@ import PayPalProviderWrapper from "@/components/PayPalProviderWrapper";
 import { CartProvider } from "./context/CartContext";
 import CookieConsentModal from "@/components/CookieConsentModal";
 import GoogleTagManager from "@/components/analytics/GoogleTagManager";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import FacebookPixel from "@/components/analytics/FacebookPixel";
+
 
 
 export const metadata: Metadata = {
@@ -89,8 +92,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {/* Google Tag Manager */}
         <GoogleTagManager />
+        <GoogleAnalytics />
+        <FacebookPixel />
         <SessionProviderWrapper>
           <PayPalProviderWrapper>
             <CartProvider>
