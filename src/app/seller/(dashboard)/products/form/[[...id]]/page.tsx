@@ -240,7 +240,7 @@ function ProductFormContent() {
     } else {
       setAlertMessage({
         isOpen: true,
-        type: "warning",
+        type: "error",
         message: "No variants with stock quantities found. Please add variant quantities first.",
       });
     }
@@ -253,7 +253,7 @@ function ProductFormContent() {
     if (images.length === 0) {
       setPopup({
         isOpen: true,
-        type: "warning",
+        type: "error",
         message: "Please upload at least one main product image.",
       });
       return;
@@ -262,7 +262,7 @@ function ProductFormContent() {
     if (!form.title || !form.description || !form.brandId || !form.categoryId) {
       setPopup({
         isOpen: true,
-        type: "warning",
+        type: "error",
         message: "Please fill in all basic product information.",
       });
       return;
@@ -271,7 +271,7 @@ function ProductFormContent() {
     if (variants.length === 0) {
       setPopup({
         isOpen: true,
-        type: "warning",
+        type: "error",
         message: "Please add at least one product variant.",
       });
       return;
@@ -291,7 +291,7 @@ function ProductFormContent() {
       if (errors.length > 0) {
         setPopup({
           isOpen: true,
-          type: "warning",
+          type: "error",
           message: `Variant #${i + 1}: Missing ${errors.join(", ")}`,
         });
         return;
@@ -301,7 +301,7 @@ function ProductFormContent() {
     if (!form.costPrice || !form.sellingPrice || !form.baseQty) {
       setPopup({
         isOpen: true,
-        type: "warning",
+        type: "error",
         message: "Please fill in all required pricing and inventory details.",
       });
       return;

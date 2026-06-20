@@ -1,4 +1,4 @@
-// modal 
+// Modal types - Updated for warning alerts
 
 export interface PopUpInterface {
   isOpen: boolean;

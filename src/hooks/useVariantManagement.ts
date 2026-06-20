@@ -210,7 +210,7 @@ export const useVariantManagement = ({
 
       const sourceVariant = variants[variantIndex];
       const usedSizes = getVariantsByColor(sourceVariant.colorId).map((v) => v.sizeId);
-      const newVariants = [];
+      const newVariants: ProductVariant[] = [];
 
       for (const sizeId of allSizeIds) {
         if (!usedSizes.includes(sizeId)) {
@@ -239,7 +239,7 @@ export const useVariantManagement = ({
 
       const sourceVariant = variants[variantIndex];
       const usedColors = getVariantsBySize(sourceVariant.sizeId).map((v) => v.colorId);
-      const newVariants = [];
+      const newVariants: ProductVariant[] = [];
 
       for (const colorId of allColorIds) {
         if (!usedColors.includes(colorId)) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2, Copy, ChevronDown, ChevronUp, AlertCircle, Copy2 } from "lucide-react";
+import { Trash2, Copy, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { MenuItem, TextField, Tooltip, IconButton, Chip, Box } from "@mui/material";
 import { useState } from "react";
 import { VariantImagesUploader } from "./VariantImagesUploader";
@@ -115,7 +115,7 @@ export const VariantCardV2 = ({
                 onClick={onCopyToAllSizes}
                 sx={{ color: "blue" }}
               >
-                <Copy2 size={16} />
+                <Copy size={16} />
               </IconButton>
             </Tooltip>
           )}
@@ -126,7 +126,7 @@ export const VariantCardV2 = ({
                 onClick={onCopyToAllColors}
                 sx={{ color: "blue" }}
               >
-                <Copy2 size={16} />
+                <Copy size={16} />
               </IconButton>
             </Tooltip>
           )}

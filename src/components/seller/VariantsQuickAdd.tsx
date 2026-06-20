@@ -122,10 +122,10 @@ export const VariantsQuickAdd = ({
   };
 
   const totalNew = selectedColors.size * selectedSizes.size;
-  const existingCount = Array.from(selectedColors).reduce((acc, colorId) => {
+  const existingCount = Array.from(selectedColors).reduce((acc: number, colorId) => {
     return (
       acc +
-      Array.from(selectedSizes).reduce((sAcc, sizeId) => {
+      Array.from(selectedSizes).reduce((sAcc: number, sizeId) => {
         return existingCombos.has(`${colorId}-${sizeId}`) ? sAcc + 1 : sAcc;
       }, 0)
     );
