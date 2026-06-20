@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect, useRef } from "react";
-import { Plus, Check, ImageIcon, Info, Layers, DollarSign, Shirt, Eye, AlertCircle, ShoppingBag, ChevronRight, ChevronLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, ImageIcon, Info, DollarSign, Shirt, Eye, AlertCircle, ShoppingBag, ChevronRight, ChevronLeft } from "lucide-react";
 import PopupAlert from "@/components/PopupAlert";
 import AlertMessage from "@/components/AlertMessage";
 import { PopUpInterface, AlertInterface } from "@/lib/types";
@@ -22,7 +22,8 @@ import { TextField, MenuItem, Box, Button, Popover } from "@mui/material";
 import { ROUTES } from "@/constants/routes";
 import RichTextEditor from "@/components/RichTextEditor";
 import { MediaUploader } from "@/components/seller/MediaUploader";
-import { VariantCard } from "@/components/seller/VariantCard";
+import { VariantVideoUploader } from "@/components/seller/VariantVideoUploader";
+import { VariantsTikTokStyle } from "@/components/seller/VariantsTikTokStyle";
 import { ProductPreviewCard } from "@/components/seller/ProductPreviewCard";
 
 function ProductFormContent() {
@@ -34,7 +35,6 @@ function ProductFormContent() {
   const isEditMode = Boolean(id);
 
   const allowedRoles = ["seller"];
-  const variantsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -62,6 +62,7 @@ function ProductFormContent() {
   });
 
   const [images, setImages] = useState<any[]>([]);
+  const [productVideo, setProductVideo] = useState<any>(null);
   const [variants, setVariants] = useState<any[]>([]);
 
   const [brands, setBrands] = useState<any[]>([]);
@@ -95,6 +96,7 @@ function ProductFormContent() {
   });
 
   const fieldStyle = {
+  
     "& .MuiOutlinedInput-root": {
       borderRadius: "0.5rem",
       backgroundColor: "#f9fafb",
@@ -168,6 +170,10 @@ function ProductFormContent() {
         active: data.active ?? true,
       });
       setImages(data.productimage || []);
+      setProductVideo({
+        url: data.videoUrl || "",
+        thumbnail: data.videoThumbnail || "",
+      });
       setVariants(
         (data.productvariant || []).map((v: any) => ({
           ...v,
@@ -213,58 +219,33 @@ function ProductFormContent() {
     }
   };
 
-  const handleVariantAdd = () => {
-    const newVariant = {
-      colorId: "",
-      sizeId: "",
-      sku: "",
-      price: form.sellingPrice || "",
-      stock: "",
-      isActive: true,
-      images: [],
-      videoUrl: "",
-      videoThumbnail: "",
-    };
-    setVariants((prev) => [...prev, newVariant]);
-    setTimeout(() => {
-      variantsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+  // Calculate total quantity from all variants
+  const calculateTotalVariantQuantity = () => {
+    return variants.reduce((total, v) => {
+      const qty = parseInt(String(v.stock)) || 0;
+      return total + qty;
+    }, 0);
   };
 
-  const handleVariantChange = (idx: number, field: string, value: any) => {
-    setVariants((prev) =>
-      prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v))
-    );
-  };
-
-  const handleVariantRemove = (idx: number) => {
-    setVariants((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleVariantCopy = (idx: number) => {
-    setVariants((prev) => {
-      const variantToCopy = prev[idx];
-      const newVariant = {
-        ...variantToCopy,
-        id: undefined,
-        sku: "",
-      };
-      const newVariants = [...prev];
-      newVariants.splice(idx + 1, 0, newVariant);
-      return newVariants;
-    });
-    setTimeout(() => {
-      variantsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
-
-  const validateVariants = () => {
-    for (const v of variants) {
-      if (!v.colorId || !v.sizeId || !v.price || !v.stock)
-        return false;
+  // Auto-fill base quantity from variants
+  const handleAutoFillBaseQty = () => {
+    const totalQty = calculateTotalVariantQuantity();
+    if (totalQty > 0) {
+      setForm((prev) => ({ ...prev, baseQty: totalQty.toString() }));
+      setAlertMessage({
+        isOpen: true,
+        type: "success",
+        message: `Base quantity auto-filled: ${totalQty} (sum of all variant quantities)`,
+      });
+    } else {
+      setAlertMessage({
+        isOpen: true,
+        type: "warning",
+        message: "No variants with stock quantities found. Please add variant quantities first.",
+      });
     }
-    return true;
   };
+
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -296,13 +277,25 @@ function ProductFormContent() {
       return;
     }
 
-    if (variants.length > 0 && !validateVariants()) {
-      setPopup({
-        isOpen: true,
-        type: "warning",
-        message: "Please fill all required fields for each variant.",
-      });
-      return;
+    // Validate each variant
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
+      const errors: string[] = [];
+
+      if (!v.colorId) errors.push("Color");
+      if (!v.sizeId) errors.push("Size");
+      if (!v.price) errors.push("Price");
+      if (v.stock === "" || v.stock === undefined) errors.push("Stock");
+      if (!v.images || v.images.length === 0) errors.push("Images");
+
+      if (errors.length > 0) {
+        setPopup({
+          isOpen: true,
+          type: "warning",
+          message: `Variant #${i + 1}: Missing ${errors.join(", ")}`,
+        });
+        return;
+      }
     }
 
     if (!form.costPrice || !form.sellingPrice || !form.baseQty) {
@@ -321,6 +314,8 @@ function ProductFormContent() {
         images,
         variants,
         wearWith: wearWith.map((w) => w.id),
+        videoUrl: productVideo?.url || "",
+        videoThumbnail: productVideo?.thumbnail || "",
       };
 
       if (isEditMode) {
@@ -442,16 +437,35 @@ function ProductFormContent() {
                   </div>
                 </div>
 
-                <MediaUploader
-                  images={images}
-                  onImagesChange={setImages}
-                  onError={(msg) =>
-                    setAlertMessage({ isOpen: true, type: "error", message: msg })
-                  }
-                  maxImages={10}
-                />
+                {/* Images Section */}
+                <div className="mb-8">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Product Images</h3>
+                  <MediaUploader
+                    images={images}
+                    onImagesChange={setImages}
+                    onError={(msg) =>
+                      setAlertMessage({ isOpen: true, type: "error", message: msg })
+                    }
+                    maxImages={10}
+                  />
+                </div>
 
-                <div className="mt-6 bg-blue-50/50 rounded-xl p-4 flex gap-3 items-start border border-blue-100">
+                {/* Video Section */}
+                <div className="mb-8 pb-8 border-b border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Product Video (Optional)</h3>
+                  <VariantVideoUploader
+                    videoUrl={productVideo?.url || ""}
+                    videoThumbnail={productVideo?.thumbnail}
+                    onVideoChange={(url) => setProductVideo((prev: any) => ({ ...prev, url }))}
+                    onVideoThumbnailChange={(thumb) => setProductVideo((prev: any) => ({ ...prev, thumbnail: thumb }))}
+                    onError={(msg) =>
+                      setAlertMessage({ isOpen: true, type: "error", message: msg })
+                    }
+                    variantLabel="Product"
+                  />
+                </div>
+
+                <div className="bg-blue-50/50 rounded-xl p-4 flex gap-3 items-start border border-blue-100">
                   <Info className="text-blue-500 shrink-0 mt-0.5" size={20} />
                   <div className="text-sm text-blue-900">
                     <p className="font-semibold mb-1">Media Guidelines</p>
@@ -459,6 +473,7 @@ function ProductFormContent() {
                       <li>First image will be the product cover.</li>
                       <li>Use clear, well-lit photos with a clean background.</li>
                       <li>Recommended resolution: 1080x1080px (1:1 ratio).</li>
+                      <li>Video must be under 15MB and in MP4 format.</li>
                     </ul>
                   </div>
                 </div>
@@ -657,72 +672,22 @@ function ProductFormContent() {
 
               </div>
 
-              {/* VARIANTS */}
+              {/* VARIANTS - TikTok Style Manager */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      <Layers className="text-blue-600" size={24} />
-                      Product Variants
-                    </h2>
-                    <p className="text-gray-500 mt-1">Add different colors, sizes, and set stock levels.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="contained"
-                    onClick={handleVariantAdd}
-                    sx={{
-                      background: "var(--brand-secondary, #2563eb)",
-                      whiteSpace: "nowrap",
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      boxShadow: 'none',
-                      px: 3,
-                      py: 1.5
-                    }}
-                    startIcon={<Plus size={20} />}
-                  >
-                    Add New Variant
-                  </Button>
-                </div>
-
-                {variants.length === 0 ? (
-                  <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
-                      <Layers className="text-gray-400" size={32} />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No variants created</h3>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">Create variants to offer different options like colors and sizes for your product.</p>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={handleVariantAdd}
-                      sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Create First Variant
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {variants.map((variant, idx) => (
-                      <div key={idx} className="relative group transition-all duration-300">
-                        <VariantCard
-                          variant={variant}
-                          index={idx}
-                          colors={colors}
-                          sizes={sizes}
-                          onVariantChange={(field, value) => handleVariantChange(idx, field, value)}
-                          onVariantRemove={() => handleVariantRemove(idx)}
-                          onVariantCopy={() => handleVariantCopy(idx)}
-                          onError={(msg) => setAlertMessage({ isOpen: true, type: "error", message: msg })}
-                          autoFillPrice={form.sellingPrice}
-                        />
-                      </div>
-                    ))}
-                    <div ref={variantsEndRef} className="h-4" />
-                  </div>
-                )}
+                <VariantsTikTokStyle
+                  variants={variants}
+                  onVariantsChange={setVariants}
+                  colors={colors}
+                  sizes={sizes}
+                  basePrice={form.sellingPrice}
+                  onError={(msg) =>
+                    setAlertMessage({
+                      isOpen: true,
+                      type: "error",
+                      message: msg,
+                    })
+                  }
+                />
               </div>
 
               {/* PRICING */}
@@ -765,17 +730,62 @@ function ProductFormContent() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
-                  <TextField
-                    label={<RequiredLabel text="Base Quantity" />}
-                    name="baseQty"
-                    type="number"
-                    value={form.baseQty}
-                    onChange={handleInputChange}
-                    inputProps={{ min: "0" }}
-                    fullWidth
-                    sx={fieldStyle}
-                    helperText="Initial stock level for base product"
-                  />
+                  <div>
+                    <div className="flex items-end gap-2 mb-2">
+                      <div className="flex-1">
+                        <TextField
+                          label={<RequiredLabel text="Base Quantity" />}
+                          name="baseQty"
+                          type="number"
+                          value={form.baseQty}
+                          onChange={handleInputChange}
+                          inputProps={{ min: "0" }}
+                          fullWidth
+                          sx={fieldStyle}
+                          helperText="Initial stock level for base product"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        onClick={handleAutoFillBaseQty}
+                        size="small"
+                        sx={{
+                          borderRadius: "6px",
+                          textTransform: "none",
+                          fontWeight: 600,
+                          borderColor: "#cbd5e1",
+                          color: "#475569",
+                          whiteSpace: "nowrap",
+                          mb: 0.5,
+                        }}
+                      >
+                        Auto Fill
+                      </Button>
+                    </div>
+
+                    {/* Variant Quantity Breakdown */}
+                    {variants.length > 0 && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs font-semibold text-blue-900 mb-2">
+                          Variant Quantities: {calculateTotalVariantQuantity()} total
+                        </p>
+                        <div className="text-xs text-blue-800 space-y-1 max-h-24 overflow-y-auto">
+                          {variants.map((v, idx) => {
+                            const colorName = colors.find((c) => String(c.id) === String(v.colorId))?.name || "N/A";
+                            const sizeName = sizes.find((s) => String(s.id) === String(v.sizeId))?.name || "N/A";
+                            const qty = v.stock || 0;
+                            return (
+                              <div key={idx} className="flex justify-between">
+                                <span>{colorName} - {sizeName}:</span>
+                                <span className="font-medium">{qty}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <TextField
                     label="Barcode (EAN/UPC)"
                     name="barcode"
