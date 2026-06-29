@@ -44,6 +44,7 @@ model Users {
   notifications notifications[]
   returnRequests ReturnRequest[]
   seller         seller? //  opposite relation
+  refreshTokens  RefreshToken[]
 
 
   @@index([roleId], map: "users_roleId_fkey")
@@ -1066,6 +1067,19 @@ model AffiliateBankAccount {
   @@map("affiliate_bank_accounts")
 }
 
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
 
 model CronLog {
   id         Int      @id @default(autoincrement())

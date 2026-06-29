@@ -5,6 +5,7 @@ import { sendOrderConfirmationEmail } from "@/lib/helpers/emailHelper";
 import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 import { stripe } from "@/lib/stripe";
+import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
 
 
 
@@ -367,6 +368,25 @@ export async function POST(req: NextRequest) {
 
     const ambassadorIdForOrder = firstItemWithAmbassador?.ambassadorId || null;
 
+    // ==========================================================
+    //  VALIDATE STOCK AVAILABILITY (ATOMIC TRANSACTION)
+    // ==========================================================
+    try {
+      await validateStockInTransaction(
+        orderItems.map((item: any) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+        }))
+      );
+    } catch (stockError: any) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: stockError.message || "Insufficient stock for one or more items",
+        },
+        { status: 400 }
+      );
+    }
 
     // ===============================
     //  CREATE ORDER

@@ -3,9 +3,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-//  Configure the transporter
+//  Configure the transporter — Zoho Mail SMTP
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST || "smtp.zoho.com",
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -359,6 +361,110 @@ export async function sendEmail({
   }
 }
 
+export async function sendOrderShippedEmail({
+  to,
+  name,
+  userId,
+  trackingNumber,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+  trackingNumber?: string;
+}) {
+  const subject = "Your order is on its way 🎁";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Your GAZAARABIA order has been dispatched.
+          </p>
+
+          ${trackingNumber ? `
+          <div style="margin:25px 0;padding:16px;border-left:4px solid #009639;background:#f0fdf4;">
+            <p style="margin:0 0 8px 0;font-weight:600;color:#111827;">Tracking Number:</p>
+            <p style="margin:0;font-size:16px;font-weight:700;color:#009639;letter-spacing:1px;">${trackingNumber}</p>
+          </div>
+          ` : ""}
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Estimated arrival:
+          </p>
+
+          <ul style="font-size:15px;color:#374151;line-height:1.8;margin:0;padding-left:20px;">
+            <li><strong>Standard UK:</strong> 3–5 working days</li>
+            <li><strong>Express UK:</strong> 1–2 working days</li>
+          </ul>
+
+          <p style="font-size:15px;line-height:1.7;margin:20px 0;color:#111827;">
+            Quick care guide while you wait:
+          </p>
+
+          <ul style="font-size:15px;color:#374151;line-height:1.8;margin:0;padding-left:20px;">
+            <li>Nida and Zoom: machine wash 30°C, gentle cycle, hang in shade to dry</li>
+            <li>Crepe and embroidered: hand wash or dry clean — check garment label</li>
+            <li>White pieces: avoid direct sunlight when drying to prevent yellowing</li>
+          </ul>
+
+          <p style="font-size:15px;line-height:1.7;margin:20px 0 0;color:#111827;">
+            Not arrived in time? Email info@gazaarabia.com with your order number.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin:20px 0;color:#111827;">
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Order shipped notification sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
 export async function sendOrderConfirmationEmail(
   to: string,
   details: {
@@ -705,4 +811,509 @@ export async function sendReturnStatusEmail({
   });
 
   return true;
+}
+
+
+
+
+// ========================= FLOW 1: WELCOME SERIES (5 EMAILS) =========================
+
+export async function sendWelcomeEmail1({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "Welcome — your 10% code is inside ðµð¸";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Welcome to GAZAARABIA.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Here is your 10% welcome discount:
+          </p>
+
+          <div style="text-align:center;margin:25px 0;padding:20px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+            <p style="margin:0;font-size:24px;font-weight:700;color:#E82C3F;letter-spacing:2px;">WELCOME10</p>
+            <p style="margin:8px 0 0 0;font-size:13px;color:#6b7280;">Valid for 7 days.</p>
+          </div>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            But first — something we want you to know before your first order.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Every purchase at GAZAARABIA — an abaya, a thobe, a hijab, a kaftan, a gift — sends a portion of our profits to humanitarian aid for Muslims in Palestine, Sudan, Yemen, Kashmir and Syria. Not as a campaign. Not seasonally. Every single order, every single month.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            You don't have to choose between looking good and doing good.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:25px;color:#111827;">
+            Any questions before ordering — sizing, fabric, delivery — email info@gazaarabia.com. We respond within 24 hours.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Jazakallah khayran for joining us.<br>
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Welcome email 1/5 sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
+export async function sendWelcomeEmail2({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "The story behind GAZAARABIA ðµð¸";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            We want to tell you why GAZAARABIA exists.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            A few years ago, we kept seeing the same thing happen. A Muslim woman orders an abaya online. It arrives see-through. Or two inches too short. Or the fabric is nothing like the photo. She returns it, loses the delivery cost, and gives up on shopping modest fashion online.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            At the same time — the news from Palestine was constant. From Yemen. From Sudan. From Kashmir. And the question kept coming up: what are we actually doing about it? Beyond posting. Beyond donating once a year.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            So we built GAZAARABIA.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            A marketplace where every piece of modest fashion — every abaya, thobe, hijab, kaftan, Islamic gift — comes from a verified vendor, is opacity-tested before listing, and arrives at the length it says it will. Quality you can trust.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            And every month, a portion of every order goes to verified humanitarian organisations supporting Muslims in Palestine, Sudan, Yemen, Kashmir and Syria. Not a one-off donation. A permanent, binding part of how this business operates.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            That is it. That is GAZAARABIA.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Your WELCOME10 discount is still valid. Use it on your first order.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Welcome email 2/5 sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
+export async function sendWelcomeEmail3({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "The size chart that stops returns ðµð¸";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            The biggest reason people hesitate to buy modest fashion online is uncertainty — will the fabric be what I expect? Will the length be right for my height?
+          </p>
+
+          <h3 style="margin:25px 0 15px;font-size:16px;font-weight:600;color:#111827;">FABRIC GUIDE</h3>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:12px;color:#111827;">
+            <strong>Nida Fabric:</strong> Smooth, flat, lightweight, fully opaque. Most popular everyday abaya and thobe fabric in the UK. Machine washable 30°C. Best for: everyday wear, clean structured look.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:12px;color:#111827;">
+            <strong>Zoom Fabric (Crinkle Nida):</strong> Slight stretch, crinkle texture, wrinkle-resistant. Most comfortable all-day fabric. Best for: daily wear, travel, anyone who hates ironing.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            <strong>Crepe Fabric:</strong> Textured surface, medium weight, elegant drape. Best for: Eid, Nikah, formal occasions. Some styles dry clean only.
+          </p>
+
+          <h3 style="margin:25px 0 15px;font-size:16px;font-weight:600;color:#111827;">HEIGHT-TO-LENGTH GUIDE</h3>
+
+          <table cellpadding="8" cellspacing="0" width="100%" style="font-size:14px;color:#374151;margin-bottom:20px;">
+            <tr style="background:#f9fafb;border:1px solid #e5e7eb;">
+              <td style="padding:10px;"><strong>Under 5'2" (157cm)</strong></td>
+              <td style="padding:10px;">52" length (Petite)</td>
+            </tr>
+            <tr style="border:1px solid #e5e7eb;">
+              <td style="padding:10px;"><strong>5'2" – 5'5"</strong></td>
+              <td style="padding:10px;">54" length</td>
+            </tr>
+            <tr style="background:#f9fafb;border:1px solid #e5e7eb;">
+              <td style="padding:10px;"><strong>5'5" – 5'8"</strong></td>
+              <td style="padding:10px;">56" length (Regular)</td>
+            </tr>
+            <tr style="border:1px solid #e5e7eb;">
+              <td style="padding:10px;"><strong>5'8" – 5'11"</strong></td>
+              <td style="padding:10px;">58" length (Tall)</td>
+            </tr>
+            <tr style="background:#f9fafb;border:1px solid #e5e7eb;">
+              <td style="padding:10px;"><strong>Over 5'11"</strong></td>
+              <td style="padding:10px;">60" or email us</td>
+            </tr>
+          </table>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            When between sizes, always order longer. A garment that grazes the floor is more modest and more elegant than one that ends above the ankle.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            WELCOME10 is still valid. Use it before it expires.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Welcome email 3/5 sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
+export async function sendWelcomeEmail4({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "Join our community ðµð¸";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            GAZAARABIA is more than a shop. It is a community of Muslims who believe that how we spend our money matters.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:15px;color:#111827;">
+            <strong>ð¸ Instagram: @gazaarabia</strong><br>
+            Modest fashion inspiration, Palestine stories, community styling and behind-the-scenes. Follow for early access to new drops.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:15px;color:#111827;">
+            <strong>ðµ TikTok: @gazaarabia</strong><br>
+            Fabric guides, sizing advice, styling tips and the real stories behind our mission.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            <strong>ð¬ WhatsApp Community</strong><br>
+            New arrivals, Eid drops, Palestine impact updates — direct to your phone, no algorithm.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            And if you have ordered — post your look and tag @gazaarabia. We share community photos every week.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            See you there.<br>
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Welcome email 4/5 sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
+}
+
+export async function sendWelcomeEmail5({
+  to,
+  name,
+  userId,
+}: {
+  to: string;
+  name?: string | null;
+  userId?: number | null;
+}) {
+  const subject = "Last chance: WELCOME10 expires at midnight ðµð¸";
+  const displayName = name || "there";
+
+  const html = `
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f7f7f7;padding:50px 0;color:#111827;">
+    <table align="center" cellpadding="0" cellspacing="0" width="640"
+      style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+      <tr>
+        <td style="text-align:center;padding:30px 0;border-bottom:4px solid #009639;">
+          <img src="${logoUrl}" alt="Gazaarabia" width="200" style="max-width:220px;">
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:45px 50px;">
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            As-salamu alaykum,
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            WELCOME10 expires at midnight tonight.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            If you have not found the right piece yet, here are the three most popular first orders from new GAZAARABIA customers:
+          </p>
+
+          <ul style="font-size:15px;color:#374151;line-height:1.8;margin:20px 0;padding-left:20px;">
+            <li>Women: Everyday Black Nida Abaya — the most-ordered piece on the platform.</li>
+            <li>Men: Classic White Nida Thobe — UK lengths, dispatched within 1 working day.</li>
+            <li>Gifts: Islamic Gift Sets — the most chosen gift for Eid and birthdays.</li>
+          </ul>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Still unsure about sizing? Reply to this email with your height and what you are looking for. We will tell you exactly what to order.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Code: WELCOME10 — use it tonight.
+          </p>
+
+          <p style="font-size:15px;line-height:1.7;margin-bottom:20px;color:#111827;">
+            Jazakallah khayran.<br>
+            The GAZAARABIA Team
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background:#111827;text-align:center;padding:28px 20px;">
+          <p style="color:#ffffff;font-size:13px;margin:0;line-height:1.5;">
+            &copy; ${new Date().getFullYear()} <strong>Gazaarabia</strong><br>
+            <span style="color:#9ca3af;">Where Modesty Meets Luxury</span>
+          </p>
+          <div style="height:3px;width:60px;background:#E82C3F;margin:14px auto 0;border-radius:4px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const emailResult = await sendEmail({ to, subject, html });
+
+  try {
+    await prisma.notifications.create({
+      data: {
+        userId: userId || null,
+        email: to,
+        subject,
+        message: `Welcome email 5/5 sent to ${to} — ${emailResult.success ? "success" : "failed"}.`,
+        type: "email",
+        status: emailResult.success ? "sent" : "failed",
+      },
+    });
+  } catch (error) {
+    console.error("Notification log error:", error);
+  }
+
+  return emailResult;
 }

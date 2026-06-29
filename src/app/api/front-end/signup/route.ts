@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { sendSubscribeConfirmationEmail } from "@/lib/helpers/emailHelper";
+import { sendSubscribeConfirmationEmail, sendWelcomeEmail1 } from "@/lib/helpers/emailHelper";
 import { generateReferralCode } from "@/lib/helpers/generateReferralCodeHelper";
 
 const prisma: any = new PrismaClient();
@@ -41,6 +41,13 @@ export async function POST(req: Request) {
         password: hashedPassword,
         roleId: selectedRole.id,
       },
+    });
+
+    // Send Welcome Email 1 (10% discount code)
+    await sendWelcomeEmail1({
+      to: user.email,
+      name: user.name,
+      userId: user.id,
     });
 
     if (role.toLowerCase() === "seller") {

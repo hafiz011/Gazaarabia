@@ -57,8 +57,8 @@ export async function POST(req: Request) {
       );
     }
 
-    //  Generate JWT with role name
-    const token = jwt.sign(
+    //  Generate JWT with role name (1 hour expiration)
+    const accessToken = jwt.sign(
       {
         id: user.id,
         email: user.email,
@@ -66,8 +66,25 @@ export async function POST(req: Request) {
         roleName: user.role.name,
       },
       process.env.JWT_SECRET as string,
+      { expiresIn: "1h" }
+    );
+
+    //  Generate refresh token (7 days expiration)
+    const refreshTokenString = jwt.sign(
+      { id: user.id, type: "refresh" },
+      process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
     );
+
+    //  Store refresh token in database
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshTokenString,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        isRevoked: false,
+      },
+    });
 
     //  Send role name in response
     const res = NextResponse.json({
@@ -82,7 +99,8 @@ export async function POST(req: Request) {
         affiliateType: user.role.name === "affiliate" ? user.affiliate?.type : null,
         stripeCustomerId: user.stripeCustomerId
       },
-      token,
+      accessToken,
+      refreshToken: refreshTokenString,
     });
 
     return res;
