@@ -1,23 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { CSSProperties, useMemo, useRef } from "react";
-import "react-quill-new/dist/quill.snow.css";
 
-const ReactQuill = dynamic(
-  async () => {
-    const { default: RQ } = await import("react-quill-new");
-    const { default: BlotFormatter } = await import("quill-blot-formatter");
-    RQ.Quill.register("modules/blotFormatter", BlotFormatter);
-    const DynamicRQ = ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
-    DynamicRQ.displayName = "DynamicRQ";
-    return DynamicRQ;
-  },
-  {
-    ssr: false,
-    loading: () => <p>Loading editor...</p>,
-  }
-);
+const TinyMCEEditor = dynamic(() => import("@tinymce/tinymce-react").then((m) => m.Editor), {
+  ssr: false,
+  loading: () => <p>Loading editor...</p>,
+});
 
 interface RichTextEditorProps {
   value: string;
@@ -36,117 +24,42 @@ export default function RichTextEditor({
   required = false,
   minHeight = 300,
 }: RichTextEditorProps) {
-  const quillRef = useRef<any>(null);
 
-  const editorStyle: CSSProperties = {
-    minHeight: `${minHeight}px`,
-  };
+  const handleImageUpload = (blobInfo: any): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.withCredentials = false;
+      xhr.open("POST", "/api/upload?folder=editor");
 
-  const imageHandler = () => {
-    const input = document.createElement("input");
-    input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*");
-    input.click();
+      xhr.upload.onprogress = (e) => {
+        // Handle upload progress if needed
+      };
 
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-          const res = await fetch("/api/upload?folder=editor", {
-            method: "POST",
-            body: formData,
+      xhr.onload = () => {
+        if (xhr.status !== 200) {
+          reject({
+            message: `Upload failed: ${xhr.status}`,
+            remove: true,
           });
-          const data = await res.json();
-          if (data.url) {
-            const quill = quillRef.current?.getEditor();
-            const range = quill?.getSelection();
-            if (quill && range) {
-              quill.insertEmbed(range.index, "image", data.url);
-              quill.setSelection(range.index + 1);
-            }
-          }
-        } catch (error) {
-          console.error("Image upload failed", error);
+          return;
         }
-      }
-    };
+        const json = JSON.parse(xhr.responseText);
+        if (!json || typeof json.url !== "string") {
+          reject("Invalid response from server");
+          return;
+        }
+        resolve(json.url as string);
+      };
+
+      xhr.onerror = () => {
+        reject("Image upload failed. Check your connection.");
+      };
+
+      const formData = new FormData();
+      formData.append("file", blobInfo.blob(), blobInfo.filename());
+      xhr.send(formData);
+    });
   };
-
-  const videoHandler = () => {
-    const url = prompt("Enter Video URL (YouTube, Vimeo, etc.):");
-    if (url) {
-      const embedUrl = convertToEmbedUrl(url);
-      const quill = quillRef.current?.getEditor();
-      const range = quill?.getSelection();
-      if (quill && range) {
-        quill.insertEmbed(range.index, "video", embedUrl);
-        quill.setSelection(range.index + 1);
-      }
-    }
-  };
-
-  const convertToEmbedUrl = (url: string) => {
-    let videoUrl = url;
-    if (videoUrl.includes("youtube.com/watch?v=")) {
-      videoUrl = videoUrl.replace("watch?v=", "embed/");
-      // Remove any additional params like &t= or &ab_channel=
-      if (videoUrl.includes("&")) {
-        videoUrl = videoUrl.split("&")[0];
-      }
-    } else if (videoUrl.includes("youtu.be/")) {
-      videoUrl = videoUrl.replace("youtu.be/", "youtube.com/embed/");
-      if (videoUrl.includes("?")) {
-        videoUrl = videoUrl.split("?")[0];
-      }
-    } else if (videoUrl.includes("vimeo.com/")) {
-      videoUrl = videoUrl.replace("vimeo.com/", "player.vimeo.com/video/");
-    }
-    return videoUrl;
-  };
-
-  const modules = useMemo(
-    () => ({
-      toolbar: {
-        container: [
-          ["bold", "italic", "underline", "strike"],
-          ["blockquote", "code-block"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ script: "sub" }, { script: "super" }],
-          [{ indent: "-1" }, { indent: "+1" }],
-          [{ header: [1, 2, 3, false] }],
-          [{ align: [] }],
-          ["link", "image", "video"],
-          ["clean"],
-        ],
-        handlers: {
-          image: imageHandler,
-          video: videoHandler,
-        },
-      },
-      blotFormatter: {},
-    }),
-    []
-  );
-
-  const formats = [
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "blockquote",
-    "code-block",
-    "list",
-    "script",
-    "indent",
-    "header",
-    "align",
-    "link",
-    "image",
-    "video",
-  ];
 
   return (
     <>
@@ -162,92 +75,9 @@ export default function RichTextEditor({
           border-color: #d1d5db;
         }
 
-        .rich-text-editor-wrapper:global(.ql-focus),
-        .rich-text-editor-wrapper:has(:global(.ql-editor:focus)) {
+        .rich-text-editor-wrapper:focus-within {
           border-color: var(--brand-primary, #c73030);
           box-shadow: 0 0 0 2px rgba(199, 48, 48, 0.1);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar) {
-          background-color: #f9fafb;
-          border: none !important;
-          border-bottom: 1px solid #e5e7eb;
-          padding: 12px 8px;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow) {
-          padding: 8px;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-container) {
-          font-size: 1rem;
-          font-family: inherit;
-          border: none !important;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-editor) {
-          padding: 16px 12px;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          color: #1f2937;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-editor.ql-blank::before) {
-          color: #9ca3af;
-          font-style: normal;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar button) {
-          width: 32px;
-          height: 32px;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar button:hover),
-        .rich-text-editor-wrapper :global(.ql-toolbar button:focus),
-        .rich-text-editor-wrapper :global(.ql-toolbar button.ql-active) {
-          color: var(--brand-primary, #c73030);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar button.ql-active svg) {
-          stroke: var(--brand-primary, #c73030);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-stroke) {
-          stroke: #6b7280;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-stroke.ql-active),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:hover .ql-stroke),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:focus .ql-stroke) {
-          stroke: var(--brand-primary, #c73030);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-fill),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-stroke.ql-fill) {
-          fill: #6b7280;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-fill.ql-active),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:hover .ql-fill),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:focus .ql-fill),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:hover .ql-stroke.ql-fill),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow button:focus .ql-stroke.ql-fill) {
-          fill: var(--brand-primary, #c73030);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-picker-label) {
-          color: #6b7280;
-        }
-
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-picker-label:hover),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-picker-item:hover),
-        .rich-text-editor-wrapper :global(.ql-toolbar.ql-snow .ql-picker-item.ql-selected) {
-          color: var(--brand-primary, #c73030);
-        }
-
-        .rich-text-editor-wrapper :global(.ql-editor img),
-        .rich-text-editor-wrapper :global(.ql-editor .ql-video) {
-          max-width: 100%;
         }
 
         .editor-label {
@@ -262,6 +92,52 @@ export default function RichTextEditor({
           content: " *";
           color: #dc2626;
         }
+
+        /* TinyMCE styling */
+        :global(.tox.tox-tinymce) {
+          border: none !important;
+        }
+
+        :global(.tox-editor-header) {
+          background-color: #f9fafb !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        :global(.tox .tox-tbtn) {
+          color: #6b7280 !important;
+        }
+
+        :global(.tox .tox-tbtn:hover),
+        :global(.tox .tox-tbtn:focus),
+        :global(.tox .tox-tbtn--active) {
+          color: var(--brand-primary, #c73030) !important;
+          background-color: rgba(199, 48, 48, 0.1) !important;
+        }
+
+        :global(.tox .tox-tbtn:hover::before),
+        :global(.tox .tox-tbtn:focus::before) {
+          background-color: rgba(199, 48, 48, 0.1) !important;
+        }
+
+        :global(.tox .tox-edit-area__iframe) {
+          font-family: inherit !important;
+          font-size: 0.95rem !important;
+          line-height: 1.6 !important;
+          color: #1f2937 !important;
+        }
+
+        :global(.tox .tox-menubar) {
+          background-color: #f9fafb !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        :global(.tox .tox-mbtn) {
+          color: #6b7280 !important;
+        }
+
+        :global(.tox .tox-mbtn:hover) {
+          color: var(--brand-primary, #c73030) !important;
+        }
       `}</style>
 
       <div>
@@ -271,15 +147,64 @@ export default function RichTextEditor({
           </label>
         )}
         <div className="rich-text-editor-wrapper">
-          <ReactQuill
-            forwardedRef={quillRef}
+          <TinyMCEEditor
             value={value}
-            onChange={onChange}
-            theme="snow"
-            modules={modules}
-            formats={formats}
-            placeholder={placeholder}
-            style={editorStyle}
+            onEditorChange={onChange}
+            init={{
+              height: minHeight,
+              menubar: true,
+              plugins: [
+                "advlist",
+                "autolink",
+                "lists",
+                "link",
+                "image",
+                "charmap",
+                "print",
+                "preview",
+                "hr",
+                "anchor",
+                "searchreplace",
+                "wordcount",
+                "visualblocks",
+                "visualchars",
+                "code",
+                "fullscreen",
+                "insertdatetime",
+                "media",
+                "nonbreaking",
+                "save",
+                "table",
+                "directionality",
+                "emoticons",
+                "template",
+                "codesample",
+              ],
+              toolbar:
+                "undo redo | formatselect | bold italic backcolor forecolor | " +
+                "alignleft aligncenter alignright alignjustify | " +
+                "bullist numlist outdent indent | " +
+                "link image media table | " +
+                "searchreplace | " +
+                "code fullscreen | " +
+                "removeformat",
+              toolbar_sticky: true,
+              toolbar_location: "top",
+              relative_urls: false,
+              remove_script_host: false,
+              convert_urls: false,
+              automatic_uploads: true,
+              file_picker_types: "image",
+              images_upload_handler: handleImageUpload as any,
+              font_family_formats:
+                "Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monospace; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings",
+              font_size_formats: "8px 10px 12px 14px 16px 18px 20px 24px 28px 32px 36px",
+              content_style:
+                "body { font-family: inherit; font-size: 14px; line-height: 1.6; } img { max-width: 100%; }",
+              placeholder: placeholder,
+              branding: false,
+              promotion: false,
+            }}
           />
         </div>
       </div>

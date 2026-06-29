@@ -420,6 +420,15 @@ export default function Header() {
                     {activeCategory?.name || "Shop By"}
                   </h4>
                   <div className="grid grid-cols-1 gap-1">
+                    {activeCategory && (
+                      <Link
+                        href={`/shop/${activeCategory.slug}`}
+                        className="text-[12px] font-bold text-[var(--brand-primary)] py-2 px-3 mt-2 inline-flex items-center gap-1 group"
+                        onClick={() => closeAllMenus()}
+                      >
+                        View All <ChevronRight size={14} className="group-hover:translate-x-1 transition" />
+                      </Link>
+                    )}
                     {activeCategory?.subcategories.map((subcat) => (
                       <Link
                         key={subcat.id}
@@ -430,15 +439,7 @@ export default function Header() {
                         {subcat.name}
                       </Link>
                     ))}
-                    {activeCategory && (
-                      <Link
-                        href={`/shop/${activeCategory.slug}`}
-                        className="text-[12px] font-bold text-[var(--brand-primary)] py-2 px-3 mt-2 inline-flex items-center gap-1 group"
-                        onClick={() => closeAllMenus()}
-                      >
-                        View All <ChevronRight size={14} className="group-hover:translate-x-1 transition" />
-                      </Link>
-                    )}
+                    
                   </div>
                 </div>
 

@@ -21,6 +21,7 @@
     "@stripe/react-stripe-js": "^5.4.0",
     "@stripe/stripe-js": "^8.5.2",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "@tinymce/tinymce-react": "^6.3.0",
     "aos": "^2.3.4",
     "apexcharts": "^5.3.6",
     "bcryptjs": "^3.0.2",
@@ -45,6 +46,7 @@
     "stripe": "^20.0.0",
     "swiper": "^12.0.2",
     "tailwind-scrollbar": "^3.1.0",
+    "tinymce": "^8.6.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
