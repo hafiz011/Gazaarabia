@@ -3,19 +3,50 @@ import bcrypt from "bcryptjs";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { sendSubscribeConfirmationEmail, sendWelcomeEmail1 } from "@/lib/helpers/emailHelper";
 import { generateReferralCode } from "@/lib/helpers/generateReferralCodeHelper";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { logSignupAttempt, logRateLimited } from "@/lib/authLogging";
+import { validatePassword } from "@/lib/passwordValidator";
 
 const prisma: any = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: 3 signup attempts per hour per IP (prevent account spam)
+    const rateLimitResult = await rateLimit(req, {
+      windowMs: 60 * 60 * 1000, // 1 hour
+      maxRequests: 3, // 3 attempts
+      keyGenerator: (r) => `signup:${getClientIp(r)}`, // Separate limit for signup
+    });
+
+    if (!rateLimitResult.allowed) {
+      const { email } = await req.json().catch(() => ({ email: "unknown" }));
+      logRateLimited(req, "signup", email);
+      return rateLimitResponse(rateLimitResult.resetTime);
+    }
+
     const { name, email, password, role = "customer", phone } = await req.json();
 
     if (!name || !email || !password) {
+      logSignupAttempt(req, email || "unknown", false, "Missing required fields");
       return NextResponse.json({ message: "All fields are required" }, { status: 400 });
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      logSignupAttempt(req, email, false, `Weak password: ${passwordValidation.errors.join(", ")}`);
+      return NextResponse.json(
+        {
+          message: "Password does not meet requirements",
+          errors: passwordValidation.errors,
+        },
+        { status: 400 }
+      );
     }
 
     const existing = await prisma.users.findUnique({ where: { email } });
     if (existing) {
+      logSignupAttempt(req, email, false, "Email already exists");
       return NextResponse.json({ message: "Email already exists" }, { status: 400 });
     }
 
@@ -133,9 +164,19 @@ export async function POST(req: Request) {
         name,
       });
     }
+
+    // Log successful signup
+    logSignupAttempt(req, user.email, true);
+
     return NextResponse.json({ message: "User created", user }, { status: 201 });
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return req.headers.get("x-real-ip") || "unknown";
 }

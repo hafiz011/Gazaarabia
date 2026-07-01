@@ -1,6 +1,7 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { prisma } from "@/lib/prisma";
 import ProductDetails from "./ProductDetails";
+import { BreadcrumbSchema } from "@/components/BreadcrumbSchema";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -35,6 +36,10 @@ export async function generateMetadata(
   return {
     title: product.title,
     description: product.shortDescription || `Buy ${product.title} at Gazaarabia. Modern modest fashion inspired by Gaza.`,
+    robots: {
+      index: true,
+      follow: true,
+    },
     alternates: {
       canonical: `https://gazaarabia.com/products/${slug}`,
     },
@@ -65,6 +70,9 @@ export default async function Page({ params }: Props) {
       reviews: {
         select: { rating: true },
       },
+      categories: {
+        select: { name: true, slug: true },
+      },
     },
   });
 
@@ -73,9 +81,11 @@ export default async function Page({ params }: Props) {
   const price = product.sellingPrice;
   const productImage = product.productimage[0]?.url || "https://gazaarabia.com/images/logo.png";
   const inStock = product.productvariant.some((v) => v.stock > 0);
-  
-  const averageRating = product.reviews.length > 0 
-    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length 
+  const categorySlug = product.categories?.slug || "all";
+  const categoryName = product.categories?.name || "Products";
+
+  const averageRating = product.reviews.length > 0
+    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
     : 0;
 
   const jsonLd = {
@@ -85,6 +95,7 @@ export default async function Page({ params }: Props) {
     image: productImage,
     description: product.shortDescription || product.title,
     sku: product.barcode || `GA-${product.id}`,
+    category: categoryName,
     brand: {
       "@type": "Brand",
       name: "Gazaarabia",
@@ -111,6 +122,14 @@ export default async function Page({ params }: Props) {
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: "https://gazaarabia.com" },
+          { name: "Shop", url: "https://gazaarabia.com/shop/all" },
+          { name: categoryName, url: `https://gazaarabia.com/shop/${categorySlug}` },
+          { name: product.title, url: `https://gazaarabia.com/products/${slug}` },
+        ]}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

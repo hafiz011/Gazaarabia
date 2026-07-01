@@ -2,11 +2,25 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { logTokenRefresh, logRateLimited } from "@/lib/authLogging";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: 10 refresh attempts per 5 minutes per IP (prevent token refresh spam)
+    const rateLimitResult = await rateLimit(req, {
+      windowMs: 5 * 60 * 1000, // 5 minutes
+      maxRequests: 10, // 10 attempts
+      keyGenerator: (r) => `refresh:${getClientIp(r)}`, // Separate limit for refresh
+    });
+
+    if (!rateLimitResult.allowed) {
+      logRateLimited(req, "refresh");
+      return rateLimitResponse(rateLimitResult.resetTime);
+    }
+
     const { refreshToken } = await req.json();
 
     if (!refreshToken) {
@@ -21,6 +35,7 @@ export async function POST(req: Request) {
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as any;
     } catch (error) {
+      logTokenRefresh(req, 0, false, "Invalid token signature");
       return NextResponse.json(
         { message: "Invalid or expired refresh token" },
         { status: 401 }
@@ -34,6 +49,7 @@ export async function POST(req: Request) {
     });
 
     if (!storedToken || storedToken.isRevoked || new Date() > storedToken.expiresAt) {
+      logTokenRefresh(req, decoded.id, false, "Token revoked or expired");
       return NextResponse.json(
         { message: "Refresh token is invalid or expired" },
         { status: 401 }
@@ -53,6 +69,9 @@ export async function POST(req: Request) {
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" }
     );
+
+    // Log successful token refresh
+    logTokenRefresh(req, user.id, true);
 
     return NextResponse.json({
       message: "Token refreshed successfully",
@@ -75,4 +94,10 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return req.headers.get("x-real-ip") || "unknown";
 }

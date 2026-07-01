@@ -25,15 +25,15 @@ const authOptions: any = {
           });
 
           // Check response structure
-          if (res && res.token && res.user) {
+          if (res && res.accessToken && res.user) {
             return {
               id: res.user.id.toString(),
               name: res.user.name,
               email: res.user.email,
-              token: res.token,
-              role: res.user.roleName, // or res.user.role if you have a string role
+              token: res.accessToken,
+              role: res.user.roleName,
               user_id: res.user.id,
-
+              refreshToken: res.refreshToken,
               affiliateId: res.user.affiliateId,
               affiliateType: res.user.affiliateType,
               stripeCustomerId: res.user.stripeCustomerId || null,

@@ -1,5 +1,3 @@
-// src/app/robots.ts
-
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
@@ -8,7 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-
         disallow: [
           "/admin/",
           "/seller/",
@@ -22,9 +19,9 @@ export default function robots(): MetadataRoute.Robots {
           "/private/",
           "/server/",
         ],
+        crawlDelay: 1,
       },
     ],
-
     sitemap: "https://gazaarabia.com/sitemap.xml",
   };
 }
