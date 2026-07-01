@@ -34,6 +34,8 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith("/affiliate") && pathname !== "/affiliate/login" && pathname !== "/affiliate/register";
     const isSellerRoute =
         pathname.startsWith("/seller") && pathname !== "/seller/login" && pathname !== "/seller/register";
+    const isAmbassadorRoute =
+        pathname.startsWith("/affiliate") && pathname !== "/ambassador/login" && pathname !== "/ambassador/register";
 
     // ================= ADMIN ROUTES ====================
     if (isAdminRoute) {
@@ -72,6 +74,17 @@ export async function middleware(request: NextRequest) {
 
         // Only affiliate has access
         if (role !== "affiliate") {
+            return NextResponse.redirect(new URL("/unauthorized", request.url));
+        }
+    }
+
+    if (isAmbassadorRoute) {
+        if (!token) {
+            return NextResponse.redirect(new URL(ROUTES.AMBASSADOR.LOGIN, request.url));
+        }
+        
+        // Only ambassador has access
+        if (role !== "ambassador") {
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
     }

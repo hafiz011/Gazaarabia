@@ -148,6 +148,8 @@ export default function RichTextEditor({
         )}
         <div className="rich-text-editor-wrapper">
           <TinyMCEEditor
+            tinymceScriptSrc="/tinymce/tinymce.min.js"
+            licenseKey="gpl"
             value={value}
             onEditorChange={onChange}
             init={{
@@ -160,9 +162,7 @@ export default function RichTextEditor({
                 "link",
                 "image",
                 "charmap",
-                "print",
                 "preview",
-                "hr",
                 "anchor",
                 "searchreplace",
                 "wordcount",
@@ -177,11 +177,10 @@ export default function RichTextEditor({
                 "table",
                 "directionality",
                 "emoticons",
-                "template",
                 "codesample",
               ],
               toolbar:
-                "undo redo | formatselect | bold italic backcolor forecolor | " +
+                "undo redo | blocks | bold italic backcolor forecolor | " +
                 "alignleft aligncenter alignright alignjustify | " +
                 "bullist numlist outdent indent | " +
                 "link image media table | " +
