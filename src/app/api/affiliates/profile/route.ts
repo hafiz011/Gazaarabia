@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import { MAX_COMMISSION } from "@/lib/validation/commission";
 
 const prisma: any = new PrismaClient();
 
@@ -94,13 +95,13 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // // Optional global limit
-    // if (shareCommission < 0 || shareCommission > 50) {
-    //   return NextResponse.json(
-    //     { message: "shareCommission must be between 0-50%" },
-    //     { status: 400 }
-    //   );
-    // }
+    // Global bound (0..MAX_COMMISSION)
+    if (shareCommission < 0 || shareCommission > MAX_COMMISSION) {
+      return NextResponse.json(
+        { message: `shareCommission must be between 0 and ${MAX_COMMISSION}%` },
+        { status: 400 }
+      );
+    }
 
     // NEW: cannot exceed baseCommission
     const baseCommission = Number(affiliate.baseCommission ?? 0);

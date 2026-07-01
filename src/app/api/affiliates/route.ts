@@ -4,6 +4,7 @@ import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 import { getAffiliateEarnings } from "@/lib/helpers/affiliateEarnings";
 import bcrypt from "bcryptjs";
 import { generateReferralCode } from "@/lib/helpers/generateReferralCodeHelper";
+import { validateCommission } from "@/lib/validation/commission";
 
 const prisma: any = new PrismaClient();
 
@@ -80,6 +81,11 @@ export async function POST(req: NextRequest) {
 
     if (!password || password.length < 6)
       return NextResponse.json({ message: "Password must be at least 6 characters" }, { status: 400 });
+
+    // Bound commission values
+    const commissionError = validateCommission(baseCommission, shareCommission);
+    if (commissionError)
+      return NextResponse.json({ message: commissionError }, { status: 400 });
 
     // Check unique email
     const existing = await prisma.users.findUnique({ where: { email } });

@@ -6,6 +6,7 @@ import { generateCustomerInvoice } from "@/lib/utils/generateCustomerInvoice";
 import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 import { stripe } from "@/lib/stripe";
 import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
+import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
 
 
 
@@ -70,8 +71,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const tempCouponDiscount = coupon?.discountAmount ?? 0; // We still trust the coupon discount amount from frontend for now, or we could re-calculate it.
-    // To be even safer, we should re-calculate coupon discount too, but that depends on coupon type (fixed vs percentage).
+    // Recompute the coupon discount server-side from the coupon record.
+    // Never trust coupon.discountAmount sent by the client.
+    const tempCouponDiscount = computeCouponDiscount(tempCouponData, calculatedItemsTotal);
 
     if (tempCouponData && tempReferralAffiliate) {
       tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
@@ -105,6 +107,26 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Re-enforce usage limits at order time (the validate endpoint is
+      // advisory and can be bypassed by calling this route directly).
+      if (couponData.maxUsage != null && couponData.usageCount >= couponData.maxUsage) {
+        return NextResponse.json(
+          { message: "This coupon has reached its maximum usage limit." },
+          { status: 400 }
+        );
+      }
+      if (couponData.perUserLimit != null) {
+        const usedCount = await prisma.orders.count({
+          where: { userId, couponCode: couponData.code },
+        });
+        if (usedCount >= couponData.perUserLimit) {
+          return NextResponse.json(
+            { message: "You have already used this coupon the maximum number of times." },
+            { status: 400 }
+          );
+        }
+      }
     }
 
 
@@ -134,7 +156,7 @@ export async function POST(req: NextRequest) {
     let discountSource = null; // "coupon" or "referral"
     let finalAffiliateId = null; // which affiliate to credit?
 
-    const couponDiscount = coupon?.discountAmount ?? 0;
+    const couponDiscount = computeCouponDiscount(couponData, calculatedItemsTotal);
 
     if (couponData && referralAffiliate) {
       if (couponDiscount >= referralAffiliateDiscount) {

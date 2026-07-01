@@ -7,6 +7,7 @@ import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
+import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
 
 /**
  * @route POST /api/front-end/guest-checkout
@@ -71,7 +72,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const tempCouponDiscount = coupon?.discountAmount ?? 0;
+    // Recompute the coupon discount server-side; never trust coupon.discountAmount.
+    const tempCouponDiscount = computeCouponDiscount(tempCouponData, calculatedItemsTotal);
 
     if (tempCouponData && tempReferralAffiliate) {
       tempFinalDiscountTotal = Math.max(tempCouponDiscount, tempReferralAffiliateDiscount);
@@ -105,6 +107,14 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Re-enforce the global usage cap at order time (defence-in-depth)
+      if (couponData.maxUsage != null && couponData.usageCount >= couponData.maxUsage) {
+        return NextResponse.json(
+          { message: "This coupon has reached its maximum usage limit." },
+          { status: 400 }
+        );
+      }
     }
 
 
@@ -134,7 +144,7 @@ export async function POST(req: NextRequest) {
     let discountSource = null; // "coupon" or "referral"
     let finalAffiliateId = null; // which affiliate to credit?
 
-    const couponDiscount = coupon?.discountAmount ?? 0;
+    const couponDiscount = computeCouponDiscount(couponData, calculatedItemsTotal);
 
     if (couponData && referralAffiliate) {
       if (couponDiscount >= referralAffiliateDiscount) {

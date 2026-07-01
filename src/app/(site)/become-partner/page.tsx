@@ -28,6 +28,8 @@ export default function PartnerPage() {
                 "Monthly payouts, zero joining fee",
             ],
             accent: "var(--brand-primary)",
+            href: ROUTES.AFFILIATE.REGISTER,
+            loginHref: ROUTES.AFFILIATE.LOGIN,
         },
         {
             title: "Ambassador Program",
@@ -40,6 +42,8 @@ export default function PartnerPage() {
                 "Featured spotlight & co-marketing",
             ],
             accent: "var(--brand-secondary)",
+            href: ROUTES.AMBASSADOR.REGISTER,
+            loginHref: ROUTES.AMBASSADOR.LOGIN,
         },
     ];
 
@@ -100,7 +104,7 @@ export default function PartnerPage() {
                             </p>
 
                             <a
-                                href={ROUTES.AFFILIATE.REGISTER}
+                                href={ROUTES.AMBASSADOR.REGISTER}
                                 className="inline-block mt-5 px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white shadow hover:opacity-90 transition"
                             >
                                 Apply Now
@@ -260,7 +264,7 @@ export default function PartnerPage() {
 
                                             <div className="mt-6 flex gap-3 flex-wrap">
                                                 <a
-                                                    href={ROUTES.AFFILIATE.REGISTER}
+                                                    href={p.href}
                                                     className="inline-block px-5 py-2 rounded-lg font-semibold text-sm"
                                                     style={{
                                                         background: p.accent,
@@ -283,6 +287,17 @@ export default function PartnerPage() {
                                                     Learn More
                                                 </a>
                                             </div>
+
+                                            <p className="mt-3 text-sm text-[var(--text-muted)]">
+                                                Already a {p.title.split(" ")[0].toLowerCase()}?{" "}
+                                                <a
+                                                    href={p.loginHref}
+                                                    className="font-semibold hover:underline"
+                                                    style={{ color: p.accent }}
+                                                >
+                                                    Log in
+                                                </a>
+                                            </p>
                                         </div>
                                     </div>
                                 </motion.div>

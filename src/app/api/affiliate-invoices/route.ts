@@ -38,6 +38,15 @@ export async function POST(req: NextRequest) {
 
   if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+  // Only admins may mark invoices as paid (matches the GET handler above)
+  const adminUser = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true },
+  });
+
+  if (!adminUser || adminUser.role.name.toLowerCase() !== "admin")
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
   const invoice = await prisma.affiliateInvoice.findUnique({
     where: { id: invoiceId },
   });

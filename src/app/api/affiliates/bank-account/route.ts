@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
 
+// NOTE: Prefer /api/affiliates/me/bank-details for new work. This route is kept
+// for backwards compatibility and now enforces the same affiliate-role check.
+async function requireAffiliate(userId: number) {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: { role: true },
+  });
+  return !!user && user.role?.name.toLowerCase() === "affiliate";
+}
+
 export async function GET(req: Request) {
   try {
     const token = getTokenFromHeader(req);
@@ -9,6 +19,10 @@ export async function GET(req: Request) {
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await requireAffiliate(userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const affiliate = await prisma.affiliate.findUnique({
@@ -29,6 +43,10 @@ export async function POST(req: Request) {
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await requireAffiliate(userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();

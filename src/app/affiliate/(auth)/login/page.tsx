@@ -222,8 +222,15 @@ export default function AffiliateLoginPage() {
 
             <p className="text-xs text-center text-gray-500">
               Don’t have an affiliate account?{" "}
-              <a href="/affiliate/register" className="text-[var(--brand-primary)] hover:underline font-medium">
+              <a href={ROUTES.AFFILIATE.REGISTER} className="text-[var(--brand-primary)] hover:underline font-medium">
                 Register here
+              </a>
+            </p>
+
+            <p className="text-xs text-center text-gray-400">
+              Are you an ambassador?{" "}
+              <a href={ROUTES.AMBASSADOR.LOGIN} className="text-[var(--brand-primary)] hover:underline font-medium">
+                Ambassador login
               </a>
             </p>
           </form>

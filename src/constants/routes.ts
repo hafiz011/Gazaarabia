@@ -23,6 +23,13 @@ export const ROUTES = {
     DASHBOARD: "/affiliate",
   },
 
+  //  Ambassador routes (ambassadors share the affiliate dashboard)
+  AMBASSADOR: {
+    LOGIN: "/ambassador/login",
+    REGISTER: "/ambassador/register",
+    DASHBOARD: "/affiliate",
+  },
+
   //  Content manager routes
   CONTENT_MANAGER: {
     LOGIN: "/admin/login",

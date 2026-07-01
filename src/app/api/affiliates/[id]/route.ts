@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getTokenFromHeader, getUserIdFromToken } from "@/lib/authToken";
+import { validateCommission } from "@/lib/validation/commission";
 import { PrismaClient } from "@prisma/client";
 
 const prisma: any = new PrismaClient();
@@ -66,6 +67,14 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
     }
 
+    // Bound commission values (fall back to current values when a field is omitted)
+    const commissionError = validateCommission(
+      baseCommission ?? affiliate.baseCommission,
+      shareCommission ?? affiliate.shareCommission
+    );
+    if (commissionError)
+      return NextResponse.json({ message: commissionError }, { status: 400 });
+
     //  Update User
     await prisma.users.update({
       where: { id: affiliate.userId },
@@ -87,6 +96,15 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
         isActive,
       },
     });
+
+    // Audit trail. Wrapped so a not-yet-migrated audit_log table never blocks the update.
+    try {
+      await prisma.auditLog.create({
+        data: { actorId: userId, action: "PUT", entity: "Affiliate", entityId: affiliateId },
+      });
+    } catch (auditErr) {
+      console.error("Audit log (affiliate update) failed:", auditErr);
+    }
 
     return NextResponse.json({ success: true, message: "Affiliate updated successfully." });
   } catch (err) {
@@ -124,6 +142,15 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       prisma.affiliate.delete({ where: { id: Number(id) } }),
       prisma.users.delete({ where: { id: affiliate.userId } }),
     ]);
+
+    // Audit trail. Wrapped so a not-yet-migrated audit_log table never blocks the delete.
+    try {
+      await prisma.auditLog.create({
+        data: { actorId: userId, action: "DELETE", entity: "Affiliate", entityId: Number(id) },
+      });
+    } catch (auditErr) {
+      console.error("Audit log (affiliate delete) failed:", auditErr);
+    }
 
     return NextResponse.json({ success: true, message: "Affiliate deleted successfully" }, { status: 200 });
 

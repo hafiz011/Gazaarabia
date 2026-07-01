@@ -35,6 +35,12 @@ async function main() {
     create: { name: "seller" },
   });
 
+  await prisma.roles.upsert({
+    where: { name: "ambassador" },
+    update: {},
+    create: { name: "ambassador" },
+  });
+
   // ---- Admin user ----
   const adminEmail = process.env.SEED_ADMIN_EMAIL || "info@gazaarabia.com";
   const adminName = process.env.SEED_ADMIN_NAME || "Super Admin";

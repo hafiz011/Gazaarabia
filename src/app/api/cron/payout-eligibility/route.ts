@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -10,7 +10,13 @@ const prisma = new PrismaClient();
  * 
  * Frequency: Run daily
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Only the scheduler (holding CRON_SECRET) may flip payout eligibility
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const now = new Date();
 

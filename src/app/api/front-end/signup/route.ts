@@ -55,13 +55,24 @@ export async function POST(req: Request) {
     // default role can be customer or any role you have
     // const defaultRole = await prisma.roles.findFirst({ where: { name: "customer" } });
 
+    // Normalise the requested role. Affiliates and ambassadors are BOTH stored
+    // with the user role "affiliate" and distinguished by Affiliate.type — so an
+    // "ambassador" signup resolves to the "affiliate" user role (no separate
+    // "ambassador" role row is required).
+    const requestedRole = (role ?? "customer").toLowerCase();
+    const isAmbassador = requestedRole === "ambassador";
+    const isAffiliate = requestedRole === "affiliate";
+    const isPartner = isAmbassador || isAffiliate;
+
+    const userRoleName = isPartner ? "affiliate" : requestedRole;
+
     // Get the role record dynamically
     const selectedRole = await prisma.roles.findFirst({
-      where: { name: role.toLowerCase() },
+      where: { name: userRoleName },
     });
 
     if (!selectedRole) {
-      return NextResponse.json({ message: `Invalid role: ${role}` }, { status: 400 });
+      return NextResponse.json({ message: `Invalid role: ${userRoleName}` }, { status: 400 });
     }
 
     const user = await prisma.users.create({
@@ -81,7 +92,7 @@ export async function POST(req: Request) {
       userId: user.id,
     });
 
-    if (role.toLowerCase() === "seller") {
+    if (requestedRole === "seller") {
       await prisma.seller.create({
         data: {
           userId: user.id,
@@ -92,41 +103,48 @@ export async function POST(req: Request) {
     }
     else {
 
-      // Get commission values from HomePageSetting
-      const settings = await prisma.homePageSetting.findFirst();
+      // Only affiliates/ambassadors get an Affiliate record (with a referral code
+      // and coupon-creation rights). Ordinary customers must NOT get one.
+      if (isPartner) {
 
-      const baseCommission = settings?.affiliateCommission || 10;
-      const shareCommission = 7;
+        // Get commission values from HomePageSetting
+        const settings = await prisma.homePageSetting.findFirst();
+
+        const baseCommission = settings?.affiliateCommission || 10;
+        const shareCommission = 7;
 
 
-      // ==============================
-      // GENERATE UNIQUE REFERRAL CODE
-      // ==============================
-      let referralCode = generateReferralCode();
+        // ==============================
+        // GENERATE UNIQUE REFERRAL CODE
+        // ==============================
+        let referralCode = generateReferralCode();
 
-      // Ensure uniqueness
-      let exists = await prisma.affiliate.findUnique({
-        where: { referralCode },
-      });
-
-      while (exists) {
-        referralCode = generateReferralCode();
-        exists = await prisma.affiliate.findUnique({
+        // Ensure uniqueness
+        let exists = await prisma.affiliate.findUnique({
           where: { referralCode },
         });
+
+        while (exists) {
+          referralCode = generateReferralCode();
+          exists = await prisma.affiliate.findUnique({
+            where: { referralCode },
+          });
+        }
+
+
+        // Create affiliate entry using dynamic commissions.
+        // type distinguishes an ambassador from a regular affiliate.
+        await prisma.affiliate.create({
+          data: {
+            userId: user.id,
+            baseCommission: baseCommission,
+            shareCommission: shareCommission,
+            type: isAmbassador ? "ambassador" : "affiliate",
+            isActive: true,
+            referralCode
+          },
+        });
       }
-
-
-      // Create affiliate entry using dynamic commissions
-      await prisma.affiliate.create({
-        data: {
-          userId: user.id,
-          baseCommission: baseCommission,
-          shareCommission: shareCommission,
-          isActive: true,
-          referralCode
-        },
-      });
 
 
       // //If the role is affiliate → insert record into Affiliate table

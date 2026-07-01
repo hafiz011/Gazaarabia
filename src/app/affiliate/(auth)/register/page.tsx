@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AlertMessage from "@/components/AlertMessage";
-import { authService } from "@/lib/services/authService"; // you'll add signupAmbassador() later
+import { authService } from "@/lib/services/authService";
+import { ROUTES } from "@/constants/routes";
 
-export default function AmbassadorSignupPage() {
+export default function AffiliateSignupPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
         name: "",
@@ -35,11 +37,9 @@ export default function AmbassadorSignupPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    //  Global phone validation (E.164-like, but relaxed)
+    // Global phone validation (E.164-like, but relaxed)
     const isValidPhone = (phone: string) => {
-        // allows +, digits, spaces, dashes
-        // ensures total digits between 7 and 15 (ITU standard)
-        const cleaned = phone.replace(/[^0-9]/g, ""); // remove non-digits
+        const cleaned = phone.replace(/[^0-9]/g, "");
         return /^(\+?[0-9\s-]{7,20})$/.test(phone) && cleaned.length >= 7 && cleaned.length <= 15;
     };
 
@@ -47,27 +47,24 @@ export default function AmbassadorSignupPage() {
         e.preventDefault();
 
         if (form.password !== form.confirmPassword) {
-            setAlert({
-                isOpen: true,
-                type: "error",
-                message: "Passwords do not match",
-            });
+            setAlert({ isOpen: true, type: "error", message: "Passwords do not match" });
             return;
         }
 
         try {
+            setLoading(true);
             await authService.signup({
                 name: form.name,
                 email: form.email,
                 password: form.password,
                 phone: form.phone,
-                role: "Ambassador", //  Important addition
+                role: "affiliate", // creates an affiliate-role user with type "affiliate"
             });
 
             setAlert({
                 isOpen: true,
                 type: "success",
-                message: "Ambassador account created successfully!",
+                message: "Affiliate account created successfully! Redirecting to login…",
             });
 
             setForm({
@@ -79,16 +76,17 @@ export default function AmbassadorSignupPage() {
                 website: "",
             });
 
-            router.push("/Ambassador/login");
+            setTimeout(() => router.push(ROUTES.AFFILIATE.LOGIN), 1200);
         } catch (err: any) {
             setAlert({
                 isOpen: true,
                 type: "error",
                 message: err.message || "Something went wrong.",
             });
+        } finally {
+            setLoading(false);
         }
     };
-
 
     return (
         <div className="min-h-screen flex justify-center items-start bg-[var(--background)] px-4 py-10">
@@ -96,10 +94,10 @@ export default function AmbassadorSignupPage() {
                 {/* Heading */}
                 <div className="mb-10 text-center">
                     <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
-                        Join Our Ambassador Program
+                        Join Our Affiliate Program
                     </h1>
                     <p className="text-[var(--text-muted)] text-sm">
-                        Sign up to earn commissions by promoting our products
+                        Sign up to earn commissions by referring customers with your unique link and coupons
                     </p>
                 </div>
 
@@ -146,7 +144,7 @@ export default function AmbassadorSignupPage() {
                         />
                     </div>
 
-                    {/*  Phone Number */}
+                    {/* Phone Number */}
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                             Phone Number
@@ -156,7 +154,7 @@ export default function AmbassadorSignupPage() {
                             name="phone"
                             value={form.phone}
                             onChange={handleChange}
-                            placeholder="e.g. +1 234 567 8901"
+                            placeholder="e.g. +44 20 7946 0958"
                             className={`w-full border ${form.phone && !isValidPhone(form.phone)
                                 ? "border-red-500 focus:ring-red-400"
                                 : "border-[var(--soft-gray)] focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
@@ -229,8 +227,8 @@ export default function AmbassadorSignupPage() {
                             className="text-sm text-[var(--text-secondary)] leading-tight cursor-pointer"
                         >
                             I agree to the{" "}
-                            <a href="/ambassador-terms" className="text-[var(--brand-primary)] hover:underline font-medium">
-                                Ambassador Terms & Conditions
+                            <a href="/affiliate-terms" className="text-[var(--brand-primary)] hover:underline font-medium">
+                                Affiliate Terms &amp; Conditions
                             </a>
                         </label>
                     </div>
@@ -239,9 +237,10 @@ export default function AmbassadorSignupPage() {
                     <div className="md:col-span-2">
                         <button
                             type="submit"
-                            className="w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium hover:opacity-90 active:scale-[0.98] transition"
+                            disabled={loading}
+                            className="w-full bg-[var(--brand-primary)] text-white py-3 rounded-md font-medium hover:opacity-90 active:scale-[0.98] transition disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Sign Up as Ambassador
+                            {loading ? "Creating account…" : "Sign Up as Affiliate"}
                         </button>
                     </div>
                 </form>
@@ -250,10 +249,21 @@ export default function AmbassadorSignupPage() {
                 <p className="text-center text-sm text-[var(--text-muted)] mt-8">
                     Already have an account?{" "}
                     <a
-                        href="/Ambassador/login"
+                        href={ROUTES.AFFILIATE.LOGIN}
                         className="text-[var(--brand-primary)] font-medium hover:underline"
                     >
                         Log in
+                    </a>
+                </p>
+
+                {/* Cross-link */}
+                <p className="text-center text-xs text-[var(--text-muted)] mt-2">
+                    Want to promote products as an ambassador instead?{" "}
+                    <a
+                        href={ROUTES.AMBASSADOR.REGISTER}
+                        className="text-[var(--brand-primary)] font-medium hover:underline"
+                    >
+                        Become an Ambassador
                     </a>
                 </p>
             </div>

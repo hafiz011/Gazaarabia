@@ -805,9 +805,21 @@ model Payout {
   paymentMethod String?
   paymentRef    String?
   invoiceUrl    String? 
-  periodLabel   String? 
+  periodLabel   String?
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
+}
+
+// Audit trail for sensitive admin mutations (e.g. affiliate edit/delete)
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int      // admin user id who performed the action
+  action    String   // e.g. "PUT" | "DELETE"
+  entity    String   // e.g. "Affiliate"
+  entityId  Int      // id of the affected record
+  createdAt DateTime @default(now())
+
+  @@map("audit_log")
 }
 
 model Coupon {
