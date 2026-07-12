@@ -31,7 +31,14 @@ export async function syncSellerProducts(
     for (const p of products) {
       try {
         const saved = await prisma.products.upsert({
-          where: { externalProductId: p.externalProductId },
+          // Scope the match to THIS seller so two stores that share an external
+          // product id can't overwrite each other's products.
+          where: {
+            sellerId_externalProductId: {
+              sellerId: seller.id,
+              externalProductId: p.externalProductId,
+            },
+          },
           update: {
             title: p.title,
             description: p.description,

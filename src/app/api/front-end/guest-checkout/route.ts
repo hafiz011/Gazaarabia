@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
 import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
+import { pushExternalItemsForOrder } from "@/lib/orderPush";
 
 /**
  * @route POST /api/front-end/guest-checkout
@@ -623,6 +624,14 @@ export async function POST(req: NextRequest) {
           isActive: true,
         },
       });
+    }
+
+    //  Forward external-store (Shopify/WooCommerce) items to the seller's store.
+    //  No-op unless the order is paid and contains external products.
+    try {
+      await pushExternalItemsForOrder(newOrder.id);
+    } catch (e) {
+      console.error("External store push failed:", (e as Error).message);
     }
 
     return NextResponse.json({

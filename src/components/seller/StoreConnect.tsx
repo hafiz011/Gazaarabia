@@ -46,6 +46,8 @@ export default function StoreConnect({ sellerId, token }: Props) {
   const [message, setMessage] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [lastSynced, setLastSynced] = useState<string | null>(null)
+  const [wooWebhookUrl, setWooWebhookUrl] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetchStatus()
@@ -57,6 +59,7 @@ export default function StoreConnect({ sellerId, token }: Props) {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
+      setWooWebhookUrl(data.wooWebhookUrl ?? null)
       if (data.storeType) {
         setStoreType(data.storeType)
         setIsConnected(true)
@@ -84,6 +87,16 @@ export default function StoreConnect({ sellerId, token }: Props) {
 
   const updateForm = (key: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }))
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
 
   async function handleConnect() {
     setLoading(true)
@@ -321,6 +334,37 @@ export default function StoreConnect({ sellerId, token }: Props) {
                     </div>
                   </div>
                 </div>
+
+                {/* Webhook setup guide — enables automatic order-status sync */}
+                {wooWebhookUrl && (
+                  <div className="rounded-2xl border-2 border-purple-100 bg-purple-50/40 p-5 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck size={16} className="text-purple-600" />
+                      <p className="text-sm font-bold text-gray-800">Order status sync (optional)</p>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      To sync order statuses back automatically, add a webhook in your store under{' '}
+                      <span className="font-semibold text-gray-700">WooCommerce → Settings → Advanced → Webhooks</span>.
+                      Use the delivery URL below, choose the <span className="font-semibold text-gray-700">Order updated</span> topic,
+                      and set the webhook&apos;s <span className="font-semibold text-gray-700">Secret</span> to your{' '}
+                      <span className="font-semibold text-gray-700">Consumer Secret</span> (the same value entered above).
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={wooWebhookUrl}
+                        className="flex-1 bg-white border-2 border-purple-100 rounded-xl py-2.5 px-3 text-xs font-mono text-gray-700 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(wooWebhookUrl)}
+                        className="px-4 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition active:scale-95"
+                      >
+                        {copied ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

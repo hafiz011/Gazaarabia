@@ -352,7 +352,7 @@ model products {
   ambassador            Affiliate? @relation("AffiliateAmbassadorRelation", fields: [ambassadorId], references: [id])
 
   // External Store Tracking
-  externalProductId  String?   @unique
+  externalProductId  String?   // unique per seller (see @@unique below), NOT globally
   externalVariantId  String?
   externalSource     String?   // "shopify" | "woocommerce"
   isExternalProduct  Boolean   @default(false)
@@ -370,6 +370,10 @@ model products {
   @@index([active, isDeleted, createdAt(sort: Desc)])
   @@index([slug])
   @@index([isExternalProduct])
+  // A given external product id is unique within one seller's store, but two
+  // different sellers' stores can legitimately reuse the same id (WooCommerce
+  // ids start at 1 per site), so scope uniqueness to the seller.
+  @@unique([sellerId, externalProductId])
 }
 
 model productvariant {
@@ -596,6 +600,7 @@ model OrderItem {
  
   // External Order Tracking
   externalOrderId   String?
+  fulfillmentStatus String?   // item-level status from external store webhook (e.g. shipped/cancelled/confirmed)
 
   // Affiliate commission per item
   affiliateEarning       Float?

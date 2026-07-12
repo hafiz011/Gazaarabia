@@ -59,8 +59,22 @@ async function pushToWooCommerce(
     `${seller.wooConsumerKey}:${seller.wooConsumerSecret}`
   ).toString('base64')
 
+  const base = (seller.wooSiteUrl ?? '').replace(/\/+$/, '') // strip trailing slash
+
+  // WooCommerce expects numeric ids; externalVariantId equals externalProductId
+  // for simple products, and holds the variation id for variable ones.
+  const productId = Number(orderItem.product.externalProductId)
+  const variantId = Number(orderItem.product.externalVariantId)
+  const lineItem: Record<string, any> = {
+    product_id: productId,
+    quantity:   orderItem.quantity,
+  }
+  if (variantId && variantId !== productId) {
+    lineItem.variation_id = variantId
+  }
+
   const res = await fetch(
-    `${seller.wooSiteUrl}/wp-json/wc/v3/orders`,
+    `${base}/wp-json/wc/v3/orders`,
     {
       method: 'POST',
       headers: {
@@ -68,12 +82,7 @@ async function pushToWooCommerce(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        line_items: [
-          {
-            product_id: orderItem.product.externalProductId,
-            quantity:   orderItem.quantity,
-          },
-        ],
+        line_items: [lineItem],
         shipping: {
           first_name: order.firstName,
           last_name:  order.lastName  ?? '',
@@ -138,5 +147,44 @@ export async function pushOrderToExternalStore({
     const message = (err as Error).message
     console.error('Order push failed:', message)
     return { success: false, externalOrderId: null, error: message }
+  }
+}
+
+// Order statuses that mean payment is confirmed and the order can be forwarded.
+const PAID_STATUSES = [
+  'paid',
+  'succeeded',
+  'processing',
+  'confirmed',
+  'shipped',
+  'delivered',
+]
+
+// ─── Forward all external items on a paid order ────
+/**
+ * Push every external-store item on a paid order to the seller's store.
+ * Idempotent: items that already carry an `externalOrderId` are skipped, so it
+ * is safe to call from both the order-create path and the payment webhook — the
+ * first to run does the work, the rest are no-ops.
+ */
+export async function pushExternalItemsForOrder(orderId: number): Promise<void> {
+  const order = await prisma.orders.findUnique({
+    where:  { id: orderId },
+    select: { status: true },
+  })
+
+  if (!order || !PAID_STATUSES.includes(order.status.toLowerCase())) return
+
+  const items = await prisma.orderItem.findMany({
+    where: {
+      orderId,
+      externalOrderId: null,
+      product: { isExternalProduct: true },
+    },
+    select: { id: true },
+  })
+
+  for (const item of items) {
+    await pushOrderToExternalStore({ orderItemId: item.id })
   }
 }

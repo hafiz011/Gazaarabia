@@ -7,6 +7,7 @@ import { getAmbassadorForProduct } from "@/lib/helpers/ambassador";
 import { stripe } from "@/lib/stripe";
 import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
 import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
+import { pushExternalItemsForOrder } from "@/lib/orderPush";
 
 
 
@@ -558,6 +559,15 @@ export async function POST(req: NextRequest) {
       charityAmount: charity?.amount ?? 0
 
     });
+
+
+    //  Forward external-store (Shopify/WooCommerce) items to the seller's store.
+    //  No-op unless the order is paid and contains external products.
+    try {
+      await pushExternalItemsForOrder(newOrder.id);
+    } catch (e) {
+      console.error("External store push failed:", (e as Error).message);
+    }
 
 
     return NextResponse.json({

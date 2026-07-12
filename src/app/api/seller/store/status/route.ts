@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
   const seller = await prisma.seller.findUnique({
     where: { userId: user.id },
     select: {
+      id: true,
       storeType: true,
       shopifyDomain: true,
       shopifyAccessToken: true,
@@ -38,5 +39,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 })
   }
 
-  return NextResponse.json(seller)
+  // Delivery URL the seller registers in WooCommerce (carries sellerId so the
+  // webhook knows which store — and thus which secret — to verify against).
+  // The webhook "Secret" field must be set to the store's Consumer Secret.
+  const origin = process.env.APP_URL ?? req.nextUrl.origin
+  const wooWebhookUrl = `${origin}/api/webhooks/woocommerce?sellerId=${seller.id}`
+
+  return NextResponse.json({ ...seller, wooWebhookUrl })
 }

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     updateData.shopifyDomain      = credentials.domain
     updateData.shopifyAccessToken = credentials.accessToken
   } else if (storeType === 'woocommerce') {
-    updateData.wooSiteUrl         = credentials.siteUrl
+    updateData.wooSiteUrl         = credentials.siteUrl?.replace(/\/+$/, '') // strip trailing slash
     updateData.wooConsumerKey     = credentials.consumerKey
     updateData.wooConsumerSecret  = credentials.consumerSecret
   }
