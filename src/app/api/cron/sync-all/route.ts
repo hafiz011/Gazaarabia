@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const sellers = await prisma.seller.findMany({
         where: {
             isActive: true,
-            storeType: { not: null },
+            storeType: "woocommerce", // Shopify syncs via its own app (webhooks + delta), not this cron
         },
         select: {
             id: true,

@@ -14,6 +14,7 @@ export default function SellerLoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [errors, setErrors] = useState<{ email?: string; password?: string; root?: string }>({});
   const [alert, setAlert] = useState<{
@@ -31,6 +32,9 @@ export default function SellerLoginPage() {
     if (rememberedEmail) {
       setForm((p) => ({ ...p, email: rememberedEmail, rememberMe: true }));
     }
+    //  Only accept relative paths to prevent open-redirect.
+    const cb = new URLSearchParams(window.location.search).get("callbackUrl");
+    if (cb && cb.startsWith("/")) setCallbackUrl(cb);
   }, []);
 
 
@@ -51,9 +55,9 @@ export default function SellerLoginPage() {
     if (status !== "authenticated") return;
 
     if (session?.user?.role === "seller") {
-      router.replace(ROUTES.SELLER.DASHBOARD);
+      router.replace(callbackUrl || ROUTES.SELLER.DASHBOARD);
     }
-  }, [status, session, router]);
+  }, [status, session, router, callbackUrl]);
 
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -99,7 +103,7 @@ export default function SellerLoginPage() {
       });
 
       setTimeout(() => {
-        router.push(ROUTES.SELLER.DASHBOARD);
+        router.push(callbackUrl || ROUTES.SELLER.DASHBOARD);
       }, 1000);
     } catch (err: any) {
       setAlert({

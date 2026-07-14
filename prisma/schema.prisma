@@ -96,6 +96,7 @@ model seller {
 
   @@index([userId])
   @@index([status])
+  @@index([shopifyDomain]) // resolveSellerByShop filters on this per webhook/link call
   @@map("sellers")
 }
 
@@ -389,6 +390,23 @@ model productvariant {
   videoUrl       String?
   videoThumbnail String?
 
+  // ── Shopify external identity + metadata (Milestone 2.6) ──
+  externalVariantId String?   // gid://shopify/ProductVariant/… (primary external id)
+  externalProductId String?   // gid://shopify/Product/…
+  inventoryItemId   String?   // gid://shopify/InventoryItem/…
+  externalSource    String?   // "shopify"
+  barcode           String?
+  compareAtPrice    Float?
+  weight            Float?
+  weightUnit        String?
+  taxable           Boolean?
+  requiresShipping  Boolean?
+  position          Int?
+  options           Json?     // [{ name, value }] — arbitrary Shopify options
+  imageUrl          String?   // variant image (falls back to product image)
+  externalCreatedAt DateTime?
+  externalUpdatedAt DateTime?
+
 
   products products @relation(fields: [productId], references: [id], map: "ProductVariant_productId_fkey")
   color    Colors?  @relation(fields: [colorId], references: [id])
@@ -399,8 +417,10 @@ model productvariant {
   orderItems    OrderItem[] // This is required to complete the relation
   reviews       Review[]
 
+  @@unique([productId, externalVariantId], map: "productvariant_product_externalVariant_key")
   @@index([productId], map: "ProductVariant_productId_fkey")
   @@index([colorId], map: "productvariant_colorId_fkey")
+  @@index([externalVariantId], map: "productvariant_externalVariantId_idx")
 }
 
 model VariantImage {
@@ -551,7 +571,9 @@ model Orders {
   updatedAt DateTime @updatedAt
 
   //  Relations
-  user       Users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): a user with orders must not be hard-deleted — it would
+  // destroy sales/financial history. Soft-delete the user instead.
+  user       Users       @relation(fields: [userId], references: [id], onDelete: Restrict)
   orderItems OrderItem[]
   returnRequests ReturnRequest[]
 
@@ -559,6 +581,8 @@ model Orders {
   @@index([userId])
   @@index([status])
   @@index([createdAt(sort: Desc)])
+  @@index([transactionId]) // Stripe webhook looks up orders by payment intent id
+  @@index([couponCode])    // coupon per-user-limit check filters on this
   @@map("orders")
 }
 
@@ -602,6 +626,14 @@ model OrderItem {
   externalOrderId   String?
   fulfillmentStatus String?   // item-level status from external store webhook (e.g. shipped/cancelled/confirmed)
 
+  // Shopify order mapping/status (Milestone 3)
+  externalOrderName       String?   // Shopify order name e.g. "#1001"
+  externalFinancialStatus String?   // paid | refunded | partially_refunded | pending
+  trackingNumber          String?
+  trackingCompany         String?
+  trackingUrl             String?   @db.LongText
+  externalSyncedAt        DateTime?
+
   // Affiliate commission per item
   affiliateEarning       Float?
   affiliateCommissionAdjusted Boolean @default(false)
@@ -630,6 +662,7 @@ model OrderItem {
   @@index([variantId])
   @@index([sellerId])
   @@index([payoutEligibleAt])
+  @@index([externalOrderId]) // Shopify/Woo order-status webhooks match on this
   @@map("orders_item")
 }
 

@@ -1,9 +1,10 @@
 // lib/storeHelper.ts
+//
+// WooCommerce REST product fetching. NOTE: Shopify is NO LONGER handled here —
+// it uses the dedicated OAuth Shopify app (GraphQL). The old REST Shopify fetch
+// was removed with Milestone 4 cleanup.
 
-import type {
-  NormalizedProduct,
-  StoreType,
-} from '@/types/store'
+import type { NormalizedProduct } from '@/types/store'
 import type { seller } from '@prisma/client'
 
 // Parse a price-like value into a finite number. WooCommerce variable products
@@ -11,37 +12,6 @@ import type { seller } from '@prisma/client'
 function toPrice(value: unknown): number {
   const n = parseFloat(value as string)
   return Number.isFinite(n) ? n : 0
-}
-
-// ─── Shopify ───────────────────────────────────────
-export async function fetchShopifyProducts(
-  domain: string,
-  token: string
-): Promise<NormalizedProduct[]> {
-  const res = await fetch(
-    `https://${domain}/admin/api/2024-01/products.json?limit=250`,
-    {
-      headers: { 'X-Shopify-Access-Token': token },
-      cache: 'no-store',
-    }
-  )
-
-  if (!res.ok) throw new Error(`Shopify fetch failed: ${res.statusText}`)
-
-  const data = await res.json()
-
-  return data.products.map((p: any): NormalizedProduct => ({
-    externalProductId: p.id.toString(),
-    externalVariantId: p.variants[0]?.id?.toString() ?? '',
-    externalSource:    'shopify',
-    title:             p.title,
-    description:       p.body_html ?? null,
-    sellingPrice:      parseFloat(p.variants[0]?.price ?? '0'),
-    costPrice:         parseFloat(p.variants[0]?.price ?? '0'),
-    baseQty:           p.variants[0]?.inventory_quantity ?? 0,
-    slug:              `${p.handle}-${p.id}`,
-    image:             p.images?.[0]?.src ?? null,
-  }))
 }
 
 // ─── WooCommerce ───────────────────────────────────
@@ -96,18 +66,10 @@ export async function fetchWooProducts(
   return all
 }
 
-// ─── Universal Fetcher ─────────────────────────────
+// ─── Universal Fetcher (WooCommerce only) ──────────
 export async function fetchExternalProducts(
   seller: seller
 ): Promise<NormalizedProduct[]> {
-  if (
-    seller.storeType === 'shopify' &&
-    seller.shopifyDomain &&
-    seller.shopifyAccessToken
-  ) {
-    return fetchShopifyProducts(seller.shopifyDomain, seller.shopifyAccessToken)
-  }
-
   if (
     seller.storeType === 'woocommerce' &&
     seller.wooSiteUrl &&

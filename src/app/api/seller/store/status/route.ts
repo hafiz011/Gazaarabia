@@ -26,8 +26,6 @@ export async function GET(req: NextRequest) {
     select: {
       id: true,
       storeType: true,
-      shopifyDomain: true,
-      shopifyAccessToken: true,
       wooSiteUrl: true,
       wooConsumerKey: true,
       wooConsumerSecret: true,

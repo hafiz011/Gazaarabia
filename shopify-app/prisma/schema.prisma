@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?   @db.Text
+  expires             DateTime?
+  accessToken         String    @db.Text
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?   @db.Text
+  refreshTokenExpires DateTime?
+}
+
+// Idempotency + mapping between a Gazaarabia marketplace order (per shop) and the
+// Shopify order it created. One row per (shop, gazaOrderId) → prevents duplicate
+// Shopify orders and is the permanent mapping for status sync.
+model OrderMap {
+  id                Int       @id @default(autoincrement())
+  shop              String
+  gazaOrderId       String // Gazaarabia marketplace order id (as string)
+  shopifyOrderGid   String // gid://shopify/Order/…
+  orderNumber       String? // numeric legacy id
+  orderName         String? // e.g. "#1001"
+  financialStatus   String?
+  fulfillmentStatus String?
+  cancelledAt       DateTime?
+  createdAt         DateTime  @default(now())
+  syncedAt          DateTime?
+
+  @@unique([shop, gazaOrderId])
+  @@index([shopifyOrderGid])
+  @@map("order_map")
+}
+
+// Resumable product-sync state (replaces in-memory; survives restarts/crashes).
+model SyncJob {
+  id          Int       @id @default(autoincrement())
+  shop        String    @unique
+  status      String    @default("idle") // idle | running | completed | failed
+  mode        String    @default("full") // full | delta
+  cursor      String?   @db.Text // in-progress cursor (resume point)
+  lastCursor  String?   @db.Text // last successfully-forwarded page cursor
+  page        Int       @default(0)
+  synced      Int       @default(0)
+  error       String?   @db.Text
+  startedAt   DateTime?
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("sync_job")
+}
+
+// Persistent webhook idempotency — dedup by X-Shopify-Webhook-Id.
+model WebhookEvent {
+  id          Int      @id @default(autoincrement())
+  webhookId   String   @unique
+  topic       String?
+  shop        String?
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+  @@map("webhook_event")
+}

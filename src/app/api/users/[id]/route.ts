@@ -123,12 +123,29 @@ export async function DELETE(req: Request, { params }: any) {
   }
 
   try {
+    //  A user with orders can't be hard-deleted (order history is protected at
+    //  the DB level). Ask the admin to deactivate instead.
+    const orderCount = await prisma.orders.count({ where: { userId: Number(params.id) } });
+    if (orderCount > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete a user who has orders. Deactivate the account instead." },
+        { status: 409 }
+      );
+    }
+
     await prisma.users.delete({
       where: { id: Number(params.id) },
     });
 
     return NextResponse.json({ message: "User deleted successfully" });
-  } catch (error) {
+  } catch (error: any) {
+    //  Safety net: FK restriction (orders / other related records).
+    if (error?.code === "P2003") {
+      return NextResponse.json(
+        { error: "Cannot delete: user has related records. Deactivate instead." },
+        { status: 409 }
+      );
+    }
     console.error("DELETE User Error:", error);
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }

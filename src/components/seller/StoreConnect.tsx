@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   ShoppingBag,
   Settings,
-  ArrowRight,
   Database
 } from 'lucide-react'
 
@@ -60,23 +59,16 @@ export default function StoreConnect({ sellerId, token }: Props) {
       })
       const data = await res.json()
       setWooWebhookUrl(data.wooWebhookUrl ?? null)
-      if (data.storeType) {
+      // Shopify is handled by the dedicated OAuth app — this form is WooCommerce only.
+      if (data.storeType === 'woocommerce') {
         setStoreType(data.storeType)
         setIsConnected(true)
         setLastSynced(data.lastSyncedAt)
-
-        if (data.storeType === 'shopify') {
-          setForm({
-            domain: data.shopifyDomain,
-            accessToken: data.shopifyAccessToken
-          })
-        } else {
-          setForm({
-            siteUrl: data.wooSiteUrl,
-            consumerKey: data.wooConsumerKey,
-            consumerSecret: data.wooConsumerSecret
-          })
-        }
+        setForm({
+          siteUrl: data.wooSiteUrl,
+          consumerKey: data.wooConsumerKey,
+          consumerSecret: data.wooConsumerSecret,
+        })
       }
     } catch (err) {
       console.error('Failed to fetch store status:', err)
@@ -206,26 +198,10 @@ export default function StoreConnect({ sellerId, token }: Props) {
           </div>
 
           {!storeType ? (
-            <div className="grid grid-cols-2 gap-6">
-              <button
-                onClick={() => setStoreType('shopify')}
-                className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50/30 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/50"
-              >
-                <div className="p-4 rounded-2xl bg-gray-50 group-hover:bg-blue-600 group-hover:text-white text-gray-400 transition-all duration-300">
-                  <Store size={32} />
-                </div>
-                <div className="text-center">
-                  <span className="block font-bold text-gray-900">Shopify</span>
-                  <span className="text-xs text-gray-400 mt-1">Connect via Access Token</span>
-                </div>
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight size={16} className="text-blue-600" />
-                </div>
-              </button>
-
+            <div className="space-y-4">
               <button
                 onClick={() => setStoreType('woocommerce')}
-                className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/30 transition-all duration-300 hover:shadow-xl hover:shadow-purple-100/50"
+                className="group relative flex w-full flex-col items-center justify-center gap-4 p-8 rounded-3xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/30 transition-all duration-300 hover:shadow-xl hover:shadow-purple-100/50"
               >
                 <div className="p-4 rounded-2xl bg-gray-50 group-hover:bg-purple-600 group-hover:text-white text-gray-400 transition-all duration-300">
                   <LinkIcon size={32} />
@@ -234,23 +210,24 @@ export default function StoreConnect({ sellerId, token }: Props) {
                   <span className="block font-bold text-gray-900">WooCommerce</span>
                   <span className="text-xs text-gray-400 mt-1">Connect via REST API</span>
                 </div>
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight size={16} className="text-purple-600" />
-                </div>
               </button>
+              <p className="text-xs text-gray-400 text-center">
+                Using <span className="font-semibold text-gray-600">Shopify</span>? Install the Gazaarabia
+                Shopify app from your Shopify admin — it connects automatically.
+              </p>
             </div>
           ) : (
-            <div className={`p-4 rounded-2xl border-2 flex items-center justify-between ${storeType === 'shopify' ? 'border-blue-100 bg-blue-50/30' : 'border-purple-100 bg-purple-50/30'}`}>
+            <div className="p-4 rounded-2xl border-2 flex items-center justify-between border-purple-100 bg-purple-50/30">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${storeType === 'shopify' ? 'bg-blue-600' : 'bg-purple-600'} text-white`}>
-                  {storeType === 'shopify' ? <Store size={20} /> : <LinkIcon size={20} />}
+                <div className="p-2 rounded-lg bg-purple-600 text-white">
+                  <LinkIcon size={20} />
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 capitalize">{storeType}</p>
                   <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Active Selection</p>
                 </div>
               </div>
-              <CheckCircle2 size={24} className={storeType === 'shopify' ? 'text-blue-500' : 'text-purple-500'} />
+              <CheckCircle2 size={24} className="text-purple-500" />
             </div>
           )}
         </div>
@@ -262,36 +239,6 @@ export default function StoreConnect({ sellerId, token }: Props) {
               <Settings size={18} className="text-blue-500" />
               2. Connection Settings
             </label>
-
-            {storeType === 'shopify' && (
-              <div className="grid gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Store Domain</label>
-                  <div className="relative group">
-                    <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
-                    <input
-                      className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl py-4 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:ring-0 transition-all outline-none text-gray-900 placeholder:text-gray-400 font-medium shadow-sm"
-                      placeholder="example.myshopify.com"
-                      value={form.domain || ''}
-                      onChange={(e) => updateForm('domain', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Admin Access Token</label>
-                  <div className="relative group">
-                    <ShieldCheck size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
-                    <input
-                      className="w-full bg-gray-50 border-2 border-gray-50 rounded-2xl py-4 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:ring-0 transition-all outline-none text-gray-900 placeholder:text-gray-400 font-medium shadow-sm"
-                      placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx"
-                      type="password"
-                      value={form.accessToken || ''}
-                      onChange={(e) => updateForm('accessToken', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
 
             {storeType === 'woocommerce' && (
               <div className="grid gap-5">

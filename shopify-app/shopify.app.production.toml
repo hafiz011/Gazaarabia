@@ -1,0 +1,100 @@
+# PRODUCTION config. Use with `shopify app deploy --config=production`.
+# Contains the FULL webhook set including Protected Customer Data topics
+# (orders/*, refunds/create) — these register only after PCD access is approved.
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "2d7ddfe6c238bfc3798d7702a70eb553"
+name = "Gazaarabia"
+application_url = "https://shopify.gazaarabia.com"
+embedded = true
+
+[build]
+# Never auto-rewrite production URLs from a dev tunnel.
+automatically_update_urls_on_dev = false
+
+[access_scopes]
+scopes = "read_inventory,read_orders,read_products,write_orders"
+
+[auth]
+redirect_urls = [
+  "https://shopify.gazaarabia.com/auth/callback",
+  "https://shopify.gazaarabia.com/auth/shopify/callback",
+]
+
+[webhooks]
+api_version = "2025-01"
+
+  # ── App lifecycle ─────────────────────────────────────────────
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = ["app/scopes_update"]
+
+  # ── Order status sync (PROTECTED CUSTOMER DATA — needs approval) ──
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/create"
+  topics = ["orders/create"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/updated"
+  topics = ["orders/updated"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/paid"
+  topics = ["orders/paid"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/fulfilled"
+  topics = ["orders/fulfilled"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/partially_fulfilled"
+  topics = ["orders/partially_fulfilled"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/cancelled"
+  topics = ["orders/cancelled"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/orders/delete"
+  topics = ["orders/delete"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/refunds/create"
+  topics = ["refunds/create"]
+
+  # ── Product + inventory sync ──────────────────────────────────
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/products/create"
+  topics = ["products/create"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/products/update"
+  topics = ["products/update"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/products/delete"
+  topics = ["products/delete"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/inventory_levels/update"
+  topics = ["inventory_levels/update"]
+
+  # ── Mandatory GDPR compliance ─────────────────────────────────
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/data_request"
+  compliance_topics = ["customers/data_request"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/redact"
+  compliance_topics = ["customers/redact"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/shop/redact"
+  compliance_topics = ["shop/redact"]
+
+[pos]
+embedded = false

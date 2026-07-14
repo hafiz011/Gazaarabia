@@ -138,10 +138,31 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
 
     if (!affiliate) return NextResponse.json({ message: "Affiliate not found" }, { status: 404 });
 
-    await prisma.$transaction([
-      prisma.affiliate.delete({ where: { id: Number(id) } }),
-      prisma.users.delete({ where: { id: affiliate.userId } }),
-    ]);
+    try {
+      //  If the underlying user has orders, keep the user account (its order
+      //  history is protected) and remove only the affiliate mapping.
+      const orderCount = await prisma.orders.count({ where: { userId: affiliate.userId } });
+      if (orderCount > 0) {
+        await prisma.affiliate.delete({ where: { id: Number(id) } });
+      } else {
+        await prisma.$transaction([
+          prisma.affiliate.delete({ where: { id: Number(id) } }),
+          prisma.users.delete({ where: { id: affiliate.userId } }),
+        ]);
+      }
+    } catch (e: any) {
+      if (e?.code === "P2003") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Cannot delete: this affiliate has related records (orders, payouts, or invoices). Deactivate instead.",
+          },
+          { status: 409 }
+        );
+      }
+      throw e;
+    }
 
     // Audit trail. Wrapped so a not-yet-migrated audit_log table never blocks the delete.
     try {

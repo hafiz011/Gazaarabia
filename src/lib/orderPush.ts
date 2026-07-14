@@ -3,51 +3,12 @@
 import { prisma } from '@/lib/prisma'
 import type { ExternalPushResult } from '@/types/store'
 import type { Orders, seller } from '@prisma/client'
+import { pushShopifyOrders } from '@/lib/services/shopifyOrderPush'
 
-// ─── Shopify ───────────────────────────────────────
-async function pushToShopify(
-  seller: seller,
-  orderItem: any,
-  order: Orders
-): Promise<string> {
-  const res = await fetch(
-    `https://${seller.shopifyDomain}/admin/api/2024-01/orders.json`,
-    {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': seller.shopifyAccessToken!,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        order: {
-          line_items: [
-            {
-              variant_id: orderItem.product.externalVariantId,
-              quantity:   orderItem.quantity,
-              price:      orderItem.price.toString(),
-            },
-          ],
-          shipping_address: {
-            first_name: order.firstName,
-            last_name:  order.lastName  ?? '',
-            address1:   order.address1,
-            address2:   order.address2  ?? '',
-            city:       order.city,
-            country:    order.country,
-            zip:        order.postalCode,
-            phone:      order.phone,
-          },
-          financial_status: 'paid',
-          note: `Marketplace Order #${order.id}`,
-        },
-      }),
-    }
-  )
-
-  const data = await res.json()
-  if (!data.order?.id) throw new Error(JSON.stringify(data.errors))
-  return data.order.id.toString()
-}
+// NOTE: Shopify orders are NOT created here anymore. Since Milestone 3 they are
+// built from stored Variant GIDs and created via the Shopify app's GraphQL
+// orderCreate (see src/lib/services/shopifyOrderPush.ts). This file only handles
+// the WooCommerce REST push.
 
 // ─── WooCommerce ───────────────────────────────────
 async function pushToWooCommerce(
@@ -106,7 +67,7 @@ async function pushToWooCommerce(
   return data.id.toString()
 }
 
-// ─── Universal Push ────────────────────────────────
+// ─── WooCommerce order push ─────────────────────────
 export async function pushOrderToExternalStore({
   orderItemId,
 }: {
@@ -127,11 +88,9 @@ export async function pushOrderToExternalStore({
 
     if (!seller?.storeType) return { success: false, externalOrderId: null }
 
+    // WooCommerce only — Shopify is handled by pushShopifyOrders (the app flow).
     let externalOrderId: string | null = null
-
-    if (seller.storeType === 'shopify') {
-      externalOrderId = await pushToShopify(seller, orderItem, orderItem.order)
-    } else if (seller.storeType === 'woocommerce') {
+    if (seller.storeType === 'woocommerce') {
       externalOrderId = await pushToWooCommerce(seller, orderItem, orderItem.order)
     }
 
@@ -181,10 +140,19 @@ export async function pushExternalItemsForOrder(orderId: number): Promise<void> 
       externalOrderId: null,
       product: { isExternalProduct: true },
     },
-    select: { id: true },
+    select: { id: true, seller: { select: { storeType: true } } },
   })
 
+  // WooCommerce: existing per-item REST push (unchanged).
   for (const item of items) {
-    await pushOrderToExternalStore({ orderItemId: item.id })
+    if (item.seller?.storeType === 'woocommerce') {
+      await pushOrderToExternalStore({ orderItemId: item.id })
+    }
+  }
+
+  // Shopify (Milestone 3): one GraphQL order per seller, built from stored Variant
+  // GIDs and created via the Shopify app (idempotent, offline session).
+  if (items.some((i) => i.seller?.storeType === 'shopify')) {
+    await pushShopifyOrders(orderId)
   }
 }
