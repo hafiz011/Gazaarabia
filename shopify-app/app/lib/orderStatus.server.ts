@@ -1,5 +1,5 @@
-// Maps Shopify order/refund webhook payloads → unified status updates forwarded
-// to Gazaarabia. Reuses the hardened gazaarabiaFetch (timeout + retry).
+// Maps Shopify order status webhook payloads → status updates forwarded to
+// Gazaarabia. Reuses the hardened gazaarabiaFetch (timeout + retry).
 
 import db from "../db.server";
 import { gazaarabiaFetch } from "./gazaarabia.server";
@@ -24,7 +24,7 @@ async function ignore(shop: string, topic: string, id: string): Promise<void> {
   log.info("order.webhook.ignored", { shop, topic, id, reason: "not_marketplace_order" });
 }
 
-// orders/create|updated|paid|fulfilled|partially_fulfilled|cancelled → one update.
+// orders/updated|paid|fulfilled|partially_fulfilled|cancelled → one status update.
 export async function forwardOrderStatus(shop: string, topic: string, payload: any): Promise<void> {
   const orderId = String(payload?.id ?? "");
   if (!(await isMarketplaceOrder(shop, orderId))) return ignore(shop, topic, orderId);
@@ -53,38 +53,4 @@ export async function forwardOrderStatus(shop: string, topic: string, payload: a
     tracking,
   });
   log.info("webhook.processed", { shop, kind: "order.status", topic, id: payload?.id });
-}
-
-// orders/delete → mark the mapped items as removed on the Shopify side.
-export async function forwardOrderDelete(shop: string, payload: any): Promise<void> {
-  const orderId = String(payload?.id ?? "");
-  if (!(await isMarketplaceOrder(shop, orderId))) return ignore(shop, "orders/delete", orderId);
-
-  await gazaarabiaFetch("/api/integrations/shopify/order-status", {
-    shop,
-    topic: "orders/delete",
-    externalOrderId: String(payload?.id ?? ""),
-    deleted: true,
-  });
-  log.info("webhook.processed", { shop, kind: "order.delete", id: payload?.id });
-}
-
-// refunds/create → synchronize refund state (never recreate the order).
-export async function forwardRefund(shop: string, payload: any): Promise<void> {
-  const orderId = String(payload?.order_id ?? "");
-  if (!(await isMarketplaceOrder(shop, orderId))) return ignore(shop, "refunds/create", orderId);
-
-  const amount = (Array.isArray(payload?.transactions) ? payload.transactions : []).reduce(
-    (s: number, t: any) => s + (parseFloat(t?.amount) || 0),
-    0
-  );
-  await gazaarabiaFetch("/api/integrations/shopify/refund", {
-    shop,
-    externalOrderId: String(payload?.order_id ?? ""),
-    refundId: String(payload?.id ?? ""),
-    amount,
-    reason: payload?.note ?? null,
-    createdAt: payload?.created_at ?? null,
-  });
-  log.info("refund.synchronized", { shop, orderId: payload?.order_id, amount });
 }

@@ -80,11 +80,15 @@ async function respectThrottle(extensions: any) {
 }
 
 export async function syncProducts(admin: any, shop: string, opts: SyncOptions = {}): Promise<SyncSummary> {
+  console.log("[SYNC][ENTER] syncProducts", { shop, opts }); // TEMP DIAGNOSTIC
   const mode: "full" | "delta" = opts.mode ?? (opts.since ? "delta" : "full");
   const query = mode === "delta" && opts.since ? `updated_at:>'${opts.since}'` : undefined;
 
   // Resume a crashed run from its saved cursor (same mode only).
+  const __tPrior = Date.now(); // TEMP DIAGNOSTIC
+  console.log("[SYNC][ENTER] getSyncState(prior)", { shop });
   const prior = await getSyncState(shop);
+  console.log(`[SYNC][EXIT] getSyncState(prior) (${Date.now() - __tPrior}ms)`, { shop, status: prior.status });
   const resuming = prior.status === "running" && !!prior.cursor && prior.mode === mode;
 
   let cursor: string | null = resuming ? prior.cursor : null;
@@ -93,6 +97,8 @@ export async function syncProducts(admin: any, shop: string, opts: SyncOptions =
   let pages = resuming ? prior.pages : 0;
 
   log.info(resuming ? "sync.resumed" : "sync.started", { shop, mode, since: opts.since ?? null, cursor });
+  const __tSetRun = Date.now(); // TEMP DIAGNOSTIC
+  console.log("[SYNC][ENTER] setSyncState(running)", { shop, cursor, imported, pages });
   await setSyncState(shop, {
     status: "running",
     mode,
@@ -103,14 +109,22 @@ export async function syncProducts(admin: any, shop: string, opts: SyncOptions =
     finishedAt: null,
     cursor,
   });
+  console.log(`[SYNC][EXIT] setSyncState(running) (${Date.now() - __tSetRun}ms)`, { shop, cursor, imported, pages });
 
   try {
     do {
+      console.log("[SYNC] loop top", { shop, cursor, imported, pages }); // TEMP DIAGNOSTIC
       // One page, retried (covers throttling / timeouts / transient 5xx).
       const body: any = await withRetry(
         async () => {
+          const __tGql = Date.now(); // TEMP DIAGNOSTIC
+          console.log("[SYNC][ENTER] GraphQL", { shop, cursor, imported, pages });
           const res = await admin.graphql(PRODUCTS_QUERY, { variables: { cursor, query } });
+          console.log(`[SYNC][EXIT] GraphQL (${Date.now() - __tGql}ms)`, { shop, cursor });
+          const __tJson = Date.now(); // TEMP DIAGNOSTIC
+          console.log("[SYNC][ENTER] res.json", { shop, cursor });
           const json: any = await res.json();
+          console.log(`[SYNC][EXIT] res.json (${Date.now() - __tJson}ms)`, { shop, cursor, errors: json.errors?.length ?? 0 });
           if (json.errors?.length) {
             const err: any = new Error(json.errors.map((e: any) => e.message).join("; "));
             if (/throttl/i.test(err.message)) err.status = 429;
@@ -122,36 +136,57 @@ export async function syncProducts(admin: any, shop: string, opts: SyncOptions =
       );
 
       const conn = body.data.products;
+      console.log("[SYNC] products received", { shop, count: conn?.nodes?.length, hasNextPage: conn?.pageInfo?.hasNextPage }); // TEMP DIAGNOSTIC
 
       // Build one page of products WITH all their variants. Products with more
       // variants than the inline page get topped up individually.
       const chunk: any[] = [];
       let variantCount = 0;
+      const __tBuild = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] buildChunk (mapGraphqlProduct)", { shop, nodes: conn?.nodes?.length });
       for (const node of conn.nodes) {
         let extra: any[] = [];
         if (node.variants?.pageInfo?.hasNextPage) {
+          const __tVar = Date.now(); // TEMP DIAGNOSTIC
+          console.log("[SYNC][ENTER] fetchRemainingVariants", { shop, productId: node.id });
           extra = await fetchRemainingVariants(admin, node.id, node.variants.pageInfo.endCursor);
+          console.log(`[SYNC][EXIT] fetchRemainingVariants (${Date.now() - __tVar}ms)`, { shop, productId: node.id, extra: extra.length });
         }
         const mapped = mapGraphqlProduct(node, extra);
         variantCount += mapped.variants.length;
         chunk.push(mapped);
       }
+      console.log(`[SYNC][EXIT] buildChunk (mapGraphqlProduct) (${Date.now() - __tBuild}ms)`, { shop, chunk: chunk.length, variantCount }); // TEMP DIAGNOSTIC
 
+      const __tFwd = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] forwardChunk", { shop, cursor, chunk: chunk.length, imported, pages });
       const r = await forwardChunk(shop, chunk);
+      console.log(`[SYNC][EXIT] forwardChunk (${Date.now() - __tFwd}ms)`, { shop, cursor, result: r });
       imported += r.imported;
       skipped += r.skipped;
       pages++;
 
       // Persist the NEXT cursor as the resume point after this page is forwarded.
       const nextCursor = conn.pageInfo.hasNextPage ? conn.pageInfo.endCursor : null;
+      const __tSet = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] setSyncState(progress)", { shop, cursor: nextCursor, imported, pages });
       await setSyncState(shop, { synced: imported, pages, cursor: nextCursor, lastCursor: cursor });
+      console.log(`[SYNC][EXIT] setSyncState(progress) (${Date.now() - __tSet}ms)`, { shop, imported, pages });
+      const __tIncr = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] incr(metrics)", { shop });
       await incr(METRIC.productsSynced, chunk.length);
+      console.log(`[SYNC][EXIT] incr(metrics) (${Date.now() - __tIncr}ms)`, { shop });
       log.info("sync.page", { shop, page: pages, products: chunk.length, variants: variantCount, importedTotal: imported });
 
+      const __tThr = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] respectThrottle", { shop, pages });
       await respectThrottle(body.extensions);
+      console.log(`[SYNC][EXIT] respectThrottle (${Date.now() - __tThr}ms)`, { shop, pages });
       cursor = nextCursor;
     } while (cursor);
 
+    const __tDone = Date.now(); // TEMP DIAGNOSTIC
+    console.log("[SYNC][ENTER] setSyncState(completed)", { shop, imported, pages });
     await setSyncState(shop, {
       status: "completed",
       synced: imported,
@@ -159,10 +194,13 @@ export async function syncProducts(admin: any, shop: string, opts: SyncOptions =
       finishedAt: new Date().toISOString(),
       cursor: null,
     });
+    console.log(`[SYNC][EXIT] setSyncState(completed) (${Date.now() - __tDone}ms)`, { shop, imported, pages }); // TEMP DIAGNOSTIC
+    console.log("[SYNC] completed", { shop, imported, skipped, pages }); // TEMP DIAGNOSTIC
     log.info("sync.completed", { shop, mode, imported, skipped, pages });
     return { imported, skipped, pages, mode };
   } catch (err) {
     const message = (err as Error).message;
+    console.log("[SYNC][CATCH] exception:", message); // TEMP DIAGNOSTIC
     await setSyncState(shop, { status: "failed", error: message, finishedAt: new Date().toISOString() });
     log.error("sync.failed", { shop, mode, error: message, pagesDone: pages });
     throw err;
@@ -205,9 +243,14 @@ export function startSyncInBackground(
   shop: string,
   opts: SyncOptions & { startedAtIso: string }
 ): void {
+  console.log("[SYNC] startSyncInBackground called", { shop, opts }); // TEMP DIAGNOSTIC
   void (async () => {
+    console.log("[SYNC] background IIFE entered", { shop }); // TEMP DIAGNOSTIC
     try {
+      const __tSync = Date.now(); // TEMP DIAGNOSTIC
+      console.log("[SYNC][ENTER] syncProducts(top)", { shop });
       const summary = await syncProducts(admin, shop, opts);
+      console.log(`[SYNC][EXIT] syncProducts(top) (${Date.now() - __tSync}ms)`, { shop, summary });
       await gazaarabiaFetch("/api/integrations/shopify/sync-complete", {
         shop,
         // last-sync = when we STARTED, so the next delta can't miss products

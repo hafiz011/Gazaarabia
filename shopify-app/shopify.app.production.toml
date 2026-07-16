@@ -1,6 +1,7 @@
 # PRODUCTION config. Use with `shopify app deploy --config=production`.
-# Contains the FULL webhook set including Protected Customer Data topics
-# (orders/*, refunds/create) — these register only after PCD access is approved.
+# Contains the webhook set including Protected Customer Data order-STATUS topics
+# (orders/updated|paid|fulfilled|partially_fulfilled|cancelled) — these register
+# only after PCD access is approved. No orders/create, orders/delete, or refunds.
 # Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "2d7ddfe6c238bfc3798d7702a70eb553"
@@ -33,11 +34,7 @@ api_version = "2025-01"
   uri = "/webhooks/app/scopes_update"
   topics = ["app/scopes_update"]
 
-  # ── Order status sync (PROTECTED CUSTOMER DATA — needs approval) ──
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/create"
-  topics = ["orders/create"]
-
+  # ── Order STATUS sync only (Gazaarabia-created orders; PCD — needs approval) ──
   [[webhooks.subscriptions]]
   uri = "/webhooks/orders/updated"
   topics = ["orders/updated"]
@@ -57,14 +54,6 @@ api_version = "2025-01"
   [[webhooks.subscriptions]]
   uri = "/webhooks/orders/cancelled"
   topics = ["orders/cancelled"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/delete"
-  topics = ["orders/delete"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/refunds/create"
-  topics = ["refunds/create"]
 
   # ── Product + inventory sync ──────────────────────────────────
   [[webhooks.subscriptions]]

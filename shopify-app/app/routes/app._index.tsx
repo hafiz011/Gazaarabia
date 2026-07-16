@@ -38,7 +38,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 // immediately. mode=full forces a full re-sync; otherwise it runs a delta from
 // the last sync time.
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const __tAuth = Date.now(); // TEMP DIAGNOSTIC
+  console.log("[SYNC][ENTER] authenticate.admin (action)");
   const { admin, session } = await authenticate.admin(request);
+  console.log(`[SYNC][EXIT] authenticate.admin (action) (${Date.now() - __tAuth}ms)`, { shop: session.shop });
   const shop = session.shop;
 
   if (await isSyncing(shop)) return { started: false, reason: "already_running" as const };
@@ -50,6 +53,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const mode = since ? ("delta" as const) : ("full" as const);
   const startedAtIso = new Date().toISOString();
 
+  const __tSetRunA = Date.now(); // TEMP DIAGNOSTIC
+  console.log("[SYNC][ENTER] setSyncState(running) (action)", { shop, mode });
   await setSyncState(shop, {
     status: "running",
     mode,
@@ -60,9 +65,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     finishedAt: null,
     cursor: null,
   });
+  console.log(`[SYNC][EXIT] setSyncState(running) (action) (${Date.now() - __tSetRunA}ms)`, { shop });
 
   // Queue when Redis is available (crash-safe, resumable); else run in-process.
+  const __tEnq = Date.now(); // TEMP DIAGNOSTIC
+  console.log("[SYNC][ENTER] enqueueProductSync", { shop });
   const queued = await enqueueProductSync({ shop, mode, since });
+  console.log(`[SYNC][EXIT] enqueueProductSync (${Date.now() - __tEnq}ms)`, { shop, queued });
   if (!queued) startSyncInBackground(admin, shop, { since, mode, startedAtIso });
 
   return { started: true as const };

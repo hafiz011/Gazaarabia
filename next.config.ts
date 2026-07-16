@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
   // Do not expose source maps in production
   productionBrowserSourceMaps: false,
 
+  // next/image remote-host allow-list. This is a multi-vendor marketplace: product
+  // images are served from each seller's storefront CDN — Shopify products come from
+  // cdn.shopify.com, WooCommerce/custom sellers from arbitrary hosts. We allow any
+  // HTTPS host (consistent with the CSP `img-src … https:` above). To lock this down
+  // to known platforms, replace the `**` entry with explicit `hostname` entries
+  // (e.g. "cdn.shopify.com").
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+    ],
+  },
+
   async headers() {
     return [
       {
