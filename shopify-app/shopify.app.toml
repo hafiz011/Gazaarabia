@@ -10,11 +10,6 @@ automatically_update_urls_on_dev = true
 include_config_on_deploy = true
 
 [webhooks]
-# MODE A — LOCALHOST DEVELOPMENT. No webhook subscription blocks here on purpose.
-# `--use-localhost` is NOT compatible with webhooks: Shopify rejects localhost
-# endpoints ("Invalid value: ...localhost... for: uri"), which makes the dev
-# preview fail to start. Webhook subscriptions live in shopify.app.webhooks.toml
-# (Mode B, tunnel) and shopify.app.production.toml — never removed, just moved.
 api_version = "2026-10"
 
 [access_scopes]

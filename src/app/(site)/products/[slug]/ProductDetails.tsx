@@ -147,17 +147,33 @@ export default function ProductDetails() {
         setSelectedSize(firstVariantForColor.size);
       }
     }
-  }, [colors, variants]);
+    // Size-only products (no colours) — auto-select the first size so a variant resolves.
+    if (sizes.length > 0 && colors.length === 0 && !selectedSize) {
+      setSelectedSize(sizes[0]);
+    }
+  }, [colors, sizes, variants]);
 
-  const selectedVariant: any =
-    selectedColor && selectedSize
-      ? variants.find(
+  // Products with real colour/size options use the colour+size selection below.
+  // Shopify-synced products have variants with no colour/size (colorId/sizeId null),
+  // so there is nothing to "select" — fall back to the product's single/default variant.
+  const hasVariantOptions = colors.length > 0 || sizes.length > 0;
+
+  // Match only the dimensions the product actually exposes: colour+size, colour-only,
+  // size-only, or (Shopify) neither → single/default variant.
+  const selectedVariant: any = hasVariantOptions
+    ? variants.find(
         (v) =>
-          v.color?.id === selectedColor.id && v.size?.id === selectedSize.id
-      )
-      : null;
+          (colors.length === 0 || v.color?.id === selectedColor?.id) &&
+          (sizes.length === 0 || v.size?.id === selectedSize?.id)
+      ) || null
+    : variants[0] || null;
 
-  const availableStock = selectedVariant?.availableStock || 0;
+  // Never collapse to 0 simply because no colour/size is selected. Use the selected
+  // (or default) variant's stock; for option-less products fall back to the
+  // product-level availableStock the API already returns.
+  const availableStock =
+    selectedVariant?.availableStock ??
+    (hasVariantOptions ? 0 : product?.availableStock ?? 0);
 
   // video related vars 
   const hasVideo = Boolean(selectedVariant?.videoUrl);
@@ -235,7 +251,11 @@ export default function ProductDetails() {
 
   //  Zoom effect
   const handleAddToCart = async () => {
-    if (!selectedColor || !selectedSize) {
+    // Require a selection only for the dimensions the product actually exposes.
+    if (
+      hasVariantOptions &&
+      ((colors.length > 0 && !selectedColor) || (sizes.length > 0 && !selectedSize))
+    ) {
       setShowVariantWarning(true);
       return;
     }
@@ -256,11 +276,11 @@ export default function ProductDetails() {
 
       const variantData = {
         id: selectedVariant.id,
-        sizeId: selectedSize.id,
-        colorId: selectedColor.id,
-        sizeName: selectedSize.name,
-        colorName: selectedColor.name,
-        hexCode: selectedColor.hexCode,
+        sizeId: selectedSize?.id ?? null,
+        colorId: selectedColor?.id ?? null,
+        sizeName: selectedSize?.name ?? null,
+        colorName: selectedColor?.name ?? null,
+        hexCode: selectedColor?.hexCode ?? null,
         price: selectedVariant.price,
         availableStock: selectedVariant.availableStock,
         variantImages: selectedVariant.variantImages || [],
@@ -276,8 +296,8 @@ export default function ProductDetails() {
         product.id,
         quantity,
         selectedVariant.id,
-        selectedColor.id,
-        selectedSize.id,
+        selectedColor?.id ?? null,
+        selectedSize?.id ?? null,
         productData,
         variantData
       );
