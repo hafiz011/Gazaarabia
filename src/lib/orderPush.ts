@@ -127,12 +127,20 @@ const PAID_STATUSES = [
  * first to run does the work, the rest are no-ops.
  */
 export async function pushExternalItemsForOrder(orderId: number): Promise<void> {
+  console.log("[ORDER-PUSH-TRACE][ENTER] pushExternalItemsForOrder", { orderId });
   const order = await prisma.orders.findUnique({
     where:  { id: orderId },
     select: { status: true },
   })
 
-  if (!order || !PAID_STATUSES.includes(order.status.toLowerCase())) return
+  if (!order) {
+    console.log("[ORDER-PUSH-TRACE][RETURN] pushExternalItemsForOrder: order_not_found", { orderId });
+    return;
+  }
+  if (!PAID_STATUSES.includes(order.status.toLowerCase())) {
+    console.log("[ORDER-PUSH-TRACE][RETURN] pushExternalItemsForOrder: order_not_paid", { orderId, status: order.status });
+    return;
+  }
 
   const items = await prisma.orderItem.findMany({
     where: {
@@ -142,6 +150,11 @@ export async function pushExternalItemsForOrder(orderId: number): Promise<void> 
     },
     select: { id: true, seller: { select: { storeType: true } } },
   })
+  console.log("[ORDER-PUSH-TRACE] external_items_loaded", {
+    orderId,
+    count: items.length,
+    storeTypes: items.map((item) => item.seller?.storeType ?? null),
+  });
 
   // WooCommerce: existing per-item REST push (unchanged).
   for (const item of items) {
@@ -153,6 +166,11 @@ export async function pushExternalItemsForOrder(orderId: number): Promise<void> 
   // Shopify (Milestone 3): one GraphQL order per seller, built from stored Variant
   // GIDs and created via the Shopify app (idempotent, offline session).
   if (items.some((i) => i.seller?.storeType === 'shopify')) {
+    console.log("[ORDER-PUSH-TRACE][ENTER] pushShopifyOrders", { orderId });
     await pushShopifyOrders(orderId)
+    console.log("[ORDER-PUSH-TRACE][EXIT] pushShopifyOrders", { orderId });
+  } else {
+    console.log("[ORDER-PUSH-TRACE][SKIP] pushShopifyOrders: no_shopify_items", { orderId });
   }
+  console.log("[ORDER-PUSH-TRACE][EXIT] pushExternalItemsForOrder", { orderId });
 }

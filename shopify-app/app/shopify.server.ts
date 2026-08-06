@@ -18,7 +18,13 @@ const shopify = shopifyApp({
   distribution: AppDistribution.AppStore,
   future: {
     unstable_newEmbeddedAuthStrategy: true,
-    expiringOfflineAccessTokens: true,
+    // expiringOfflineAccessTokens intentionally OFF: order pushes run in the
+    // background via unauthenticated.admin(), which can only LOAD the stored
+    // session — it cannot refresh an expired token (refresh happens only during
+    // embedded app visits). With expiring tokens the integration dies whenever
+    // the merchant doesn't open the app (runtime-proven: shpua_ token expired
+    // 2026-07-16 → every push 401). Non-expiring shpat_ offline tokens are
+    // required for this architecture.
   },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }

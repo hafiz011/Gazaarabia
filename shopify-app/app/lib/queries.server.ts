@@ -97,3 +97,35 @@ export const ORDER_CREATE_MUTATION = `#graphql
     }
   }
 `;
+
+// Reconcile lookup: find an order we previously created for a Gazaarabia order.
+// Every orderCreate stamps a unique tag `gaza-order-<gazaOrderId>`; after an
+// AMBIGUOUS response (timeout / 502 / connection lost / throttle) we search by
+// that tag to discover whether the order was actually created, so a retry adopts
+// the existing order instead of creating a duplicate.
+export const ORDER_BY_TAG_QUERY = `#graphql
+  query OrderByTag($query: String!) {
+    orders(first: 1, query: $query) {
+      edges {
+        node {
+          id
+          name
+          legacyResourceId
+          displayFinancialStatus
+          displayFulfillmentStatus
+          cancelledAt
+        }
+      }
+    }
+  }
+`;
+
+// Customer reuse: find an existing Shopify customer by email so orderCreate can
+// associate it (customer.toAssociate) instead of risking a duplicate customer.
+export const CUSTOMER_BY_EMAIL_QUERY = `#graphql
+  query CustomerByEmail($query: String!) {
+    customers(first: 1, query: $query) {
+      edges { node { id email } }
+    }
+  }
+`;

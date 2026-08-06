@@ -586,6 +586,21 @@ model Orders {
   @@map("orders")
 }
 
+// Stripe webhook replay protection (idempotency). One row per Stripe event.id;
+// the UNIQUE constraint lets the webhook atomically claim an event and reject
+// duplicate deliveries before doing any work. `processedAt` is stamped once the
+// event has been fully applied (null = claimed-but-not-yet-processed).
+model ProcessedStripeEvent {
+  id          Int       @id @default(autoincrement())
+  eventId     String    @unique // Stripe event.id (evt_…)
+  eventType   String // e.g. payment_intent.succeeded
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([processedAt])
+  @@map("processed_stripe_event")
+}
+
 model OrderItem {
   id        Int  @id @default(autoincrement())
   sellerId  Int

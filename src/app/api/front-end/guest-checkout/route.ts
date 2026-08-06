@@ -9,6 +9,7 @@ import { stripe } from "@/lib/stripe";
 import { validateStockInTransaction } from "@/lib/helpers/stockHelper";
 import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
 import { pushExternalItemsForOrder } from "@/lib/orderPush";
+import { deriveVerifiedOrderStatus } from "@/lib/payments/verifyPaymentStatus";
 
 /**
  * @route POST /api/front-end/guest-checkout
@@ -454,6 +455,9 @@ export async function POST(req: NextRequest) {
     // ===============================
     //  CREATE ORDER
     // ===============================
+    // ── SERVER-VERIFIED payment status (browser value ignored) ──
+    const verifiedStatus = await deriveVerifiedOrderStatus(payment);
+
     const newOrder = await prisma.orders.create({
       data: {
         userId: Number(user.id),
@@ -464,7 +468,7 @@ export async function POST(req: NextRequest) {
         subtotal: payment.subtotal,
         paymentMethod: payment.paymentMethod,
         transactionId: payment.transactionId,
-        status: (payment.paymentStatus || "completed").toLowerCase(),
+        status: verifiedStatus,
         paymentResponse: payment.paymentResponse,
 
         //  Address Snapshot
@@ -549,7 +553,7 @@ export async function POST(req: NextRequest) {
           anonymous: charity?.anonymous || false,
           transactionId: payment.transactionId,
           paymentMethod: payment?.paymentMethod,
-          paymentStatus: payment.paymentStatus || "completed",
+          paymentStatus: verifiedStatus,
 
           //  IMPORTANT — link donation to order
           orderId: newOrder.id,
@@ -626,12 +630,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    //  Forward external-store (Shopify/WooCommerce) items to the seller's store.
-    //  No-op unless the order is paid and contains external products.
-    try {
-      await pushExternalItemsForOrder(newOrder.id);
-    } catch (e) {
-      console.error("External store push failed:", (e as Error).message);
+    //  Forward external-store items — ONLY for non-Stripe, SERVER-VERIFIED paid
+    //  orders. Stripe orders are pushed solely by the verified webhook; the cron
+    //  (/api/cron/push-pending-external) is the durable backstop.
+    const _pm = (payment.paymentMethod || "").toLowerCase();
+    if (verifiedStatus === "paid" && _pm !== "stripe") {
+      void pushExternalItemsForOrder(newOrder.id).catch((e) =>
+        console.error("External store push failed (cron will retry):", (e as Error).message)
+      );
     }
 
     return NextResponse.json({

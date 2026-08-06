@@ -6,16 +6,45 @@ import { syncLog } from "@/lib/helpers/syncLog";
 // in a marketplace order, then persists the returned mapping on the seller's
 // items. Idempotent: skips seller groups already pushed (externalOrderId set).
 
-const APP = (process.env.SHOPIFY_APP_URL ?? "").replace(/\/+$/, "");
-const SECRET = process.env.GAZAARABIA_INTERNAL_SECRET ?? "";
+// Read at CALL time, not module-import time. Module-level consts are evaluated
+// once when the module is first imported, so an env var that is loaded later (or
+// changed) is never picked up, and a missing var silently disables the whole push
+// for the lifetime of the process. Resolving per call makes the config observable
+// and removes the import-order dependency.
+const appBaseUrl = () => (process.env.SHOPIFY_APP_URL ?? "").replace(/\/+$/, "");
+const internalSecret = () => process.env.GAZAARABIA_INTERNAL_SECRET ?? "";
 
 export async function pushShopifyOrders(orderId: number): Promise<void> {
+  const APP = appBaseUrl();
+  const SECRET = internalSecret();
+  console.log("[ORDER-PUSH-TRACE][ENTER] pushShopifyOrders", {
+    orderId,
+    app: APP,
+    hasInternalSecret: Boolean(SECRET),
+  });
+
   if (!APP || !SECRET) {
-    syncLog("order.push_misconfigured", { orderId });
+    console.log("[ORDER-PUSH-TRACE][RETURN] pushShopifyOrders: missing_configuration", {
+      orderId,
+      hasApp: Boolean(APP),
+      hasInternalSecret: Boolean(SECRET),
+    });
+    // Name the missing variable(s) — previously this logged nothing actionable,
+    // so a misconfigured deploy silently dropped every Shopify order push.
+    syncLog("order.push_misconfigured", {
+      orderId,
+      missing: [!APP && "SHOPIFY_APP_URL", !SECRET && "GAZAARABIA_INTERNAL_SECRET"].filter(Boolean),
+    });
     return;
   }
 
+  console.log("[ORDER-PUSH-TRACE][ENTER] buildShopifyOrders", { orderId });
   const { groups, errors } = await buildShopifyOrders(orderId);
+  console.log("[ORDER-PUSH-TRACE][EXIT] buildShopifyOrders", {
+    orderId,
+    groupCount: groups.length,
+    errors,
+  });
   if (errors.length) syncLog("order.validation_errors", { orderId, errors });
 
   for (const g of groups) {
@@ -25,19 +54,37 @@ export async function pushShopifyOrders(orderId: number): Promise<void> {
       select: { id: true },
     });
     if (already) {
+      console.log("[ORDER-PUSH-TRACE][SKIP] seller_group_already_mapped", { orderId, sellerId: g.sellerId });
       syncLog("order.already_pushed", { orderId, sellerId: g.sellerId });
       continue;
     }
 
     try {
+      const url = `${APP}/api/push-order`;
+      const requestBody = { shop: g.shop, gazaOrderId: g.gazaOrderId, input: g.input };
+      console.log("[ORDER-PUSH-TRACE][ENTER] POST /api/push-order", {
+        orderId,
+        sellerId: g.sellerId,
+        url,
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-internal-secret": "[REDACTED]" },
+        body: requestBody,
+      });
       syncLog("order.submitted", { orderId, sellerId: g.sellerId, shop: g.shop });
-      const res = await fetch(`${APP}/api/push-order`, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-internal-secret": SECRET },
-        body: JSON.stringify({ shop: g.shop, gazaOrderId: g.gazaOrderId, input: g.input }),
+        body: JSON.stringify(requestBody),
         signal: AbortSignal.timeout(20000),
       });
       const data = await res.json();
+      console.log("[ORDER-PUSH-TRACE][EXIT] POST /api/push-order", {
+        orderId,
+        sellerId: g.sellerId,
+        status: res.status,
+        ok: res.ok,
+        response: data,
+      });
 
       // Queued (202): the app's worker will create the order and call back to
       // /order-mapped to store externalOrderId. Nothing to persist here.
@@ -58,6 +105,11 @@ export async function pushShopifyOrders(orderId: number): Promise<void> {
             externalSyncedAt: new Date(),
           },
         });
+        console.log("[ORDER-PUSH-TRACE][WRITE] orderItem.externalOrderId", {
+          orderId,
+          sellerId: g.sellerId,
+          externalOrderId: numeric,
+        });
         syncLog("order.created", {
           orderId,
           sellerId: g.sellerId,
@@ -73,6 +125,13 @@ export async function pushShopifyOrders(orderId: number): Promise<void> {
         });
       }
     } catch (e) {
+      console.error("[ORDER-PUSH-TRACE][ERROR] POST /api/push-order", {
+        orderId,
+        sellerId: g.sellerId,
+        error: (e as Error).message,
+        stack: (e as Error).stack,
+        cause: (e as any)?.cause,
+      });
       syncLog("order.push_error", { orderId, sellerId: g.sellerId, error: (e as Error).message });
     }
   }

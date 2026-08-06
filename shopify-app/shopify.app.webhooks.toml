@@ -1,21 +1,4 @@
-# ═══════════════════════════════════════════════════════════════════════════
-# MODE B — WEBHOOK DEVELOPMENT (requires a PUBLIC tunnel URL)
-#
-#   shopify app dev --config=webhooks
-#
-# Same app (same client_id), same code, same routes as shopify.app.toml.
-# The ONLY difference: this config declares the 8 webhook subscriptions.
-#
-# Webhooks REQUIRE a publicly reachable HTTPS endpoint — Shopify's servers POST
-# to `application_url` + each `uri`. That is why this config must NOT be used
-# with `--use-localhost`: Shopify rejects localhost endpoints with
-#   Invalid value: "https://localhost:3458/webhooks/..." for: "uri"
-# `automatically_update_urls_on_dev = true` lets the CLI substitute the live
-# tunnel URL, so the URIs below resolve to https://<tunnel-host>/webhooks/...
-#
-# If the Cloudflare quick tunnel cannot start on your network, supply your own:
-#   shopify app dev --config=webhooks --tunnel-url https://<host>:3458
-# ═══════════════════════════════════════════════════════════════════════════
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "3aa81dc01db00234ff56592be7c9a404"
 name = "Gazaarabia Dev"
@@ -28,38 +11,6 @@ include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-10"
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/inventory_levels/update"
-  topics = [ "inventory_levels/update" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/cancelled"
-  topics = [ "orders/cancelled" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/fulfilled"
-  topics = [ "orders/fulfilled" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/paid"
-  topics = [ "orders/paid" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/partially_fulfilled"
-  topics = [ "orders/partially_fulfilled" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/updated"
-  topics = [ "orders/updated" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/products/delete"
-  topics = [ "products/delete" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/products/update"
-  topics = [ "products/update" ]
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

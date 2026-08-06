@@ -48,6 +48,12 @@ model OrderMap {
   cancelledAt       DateTime?
   createdAt         DateTime  @default(now())
   syncedAt          DateTime?
+  // Claim-first lifecycle: a row is inserted with status="creating" BEFORE the
+  // Shopify orderCreate mutation runs. The @@unique([shop, gazaOrderId]) makes a
+  // concurrent second request fail at this INSERT — before it can call Shopify —
+  // so two requests can never both reach orderCreate. Set to "created" once the
+  // Shopify order exists; the claim is deleted (released) on permanent failure.
+  status            String    @default("created") // creating | created
 
   @@unique([shop, gazaOrderId])
   @@index([shopifyOrderGid])

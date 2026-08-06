@@ -14,7 +14,9 @@ embedded = true
 automatically_update_urls_on_dev = false
 
 [access_scopes]
-scopes = "read_inventory,read_orders,read_products,write_orders"
+# read_customers: required by the customer-reuse search (customers by email →
+# customer.toAssociate on orderCreate) in app/lib/orderCustomer.server.ts.
+scopes = "read_customers,read_inventory,read_orders,read_products,write_orders"
 
 [auth]
 redirect_urls = [

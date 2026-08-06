@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DATABASE_URL=mysql://root@localhost:3306/gaza187654_676 node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);\\(async\\(\\)=>{const os=await p.orders.groupBy\\({by:['\\\\''status'\\\\''],_count:true}\\);console.log\\('\\\\''orders by status: '\\\\''+JSON.stringify\\(os.map\\(o=>\\({status:o.status,n:o._count}\\)\\)\\)\\);const pend=await p.orderItem.count\\({where:{externalOrderId:null,product:{isExternalProduct:true},order:{status:{in:['\\\\''paid'\\\\'','\\\\''succeeded'\\\\'']}}}}\\);console.log\\('\\\\''paid orders with UNPUSHED external items \\(cron backlog\\)='\\\\''+pend\\);const ev=await p.processedStripeEvent.count\\(\\);const evUnproc=await p.processedStripeEvent.count\\({where:{processedAt:null}}\\);console.log\\('\\\\''processed_stripe_event total='\\\\''+ev+'\\\\'' unprocessed\\(claimed-not-done\\)='\\\\''+evUnproc\\);await p.$disconnect\\(\\);}\\)\\(\\).catch\\(e=>console.log\\('\\\\''ERR '\\\\''+e.message\\)\\);')",
+      "Bash(DATABASE_URL=mysql://root@localhost:3306/gazaarabia_shopify node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);\\(async\\(\\)=>{const t=await p.orderMap.count\\(\\);const c=await p.orderMap.count\\({where:{status:'\\\\''creating'\\\\''}}\\);const orphan=await p.orderMap.count\\({where:{OR:[{shopifyOrderGid:'\\\\'''\\\\''},{shopifyOrderGid:null}]}}\\);console.log\\('\\\\''order_map total='\\\\''+t+'\\\\'' stuck_creating='\\\\''+c+'\\\\'' empty_gid='\\\\''+orphan\\);await p.$disconnect\\(\\);}\\)\\(\\).catch\\(e=>console.log\\('\\\\''ERR '\\\\''+e.message\\)\\);')"
+    ]
+  }
+}
