@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { loadStripe, PaymentIntent } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
@@ -58,6 +58,7 @@ function StripeWrapper({
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState("");
 
+    const elementsOptions = useMemo(() => ({ clientSecret }), [clientSecret]);
 
     const isGuest = !session?.user;
 
@@ -294,7 +295,7 @@ function StripeWrapper({
 
                         {/* Stripe Card Input */}
                         {selectedCard === "new" && clientSecret && (
-                            <Elements stripe={stripePromise} options={{ clientSecret }}>
+                            <Elements key={clientSecret} stripe={stripePromise} options={elementsOptions}>
                                 <StripeCardForm amount={amount} onSuccess={onSuccess} />
                             </Elements>
                         )}

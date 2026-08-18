@@ -1,91 +1,68 @@
-# PRODUCTION config. Use with `shopify app deploy --config=production`.
-# Contains the webhook set including Protected Customer Data order-STATUS topics
-# (orders/updated|paid|fulfilled|partially_fulfilled|cancelled) — these register
-# only after PCD access is approved. No orders/create, orders/delete, or refunds.
-# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# Production configuration template for Gazaarabia Shopify App
 
-client_id = "2d7ddfe6c238bfc3798d7702a70eb553"
+client_id = "<SHOPIFY_CLIENT_ID>"
 name = "Gazaarabia"
 application_url = "https://shopify.gazaarabia.com"
 embedded = true
 
 [build]
-# Never auto-rewrite production URLs from a dev tunnel.
 automatically_update_urls_on_dev = false
-
-[access_scopes]
-# read_customers: required by the customer-reuse search (customers by email →
-# customer.toAssociate on orderCreate) in app/lib/orderCustomer.server.ts.
-scopes = "read_customers,read_inventory,read_orders,read_products,write_orders"
-
-[auth]
-redirect_urls = [
-  "https://shopify.gazaarabia.com/auth/callback",
-  "https://shopify.gazaarabia.com/auth/shopify/callback",
-]
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-01"
 
-  # ── App lifecycle ─────────────────────────────────────────────
   [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
-  topics = ["app/uninstalled"]
 
   [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
-  topics = ["app/scopes_update"]
-
-  # ── Order STATUS sync only (Gazaarabia-created orders; PCD — needs approval) ──
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/orders/updated"
-  topics = ["orders/updated"]
 
   [[webhooks.subscriptions]]
+  topics = [ "orders/paid" ]
   uri = "/webhooks/orders/paid"
-  topics = ["orders/paid"]
 
   [[webhooks.subscriptions]]
+  topics = [ "orders/updated" ]
+  uri = "/webhooks/orders/updated"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/fulfilled" ]
   uri = "/webhooks/orders/fulfilled"
-  topics = ["orders/fulfilled"]
 
   [[webhooks.subscriptions]]
+  topics = [ "orders/partially_fulfilled" ]
   uri = "/webhooks/orders/partially_fulfilled"
-  topics = ["orders/partially_fulfilled"]
 
   [[webhooks.subscriptions]]
+  topics = [ "orders/cancelled" ]
   uri = "/webhooks/orders/cancelled"
-  topics = ["orders/cancelled"]
 
-  # ── Product + inventory sync ──────────────────────────────────
   [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
   uri = "/webhooks/products/create"
-  topics = ["products/create"]
 
   [[webhooks.subscriptions]]
+  topics = [ "products/update" ]
   uri = "/webhooks/products/update"
-  topics = ["products/update"]
 
   [[webhooks.subscriptions]]
+  topics = [ "products/delete" ]
   uri = "/webhooks/products/delete"
-  topics = ["products/delete"]
 
   [[webhooks.subscriptions]]
+  topics = [ "inventory_levels/update" ]
   uri = "/webhooks/inventory_levels/update"
-  topics = ["inventory_levels/update"]
 
-  # ── Mandatory GDPR compliance ─────────────────────────────────
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/customers/data_request"
-  compliance_topics = ["customers/data_request"]
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_inventory,read_orders,read_products,write_orders,read_customers"
 
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/customers/redact"
-  compliance_topics = ["customers/redact"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/shop/redact"
-  compliance_topics = ["shop/redact"]
-
-[pos]
-embedded = false
+[auth]
+redirect_urls = [
+  "https://shopify.gazaarabia.com/auth/callback",
+  "https://shopify.gazaarabia.com/api/auth"
+]

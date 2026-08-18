@@ -11,6 +11,8 @@ import { computeCouponDiscount } from "@/lib/helpers/couponDiscount";
 import { pushExternalItemsForOrder } from "@/lib/orderPush";
 import { deriveVerifiedOrderStatus } from "@/lib/payments/verifyPaymentStatus";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
  * @route POST /api/front-end/guest-checkout
  * @desc Create a guest user (if needed), save delivery address, place order, and send confirmation email
@@ -29,6 +31,13 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { success: false, message: "Missing required fields." },
+        { status: 400 }
+      );
+    }
+
+    if (!EMAIL_REGEX.test(address.email.trim())) {
+      return NextResponse.json(
+        { success: false, message: "Invalid email address." },
         { status: 400 }
       );
     }

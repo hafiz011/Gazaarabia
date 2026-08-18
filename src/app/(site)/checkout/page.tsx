@@ -83,6 +83,9 @@ export default function CheckoutPage() {
   const [stripeOpen, setStripeOpen] = useState(false);
   const [hasTrackedInit, setHasTrackedInit] = useState(false);
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValidEmail = (email?: string | null) => !!email && emailRegex.test(email.trim());
+
 
 
 
@@ -268,6 +271,11 @@ export default function CheckoutPage() {
         return;
       }
 
+      if (!isValidEmail(addressData.email)) {
+        setErrorMsg("Please enter a valid email address before completing checkout.");
+        return;
+      }
+
       const orderPayload: any = {
         payment: {
           totalAmount: grandTotal,
@@ -368,6 +376,17 @@ export default function CheckoutPage() {
     }
 
     try {
+      const addressData = token ? selectedAddress : guestAddress;
+      if (!addressData) {
+        setErrorMsg("Please provide your delivery address before payment.");
+        return;
+      }
+
+      if (!isValidEmail(addressData.email)) {
+        setErrorMsg("Please enter a valid email address before completing checkout.");
+        return;
+      }
+
       // 2️. Sync + validate cart before checkout
       const syncResponse = await cartService.syncCart(token, cart);
 
@@ -430,6 +449,11 @@ export default function CheckoutPage() {
         return;
       }
 
+      if (!isValidEmail(addressData.email)) {
+        setErrorMsg("Please enter a valid email address before completing checkout.");
+        return;
+      }
+
       if (paymentType == 'paypal') {
         //  All good — open PayPal modal
         setPaypalOpen(true);
@@ -457,7 +481,11 @@ export default function CheckoutPage() {
       if (!addressData) {
         setErrorMsg("Please provide your delivery address before payment.");
         return;
+      }
 
+      if (!isValidEmail(addressData.email)) {
+        setErrorMsg("Please enter a valid email address before completing checkout.");
+        return;
       }
 
       const totalAmount = subtotal - discountAmount;

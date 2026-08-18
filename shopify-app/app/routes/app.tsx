@@ -10,7 +10,32 @@ import { authenticate } from "../shopify.server";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const startedAt = Date.now();
+  console.log("[DASHBOARD-AUTH][ENTER] authenticate.admin", {
+    url: request.url,
+    hasAuthorization: Boolean(request.headers.get("authorization")),
+  });
+  try {
+    await authenticate.admin(request);
+    console.log("[DASHBOARD-AUTH][EXIT] authenticate.admin", {
+      durationMs: Date.now() - startedAt,
+    });
+  } catch (error) {
+    const responseDetails = error instanceof Response
+      ? {
+          status: error.status,
+          statusText: error.statusText,
+          headers: Object.fromEntries(error.headers.entries()),
+          body: await error.clone().text().catch(() => "[unreadable]"),
+        }
+      : undefined;
+    console.error("[DASHBOARD-AUTH][ERROR] authenticate.admin", {
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+      response: responseDetails,
+    });
+    throw error;
+  }
 
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };

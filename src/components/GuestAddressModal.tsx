@@ -40,6 +40,8 @@ export default function GuestAddressModal({ onCancel, onSave, initialData }: Gue
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -48,6 +50,15 @@ export default function GuestAddressModal({ onCancel, onSave, initialData }: Gue
         isOpen: true,
         type: "error",
         message: "Please fill all required fields: First Name, Email, Phone, and Address.",
+      });
+      return;
+    }
+
+    if (!emailRegex.test(form.email.trim())) {
+      setAlert({
+        isOpen: true,
+        type: "error",
+        message: "Please enter a valid email address.",
       });
       return;
     }
@@ -128,6 +139,7 @@ export default function GuestAddressModal({ onCancel, onSave, initialData }: Gue
           <TextField
             label="Email"
             name="email"
+            type="email"
             value={form.email}
             onChange={handleChange}
             fullWidth

@@ -34,7 +34,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "prisma/seed.js",
-    "src/app/(site)/become-partner/page.tsx",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
